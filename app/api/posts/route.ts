@@ -39,7 +39,7 @@ export async function POST(
     [
       body.post,
       body.platform,
-      body.schedule_time,
+      body.scheduleTime,
       "scheduled",
       body.imageUrl,
     ]
