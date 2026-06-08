@@ -19,7 +19,14 @@ export function startScheduler() {
     WHERE status = 'scheduled'
       AND schedule_time <= NOW()
   `);
+    console.log("Found Posts:", result.rows.length);
 
+    console.log(
+      "Post IDs:",
+      result.rows.map((p) => p.id),
+    );
+
+    console.log("Server Time:", new Date().toISOString());
     for (const post of result.rows) {
       await pool.query(
         `
@@ -32,9 +39,7 @@ export function startScheduler() {
 
       try {
         //await publishToLinkedIn(post.post);
-await publishToInstagram(
-  post.id
-);
+        await publishToInstagram(post.id);
         await pool.query(
           `
       UPDATE posts
