@@ -1,69 +1,60 @@
 import { pool } from "@/lib/db";
 
-export async function publishToInstagram(
-  postId: number
-) {
-
-  const result =
-    await pool.query(
-      `
+export async function publishToInstagram(postId: number) {
+  const result = await pool.query(
+    `
       SELECT *
       FROM posts
       WHERE id = $1
       `,
-      [postId]
-    );
+    [postId],
+  );
 
-  const post =
-    result.rows[0];
+  const post = result.rows[0];
 
-  const instagramId =
-    process.env.INSTAGRAM_BUSINESS_ID!;
+  const instagramId = process.env.INSTAGRAM_BUSINESS_ID!;
 
-  const accessToken =
-    process.env.META_ACCESS_TOKEN!;
+  const accessToken = process.env.META_ACCESS_TOKEN!;
 
-  const containerResponse =
-    await fetch(
-      `https://graph.facebook.com/v19.0/${instagramId}/media`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify({
-          image_url:
-            post.image_url,
-          caption:
-            post.post,
-          access_token:
-            accessToken,
-        }),
-      }
-    );
+  const containerResponse = await fetch(
+    `https://graph.facebook.com/v19.0/${instagramId}/media`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        image_url: post.image_url,
+        caption: post.post,
+        access_token: accessToken,
+      }),
+    },
+  );
 
-  const container =
-    await containerResponse.json();
+  const container = await containerResponse.json();
+  console.log("Container:", container);
+  const publishResponse = await fetch(
+    `https://graph.facebook.com/v19.0/${instagramId}/media_publish`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        creation_id: container.id,
+        access_token: accessToken,
+      }),
+    },
+  );
 
-  const publishResponse =
-    await fetch(
-      `https://graph.facebook.com/v19.0/${instagramId}/media_publish`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify({
-          creation_id:
-            container.id,
-          access_token:
-            accessToken,
-        }),
-      }
-    );
+  const publishData = await publishResponse.json();
+  console.log("Publish:", publishData);
 
-  return await publishResponse.json();
+  if (container.error) {
+    throw new Error(JSON.stringify(container.error));
+  }
 
+  if (publishData.error) {
+    throw new Error(JSON.stringify(publishData.error));
+  }
 }
