@@ -11,7 +11,7 @@ export function startScheduler() {
   started = true;
 
   cron.schedule("* * * * *", async () => {
-    console.log("Checking scheduled posts...");
+    console.log("DIZITO_V2_SCHEDULER_RUNNING...");
 
     const result = await pool.query(`
     SELECT *
