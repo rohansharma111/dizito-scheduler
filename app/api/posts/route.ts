@@ -12,6 +12,11 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json();
 
+  console.log("1. Received:", body.scheduleTime);
+  const converted = new Date(body.scheduleTime);
+  console.log("2. Date object:", converted);
+  console.log("3. ISO:", converted.toISOString());
+
   const result = await pool.query(
     `
     INSERT INTO posts
@@ -49,13 +54,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   const body = await request.json();
-  console.log("1. Received:", body.scheduleTime);
 
-  const converted = new Date(body.scheduleTime);
-
-  console.log("2. Date object:", converted);
-
-  console.log("3. ISO:", converted.toISOString());
   await pool.query("DELETE FROM posts WHERE id = $1", [body.id]);
 
   return Response.json({
