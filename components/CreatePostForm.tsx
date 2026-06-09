@@ -161,7 +161,36 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                     {item.schedule_time.replace("T", " ")}
                   </td>
 
-                  <td className="border p-2">{item.status}</td>
+                  <td className="border p-2">
+                    {item.status}
+
+                    {item.status === "failed" && (
+                      <button
+                        className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded"
+                        onClick={async () => {
+                          await fetch(`/api/posts/retry`, {
+                            method: "POST",
+
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+
+                            body: JSON.stringify({
+                              id: item.id,
+                            }),
+                          });
+
+                          const response = await fetch("/api/posts");
+
+                          const latestPosts = await response.json();
+
+                          setPosts(latestPosts);
+                        }}
+                      >
+                        Retry
+                      </button>
+                    )}
+                  </td>
 
                   <td className="border p-2">
                     <button
