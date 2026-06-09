@@ -190,6 +190,16 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         Retry
                       </button>
                     )}
+                    {item.publish_message && (
+                      <button
+                        className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
+                        onClick={() => {
+                          alert(item.publish_message);
+                        }}
+                      >
+                        View Error
+                      </button>
+                    )}
                   </td>
 
                   <td className="border p-2">
