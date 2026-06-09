@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       body.scheduleTime,
       "scheduled",
       body.imageUrl,
-      1
+      body.socialAccountId
     ],
   );
 

@@ -1,11 +1,26 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Post } from "../types";
 export default function CreatePostForm({ posts, setPosts }: any) {
   const [post, setPost] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [scheduleTime, setScheduleTime] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
+
+  const [socialAccountId, setSocialAccountId] = useState<number>(1);
+
+  useEffect(() => {
+    async function loadAccounts() {
+      const response = await fetch("/api/social-accounts");
+
+      const data = await response.json();
+
+      setAccounts(data);
+    }
+
+    loadAccounts();
+  }, []);
 
   return (
     <div className="bg-white p-6 rounded shadow mt-8">
@@ -37,6 +52,17 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           value={scheduleTime || ""}
           onChange={(e) => setScheduleTime(e.target.value)}
         />
+        <select
+          className="w-full border p-3 rounded"
+          value={socialAccountId}
+          onChange={(e) => setSocialAccountId(Number(e.target.value))}
+        >
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.account_name}
+            </option>
+          ))}
+        </select>
         <input
           type="file"
           accept="image/*"
@@ -86,6 +112,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                 platform,
                 scheduleTime: new Date(scheduleTime).toISOString(),
                 imageUrl,
+                socialAccountId,
               }),
             });
 
