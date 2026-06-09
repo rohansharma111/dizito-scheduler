@@ -49,6 +49,12 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         <button
           className="bg-blue-600 text-white px-6 py-3 rounded"
           onClick={async () => {
+             console.log("scheduleTime state:", scheduleTime);
+
+  console.log(
+    "converted:",
+    new Date(scheduleTime).toISOString()
+  );
             if (!post.trim()) {
               alert("Please enter a post");
               return;
