@@ -5,21 +5,30 @@ import StatsCards from "../components/StatsCards";
 import CreatePostForm from "../components/CreatePostForm";
 import { useState, useEffect } from "react";
 import { Post } from "../types";
+
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
-  useEffect(() => {
-  async function loadPosts() {
-    const response =
-      await fetch("/api/posts");
 
-    const data =
-      await response.json();
+  async function loadPosts() {
+    const response = await fetch("/api/posts");
+
+    const data = await response.json();
 
     setPosts(data);
   }
 
-  loadPosts();
-}, []);
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadPosts();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />

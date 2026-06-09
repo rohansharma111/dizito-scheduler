@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     WHERE id = $1
     `,
     [body.id],
-  );
+  ); 
 
   return Response.json({
     success: true,
