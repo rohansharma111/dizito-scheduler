@@ -35,7 +35,7 @@ const account =
       body: JSON.stringify({
         image_url: post.image_url,
         caption: post.post,
-        access_token: account.accessToken,
+        access_token: account.access_token,
       }),
     },
   );
@@ -51,7 +51,7 @@ const account =
       },
       body: JSON.stringify({
         creation_id: container.id,
-        access_token: account.accessToken,
+        access_token: account.access_token,
       }),
     },
   );
