@@ -12,12 +12,21 @@ export async function publishToInstagram(postId: number) {
 
   const post = result.rows[0];
 
-  const instagramId = process.env.INSTAGRAM_BUSINESS_ID!;
+const accountResult =
+  await pool.query(
+    `
+    SELECT *
+    FROM social_accounts
+    WHERE id = $1
+    `,
+    [post.social_account_id]
+  );
 
-  const accessToken = process.env.META_ACCESS_TOKEN!;
+const account =
+  accountResult.rows[0];
 
   const containerResponse = await fetch(
-    `https://graph.facebook.com/v19.0/${instagramId}/media`,
+    `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media`,
     {
       method: "POST",
       headers: {
@@ -26,7 +35,7 @@ export async function publishToInstagram(postId: number) {
       body: JSON.stringify({
         image_url: post.image_url,
         caption: post.post,
-        access_token: accessToken,
+        access_token: account.accessToken,
       }),
     },
   );
