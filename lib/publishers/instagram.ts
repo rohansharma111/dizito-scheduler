@@ -43,7 +43,7 @@ const account =
   const container = await containerResponse.json();
   console.log("Container:", container);
   const publishResponse = await fetch(
-    `https://graph.facebook.com/v19.0/${instagramId}/media_publish`,
+    `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media_publish`,
     {
       method: "POST",
       headers: {
@@ -51,7 +51,7 @@ const account =
       },
       body: JSON.stringify({
         creation_id: container.id,
-        access_token: accessToken,
+        access_token: account.accessToken,
       }),
     },
   );

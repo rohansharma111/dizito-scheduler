@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       platform,
       schedule_time,
       status,
-      image_url
+      image_url,
+      social_account_id
     )
     VALUES
     (
@@ -28,7 +29,8 @@ export async function POST(request: Request) {
       $2,
       $3,
       $4,
-      $5
+      $5,
+      $6
     )
     RETURNING *
     `,
@@ -38,6 +40,7 @@ export async function POST(request: Request) {
       body.scheduleTime,
       "scheduled",
       body.imageUrl,
+      1
     ],
   );
 
