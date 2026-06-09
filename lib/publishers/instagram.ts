@@ -42,6 +42,11 @@ const account =
 
   const container = await containerResponse.json();
   console.log("Container:", container);
+
+  await new Promise(
+  (resolve) => setTimeout(resolve, 10000)
+);
+
   const publishResponse = await fetch(
     `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media_publish`,
     {
