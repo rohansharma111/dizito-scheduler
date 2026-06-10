@@ -53,7 +53,7 @@ export async function GET(
         error:
           "No Facebook Pages found",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -104,7 +104,7 @@ export async function GET(
       $3,
       $4,
       $5
-    )
+    ) 
     `,
     [
       "instagram",
