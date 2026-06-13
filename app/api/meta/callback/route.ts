@@ -53,7 +53,8 @@ export async function GET(request: Request) {
   }
 
   return Response.json({
-    pages: pagesData.data,
+    tokenData,
+    pagesData,
   });
   /*
   // Get Instagram Business Account
