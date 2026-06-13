@@ -171,6 +171,10 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                       <span className="text-blue-600">Scheduled</span>
                     )}
 
+{item.status === "processing" && (
+                      <span className="text-green-600">Processing</span>
+                    )}
+
                     {item.status === "failed" && (
                       <span className="text-red-600">Failed</span>
                     )}
