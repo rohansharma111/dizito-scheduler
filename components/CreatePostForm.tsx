@@ -162,25 +162,18 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   </td>
 
                   <td className="border p-2">
-                    {item.status}
 
-{item.status === "published" && (
-  <span className="text-green-600">
-    Published
-  </span>
-)}
+                    {item.status === "published" && (
+                      <span className="text-green-600">Published</span>
+                    )}
 
-{item.status === "scheduled" && (
-  <span className="text-blue-600">
-    Scheduled
-  </span>
-)}
+                    {item.status === "scheduled" && (
+                      <span className="text-blue-600">Scheduled</span>
+                    )}
 
-{item.status === "failed" && (
-  <span className="text-red-600">
-    Failed
-  </span>
-)}
+                    {item.status === "failed" && (
+                      <span className="text-red-600">Failed</span>
+                    )}
 
                     {item.status === "failed" && (
                       <button
