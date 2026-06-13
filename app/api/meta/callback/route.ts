@@ -52,63 +52,22 @@ export async function GET(request: Request) {
     );
   }
 
-  return Response.json({
-    tokenData,
-    pagesData,
-  });
-  /*
-  // Get Instagram Business Account
-  const instagramResponse = await fetch(
-    `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`,
-  );
-
-  const instagramData = await instagramResponse.json();
-
-  const instagramId = instagramData?.instagram_business_account?.id;
-
-  if (!instagramId) {
-    return Response.json(
-      {
-        error: "Instagram Business Account not found",
-        page,
-        instagramData,
-      },
-      { status: 400 },
-    );
-  }
-
-  // Save account in database
   await pool.query(
     `
-    INSERT INTO social_accounts
-    (
-      platform,
-      account_name,
-      access_token,
-      page_id,
-      instagram_business_id,
-      user_id
-    )
-    VALUES
-    (
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6
-    ) 
-    `,
-    [
-      "instagram",
-      page.name,
-      accessToken,
-      page.id,
-      instagramId,
-      (session.user as any).id,
-    ],
+  INSERT INTO oauth_page_selections
+  (
+    user_id,
+    access_token,
+    pages
+  )
+  VALUES
+  (
+    $1,
+    $2,
+    $3
+  )
+  `,
+    [(session.user as any).id, accessToken, JSON.stringify(pagesData.data)],
   );
-
-  // Redirect to accounts page
-  return Response.redirect(new URL("/accounts", request.url));*/
+  return Response.redirect(new URL("/accounts/select", request.url));
 }

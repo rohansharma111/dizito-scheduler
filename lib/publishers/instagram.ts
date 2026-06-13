@@ -12,19 +12,20 @@ export async function publishToInstagram(postId: number) {
 
   const post = result.rows[0];
 
-const accountResult =
-  await pool.query(
+  const accountResult = await pool.query(
     `
     SELECT *
     FROM social_accounts
     WHERE id = $1
+    AND user_id = $2
     `,
-    [post.social_account_id]
+    [post.social_account_id, post.user_id],
   );
 
-const account =
-  accountResult.rows[0];
-
+  const account = accountResult.rows[0];
+  if (!account) {
+    throw new Error("Account ownership mismatch");
+  }
   const containerResponse = await fetch(
     `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media`,
     {
@@ -43,9 +44,7 @@ const account =
   const container = await containerResponse.json();
   console.log("Container:", container);
 
-  await new Promise(
-  (resolve) => setTimeout(resolve, 10000)
-);
+  await new Promise((resolve) => setTimeout(resolve, 10000));
 
   const publishResponse = await fetch(
     `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media_publish`,
