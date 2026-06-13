@@ -23,7 +23,19 @@ export default function AccountsPage() {
 
           <div>{account.platform}</div>
 
-          <div>Connected</div>
+          <div>
+            {account.status === "connected" && <div>🟢 Connected</div>}
+
+            {account.status === "expired" && <div>🔴 Expired</div>}
+
+            {account.status === "error" && <div>🟠 Error</div>}
+          </div>
+          <div>
+            Last Checked:
+            {account.last_checked_at
+              ? new Date(account.last_checked_at).toLocaleString()
+              : "Never"}
+          </div>
           <button
             className="mt-2 bg-red-500 text-white px-3 py-1 rounded"
             onClick={async () => {
