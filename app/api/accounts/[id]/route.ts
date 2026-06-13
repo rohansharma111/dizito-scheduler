@@ -4,12 +4,10 @@ import { authOptions } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
-  {
-    params,
-  }: {
-    params: {
+  context: {
+    params: Promise<{
       id: string;
-    };
+    }>;
   }
 ) {
 
@@ -32,6 +30,9 @@ export async function DELETE(
 
   }
 
+  const { id } =
+    await context.params;
+
   await pool.query(
     `
     DELETE
@@ -40,7 +41,7 @@ export async function DELETE(
     AND user_id = $2
     `,
     [
-      params.id,
+      id,
       (session.user as any).id,
     ]
   );
