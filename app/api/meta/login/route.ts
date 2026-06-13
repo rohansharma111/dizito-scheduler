@@ -17,7 +17,6 @@ export async function GET() {
     `?client_id=${clientId}` +
     `&redirect_uri=${encodeURIComponent(redirectUri!)}` +
     `&scope=${scope}`;
-  console.log("REDIRECT URI:", redirectUri);
-  console.log("OAUTH URL:", url);
+  
   return Response.redirect(url);
 }
