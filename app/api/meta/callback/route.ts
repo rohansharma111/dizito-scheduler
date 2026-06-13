@@ -69,5 +69,21 @@ export async function GET(request: Request) {
   `,
     [(session.user as any).id, accessToken, JSON.stringify(pagesData.data)],
   );
-  return Response.redirect(new URL("/accounts/select", request.url));
+  console.log("REQUEST URL:", request.url);
+
+const redirectUrl =
+  new URL(
+    "/accounts/select",
+    request.url
+  );
+
+console.log(
+  "REDIRECT URL:",
+  redirectUrl.toString()
+);
+
+return Response.redirect(
+  redirectUrl
+);
+  //return Response.redirect(new URL("/accounts/select", request.url));
 }
