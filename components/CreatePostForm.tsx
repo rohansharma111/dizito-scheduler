@@ -9,7 +9,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [accounts, setAccounts] = useState<any[]>([]);
 
   const [socialAccountId, setSocialAccountId] = useState<number>(1);
-
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   useEffect(() => {
     async function loadAccounts() {
       const response = await fetch("/api/social-accounts");
@@ -73,7 +74,10 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           }}
         />
         <button
-          className="bg-blue-600 text-white px-6 py-3 rounded"
+          disabled={loading}
+          className={`px-6 py-3 rounded text-white ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
+          }`}
           onClick={async () => {
             if (!post.trim()) {
               alert("Please enter a post");
@@ -84,58 +88,70 @@ export default function CreatePostForm({ posts, setPosts }: any) {
               alert("Please select a date and time");
               return;
             }
-            let imageUrl = "";
 
-            if (image) {
-              const formData = new FormData();
+            setLoading(true);
+            setSuccessMessage("");
 
-              formData.append("file", image);
+            try {
+              let imageUrl = "";
 
-              const uploadResponse = await fetch("/api/upload", {
+              if (image) {
+                const formData = new FormData();
+
+                formData.append("file", image);
+
+                const uploadResponse = await fetch("/api/upload", {
+                  method: "POST",
+                  body: formData,
+                });
+
+                const uploadData = await uploadResponse.json();
+
+                imageUrl = uploadData.url;
+              }
+
+              const response = await fetch("/api/posts", {
                 method: "POST",
-                body: formData,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  post,
+                  platform,
+                  scheduleTime: new Date(scheduleTime).toISOString(),
+                  imageUrl,
+                  socialAccountId,
+                }),
               });
 
-              const uploadData = await uploadResponse.json();
+              await response.json();
 
-              imageUrl = uploadData.url;
+              const postsResponse = await fetch("/api/posts");
+
+              const latestPosts = await postsResponse.json();
+
+              setPosts(latestPosts);
+
+              setPost("");
+              setPlatform("Instagram");
+              setScheduleTime("");
+              setImage(null);
+
+              setSuccessMessage("✅ Post scheduled successfully");
+            } catch (error) {
+              console.error(error);
+
+              alert("Failed to schedule post");
+            } finally {
+              setLoading(false);
             }
-            const response = await fetch("/api/posts", {
-              method: "POST",
-
-              headers: {
-                "Content-Type": "application/json",
-              },
-
-              body: JSON.stringify({
-                post,
-                platform,
-                scheduleTime: new Date(scheduleTime).toISOString(),
-                imageUrl,
-                socialAccountId,
-              }),
-            });
-
-            const data = await response.json();
-
-            const postsResponse = await fetch("/api/posts");
-
-            const latestPosts = await postsResponse.json();
-
-            setPosts(latestPosts);
-            alert("Saved to backend");
-            console.log(data);
-
-            setPost("");
-            setPlatform("Instagram");
-            setScheduleTime("");
           }}
         >
-          Schedule Post
+          {loading ? "Saving..." : "Schedule Post"}
         </button>
-        <button className="bg-green-600 text-white px-6 py-3 rounded">
-          Post Now
-        </button>
+        {successMessage && (
+          <div className="text-green-600 font-medium">{successMessage}</div>
+        )}
         <div className="mt-8">
           <h3 className="text-xl font-bold mb-4">Scheduled Posts</h3>
 
