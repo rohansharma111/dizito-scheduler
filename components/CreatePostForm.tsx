@@ -158,11 +158,14 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   <td className="border p-2">{item.platform}</td>
 
                   <td className="border p-2">
-                    {item.schedule_time.replace("T", " ")}
+                    {new Date(item.schedule_time).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
                   </td>
 
                   <td className="border p-2">
-
                     {item.status === "published" && (
                       <span className="text-green-600">Published</span>
                     )}
@@ -171,7 +174,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                       <span className="text-blue-600">Scheduled</span>
                     )}
 
-{item.status === "processing" && (
+                    {item.status === "processing" && (
                       <span className="text-green-600">Processing</span>
                     )}
 

@@ -52,8 +52,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const page = pagesData.data[0];
-
+  return Response.json({
+    pages: pagesData.data,
+  });
+  /*
   // Get Instagram Business Account
   const instagramResponse = await fetch(
     `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`,
@@ -107,5 +109,5 @@ export async function GET(request: Request) {
   );
 
   // Redirect to accounts page
-  return Response.redirect(new URL("/accounts", request.url));
+  return Response.redirect(new URL("/accounts", request.url));*/
 }
