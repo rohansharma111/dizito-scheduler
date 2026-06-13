@@ -16,9 +16,7 @@ export default function SelectAccountsPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">
-        Select Accounts
-      </h1>
+      <h1 className="text-3xl font-bold mb-6">Select Accounts</h1>
 
       <div className="space-y-3">
         {pages.map((page: any) => (
@@ -31,15 +29,10 @@ export default function SelectAccountsPage() {
               checked={selectedPages.includes(page.id)}
               onChange={(e) => {
                 if (e.target.checked) {
-                  setSelectedPages([
-                    ...selectedPages,
-                    page.id,
-                  ]);
+                  setSelectedPages([...selectedPages, page.id]);
                 } else {
                   setSelectedPages(
-                    selectedPages.filter(
-                      (id) => id !== page.id
-                    )
+                    selectedPages.filter((id) => id !== page.id),
                   );
                 }
               }}
@@ -52,11 +45,28 @@ export default function SelectAccountsPage() {
 
       <button
         className="mt-6 bg-blue-600 text-white px-6 py-3 rounded"
-        onClick={() => {
-          console.log(selectedPages);
-          alert(
-            `${selectedPages.length} page(s) selected`
-          );
+        onClick={async () => {
+          const response = await fetch("/api/connect-pages", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              selectedPages,
+            }),
+          });
+
+          const data = await response.json();
+
+          console.log(data);
+
+          if (response.ok) {
+            window.location.href = "/accounts";
+          } else {
+            alert(data.error || "Failed to connect accounts");
+          }
         }}
       >
         Connect Selected
