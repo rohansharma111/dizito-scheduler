@@ -280,6 +280,18 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         Delete
                       </button>
                     )}
+                    <button
+                      className="bg-green-600 text-white px-3 py-1 rounded ml-2"
+                      onClick={async () => {
+                        await fetch(`/api/posts/${item.id}/duplicate`, {
+                          method: "POST",
+                        });
+
+                        window.location.reload();
+                      }}
+                    >
+                      Duplicate
+                    </button>
                   </td>
                 </tr>
               ))}
