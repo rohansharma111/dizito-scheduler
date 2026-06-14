@@ -1,49 +1,40 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
-export default function EditPostPage({
-  params,
-}: any) {
+export default function EditPostPage() {
+  const params = useParams();
 
-  const [post,
-    setPost] =
-    useState("");
+  const id = params.id as string;
 
-  const [scheduleTime,
-    setScheduleTime] =
-    useState("");
+  const [post, setPost] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!id) return;
 
-    fetch(
-      `/api/posts/${params.id}`
-    )
-      .then((res) =>
-        res.json()
-      )
-      .then((data) => {
+    async function loadPost() {
+      const response = await fetch(
+        `/api/posts/${id}`
+      );
 
-        setPost(
-          data.post
-        );
+      const data =
+        await response.json();
 
-        setScheduleTime(
-          data.schedule_time
-            ?.slice(0, 16)
-        );
+      setPost(data.post);
 
-      });
+      setScheduleTime(
+        data.schedule_time?.slice(0, 16)
+      );
+    }
 
-  }, [params.id]);
+    loadPost();
+  }, [id]);
 
   return (
-
     <div className="p-8 max-w-2xl mx-auto">
-
       <h1 className="text-3xl font-bold mb-6">
         Edit Post
       </h1>
@@ -53,9 +44,7 @@ export default function EditPostPage({
         rows={6}
         value={post}
         onChange={(e) =>
-          setPost(
-            e.target.value
-          )
+          setPost(e.target.value)
         }
       />
 
@@ -71,38 +60,63 @@ export default function EditPostPage({
       />
 
       <button
-        className="bg-blue-600 text-white px-6 py-3 rounded mt-4"
+        disabled={loading}
+        className={`px-6 py-3 rounded text-white mt-4 ${
+          loading
+            ? "bg-gray-400"
+            : "bg-blue-600"
+        }`}
         onClick={async () => {
+          setLoading(true);
 
-          await fetch(
-            `/api/posts/${params.id}`,
-            {
-              method: "PUT",
+          try {
+            const response =
+              await fetch(
+                `/api/posts/${id}`,
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+                  },
+                  body:
+                    JSON.stringify({
+                      post,
+                      schedule_time:
+                        new Date(
+                          scheduleTime
+                        ).toISOString(),
+                    }),
+                }
+              );
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+            const data =
+              await response.json();
 
-              body:
-                JSON.stringify({
-                  post,
-                  schedule_time:
-                    scheduleTime,
-                }),
+            if (!response.ok) {
+              alert(
+                data.error ||
+                  "Failed to update post"
+              );
+              return;
             }
-          );
 
-          window.location.href =
-            "/dashboard";
-
+            window.location.href =
+              "/dashboard";
+          } catch (error) {
+            console.error(error);
+            alert(
+              "Failed to update post"
+            );
+          } finally {
+            setLoading(false);
+          }
         }}
       >
-        Save Changes
+        {loading
+          ? "Saving..."
+          : "Save Changes"}
       </button>
-
     </div>
-
   );
-
 }
