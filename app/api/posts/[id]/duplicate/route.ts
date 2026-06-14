@@ -12,10 +12,7 @@ export async function POST(
     }>;
   },
 ) {
-  const session =
-    await getServerSession(
-      authOptions,
-    );
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return Response.json(
@@ -28,31 +25,23 @@ export async function POST(
     );
   }
 
-  const { id } =
-    await params;
+  const { id } = await params;
 
-  const result =
-    await pool.query(
-      `
+  const result = await pool.query(
+    `
       SELECT *
       FROM posts
       WHERE
         id = $1
         AND user_id = $2
       `,
-      [
-        id,
-        (session.user as any).id,
-      ],
-    );
+    [id, (session.user as any).id],
+  );
 
-  if (
-    result.rows.length === 0
-  ) {
+  if (result.rows.length === 0) {
     return Response.json(
       {
-        error:
-          "Post not found",
+        error: "Post not found",
       },
       {
         status: 404,
@@ -60,47 +49,23 @@ export async function POST(
     );
   }
 
-  const original =
-    result.rows[0];
+  const original = result.rows[0];
 
-  if (
-    original.status ===
-    "processing"
-  ) {
+  if (original.status === "processing") {
     return Response.json(
       {
-        error:
-          "Cannot duplicate processing post",
+        error: "Cannot duplicate processing post",
       },
       {
         status: 400,
       },
     );
   }
-const newStatus =
-  original.status === "draft"
-    ? "draft"
-    : "draft";
-  let newDate = null;
+  const newStatus = "draft";
+  const newDate = null;
 
-if (
-  original.schedule_time
-) {
-
-  newDate =
-    new Date(
-      original.schedule_time
-    );
-
-  newDate.setDate(
-    newDate.getDate() + 1
-  );
-
-}
-
-  const duplicate =
-    await pool.query(
-      `
+  const duplicate = await pool.query(
+    `
       INSERT INTO posts
       (
         post,
@@ -123,16 +88,16 @@ if (
       )
       RETURNING *
       `,
-      [
-        original.post,
-        original.platform,
-        newDate,
-        newStatus,
-        original.image_url,
-        original.social_account_id,
-        original.user_id,
-      ],
-    );
+    [
+      original.post,
+      original.platform,
+      newDate,
+      "draft",
+      original.image_url,
+      original.social_account_id,
+      original.user_id,
+    ],
+  );
 
   return Response.json({
     success: true,

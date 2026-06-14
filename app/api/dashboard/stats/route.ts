@@ -34,7 +34,7 @@ export async function GET() {
         ) AS failed,
 
       COUNT(*) FILTER (
-          WHERE status = 'draft'
+          WHERE status = 'draft' and schedule_time is null
         ) AS draft
 
       FROM posts

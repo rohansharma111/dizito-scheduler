@@ -254,7 +254,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                       <button
                         className="bg-blue-600 text-white px-3 py-1 rounded ml-2"
                         onClick={() => {
-                          window.location.href = `/posts/${item.id}/edit`;
+                          window.location.href = `/posts/${item.id}/edit?schedule=true`;
                         }}
                       >
                         Schedule
