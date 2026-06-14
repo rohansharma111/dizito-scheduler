@@ -10,28 +10,48 @@ export default function EditPostPage() {
 
   const [post, setPost] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
 
     async function loadPost() {
-      const response = await fetch(
-        `/api/posts/${id}`
-      );
+      try {
+        const response = await fetch(
+          `/api/posts/${id}`
+        );
 
-      const data =
-        await response.json();
+        const data =
+          await response.json();
 
-      setPost(data.post);
+        setPost(data.post || "");
+        setStatus(data.status || "");
 
-      setScheduleTime(
-        data.schedule_time?.slice(0, 16)
-      );
+        setScheduleTime(
+          data.schedule_time
+            ? data.schedule_time.slice(0, 16)
+            : ""
+        );
+      } catch (error) {
+        console.error(error);
+        alert("Failed to load post");
+      } finally {
+        setPageLoading(false);
+      }
     }
 
     loadPost();
   }, [id]);
+
+  if (pageLoading) {
+    return (
+      <div className="p-8">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -48,28 +68,43 @@ export default function EditPostPage() {
         }
       />
 
-      <input
-        type="datetime-local"
-        className="w-full border p-3 rounded mt-4"
-        value={scheduleTime}
-        onChange={(e) =>
-          setScheduleTime(
-            e.target.value
-          )
-        }
-      />
+      {status !== "draft" && (
+        <input
+          type="datetime-local"
+          className="w-full border p-3 rounded mt-4"
+          value={scheduleTime}
+          onChange={(e) =>
+            setScheduleTime(
+              e.target.value
+            )
+          }
+        />
+      )}
 
       <button
         disabled={loading}
         className={`px-6 py-3 rounded text-white mt-4 ${
           loading
-            ? "bg-gray-400"
+            ? "bg-gray-400 cursor-not-allowed"
             : "bg-blue-600"
         }`}
         onClick={async () => {
           setLoading(true);
 
           try {
+            const body: any = {
+              post,
+            };
+
+            if (
+              status !== "draft"
+            ) {
+              body.schedule_time =
+                new Date(
+                  scheduleTime
+                ).toISOString();
+            }
+
             const response =
               await fetch(
                 `/api/posts/${id}`,
@@ -80,13 +115,9 @@ export default function EditPostPage() {
                       "application/json",
                   },
                   body:
-                    JSON.stringify({
-                      post,
-                      schedule_time:
-                        new Date(
-                          scheduleTime
-                        ).toISOString(),
-                    }),
+                    JSON.stringify(
+                      body
+                    ),
                 }
               );
 
@@ -105,6 +136,7 @@ export default function EditPostPage() {
               "/dashboard";
           } catch (error) {
             console.error(error);
+
             alert(
               "Failed to update post"
             );

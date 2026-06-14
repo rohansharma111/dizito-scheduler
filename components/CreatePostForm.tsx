@@ -73,9 +73,10 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         body: JSON.stringify({
           post,
           platform,
-          scheduleTime: scheduleTime
-            ? new Date(scheduleTime).toISOString()
-            : null,
+          scheduleTime:
+            status === "scheduled"
+              ? new Date(scheduleTime).toISOString()
+              : null,
           imageUrl,
           socialAccountId,
           status,
@@ -105,7 +106,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         status === "draft" ? "Failed to save draft" : "Failed to schedule post",
       );
     } finally {
-      setLoading(false);
+      setActionLoading(null);
     }
   }
   return (
@@ -160,6 +161,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         />
 
         <button
+          disabled={actionLoading !== null}
           className="bg-gray-600 text-white px-6 py-3 rounded"
           onClick={() => savePost("draft")}
         >
@@ -167,7 +169,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         </button>
 
         <button
-          disabled={loading}
+          disabled={actionLoading !== null}
           className={`px-6 py-3 rounded text-white ${
             loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
           }`}
@@ -188,27 +190,21 @@ export default function CreatePostForm({ posts, setPosts }: any) {
               <tr className="bg-gray-100">
                 <th className="border p-2">Post</th>
                 <th className="border p-2">Platform</th>
-                <th className="border p-2">Time</th>
                 <th className="border p-2">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {posts
-                .filter((item: Post) => item.status === "draft")
+                .filter(
+                  (item: Post) =>
+                    item.status === "draft" && item.schedule_time == null,
+                )
                 .map((item: Post, index: number) => (
                   <tr key={index}>
                     <td className="border p-2">{item.post}</td>
 
                     <td className="border p-2">{item.platform}</td>
-
-                    <td className="border p-2">
-                      {new Date(item.schedule_time).toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </td>
 
                     <td className="border p-2">
                       <button
@@ -258,6 +254,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         Duplicate
                       </button>
                       <button
+                        className="bg-blue-600 text-white px-3 py-1 rounded ml-2"
                         onClick={() => {
                           window.location.href = `/posts/${item.id}/edit`;
                         }}
@@ -272,7 +269,9 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         </div>
 
         <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">Scheduled / Published Posts</h3>
+          <h3 className="text-xl font-bold mb-4">
+            Scheduled / Published Posts
+          </h3>
 
           <table className="w-full border">
             <thead>

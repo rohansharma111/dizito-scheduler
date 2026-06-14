@@ -127,7 +127,8 @@ export async function PUT(
 
   const post =
     postResult.rows[0];
-
+let newStatus =
+  post.status;
   if (
     ![
       "scheduled",
