@@ -10,16 +10,38 @@ import { Post } from "../../types";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
-
+  const [stats, setStats] = useState({
+    scheduled: 0,
+    published: 0,
+    failed: 0,
+    accounts: 0,
+  });
   async function loadPosts() {
     const response = await fetch("/api/posts");
     const data = await response.json();
     setPosts(data);
   }
 
-  useEffect(() => {
-    loadPosts();
-  }, []);
+useEffect(() => {
+
+  loadPosts();
+  loadStats();
+
+}, []);
+
+const loadStats = async () => {
+
+  const response =
+    await fetch(
+      "/api/dashboard/stats"
+    );
+
+  const data =
+    await response.json();
+
+  setStats(data);
+
+};
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,14 +57,11 @@ export default function Home() {
 
       <div className="flex-1 p-6">
         <Navbar />
-        <StatsCards posts={posts} />
+        <StatsCards stats={stats} />
 
         <PostCalendar posts={posts} />
 
-        <CreatePostForm
-          posts={posts}
-          setPosts={setPosts}
-        />
+        <CreatePostForm posts={posts} setPosts={setPosts} />
       </div>
     </div>
   );
