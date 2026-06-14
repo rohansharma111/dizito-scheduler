@@ -80,7 +80,7 @@ export default function EditPostPage() {
               post,
             };
 
-            if (status !== "draft" || scheduleTime) {
+            if (scheduleTime) {
               body.schedule_time = new Date(scheduleTime).toISOString();
             }
             body.scheduleMode = scheduleMode;

@@ -80,6 +80,18 @@ export async function PUT(
 
   const body = await request.json();
 
+  // Validate schedule mode
+  if (body.scheduleMode && !body.schedule_time) {
+    return Response.json(
+      {
+        error: "Please select a schedule time",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
   const postResult = await pool.query(
     `
       SELECT *
@@ -103,10 +115,7 @@ export async function PUT(
   }
 
   const post = postResult.rows[0];
-  let newStatus = post.status;
-  if (post.status === "draft" && body.scheduleMode && body.schedule_time) {
-    newStatus = "scheduled";
-  }
+
   if (!["scheduled", "failed", "draft"].includes(post.status)) {
     return Response.json(
       {
@@ -118,26 +127,27 @@ export async function PUT(
     );
   }
 
+  let newStatus = post.status;
+
+  // Draft -> Scheduled
+  if (post.status === "draft" && body.scheduleMode && body.schedule_time) {
+    newStatus = "scheduled";
+  }
+
   await pool.query(
     `
     UPDATE posts
-SET
-  post = $1,
-  schedule_time = $2,
-  status = $3
-WHERE id = $4
+    SET
+      post = $1,
+      schedule_time = $2,
+      status = $3
+    WHERE id = $4
     `,
-    [body.post, body.schedule_time, newStatus, id],
+    [body.post, body.schedule_time ?? post.schedule_time, newStatus, id],
   );
 
-  if (body.scheduleMode && !body.schedule_time) {
-    return Response.json(
-      {
-        error: "Please select a schedule time",
-      },
-      {
-        status: 400,
-      },
-    );
-  }
+  return Response.json({
+    success: true,
+    status: newStatus,
+  });
 }
