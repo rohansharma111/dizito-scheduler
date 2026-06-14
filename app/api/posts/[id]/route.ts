@@ -1,29 +1,36 @@
 import { pool } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { NextRequest } from "next/server";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{
+      id: string;
+    }>;
+  },
 ) {
-
   const session =
     await getServerSession(
-      authOptions
+      authOptions,
     );
 
   if (!session?.user) {
-
     return Response.json(
       {
         error: "Unauthorized",
       },
       {
         status: 401,
-      }
+      },
     );
-
   }
+
+  const { id } =
+    await params;
 
   const result =
     await pool.query(
@@ -35,59 +42,62 @@ export async function GET(
         AND user_id = $2
       `,
       [
-        params.id,
+        id,
         (session.user as any).id,
-      ]
+      ],
     );
 
   if (
     result.rows.length === 0
   ) {
-
     return Response.json(
       {
         error: "Post not found",
       },
       {
         status: 404,
-      }
+      },
     );
-
   }
 
   return Response.json(
-    result.rows[0]
+    result.rows[0],
   );
-
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{
+      id: string;
+    }>;
+  },
 ) {
-
   const session =
     await getServerSession(
-      authOptions
+      authOptions,
     );
 
   if (!session?.user) {
-
     return Response.json(
       {
         error: "Unauthorized",
       },
       {
         status: 401,
-      }
+      },
     );
-
   }
+
+  const { id } =
+    await params;
 
   const body =
     await request.json();
 
-  const existingPost =
+  const postResult =
     await pool.query(
       `
       SELECT *
@@ -97,48 +107,42 @@ export async function PUT(
         AND user_id = $2
       `,
       [
-        params.id,
+        id,
         (session.user as any).id,
-      ]
+      ],
     );
 
   if (
-    existingPost.rows.length === 0
+    postResult.rows.length === 0
   ) {
-
     return Response.json(
       {
         error: "Post not found",
       },
       {
         status: 404,
-      }
+      },
     );
-
   }
 
   const post =
-    existingPost.rows[0];
+    postResult.rows[0];
 
   if (
     ![
       "scheduled",
       "failed",
-    ].includes(
-      post.status
-    )
+    ].includes(post.status)
   ) {
-
     return Response.json(
       {
         error:
-          "Only scheduled or failed posts can be edited",
+          "Cannot edit this post",
       },
       {
         status: 400,
-      }
+      },
     );
-
   }
 
   await pool.query(
@@ -152,12 +156,11 @@ export async function PUT(
     [
       body.post,
       body.schedule_time,
-      params.id,
-    ]
+      id,
+    ],
   );
 
   return Response.json({
     success: true,
   });
-
 }
