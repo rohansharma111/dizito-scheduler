@@ -3,23 +3,29 @@
 import { useEffect, useState } from "react";
 
 export default function AccountsPage() {
+
   const [accounts, setAccounts] =
     useState<any[]>([]);
 
   useEffect(() => {
+
     fetch("/api/accounts")
       .then((res) => res.json())
       .then((data) => {
         setAccounts(data);
       });
+
   }, []);
 
   const connectInstagram = () => {
+
     window.location.href =
-      `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(process.env.META_REDIRECT_URI!)}&scope=pages_show_list,pages_read_engagement,business_management,instagram_basic,instagram_content_publish`;
+      "/api/meta/login";
+
   };
 
   return (
+
     <div className="p-8">
 
       <div className="flex justify-between items-center mb-6">
@@ -38,25 +44,36 @@ export default function AccountsPage() {
       </div>
 
       {accounts.length === 0 && (
+
         <div className="border rounded p-6 text-center">
+
           No accounts connected yet.
+
         </div>
+
       )}
 
       {accounts.map((account) => (
+
         <div
           key={account.id}
           className="border p-4 rounded mb-4"
         >
+
           <div className="font-bold text-lg">
+
             {account.account_name}
+
           </div>
 
           <div className="text-gray-600">
+
             {account.platform}
+
           </div>
 
           <div className="mt-2">
+
             {account.status ===
               "connected" && (
               <div>
@@ -77,20 +94,25 @@ export default function AccountsPage() {
                 🟠 Error
               </div>
             )}
+
           </div>
 
           <div className="text-sm mt-2">
+
             Last Checked:{" "}
+
             {account.last_checked_at
               ? new Date(
                   account.last_checked_at
                 ).toLocaleString()
               : "Never"}
+
           </div>
 
           <button
             className="mt-3 bg-red-500 text-white px-3 py-1 rounded"
             onClick={async () => {
+
               await fetch(
                 `/api/accounts/${account.id}`,
                 {
@@ -104,12 +126,18 @@ export default function AccountsPage() {
                     a.id !== account.id
                 )
               );
+
             }}
           >
             Disconnect
           </button>
+
         </div>
+
       ))}
+
     </div>
+
   );
+
 }
