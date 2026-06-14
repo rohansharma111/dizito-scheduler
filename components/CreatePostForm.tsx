@@ -11,6 +11,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [socialAccountId, setSocialAccountId] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  
   useEffect(() => {
     async function loadAccounts() {
       const response = await fetch("/api/social-accounts");
