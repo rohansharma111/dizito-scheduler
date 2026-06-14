@@ -16,7 +16,7 @@ export default function AccountsPage() {
 
   const connectInstagram = () => {
     window.location.href =
-      `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_META_APP_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_META_REDIRECT_URI!)}&scope=pages_show_list,pages_read_engagement,business_management,instagram_basic,instagram_content_publish`;
+      `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(process.env.META_REDIRECT_URI!)}&scope=pages_show_list,pages_read_engagement,business_management,instagram_basic,instagram_content_publish`;
   };
 
   return (
