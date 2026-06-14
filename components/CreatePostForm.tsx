@@ -8,7 +8,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [image, setImage] = useState<File | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
 
-  const [socialAccountId, setSocialAccountId] = useState<number>(1);
+  const [socialAccountId, setSocialAccountId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -19,6 +19,9 @@ export default function CreatePostForm({ posts, setPosts }: any) {
       const data = await response.json();
 
       setAccounts(data);
+      if (data.length > 0) {
+        setSocialAccountId(data[0].id);
+      }
     }
 
     loadAccounts();
@@ -56,7 +59,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         />
         <select
           className="w-full border p-3 rounded"
-          value={socialAccountId}
+          value={socialAccountId ?? ""}
           onChange={(e) => setSocialAccountId(Number(e.target.value))}
         >
           {accounts.map((account) => (
@@ -89,7 +92,10 @@ export default function CreatePostForm({ posts, setPosts }: any) {
               alert("Please select a date and time");
               return;
             }
-
+            if (!socialAccountId) {
+              alert("Please select an account");
+              return;
+            }
             setLoading(true);
             setSuccessMessage("");
 
@@ -238,38 +244,42 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   </td>
 
                   <td className="border p-2">
-                    <button
-                      className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
-                      onClick={() => {
-                        window.location.href = `/posts/${item.id}/edit`;
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                      onClick={async () => {
-                        await fetch("/api/posts", {
-                          method: "DELETE",
+                    {["scheduled", "failed"].includes(item.status) && (
+                      <button
+                        className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
+                        onClick={() => {
+                          window.location.href = `/posts/${item.id}/edit`;
+                        }}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {item.status !== "processing" && (
+                      <button
+                        className="bg-red-500 text-white px-3 py-1 rounded"
+                        onClick={async () => {
+                          await fetch("/api/posts", {
+                            method: "DELETE",
 
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
 
-                          body: JSON.stringify({
-                            id: item.id,
-                          }),
-                        });
+                            body: JSON.stringify({
+                              id: item.id,
+                            }),
+                          });
 
-                        const response = await fetch("/api/posts");
+                          const response = await fetch("/api/posts");
 
-                        const latestPosts = await response.json();
+                          const latestPosts = await response.json();
 
-                        setPosts(latestPosts);
-                      }}
-                    >
-                      Delete
-                    </button>
+                          setPosts(latestPosts);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
