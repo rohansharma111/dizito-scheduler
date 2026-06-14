@@ -26,7 +26,86 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
     loadAccounts();
   }, []);
+  async function savePost(status: "scheduled" | "draft") {
+    if (!post.trim()) {
+      alert("Please enter a post");
+      return;
+    }
 
+    if (status === "scheduled" && !scheduleTime) {
+      alert("Please select a date and time");
+      return;
+    }
+
+    if (!socialAccountId) {
+      alert("Please select an account");
+      return;
+    }
+
+    setLoading(true);
+    setSuccessMessage("");
+
+    try {
+      let imageUrl = "";
+
+      if (image) {
+        const formData = new FormData();
+
+        formData.append("file", image);
+
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        imageUrl = uploadData.url;
+      }
+
+      await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          post,
+          platform,
+          scheduleTime: scheduleTime
+            ? new Date(scheduleTime).toISOString()
+            : null,
+          imageUrl,
+          socialAccountId,
+          status,
+        }),
+      });
+
+      const postsResponse = await fetch("/api/posts");
+
+      const latestPosts = await postsResponse.json();
+
+      setPosts(latestPosts);
+
+      setPost("");
+      setPlatform("Instagram");
+      setScheduleTime("");
+      setImage(null);
+
+      setSuccessMessage(
+        status === "draft"
+          ? "✅ Draft saved successfully"
+          : "✅ Post scheduled successfully",
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        status === "draft" ? "Failed to save draft" : "Failed to schedule post",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <div className="bg-white p-6 rounded shadow mt-8">
       <h2 className="text-2xl font-bold mb-4">Create Post</h2>
@@ -77,88 +156,28 @@ export default function CreatePostForm({ posts, setPosts }: any) {
             }
           }}
         />
+
+        <button
+          className="bg-gray-600 text-white px-6 py-3 rounded"
+          onClick={() => savePost("draft")}
+        >
+          Save Draft
+        </button>
+
         <button
           disabled={loading}
           className={`px-6 py-3 rounded text-white ${
             loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
           }`}
-          onClick={async () => {
-            if (!post.trim()) {
-              alert("Please enter a post");
-              return;
-            }
-
-            if (!scheduleTime) {
-              alert("Please select a date and time");
-              return;
-            }
-            if (!socialAccountId) {
-              alert("Please select an account");
-              return;
-            }
-            setLoading(true);
-            setSuccessMessage("");
-
-            try {
-              let imageUrl = "";
-
-              if (image) {
-                const formData = new FormData();
-
-                formData.append("file", image);
-
-                const uploadResponse = await fetch("/api/upload", {
-                  method: "POST",
-                  body: formData,
-                });
-
-                const uploadData = await uploadResponse.json();
-
-                imageUrl = uploadData.url;
-              }
-
-              const response = await fetch("/api/posts", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  post,
-                  platform,
-                  scheduleTime: new Date(scheduleTime).toISOString(),
-                  imageUrl,
-                  socialAccountId,
-                }),
-              });
-
-              await response.json();
-
-              const postsResponse = await fetch("/api/posts");
-
-              const latestPosts = await postsResponse.json();
-
-              setPosts(latestPosts);
-
-              setPost("");
-              setPlatform("Instagram");
-              setScheduleTime("");
-              setImage(null);
-
-              setSuccessMessage("✅ Post scheduled successfully");
-            } catch (error) {
-              console.error(error);
-
-              alert("Failed to schedule post");
-            } finally {
-              setLoading(false);
-            }
-          }}
+          onClick={() => savePost("scheduled")}
         >
           {loading ? "Saving..." : "Schedule Post"}
         </button>
+
         {successMessage && (
           <div className="text-green-600 font-medium">{successMessage}</div>
         )}
+
         <div className="mt-8">
           <h3 className="text-xl font-bold mb-4">Scheduled Posts</h3>
 
