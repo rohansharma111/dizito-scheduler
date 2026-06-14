@@ -7,7 +7,9 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [scheduleTime, setScheduleTime] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
-
+  const [actionLoading, setActionLoading] = useState<
+    "draft" | "scheduled" | null
+  >(null);
   const [socialAccountId, setSocialAccountId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -44,7 +46,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
     setLoading(true);
     setSuccessMessage("");
-
+    setActionLoading(status);
     try {
       let imageUrl = "";
 
@@ -161,7 +163,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           className="bg-gray-600 text-white px-6 py-3 rounded"
           onClick={() => savePost("draft")}
         >
-          Save Draft
+          {actionLoading === "draft" ? "Saving Draft..." : "Save Draft"}
         </button>
 
         <button
@@ -171,7 +173,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           }`}
           onClick={() => savePost("scheduled")}
         >
-          {loading ? "Saving..." : "Schedule Post"}
+          {actionLoading === "scheduled" ? "Scheduling..." : "Schedule Post"}
         </button>
 
         {successMessage && (
@@ -215,7 +217,9 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                     {item.status === "scheduled" && (
                       <span className="text-blue-600">Scheduled</span>
                     )}
-
+                    {item.status === "draft" && (
+                      <span className="text-gray-500">Draft</span>
+                    )}
                     {item.status === "processing" && (
                       <span className="text-green-600">Processing</span>
                     )}
@@ -263,7 +267,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   </td>
 
                   <td className="border p-2">
-                    {["scheduled", "failed"].includes(item.status) && (
+                    {["scheduled", "failed", "draft"].includes(item.status) && (
                       <button
                         className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
                         onClick={() => {

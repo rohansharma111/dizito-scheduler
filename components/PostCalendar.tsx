@@ -95,6 +95,13 @@ export default function PostCalendar({
                   )}
 
                   {post.status ===
+                    "draft" && (
+                    <span className="text-gray-500 font-semibold">
+                      Draft
+                    </span>
+                  )}
+
+                  {post.status ===
                     "scheduled" && (
                     <span className="text-blue-600 font-semibold">
                       Scheduled
