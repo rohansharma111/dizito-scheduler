@@ -3,10 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function GET() {
-  const session =
-    await getServerSession(
-      authOptions
-    );
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return Response.json(
@@ -15,16 +12,14 @@ export async function GET() {
       },
       {
         status: 401,
-      }
+      },
     );
   }
 
-  const userId =
-    (session.user as any).id;
+  const userId = (session.user as any).id;
 
-  const postsResult =
-    await pool.query(
-      `
+  const postsResult = await pool.query(
+    `
       SELECT
         COUNT(*) FILTER (
           WHERE status = 'scheduled'
@@ -36,43 +31,35 @@ export async function GET() {
 
         COUNT(*) FILTER (
           WHERE status = 'failed'
-        ) AS failed
+        ) AS failed,
 
+      COUNT(*) FILTER (
+          WHERE status = 'draft'
+        ) AS draft
       FROM posts
       WHERE user_id = $1
       `,
-      [userId]
-    );
+    [userId],
+  );
 
-  const accountsResult =
-    await pool.query(
-      `
+  const accountsResult = await pool.query(
+    `
       SELECT COUNT(*) AS accounts
       FROM social_accounts
       WHERE user_id = $1
       `,
-      [userId]
-    );
+    [userId],
+  );
 
   return Response.json({
-    scheduled: Number(
-      postsResult.rows[0]
-        .scheduled
-    ),
+    scheduled: Number(postsResult.rows[0].scheduled),
 
-    published: Number(
-      postsResult.rows[0]
-        .published
-    ),
+    published: Number(postsResult.rows[0].published),
 
-    failed: Number(
-      postsResult.rows[0]
-        .failed
-    ),
+    failed: Number(postsResult.rows[0].failed),
 
-    accounts: Number(
-      accountsResult.rows[0]
-        .accounts
-    ),
+    accounts: Number(accountsResult.rows[0].accounts),
+
+    drafts: Number(accountsResult.rows[0].draft),
   });
 }
