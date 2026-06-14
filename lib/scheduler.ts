@@ -14,65 +14,98 @@ export function startScheduler() {
 
   cron.schedule("* * * * *", async () => {
     try {
-      console.log("DIZITO_V2_SCHEDULER_RUNNING...");
+      console.log("=================================");
+      console.log("DIZITO_V2_SCHEDULER_RUNNING");
+      console.log("Time:", new Date().toISOString());
 
       // Recover stuck posts
-      await pool.query(`
+      const recoveryResult = await pool.query(`
         UPDATE posts
-        SET status = 'scheduled'
+        SET
+          status = 'scheduled',
+          processing_started_at = NULL
         WHERE
           status = 'processing'
           AND processing_started_at <
               NOW() - INTERVAL '15 minutes'
+        RETURNING id
       `);
 
-      // Atomically claim posts
-      const result = await pool.query(`
-          UPDATE posts
-          SET
-            status = 'processing',
-            processing_started_at = NOW()
-          WHERE id IN
-          (
-            SELECT id
-            FROM posts
-            WHERE
-              status = 'scheduled'
-              AND schedule_time <= NOW()
-            LIMIT 20
-          )
-          RETURNING *
-        `);
+      if (recoveryResult.rows.length > 0) {
+        console.log(
+          "Recovered Posts:",
+          recoveryResult.rows.map((p) => p.id),
+        );
+      }
 
-      console.log("Claimed Posts:", result.rows.length);
+      // Claim posts atomically
+      const result = await pool.query(`
+        UPDATE posts
+        SET
+          status = 'processing',
+          processing_started_at = NOW()
+        WHERE id IN (
+          SELECT id
+          FROM posts
+          WHERE
+            status = 'scheduled'
+            AND schedule_time <= NOW()
+          LIMIT 20
+        )
+        RETURNING *
+      `);
+
+      console.log(
+        "Claimed Posts:",
+        result.rows.length,
+      );
+
+      if (result.rows.length === 0) {
+        console.log("No posts to process");
+        return;
+      }
 
       console.log(
         "Post IDs:",
         result.rows.map((p) => p.id),
       );
 
-      console.log("Server Time:", new Date().toISOString());
-
       for (const post of result.rows) {
         try {
-          switch (post.platform?.toLowerCase()) {
+          console.log(
+            `Processing Post ${post.id} (${post.platform})`,
+          );
+
+          switch (
+            post.platform?.toLowerCase()
+          ) {
             case "instagram":
-              await publishToInstagram(post.id);
+              await publishToInstagram(
+                post.id,
+              );
               break;
 
             case "linkedin":
-              await publishToLinkedIn(post.id, post.access_token, post.text);
+              await publishToLinkedIn(
+                post.id,
+                post.access_token,
+                post.text,
+              );
               break;
 
             default:
-              throw new Error(`Unsupported platform: ${post.platform}`);
+              throw new Error(
+                `Unsupported platform: ${post.platform}`,
+              );
           }
 
           await pool.query(
             `
             UPDATE posts
             SET
-              status = 'published'
+              status = 'published',
+              published_at = NOW(),
+              processing_started_at = NULL
             WHERE id = $1
             `,
             [post.id],
@@ -93,22 +126,35 @@ export function startScheduler() {
               $3
             )
             `,
-            [post.id, "success", "Published successfully"],
+            [
+              post.id,
+              "success",
+              "Published successfully",
+            ],
           );
 
-          console.log(`Post ${post.id} published`);
+          console.log(
+            `Post ${post.id} published successfully`,
+          );
         } catch (error) {
-          console.error(`Post ${post.id} failed`, error);
+          console.error(
+            `Post ${post.id} failed`,
+            error,
+          );
 
           await pool.query(
             `
             UPDATE posts
             SET
               status = 'failed',
-              publish_message = $1
+              publish_message = $1,
+              processing_started_at = NULL
             WHERE id = $2
             `,
-            [String(error), post.id],
+            [
+              String(error),
+              post.id,
+            ],
           );
 
           await pool.query(
@@ -126,12 +172,23 @@ export function startScheduler() {
               $3
             )
             `,
-            [post.id, "failed", String(error)],
+            [
+              post.id,
+              "failed",
+              String(error),
+            ],
           );
         }
       }
+
+      console.log(
+        "Scheduler cycle completed",
+      );
     } catch (error) {
-      console.error("Scheduler Error:", error);
+      console.error(
+        "Scheduler Error:",
+        error,
+      );
     }
   });
 }

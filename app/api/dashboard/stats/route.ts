@@ -3,14 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function GET() {
-
   const session =
     await getServerSession(
       authOptions
     );
 
   if (!session?.user) {
-
     return Response.json(
       {
         error: "Unauthorized",
@@ -19,52 +17,37 @@ export async function GET() {
         status: 401,
       }
     );
-
   }
 
   const userId =
     (session.user as any).id;
 
-  const scheduled =
+  const postsResult =
     await pool.query(
       `
-      SELECT COUNT(*)
+      SELECT
+        COUNT(*) FILTER (
+          WHERE status = 'scheduled'
+        ) AS scheduled,
+
+        COUNT(*) FILTER (
+          WHERE status = 'published'
+        ) AS published,
+
+        COUNT(*) FILTER (
+          WHERE status = 'failed'
+        ) AS failed
+
       FROM posts
-      WHERE
-        user_id = $1
-        AND status = 'scheduled'
+      WHERE user_id = $1
       `,
       [userId]
     );
 
-  const published =
+  const accountsResult =
     await pool.query(
       `
-      SELECT COUNT(*)
-      FROM posts
-      WHERE
-        user_id = $1
-        AND status = 'published'
-      `,
-      [userId]
-    );
-
-  const failed =
-    await pool.query(
-      `
-      SELECT COUNT(*)
-      FROM posts
-      WHERE
-        user_id = $1
-        AND status = 'failed'
-      `,
-      [userId]
-    );
-
-  const accounts =
-    await pool.query(
-      `
-      SELECT COUNT(*)
+      SELECT COUNT(*) AS accounts
       FROM social_accounts
       WHERE user_id = $1
       `,
@@ -72,22 +55,24 @@ export async function GET() {
     );
 
   return Response.json({
-    scheduled:
-      Number(
-        scheduled.rows[0].count
-      ),
-    published:
-      Number(
-        published.rows[0].count
-      ),
-    failed:
-      Number(
-        failed.rows[0].count
-      ),
-    accounts:
-      Number(
-        accounts.rows[0].count
-      ),
-  });
+    scheduled: Number(
+      postsResult.rows[0]
+        .scheduled
+    ),
 
+    published: Number(
+      postsResult.rows[0]
+        .published
+    ),
+
+    failed: Number(
+      postsResult.rows[0]
+        .failed
+    ),
+
+    accounts: Number(
+      accountsResult.rows[0]
+        .accounts
+    ),
+  });
 }

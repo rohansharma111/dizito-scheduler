@@ -11,7 +11,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [socialAccountId, setSocialAccountId] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  
+
   useEffect(() => {
     async function loadAccounts() {
       const response = await fetch("/api/social-accounts");
@@ -238,6 +238,14 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   </td>
 
                   <td className="border p-2">
+                    <button
+                      className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
+                      onClick={() => {
+                        window.location.href = `/posts/${item.id}/edit`;
+                      }}
+                    >
+                      Edit
+                    </button>
                     <button
                       className="bg-red-500 text-white px-3 py-1 rounded"
                       onClick={async () => {

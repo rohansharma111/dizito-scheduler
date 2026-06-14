@@ -52,6 +52,35 @@ export async function POST(
     );
   }
 
+  // SECURITY CHECK
+  const account =
+    await pool.query(
+      `
+      SELECT id
+      FROM social_accounts
+      WHERE
+        id = $1
+        AND user_id = $2
+      `,
+      [
+        body.socialAccountId,
+        (session.user as any).id,
+      ]
+    );
+
+  if (
+    account.rows.length === 0
+  ) {
+    return Response.json(
+      {
+        error: "Invalid account",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
   const result =
     await pool.query(
       `
