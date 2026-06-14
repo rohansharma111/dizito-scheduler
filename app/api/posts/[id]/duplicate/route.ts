@@ -7,9 +7,9 @@ export async function POST(
   {
     params,
   }: {
-    params: {
+    params: Promise<{
       id: string;
-    };
+    }>;
   },
 ) {
   const session =
@@ -28,6 +28,9 @@ export async function POST(
     );
   }
 
+  const { id } =
+    await params;
+
   const result =
     await pool.query(
       `
@@ -38,7 +41,7 @@ export async function POST(
         AND user_id = $2
       `,
       [
-        params.id,
+        id,
         (session.user as any).id,
       ],
     );
@@ -48,7 +51,8 @@ export async function POST(
   ) {
     return Response.json(
       {
-        error: "Post not found",
+        error:
+          "Post not found",
       },
       {
         status: 404,
