@@ -4,9 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
-const searchParams = useSearchParams();
-
-const scheduleMode = searchParams.get("schedule") === "true";
 export default function EditPostPage() {
   const params = useParams();
 
@@ -17,6 +14,8 @@ export default function EditPostPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const scheduleMode = searchParams.get("schedule") === "true";
 
   useEffect(() => {
     if (!id) return;
