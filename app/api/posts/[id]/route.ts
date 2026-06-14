@@ -13,10 +13,7 @@ export async function GET(
     }>;
   },
 ) {
-  const session =
-    await getServerSession(
-      authOptions,
-    );
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return Response.json(
@@ -29,27 +26,20 @@ export async function GET(
     );
   }
 
-  const { id } =
-    await params;
+  const { id } = await params;
 
-  const result =
-    await pool.query(
-      `
+  const result = await pool.query(
+    `
       SELECT *
       FROM posts
       WHERE
         id = $1
         AND user_id = $2
       `,
-      [
-        id,
-        (session.user as any).id,
-      ],
-    );
+    [id, (session.user as any).id],
+  );
 
-  if (
-    result.rows.length === 0
-  ) {
+  if (result.rows.length === 0) {
     return Response.json(
       {
         error: "Post not found",
@@ -60,9 +50,7 @@ export async function GET(
     );
   }
 
-  return Response.json(
-    result.rows[0],
-  );
+  return Response.json(result.rows[0]);
 }
 
 export async function PUT(
@@ -75,10 +63,7 @@ export async function PUT(
     }>;
   },
 ) {
-  const session =
-    await getServerSession(
-      authOptions,
-    );
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return Response.json(
@@ -91,30 +76,22 @@ export async function PUT(
     );
   }
 
-  const { id } =
-    await params;
+  const { id } = await params;
 
-  const body =
-    await request.json();
+  const body = await request.json();
 
-  const postResult =
-    await pool.query(
-      `
+  const postResult = await pool.query(
+    `
       SELECT *
       FROM posts
       WHERE
         id = $1
         AND user_id = $2
       `,
-      [
-        id,
-        (session.user as any).id,
-      ],
-    );
+    [id, (session.user as any).id],
+  );
 
-  if (
-    postResult.rows.length === 0
-  ) {
+  if (postResult.rows.length === 0) {
     return Response.json(
       {
         error: "Post not found",
@@ -125,20 +102,15 @@ export async function PUT(
     );
   }
 
-  const post =
-    postResult.rows[0];
-let newStatus =
-  post.status;
-  if (
-    ![
-      "scheduled",
-      "failed","draft"
-    ].includes(post.status)
-  ) {
+  const post = postResult.rows[0];
+  let newStatus = post.status;
+  if (post.status === "draft" && body.scheduleMode && body.schedule_time) {
+    newStatus = "scheduled";
+  }
+  if (!["scheduled", "failed", "draft"].includes(post.status)) {
     return Response.json(
       {
-        error:
-          "Cannot edit this post",
+        error: "Cannot edit this post",
       },
       {
         status: 400,
@@ -149,19 +121,23 @@ let newStatus =
   await pool.query(
     `
     UPDATE posts
-    SET
-      post = $1,
-      schedule_time = $2
-    WHERE id = $3
+SET
+  post = $1,
+  schedule_time = $2,
+  status = $3
+WHERE id = $4
     `,
-    [
-      body.post,
-      body.schedule_time,
-      id,
-    ],
+    [body.post, body.schedule_time, newStatus, id],
   );
 
-  return Response.json({
-    success: true,
-  });
+  if (body.scheduleMode && !body.schedule_time) {
+    return Response.json(
+      {
+        error: "Please select a schedule time",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
 }

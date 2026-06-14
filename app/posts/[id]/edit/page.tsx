@@ -80,10 +80,10 @@ export default function EditPostPage() {
               post,
             };
 
-            if (status !== "draft") {
+            if (status !== "draft" || scheduleTime) {
               body.schedule_time = new Date(scheduleTime).toISOString();
             }
-
+            body.scheduleMode = scheduleMode;
             const response = await fetch(`/api/posts/${id}`, {
               method: "PUT",
               headers: {
