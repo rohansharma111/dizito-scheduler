@@ -61,6 +61,6 @@ export async function GET() {
 
     accounts: Number(accountsResult.rows[0].accounts),
 
-    draft: Number(accountsResult.rows[0].draft),
+    draft: Number(postsResult.rows[0].draft),
   });
 }

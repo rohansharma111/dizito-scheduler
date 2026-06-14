@@ -77,15 +77,26 @@ export async function POST(
       },
     );
   }
+const newStatus =
+  original.status === "draft"
+    ? "draft"
+    : "draft";
+  let newDate = null;
 
-  const newDate =
+if (
+  original.schedule_time
+) {
+
+  newDate =
     new Date(
-      original.schedule_time,
+      original.schedule_time
     );
 
   newDate.setDate(
-    newDate.getDate() + 1,
+    newDate.getDate() + 1
   );
+
+}
 
   const duplicate =
     await pool.query(
@@ -116,7 +127,7 @@ export async function POST(
         original.post,
         original.platform,
         newDate,
-        original.status,
+        newStatus,
         original.image_url,
         original.social_account_id,
         original.user_id,

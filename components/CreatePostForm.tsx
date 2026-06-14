@@ -170,9 +170,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
         <button
           disabled={actionLoading !== null}
-          className={`px-6 py-3 rounded text-white ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
-          }`}
+          className="px-6 py-3 rounded text-white bg-blue-600"
           onClick={() => savePost("scheduled")}
         >
           {actionLoading === "scheduled" ? "Scheduling..." : "Schedule Post"}
@@ -397,6 +395,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                           Delete
                         </button>
                       )}
+                      {item.status !== "published" && (
                       <button
                         className="bg-green-600 text-white px-3 py-1 rounded ml-2"
                         onClick={async () => {
@@ -409,6 +408,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                       >
                         Duplicate
                       </button>
+                      )}
                     </td>
                   </tr>
                 ))}
