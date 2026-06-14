@@ -100,7 +100,7 @@ export async function POST(
     const existingAccount =
       await pool.query(
         `
-        SELECT *
+        SELECT id
         FROM social_accounts
         WHERE page_id = $1
         AND user_id = $2
