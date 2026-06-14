@@ -36,6 +36,7 @@ export async function GET() {
       COUNT(*) FILTER (
           WHERE status = 'draft'
         ) AS draft
+
       FROM posts
       WHERE user_id = $1
       `,
@@ -60,6 +61,6 @@ export async function GET() {
 
     accounts: Number(accountsResult.rows[0].accounts),
 
-    drafts: Number(accountsResult.rows[0].draft),
+    draft: Number(accountsResult.rows[0].draft),
   });
 }

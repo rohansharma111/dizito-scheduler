@@ -105,7 +105,7 @@ export async function POST(
         $1,
         $2,
         $3,
-        $4,
+        $4, 
         $5,
         $6,
         $7
@@ -116,7 +116,7 @@ export async function POST(
         original.post,
         original.platform,
         newDate,
-        "scheduled",
+        original.status,
         original.image_url,
         original.social_account_id,
         original.user_id,

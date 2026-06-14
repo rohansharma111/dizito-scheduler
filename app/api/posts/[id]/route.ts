@@ -131,7 +131,7 @@ export async function PUT(
   if (
     ![
       "scheduled",
-      "failed",
+      "failed","draft"
     ].includes(post.status)
   ) {
     return Response.json(

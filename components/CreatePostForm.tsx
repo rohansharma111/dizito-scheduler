@@ -181,7 +181,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         )}
 
         <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">Scheduled Posts</h3>
+          <h3 className="text-xl font-bold mb-4">Draft Posts</h3>
 
           <table className="w-full border">
             <thead>
@@ -189,85 +189,28 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                 <th className="border p-2">Post</th>
                 <th className="border p-2">Platform</th>
                 <th className="border p-2">Time</th>
-                <th className="border p-2">Status</th>
                 <th className="border p-2">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {posts.map((item: Post, index: number) => (
-                <tr key={index}>
-                  <td className="border p-2">{item.post}</td>
+              {posts
+                .filter((item: Post) => item.status === "draft")
+                .map((item: Post, index: number) => (
+                  <tr key={index}>
+                    <td className="border p-2">{item.post}</td>
 
-                  <td className="border p-2">{item.platform}</td>
+                    <td className="border p-2">{item.platform}</td>
 
-                  <td className="border p-2">
-                    {new Date(item.schedule_time).toLocaleString("en-IN", {
-                      timeZone: "Asia/Kolkata",
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </td>
+                    <td className="border p-2">
+                      {new Date(item.schedule_time).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </td>
 
-                  <td className="border p-2">
-                    {item.status === "published" && (
-                      <span className="text-green-600">Published</span>
-                    )}
-
-                    {item.status === "scheduled" && (
-                      <span className="text-blue-600">Scheduled</span>
-                    )}
-                    {item.status === "draft" && (
-                      <span className="text-gray-500">Draft</span>
-                    )}
-                    {item.status === "processing" && (
-                      <span className="text-green-600">Processing</span>
-                    )}
-
-                    {item.status === "failed" && (
-                      <span className="text-red-600">Failed</span>
-                    )}
-
-                    {item.status === "failed" && (
-                      <button
-                        className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded"
-                        onClick={async () => {
-                          await fetch(`/api/posts/retry`, {
-                            method: "POST",
-
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-
-                            body: JSON.stringify({
-                              id: item.id,
-                            }),
-                          });
-
-                          const response = await fetch("/api/posts");
-
-                          const latestPosts = await response.json();
-
-                          setPosts(latestPosts);
-                        }}
-                      >
-                        Retry
-                      </button>
-                    )}
-                    {item.publish_message && (
-                      <button
-                        className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
-                        onClick={() => {
-                          alert(item.publish_message);
-                        }}
-                      >
-                        View Error
-                      </button>
-                    )}
-                  </td>
-
-                  <td className="border p-2">
-                    {["scheduled", "failed", "draft"].includes(item.status) && (
+                    <td className="border p-2">
                       <button
                         className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
                         onClick={() => {
@@ -276,8 +219,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                       >
                         Edit
                       </button>
-                    )}
-                    {item.status !== "processing" && (
+
                       <button
                         className="bg-red-500 text-white px-3 py-1 rounded"
                         onClick={async () => {
@@ -302,22 +244,175 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                       >
                         Delete
                       </button>
-                    )}
-                    <button
-                      className="bg-green-600 text-white px-3 py-1 rounded ml-2"
-                      onClick={async () => {
-                        await fetch(`/api/posts/${item.id}/duplicate`, {
-                          method: "POST",
-                        });
 
-                        window.location.reload();
-                      }}
-                    >
-                      Duplicate
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <button
+                        className="bg-green-600 text-white px-3 py-1 rounded ml-2"
+                        onClick={async () => {
+                          await fetch(`/api/posts/${item.id}/duplicate`, {
+                            method: "POST",
+                          });
+
+                          window.location.reload();
+                        }}
+                      >
+                        Duplicate
+                      </button>
+                      <button
+                        onClick={() => {
+                          window.location.href = `/posts/${item.id}/edit`;
+                        }}
+                      >
+                        Schedule
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4">Scheduled / Published Posts</h3>
+
+          <table className="w-full border">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border p-2">Post</th>
+                <th className="border p-2">Platform</th>
+                <th className="border p-2">Time</th>
+                <th className="border p-2">Status</th>
+                <th className="border p-2">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {posts
+                .filter((item: Post) => item.status !== "draft")
+                .map((item: Post, index: number) => (
+                  <tr key={index}>
+                    <td className="border p-2">{item.post}</td>
+
+                    <td className="border p-2">{item.platform}</td>
+
+                    <td className="border p-2">
+                      {new Date(item.schedule_time).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </td>
+
+                    <td className="border p-2">
+                      {item.status === "published" && (
+                        <span className="text-green-600">Published</span>
+                      )}
+
+                      {item.status === "scheduled" && (
+                        <span className="text-blue-600">Scheduled</span>
+                      )}
+                      {item.status === "draft" && (
+                        <span className="text-gray-500">Draft</span>
+                      )}
+                      {item.status === "processing" && (
+                        <span className="text-green-600">Processing</span>
+                      )}
+
+                      {item.status === "failed" && (
+                        <span className="text-red-600">Failed</span>
+                      )}
+
+                      {item.status === "failed" && (
+                        <button
+                          className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded"
+                          onClick={async () => {
+                            await fetch(`/api/posts/retry`, {
+                              method: "POST",
+
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+
+                              body: JSON.stringify({
+                                id: item.id,
+                              }),
+                            });
+
+                            const response = await fetch("/api/posts");
+
+                            const latestPosts = await response.json();
+
+                            setPosts(latestPosts);
+                          }}
+                        >
+                          Retry
+                        </button>
+                      )}
+                      {item.publish_message && (
+                        <button
+                          className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
+                          onClick={() => {
+                            alert(item.publish_message);
+                          }}
+                        >
+                          View Error
+                        </button>
+                      )}
+                    </td>
+
+                    <td className="border p-2">
+                      {["scheduled", "failed", "draft"].includes(
+                        item.status,
+                      ) && (
+                        <button
+                          className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
+                          onClick={() => {
+                            window.location.href = `/posts/${item.id}/edit`;
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {item.status !== "processing" && (
+                        <button
+                          className="bg-red-500 text-white px-3 py-1 rounded"
+                          onClick={async () => {
+                            await fetch("/api/posts", {
+                              method: "DELETE",
+
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+
+                              body: JSON.stringify({
+                                id: item.id,
+                              }),
+                            });
+
+                            const response = await fetch("/api/posts");
+
+                            const latestPosts = await response.json();
+
+                            setPosts(latestPosts);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                      <button
+                        className="bg-green-600 text-white px-3 py-1 rounded ml-2"
+                        onClick={async () => {
+                          await fetch(`/api/posts/${item.id}/duplicate`, {
+                            method: "POST",
+                          });
+
+                          window.location.reload();
+                        }}
+                      >
+                        Duplicate
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
