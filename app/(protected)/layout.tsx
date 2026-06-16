@@ -15,7 +15,7 @@ export default async function ProtectedLayout({
   );
 
   if (!session) {
-    redirect("/");
+    redirect("/login");
   }
 
   return (
