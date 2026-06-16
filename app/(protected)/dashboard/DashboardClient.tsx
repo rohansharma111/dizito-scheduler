@@ -1,12 +1,12 @@
 "use client";
 
-import Sidebar from "../../components/Sidebar";
-import Navbar from "../../components/Navbar";
-import StatsCards from "../../components/StatsCards";
-import CreatePostForm from "../../components/CreatePostForm";
-import PostCalendar from "../../components/PostCalendar";
+import Sidebar from "../../../components/Sidebar";
+import Navbar from "../../../components/Navbar";
+import StatsCards from "../../../components/StatsCards";
+import CreatePostForm from "../../../components/CreatePostForm";
+import PostCalendar from "../../../components/PostCalendar";
 import { useState, useEffect } from "react";
-import { Post } from "../../types";
+import { Post } from "../../../types";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);

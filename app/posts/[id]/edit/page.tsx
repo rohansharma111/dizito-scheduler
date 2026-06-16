@@ -17,6 +17,12 @@ export default function EditPostPage() {
   const searchParams = useSearchParams();
   const scheduleMode = searchParams.get("schedule") === "true";
 
+  const minScheduleTime = (() => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  })();
+
   useEffect(() => {
     if (!id) return;
 
@@ -62,6 +68,7 @@ export default function EditPostPage() {
         <input
           type="datetime-local"
           className="w-full border p-3 rounded mt-4"
+          min={minScheduleTime}
           value={scheduleTime}
           onChange={(e) => setScheduleTime(e.target.value)}
         />

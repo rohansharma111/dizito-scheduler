@@ -10,6 +10,11 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [actionLoading, setActionLoading] = useState<
     "draft" | "scheduled" | null
   >(null);
+  const minScheduleTime = (() => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  })();
   const [socialAccountId, setSocialAccountId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -136,6 +141,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         <input
           type="datetime-local"
           className="w-full border p-3 rounded"
+          min={minScheduleTime}
           value={scheduleTime || ""}
           onChange={(e) => setScheduleTime(e.target.value)}
         />

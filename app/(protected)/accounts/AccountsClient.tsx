@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 export default function AccountsPage() {
+  
   const [accounts, setAccounts] = useState<any[]>([]);
 
   useEffect(() => {

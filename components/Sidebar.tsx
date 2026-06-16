@@ -1,17 +1,47 @@
+"use client";
+
+import Link from "next/link";
+
 export default function Sidebar() {
   return (
-    <div className="w-64 bg-gray-900 text-white p-6">
-      <h2 className="text-2xl font-bold mb-8">
-        Dizito Social
-      </h2>
+    <div className="w-64 min-h-screen border-r p-4">
 
-      <ul className="space-y-4">
-        <li>Dashboard</li>
-        <li>Create Post</li>
-        <li>Scheduled Posts</li>
-        <li>Analytics</li>
-        <li>Settings</li>
-      </ul>
+      <h1 className="text-2xl font-bold mb-8">
+        Dizito
+      </h1>
+
+      <div className="space-y-3">
+
+        <Link href="/dashboard">
+          Dashboard
+        </Link>
+
+        <br />
+
+        <Link href="/posts">
+          Posts
+        </Link>
+
+        <br />
+
+        <Link href="/drafts">
+          Drafts
+        </Link>
+
+        <br />
+
+        <Link href="/calendar">
+          Calendar
+        </Link>
+
+        <br />
+
+        <Link href="/accounts">
+          Accounts
+        </Link>
+
+      </div>
+
     </div>
   );
 }
