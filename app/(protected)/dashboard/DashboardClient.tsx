@@ -1,6 +1,5 @@
 "use client";
 
-import Sidebar from "../../../components/Sidebar";
 import Navbar from "../../../components/Navbar";
 import StatsCards from "../../../components/StatsCards";
 import CreatePostForm from "../../../components/CreatePostForm";
@@ -53,7 +52,6 @@ const loadStats = async () => {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
 
       <div className="flex-1 p-6">
         <Navbar />
