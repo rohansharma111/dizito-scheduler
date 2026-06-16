@@ -1,20 +1,30 @@
+import { ReactNode } from "react";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+
+import { authOptions } from "@/lib/auth";
 import Sidebar from "@/components/Sidebar";
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const session = await getServerSession(
+    authOptions
+  );
+
+  if (!session) {
+    redirect("/");
+  }
 
   return (
-    <div className="flex">
-
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 overflow-auto">
         {children}
       </main>
-
     </div>
   );
 }
