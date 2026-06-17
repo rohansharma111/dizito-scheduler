@@ -1,45 +1,70 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-export default function Sidebar() {
-  const pathname = usePathname();
-
-  const linkClass = (
-    href: string
-  ) =>
-    `block px-3 py-2 rounded ${
-      pathname === href
-        ? "bg-blue-600 text-white"
-        : "hover:bg-gray-100"
-    }`;
-
+import LogoutButton from "./LogoutButton";
+export default function Sidebar({
+  user,
+}: {
+  user: {
+    name?: string | null;
+    email?: string | null;
+  };
+}) {
   return (
-    <aside className="w-64 border-r bg-white p-4">
-      <h1 className="text-2xl font-bold mb-8">
-        Dizito
-      </h1>
+    <aside className="w-64 border-r bg-white p-4 flex flex-col">
+      <div>
+        <h1 className="text-2xl font-bold mb-8">Dizito</h1>
 
-      <nav className="space-y-2">
-        <Link
-          href="/dashboard"
-          className={linkClass(
-            "/dashboard"
-          )}
-        >
-          Dashboard
-        </Link>
+        <nav className="space-y-2">
+          <Link
+            className="block px-3 py-2 rounded hover:bg-gray-100"
+            href="/dashboard"
+          >
+            Dashboard
+          </Link>
 
-        <Link
-          href="/accounts"
-          className={linkClass(
-            "/accounts"
-          )}
-        >
-          Accounts
-        </Link>
-      </nav>
+          <Link
+            className="block px-3 py-2 rounded hover:bg-gray-100"
+            href="/posts"
+          >
+            Posts
+          </Link>
+
+          <Link
+            className="block px-3 py-2 rounded hover:bg-gray-100"
+            href="/drafts"
+          >
+            Drafts
+          </Link>
+
+          <Link
+            className="block px-3 py-2 rounded hover:bg-gray-100"
+            href="/calendar"
+          >
+            Calendar
+          </Link>
+
+          <Link
+            className="block px-3 py-2 rounded hover:bg-gray-100"
+            href="/accounts"
+          >
+            Accounts
+          </Link>
+
+          <Link
+            className="block px-3 py-2 rounded hover:bg-gray-100"
+            href="/settings"
+          >
+            Settings
+          </Link>
+        </nav>
+      </div>
+
+      <div className="mt-auto border-t pt-4">
+        <div className="font-medium">{user.name}</div>
+
+        <div className="text-sm text-gray-500">{user.email}</div>
+
+        <LogoutButton />
+      </div>
     </aside>
   );
 }
