@@ -54,7 +54,7 @@ export default function Sidebar({
             href="/settings"
           >
             Settings
-          </Link>
+          </Link> 
         </nav>
       </div>
 
