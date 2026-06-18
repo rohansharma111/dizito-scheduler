@@ -61,7 +61,7 @@ export async function publishToFacebook(
           url: post.image_url,
           caption: post.post,
           access_token:
-            account.access_token,
+            account.page_access_token,
         }),
       }
     );

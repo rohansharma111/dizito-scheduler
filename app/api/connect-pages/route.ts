@@ -150,7 +150,8 @@ export async function POST(
         access_token,
         page_id,
         instagram_business_id,
-        user_id
+        user_id,
+        page_access_token
       )
       VALUES
       (
@@ -159,7 +160,8 @@ export async function POST(
         $3,
         $4,
         $5,
-        $6
+        $6,
+        $7,
       )
       `,
       [
@@ -170,6 +172,7 @@ export async function POST(
         instagramId,
         (session.user as any)
           .id,
+        page.access_token,
       ]
     );
 
