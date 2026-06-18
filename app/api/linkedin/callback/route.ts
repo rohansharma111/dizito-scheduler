@@ -181,8 +181,7 @@ export async function GET(
 
   return Response.redirect(
     new URL(
-      "/accounts",
-      request.url
+      "https://dizito-scheduler-production.up.railway.app/accounts"
     )
   );
 }
