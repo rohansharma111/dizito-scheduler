@@ -1,88 +1,163 @@
 import { pool } from "@/lib/db";
 
-export async function publishToLinkedIn(postId: number) {
-  const postResult = await pool.query(
-    `
+export async function publishToLinkedIn(
+  postId: number
+) {
+  const postResult =
+    await pool.query(
+      `
       SELECT *
       FROM posts
       WHERE id = $1
       `,
-    [postId],
-  );
+      [postId]
+    );
 
-  const post = postResult.rows[0];
+  const post =
+    postResult.rows[0];
 
   if (!post) {
-    throw new Error("Post not found");
+    throw new Error(
+      "Post not found"
+    );
   }
 
-  const accountResult = await pool.query(
-    `
+  const accountResult =
+    await pool.query(
+      `
       SELECT *
       FROM social_accounts
       WHERE id = $1
       `,
-    [post.social_account_id],
-  );
+      [post.social_account_id]
+    );
 
-  const account = accountResult.rows[0];
+  const account =
+    accountResult.rows[0];
 
   if (!account) {
-    throw new Error("LinkedIn account not found");
+    throw new Error(
+      "LinkedIn account not found"
+    );
   }
 
-  const accessToken = account.access_token;
+  const accessToken =
+    account.access_token;
 
-  const memberId = account.linkedin_member_id;
+  const memberId =
+    account.linkedin_member_id;
 
   if (!accessToken) {
-    throw new Error("LinkedIn access token missing");
+    throw new Error(
+      "LinkedIn access token missing"
+    );
   }
 
   if (!memberId) {
-    throw new Error("LinkedIn member id missing");
+    throw new Error(
+      "LinkedIn member id missing"
+    );
   }
 
-  const response = await fetch("https://api.linkedin.com/rest/posts", {
-    method: "POST",
+  console.log(
+    "Publishing LinkedIn Post:",
+    {
+      postId,
+      memberId,
+    }
+  );
 
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      "LinkedIn-Version": "202506",
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
+  const response =
+    await fetch(
+      "https://api.linkedin.com/rest/posts",
+      {
+        method: "POST",
 
-    body: JSON.stringify({
-      author: `urn:li:person:${memberId}`,
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          "Content-Type":
+            "application/json",
+          "LinkedIn-Version":
+            "202506",
+          "X-Restli-Protocol-Version":
+            "2.0.0",
+        },
 
-      commentary: post.post,
+        body: JSON.stringify({
+          author:
+            `urn:li:person:${memberId}`,
 
-      visibility: "PUBLIC",
+          commentary:
+            post.post,
 
-      distribution: {
-        feedDistribution: "MAIN_FEED",
-        targetEntities: [],
-        thirdPartyDistributionChannels: [],
-      },
+          visibility:
+            "PUBLIC",
 
-      lifecycleState: "PUBLISHED",
+          distribution: {
+            feedDistribution:
+              "MAIN_FEED",
 
-      isReshareDisabledByAuthor: false,
-    }),
-  });
+            targetEntities:
+              [],
 
-  const text = await response.text();
+            thirdPartyDistributionChannels:
+              [],
+          },
 
-  console.log("LINKEDIN RAW RESPONSE:", text);
+          lifecycleState:
+            "PUBLISHED",
 
-  const data = text ? JSON.parse(text) : {};
+          isReshareDisabledByAuthor:
+            false,
+        }),
+      }
+    );
 
-  console.log("LINKEDIN RESPONSE:", JSON.stringify(data, null, 2));
+  const rawResponse =
+    await response.text();
+
+  console.log(
+    "LINKEDIN STATUS:",
+    response.status
+  );
+
+  console.log(
+    "LINKEDIN RAW RESPONSE:",
+    rawResponse
+  );
+
+  let data: any = {};
+
+  try {
+    data =
+      rawResponse
+        ? JSON.parse(
+            rawResponse
+          )
+        : {};
+  } catch {
+    data = {
+      raw:
+        rawResponse,
+    };
+  }
 
   if (!response.ok) {
-    throw new Error(JSON.stringify(data));
+    throw new Error(
+      JSON.stringify(data)
+    );
   }
 
-  return data;
+  console.log(
+    "LINKEDIN SUCCESS:",
+    data
+  );
+
+  return {
+    success: true,
+    status:
+      response.status,
+    data,
+  };
 }

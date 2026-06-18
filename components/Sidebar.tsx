@@ -37,13 +37,6 @@ export default function Sidebar({
 
           <Link
             className="block px-3 py-2 rounded hover:bg-gray-100"
-            href="/calendar"
-          >
-            Calendar
-          </Link>
-
-          <Link
-            className="block px-3 py-2 rounded hover:bg-gray-100"
             href="/accounts"
           >
             Accounts
@@ -54,7 +47,7 @@ export default function Sidebar({
             href="/settings"
           >
             Settings
-          </Link> 
+          </Link>
         </nav>
       </div>
 
