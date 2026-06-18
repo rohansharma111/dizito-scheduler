@@ -81,7 +81,7 @@ export function startScheduler() {
               break;
 
             case "linkedin":
-              await publishToLinkedIn(post.id, post.access_token, post.text);
+              await publishToLinkedIn(post.id);
               break;
 
             default:

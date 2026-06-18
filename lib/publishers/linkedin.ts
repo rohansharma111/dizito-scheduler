@@ -1,48 +1,127 @@
+import { pool } from "@/lib/db";
+
 export async function publishToLinkedIn(
-  accessToken: string,
-  memberId: string,
-  text: string
+  postId: number
 ) {
+  const postResult =
+    await pool.query(
+      `
+      SELECT *
+      FROM posts
+      WHERE id = $1
+      `,
+      [postId]
+    );
 
-  const response = await fetch(
-    "https://api.linkedin.com/rest/posts",
-    {
-      method: "POST",
+  const post =
+    postResult.rows[0];
 
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-Restli-Protocol-Version": "2.0.0",
-          "LinkedIn-Version": "202506",
+  if (!post) {
+    throw new Error(
+      "Post not found"
+    );
+  }
 
-      },
+  const accountResult =
+    await pool.query(
+      `
+      SELECT *
+      FROM social_accounts
+      WHERE id = $1
+      `,
+      [
+        post.social_account_id
+      ]
+    );
 
-      body: JSON.stringify({
-        author: `urn:li:person:${memberId}`,
+  const account =
+    accountResult.rows[0];
 
-        lifecycleState: "PUBLISHED",
+  if (!account) {
+    throw new Error(
+      "LinkedIn account not found"
+    );
+  }
 
-        specificContent: {
-          "com.linkedin.ugc.ShareContent": {
-            shareCommentary: {
-              text,
-            },
+  const accessToken =
+    account.access_token;
 
-            shareMediaCategory: "NONE",
-          },
+  const memberId =
+    account.linkedin_member_id;
+
+  if (!accessToken) {
+    throw new Error(
+      "LinkedIn access token missing"
+    );
+  }
+
+  if (!memberId) {
+    throw new Error(
+      "LinkedIn member id missing"
+    );
+  }
+
+  const response =
+    await fetch(
+      "https://api.linkedin.com/rest/posts",
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          "Content-Type":
+            "application/json",
+          "LinkedIn-Version":
+            "202506",
+          "X-Restli-Protocol-Version":
+            "2.0.0",
         },
 
-        visibility: {
-          "com.linkedin.ugc.MemberNetworkVisibility":
+        body: JSON.stringify({
+          author:
+            `urn:li:person:${memberId}`,
+
+          commentary:
+            post.post,
+
+          visibility:
             "PUBLIC",
-        },
-      }),
-    }
+
+          distribution: {
+            feedDistribution:
+              "MAIN_FEED",
+            targetEntities: [],
+            thirdPartyDistributionChannels:
+              [],
+          },
+
+          lifecycleState:
+            "PUBLISHED",
+
+          isReshareDisabledByAuthor:
+            false,
+        }),
+      }
+    );
+
+  const data =
+    await response.json();
+
+  console.log(
+    "LINKEDIN RESPONSE:",
+    JSON.stringify(
+      data,
+      null,
+      2
+    )
   );
 
-  const data = await response.json();
-
-  console.log(data);
+  if (!response.ok) {
+    throw new Error(
+      JSON.stringify(data)
+    );
+  }
 
   return data;
 }
