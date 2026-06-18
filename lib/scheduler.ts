@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { pool } from "./db";
 import { publishToLinkedIn } from "./publishers/linkedin";
 import { publishToInstagram } from "./publishers/instagram";
-
+import { publishToFacebook } from "./publishers/facebook";
 let started = false;
 
 export function startScheduler() {
@@ -55,10 +55,7 @@ export function startScheduler() {
         RETURNING *
       `);
 
-      console.log(
-        "Claimed Posts:",
-        result.rows.length,
-      );
+      console.log("Claimed Posts:", result.rows.length);
 
       if (result.rows.length === 0) {
         console.log("No posts to process");
@@ -72,31 +69,23 @@ export function startScheduler() {
 
       for (const post of result.rows) {
         try {
-          console.log(
-            `Processing Post ${post.id} (${post.platform})`,
-          );
+          console.log(`Processing Post ${post.id} (${post.platform})`);
 
-          switch (
-            post.platform?.toLowerCase()
-          ) {
+          switch (post.platform?.toLowerCase()) {
             case "instagram":
-              await publishToInstagram(
-                post.id,
-              );
+              await publishToInstagram(post.id);
+              break;
+
+            case "facebook":
+              await publishToFacebook(post.id);
               break;
 
             case "linkedin":
-              await publishToLinkedIn(
-                post.id,
-                post.access_token,
-                post.text,
-              );
+              await publishToLinkedIn(post.id, post.access_token, post.text);
               break;
 
             default:
-              throw new Error(
-                `Unsupported platform: ${post.platform}`,
-              );
+              throw new Error(`Unsupported platform: ${post.platform}`);
           }
 
           await pool.query(
@@ -126,21 +115,12 @@ export function startScheduler() {
               $3
             )
             `,
-            [
-              post.id,
-              "success",
-              "Published successfully",
-            ],
+            [post.id, "success", "Published successfully"],
           );
 
-          console.log(
-            `Post ${post.id} published successfully`,
-          );
+          console.log(`Post ${post.id} published successfully`);
         } catch (error) {
-          console.error(
-            `Post ${post.id} failed`,
-            error,
-          );
+          console.error(`Post ${post.id} failed`, error);
 
           await pool.query(
             `
@@ -151,10 +131,7 @@ export function startScheduler() {
               processing_started_at = NULL
             WHERE id = $2
             `,
-            [
-              String(error),
-              post.id,
-            ],
+            [String(error), post.id],
           );
 
           await pool.query(
@@ -172,23 +149,14 @@ export function startScheduler() {
               $3
             )
             `,
-            [
-              post.id,
-              "failed",
-              String(error),
-            ],
+            [post.id, "failed", String(error)],
           );
         }
       }
 
-      console.log(
-        "Scheduler cycle completed",
-      );
+      console.log("Scheduler cycle completed");
     } catch (error) {
-      console.error(
-        "Scheduler Error:",
-        error,
-      );
+      console.error("Scheduler Error:", error);
     }
   });
 }
