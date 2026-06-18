@@ -29,9 +29,7 @@ export async function publishToLinkedIn(
       FROM social_accounts
       WHERE id = $1
       `,
-      [
-        post.social_account_id
-      ]
+      [post.social_account_id]
     );
 
   const account =
@@ -60,6 +58,14 @@ export async function publishToLinkedIn(
       "LinkedIn member id missing"
     );
   }
+
+  console.log(
+    "Publishing LinkedIn Post:",
+    {
+      postId,
+      memberId,
+    }
+  );
 
   const response =
     await fetch(
@@ -91,7 +97,10 @@ export async function publishToLinkedIn(
           distribution: {
             feedDistribution:
               "MAIN_FEED",
-            targetEntities: [],
+
+            targetEntities:
+              [],
+
             thirdPartyDistributionChannels:
               [],
           },
@@ -105,17 +114,34 @@ export async function publishToLinkedIn(
       }
     );
 
-  const data =
-    await response.json();
+  const rawResponse =
+    await response.text();
 
   console.log(
-    "LINKEDIN RESPONSE:",
-    JSON.stringify(
-      data,
-      null,
-      2
-    )
+    "LINKEDIN STATUS:",
+    response.status
   );
+
+  console.log(
+    "LINKEDIN RAW RESPONSE:",
+    rawResponse
+  );
+
+  let data: any = {};
+
+  try {
+    data =
+      rawResponse
+        ? JSON.parse(
+            rawResponse
+          )
+        : {};
+  } catch {
+    data = {
+      raw:
+        rawResponse,
+    };
+  }
 
   if (!response.ok) {
     throw new Error(
@@ -123,5 +149,15 @@ export async function publishToLinkedIn(
     );
   }
 
-  return data;
+  console.log(
+    "LINKEDIN SUCCESS:",
+    data
+  );
+
+  return {
+    success: true,
+    status:
+      response.status,
+    data,
+  };
 }

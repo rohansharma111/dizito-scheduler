@@ -7,3 +7,11 @@ export type Post = {
   status: string;
   publish_message: string;
 };
+
+type PostTarget = {
+  id: number;
+  post_id: number;
+  social_account_id: number;
+  platform: string;
+  status: string;
+};

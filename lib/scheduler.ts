@@ -1,11 +1,10 @@
 import cron from "node-cron";
 import { pool } from "./db";
-import { publishToLinkedIn } from "./publishers/linkedin";
-import { publishToInstagram } from "./publishers/instagram";
-import { publishToFacebook } from "./publishers/facebook";
+import { publishers } from "./publishers";
 let started = false;
 
 export function startScheduler() {
+  
   if (started) return;
 
   started = true;
@@ -71,22 +70,14 @@ export function startScheduler() {
         try {
           console.log(`Processing Post ${post.id} (${post.platform})`);
 
-          switch (post.platform?.toLowerCase()) {
-            case "instagram":
-              await publishToInstagram(post.id);
-              break;
+          const publisher =
+            publishers[post.platform.toLowerCase() as keyof typeof publishers];
 
-            case "facebook":
-              await publishToFacebook(post.id);
-              break;
-
-            case "linkedin":
-              await publishToLinkedIn(post.id);
-              break;
-
-            default:
-              throw new Error(`Unsupported platform: ${post.platform}`);
+          if (!publisher) {
+            throw new Error(`Unsupported platform`);
           }
+
+          await publisher(post.id);
 
           await pool.query(
             `
