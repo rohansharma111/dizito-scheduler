@@ -213,15 +213,24 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   <tr key={index}>
                     <td className="border p-2">{item.post}</td>
 
-                    <td>
-                      <div className="space-y-1">
+                    <td className="border p-2">
+                      <div className="flex items-center gap-3">
                         {item.targets?.map((target) => (
-                          <div key={target.id}>
-                            {target.platform}{" "}
-                            {target.status === "published" && "✅"}
-                            {target.status === "scheduled" && "⏳"}
-                            {target.status === "processing" && "🔄"}
-                            {target.status === "failed" && "❌"}
+                          <div
+                            key={target.id}
+                            title={`${target.platform} - ${target.status}`}
+                          >
+                            {target.platform === "instagram" && (
+                              <FaInstagram className="text-pink-500 text-xl" />
+                            )}
+
+                            {target.platform === "facebook" && (
+                              <FaFacebook className="text-blue-600 text-xl" />
+                            )}
+
+                            {target.platform === "linkedin" && (
+                              <FaLinkedin className="text-blue-700 text-xl" />
+                            )}
                           </div>
                         ))}
                       </div>
@@ -315,27 +324,41 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                     <td className="border p-2">
                       <div className="flex items-center gap-3">
                         {item.targets?.map((target) => (
-                          <div className="relative">
-                            <FaInstagram className="text-pink-500 text-xl" />
+                          <div
+                            key={target.id}
+                            className="relative"
+                            title={`${target.platform} - ${target.status}`}
+                          >
+                            {target.platform === "instagram" && (
+                              <FaInstagram className="text-pink-500 text-xl" />
+                            )}
+
+                            {target.platform === "facebook" && (
+                              <FaFacebook className="text-blue-600 text-xl" />
+                            )}
+
+                            {target.platform === "linkedin" && (
+                              <FaLinkedin className="text-blue-700 text-xl" />
+                            )}
 
                             <span
                               className={`
-      absolute
-      -bottom-1
-      -right-1
-      w-2.5
-      h-2.5
-      rounded-full
-      ${
-        target.status === "published"
-          ? "bg-green-500"
-          : target.status === "failed"
-            ? "bg-red-500"
-            : target.status === "processing"
-              ? "bg-yellow-500"
-              : "bg-blue-500"
-      }
-    `}
+            absolute
+            -bottom-1
+            -right-1
+            w-2.5
+            h-2.5
+            rounded-full
+            ${
+              target.status === "published"
+                ? "bg-green-500"
+                : target.status === "failed"
+                  ? "bg-red-500"
+                  : target.status === "processing"
+                    ? "bg-yellow-500"
+                    : "bg-blue-500"
+            }
+          `}
                             />
                           </div>
                         ))}
