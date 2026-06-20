@@ -19,11 +19,37 @@ export async function GET() {
 
   const result = await pool.query(
     `
-    SELECT *
-    FROM posts
-    WHERE user_id = $1
-    ORDER BY id DESC
-    `,
+  SELECT
+    p.*,
+
+    COALESCE(
+      json_agg(
+        json_build_object(
+          'id', pt.id,
+          'post_id', pt.post_id,
+          'social_account_id', pt.social_account_id,
+          'platform', pt.platform,
+          'status', pt.status,
+          'publish_message', pt.publish_message,
+          'published_at', pt.published_at
+        )
+      ) FILTER (
+        WHERE pt.id IS NOT NULL
+      ),
+      '[]'
+    ) AS targets
+
+  FROM posts p
+
+  LEFT JOIN post_targets pt
+    ON pt.post_id = p.id
+
+  WHERE p.user_id = $1
+
+  GROUP BY p.id
+
+  ORDER BY p.id DESC
+  `,
     [(session.user as any).id],
   );
 

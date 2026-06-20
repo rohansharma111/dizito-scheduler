@@ -197,7 +197,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
             <thead>
               <tr className="bg-gray-100">
                 <th className="border p-2">Post</th>
-                <th className="border p-2">Platform</th>
+                <th className="border p-2">Targets</th>
                 <th className="border p-2">Actions</th>
               </tr>
             </thead>
@@ -212,7 +212,19 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   <tr key={index}>
                     <td className="border p-2">{item.post}</td>
 
-                    <td className="border p-2">{item.platform}</td>
+                    <td>
+                      <div className="space-y-1">
+                        {item.targets?.map((target) => (
+                          <div key={target.id}>
+                            {target.platform}{" "}
+                            {target.status === "published" && "✅"}
+                            {target.status === "scheduled" && "⏳"}
+                            {target.status === "processing" && "🔄"}
+                            {target.status === "failed" && "❌"}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
 
                     <td className="border p-2">
                       <button
