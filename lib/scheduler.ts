@@ -164,7 +164,7 @@ export function startScheduler() {
             `
             UPDATE post_targets
             SET
-              status = 'failed',
+              status = 'failed',  
               publish_message = $1,
               processing_started_at = NULL
             WHERE id = $2

@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session =
+    await getServerSession(
+      authOptions
+    );
 
   if (!session?.user) {
     return Response.json(
@@ -12,14 +15,20 @@ export async function GET() {
       },
       {
         status: 401,
-      },
+      }
     );
   }
 
-  const userId = (session.user as any).id;
+  const userId =
+    (session.user as any).id;
 
-  const postsResult = await pool.query(
-    `
+  /*
+    POSTS
+  */
+
+  const postsResult =
+    await pool.query(
+      `
       SELECT
         COUNT(*) FILTER (
           WHERE status = 'scheduled'
@@ -33,34 +42,142 @@ export async function GET() {
           WHERE status = 'failed'
         ) AS failed,
 
-      COUNT(*) FILTER (
-          WHERE status = 'draft' and schedule_time is null
+        COUNT(*) FILTER (
+          WHERE
+            status = 'draft'
+            AND schedule_time IS NULL
         ) AS draft
 
       FROM posts
       WHERE user_id = $1
       `,
-    [userId],
-  );
+      [userId]
+    );
 
-  const accountsResult = await pool.query(
-    `
+  /*
+    TARGETS
+  */
+
+  const targetsResult =
+    await pool.query(
+      `
+      SELECT
+
+        COUNT(*) FILTER (
+          WHERE pt.status = 'scheduled'
+        ) AS scheduled_targets,
+
+        COUNT(*) FILTER (
+          WHERE pt.status = 'published'
+        ) AS published_targets,
+
+        COUNT(*) FILTER (
+          WHERE pt.status = 'failed'
+        ) AS failed_targets
+
+      FROM post_targets pt
+
+      INNER JOIN posts p
+        ON p.id = pt.post_id
+
+      WHERE p.user_id = $1
+      `,
+      [userId]
+    );
+
+  /*
+    ACCOUNTS
+  */
+
+  const accountsResult =
+    await pool.query(
+      `
       SELECT COUNT(*) AS accounts
       FROM social_accounts
       WHERE user_id = $1
       `,
-    [userId],
-  );
+      [userId]
+    );
+
+  /*
+    SUCCESS RATE
+  */
+
+  const publishedTargets =
+    Number(
+      targetsResult.rows[0]
+        .published_targets
+    );
+
+  const failedTargets =
+    Number(
+      targetsResult.rows[0]
+        .failed_targets
+    );
+
+  const totalAttempts =
+    publishedTargets +
+    failedTargets;
+
+  const successRate =
+    totalAttempts > 0
+      ? Math.round(
+          (
+            publishedTargets /
+            totalAttempts
+          ) * 100
+        )
+      : 100;
 
   return Response.json({
-    scheduled: Number(postsResult.rows[0].scheduled),
+    /*
+      Existing cards
+    */
 
-    published: Number(postsResult.rows[0].published),
+    scheduled:
+      Number(
+        postsResult.rows[0]
+          .scheduled
+      ),
 
-    failed: Number(postsResult.rows[0].failed),
+    published:
+      Number(
+        postsResult.rows[0]
+          .published
+      ),
 
-    accounts: Number(accountsResult.rows[0].accounts),
+    failed:
+      Number(
+        postsResult.rows[0]
+          .failed
+      ),
 
-    draft: Number(postsResult.rows[0].draft),
+    draft:
+      Number(
+        postsResult.rows[0]
+          .draft
+      ),
+
+    accounts:
+      Number(
+        accountsResult.rows[0]
+          .accounts
+      ),
+
+    /*
+      New target metrics
+    */
+
+    scheduledTargets:
+      Number(
+        targetsResult.rows[0]
+          .scheduled_targets
+      ),
+
+    publishedTargets,
+
+    failedTargets,
+
+    successRate,
   });
 }
