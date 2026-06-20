@@ -311,7 +311,19 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   <tr key={index}>
                     <td className="border p-2">{item.post}</td>
 
-                    <td className="border p-2">{item.platform}</td>
+                    <td>
+                      <div className="space-y-1">
+                        {item.targets?.map((target) => (
+                          <div key={target.id}>
+                            {target.platform}{" "}
+                            {target.status === "published" && "✅"}
+                            {target.status === "scheduled" && "⏳"}
+                            {target.status === "processing" && "🔄"}
+                            {target.status === "failed" && "❌"}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
 
                     <td className="border p-2">
                       {new Date(item.schedule_time).toLocaleString("en-IN", {
