@@ -16,6 +16,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
     return local.toISOString().slice(0, 16);
   })();
   const [socialAccountId, setSocialAccountId] = useState<number | null>(null);
+  const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -44,8 +45,9 @@ export default function CreatePostForm({ posts, setPosts }: any) {
       return;
     }
 
-    if (!socialAccountId) {
-      alert("Please select an account");
+    if (selectedAccounts.length === 0) {
+      alert("Select at least one account");
+
       return;
     }
 
@@ -77,13 +79,12 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         },
         body: JSON.stringify({
           post,
-          platform,
           scheduleTime:
             status === "scheduled"
               ? new Date(scheduleTime).toISOString()
               : null,
           imageUrl,
-          socialAccountId,
+          selectedAccounts,
           status,
         }),
       });
@@ -127,17 +128,6 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           onChange={(e) => setPost(e.target.value)}
         />
 
-        <select
-          className="w-full border p-3 rounded"
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
-        >
-          <option>Instagram</option>
-          <option>Facebook</option>
-          <option>LinkedIn</option>
-          <option>X (Twitter)</option>
-        </select>
-
         <input
           type="datetime-local"
           className="w-full border p-3 rounded"
@@ -145,17 +135,31 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           value={scheduleTime || ""}
           onChange={(e) => setScheduleTime(e.target.value)}
         />
-        <select
-          className="w-full border p-3 rounded"
-          value={socialAccountId ?? ""}
-          onChange={(e) => setSocialAccountId(Number(e.target.value))}
-        >
+        <div className="border p-3 rounded">
+          <h4 className="font-medium mb-2">Select Accounts</h4>
+
           {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.account_name}
-            </option>
+            <label key={account.id} className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                checked={selectedAccounts.includes(account.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedAccounts([...selectedAccounts, account.id]);
+                  } else {
+                    setSelectedAccounts(
+                      selectedAccounts.filter((id) => id !== account.id),
+                    );
+                  }
+                }}
+              />
+
+              <span>{account.account_name}</span>
+
+              <span className="text-gray-500">({account.platform})</span>
+            </label>
           ))}
-        </select>
+        </div>
         <input
           type="file"
           accept="image/*"
@@ -402,18 +406,18 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         </button>
                       )}
                       {item.status !== "published" && (
-                      <button
-                        className="bg-green-600 text-white px-3 py-1 rounded ml-2"
-                        onClick={async () => {
-                          await fetch(`/api/posts/${item.id}/duplicate`, {
-                            method: "POST",
-                          });
+                        <button
+                          className="bg-green-600 text-white px-3 py-1 rounded ml-2"
+                          onClick={async () => {
+                            await fetch(`/api/posts/${item.id}/duplicate`, {
+                              method: "POST",
+                            });
 
-                          window.location.reload();
-                        }}
-                      >
-                        Duplicate
-                      </button>
+                            window.location.reload();
+                          }}
+                        >
+                          Duplicate
+                        </button>
                       )}
                     </td>
                   </tr>

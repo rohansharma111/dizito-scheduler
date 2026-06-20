@@ -3,7 +3,7 @@ import { startScheduler } from "@/lib/scheduler";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-//startScheduler();
+startScheduler();
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -40,7 +40,9 @@ export async function POST(request: Request) {
       {
         error: "Unauthorized",
       },
-      { status: 401 },
+      {
+        status: 401,
+      },
     );
   }
 
@@ -59,7 +61,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Scheduled posts require date/time
   if (status === "scheduled" && !body.scheduleTime) {
     return Response.json(
       {
@@ -71,22 +72,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // SECURITY CHECK
-  const account = await pool.query(
-    `
-      SELECT id
-      FROM social_accounts
-      WHERE
-        id = $1
-        AND user_id = $2
-      `,
-    [body.socialAccountId, (session.user as any).id],
-  );
-
-  if (account.rows.length === 0) {
+  if (!body.selectedAccounts || body.selectedAccounts.length === 0) {
     return Response.json(
       {
-        error: "Invalid account",
+        error: "Select at least one account",
       },
       {
         status: 400,
@@ -94,16 +83,36 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await pool.query(
+  const accounts = await pool.query(
+    `
+      SELECT *
+      FROM social_accounts
+      WHERE
+        id = ANY($1)
+        AND user_id = $2
+      `,
+    [body.selectedAccounts, (session.user as any).id],
+  );
+
+  if (accounts.rows.length !== body.selectedAccounts.length) {
+    return Response.json(
+      {
+        error: "Invalid account selection",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
+  const postResult = await pool.query(
     `
       INSERT INTO posts
       (
         post,
-        platform,
         schedule_time,
         status,
         image_url,
-        social_account_id,
         user_id
       )
       VALUES
@@ -112,26 +121,47 @@ export async function POST(request: Request) {
         $2,
         $3,
         $4,
-        $5,
-        $6,
-        $7
+        $5
       )
       RETURNING *
       `,
     [
       body.post,
-      body.platform,
       body.scheduleTime,
       status,
       body.imageUrl,
-      body.socialAccountId,
       (session.user as any).id,
     ],
   );
 
+  const postId = postResult.rows[0].id;
+
+  for (const account of accounts.rows) {
+    await pool.query(
+      `
+      INSERT INTO post_targets
+      (
+        post_id,
+        social_account_id,
+        platform,
+        status
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4
+      )
+      `,
+      [postId, account.id, account.platform, status],
+    );
+  }
+
   return Response.json({
     success: true,
-    post: result.rows[0],
+    post: postResult.rows[0],
+    targets: accounts.rows.length,
   });
 }
 
