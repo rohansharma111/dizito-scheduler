@@ -139,22 +139,22 @@ export async function POST(request: Request) {
   for (const account of accounts.rows) {
     await pool.query(
       `
-      INSERT INTO post_targets
-      (
-        post_id,
-        social_account_id,
-        platform,
-        status
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3,
-        $4
-      )
-      `,
-      [postId, account.id, account.platform, status],
+    INSERT INTO post_targets
+    (
+      post_id,
+      social_account_id,
+      platform,
+      status
+    )
+    VALUES
+    (
+      $1,
+      $2,
+      $3,
+      $4
+    )
+    `,
+      [postResult.rows[0].id, account.id, account.platform, status],
     );
   }
 
