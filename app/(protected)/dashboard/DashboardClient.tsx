@@ -15,6 +15,7 @@ export default function Home() {
     failed: 0,
     accounts: 0,
   });
+  
   async function loadPosts() {
     const response = await fetch("/api/posts");
     const data = await response.json();

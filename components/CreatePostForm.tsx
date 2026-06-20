@@ -20,7 +20,9 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [selectedTargets, setSelectedTargets] = useState([]);
 
+  const [showTargetsModal, setShowTargetsModal] = useState(false);
   useEffect(() => {
     async function loadAccounts() {
       const response = await fetch("/api/social-accounts");
@@ -428,6 +430,22 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                           View Error
                         </button>
                       )}
+                      <button
+                        className="bg-gray-700 text-white px-3 py-1 rounded ml-2"
+                        onClick={async () => {
+                          const response = await fetch(
+                            `/api/posts/${item.id}/targets`,
+                          );
+
+                          const data = await response.json();
+
+                          setSelectedTargets(data);
+
+                          setShowTargetsModal(true);
+                        }}
+                      >
+                        Details
+                      </button>
                     </td>
 
                     <td className="border p-2">
@@ -492,4 +510,53 @@ export default function CreatePostForm({ posts, setPosts }: any) {
       </div>
     </div>
   );
+
+  {
+  showTargetsModal && (
+    <div className="
+      fixed inset-0
+      bg-black/50
+      flex
+      items-center
+      justify-center
+      z-50
+    ">
+
+      <div className="
+        bg-white
+        rounded-lg
+        p-6
+        w-[600px]
+      ">
+
+        <div className="
+          flex
+          justify-between
+          mb-4
+        ">
+
+          <h2 className="
+            text-xl
+            font-bold
+          ">
+            Publish Details
+          </h2>
+
+          <button
+            onClick={() =>
+              setShowTargetsModal(
+                false
+              )
+            }
+          >
+            ✕
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  )
+}
 }
