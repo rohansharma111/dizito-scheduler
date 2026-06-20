@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Post } from "../types";
+import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 export default function CreatePostForm({ posts, setPosts }: any) {
   const [post, setPost] = useState("");
   const [platform, setPlatform] = useState("Instagram");
@@ -297,7 +298,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
             <thead>
               <tr className="bg-gray-100">
                 <th className="border p-2">Post</th>
-                <th className="border p-2">Platform</th>
+                <th className="border p-2">Targets</th>
                 <th className="border p-2">Time</th>
                 <th className="border p-2">Status</th>
                 <th className="border p-2">Actions</th>
@@ -311,15 +312,31 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   <tr key={index}>
                     <td className="border p-2">{item.post}</td>
 
-                    <td>
-                      <div className="space-y-1">
+                    <td className="border p-2">
+                      <div className="flex items-center gap-3">
                         {item.targets?.map((target) => (
-                          <div key={target.id}>
-                            {target.platform}{" "}
-                            {target.status === "published" && "✅"}
-                            {target.status === "scheduled" && "⏳"}
-                            {target.status === "processing" && "🔄"}
-                            {target.status === "failed" && "❌"}
+                          <div className="relative">
+                            <FaInstagram className="text-pink-500 text-xl" />
+
+                            <span
+                              className={`
+      absolute
+      -bottom-1
+      -right-1
+      w-2.5
+      h-2.5
+      rounded-full
+      ${
+        target.status === "published"
+          ? "bg-green-500"
+          : target.status === "failed"
+            ? "bg-red-500"
+            : target.status === "processing"
+              ? "bg-yellow-500"
+              : "bg-blue-500"
+      }
+    `}
+                            />
                           </div>
                         ))}
                       </div>
