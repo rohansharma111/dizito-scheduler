@@ -29,7 +29,7 @@ const connectLinkedIn = () => {
           onClick={connectInstagram}
           className="bg-blue-600 text-white px-4 py-2 rounded"
         >
-          Connect Instagram
+          Connect Meta (Facebook/Instagram)
         </button>
         <button
           onClick={connectLinkedIn}
