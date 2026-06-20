@@ -1,25 +1,24 @@
 import cron from "node-cron";
 import { pool } from "./db";
 import { publishers } from "./publishers";
+
 let started = false;
 
 export function startScheduler() {
-  
   if (started) return;
 
   started = true;
 
-  console.log("DIZITO_SCHEDULER_STARTED");
+  console.log("DIZITO_V3_SCHEDULER_STARTED");
 
   cron.schedule("* * * * *", async () => {
     try {
       console.log("=================================");
-      console.log("DIZITO_V2_SCHEDULER_RUNNING");
+      console.log("DIZITO_V3_SCHEDULER_RUNNING");
       console.log("Time:", new Date().toISOString());
 
-      // Recover stuck posts
-      const recoveryResult = await pool.query(`
-        UPDATE posts
+      await pool.query(`
+        UPDATE post_targets
         SET
           status = 'scheduled',
           processing_started_at = NULL
@@ -27,68 +26,109 @@ export function startScheduler() {
           status = 'processing'
           AND processing_started_at <
               NOW() - INTERVAL '15 minutes'
-        RETURNING id
       `);
 
-      if (recoveryResult.rows.length > 0) {
-        console.log(
-          "Recovered Posts:",
-          recoveryResult.rows.map((p) => p.id),
-        );
-      }
-
-      // Claim posts atomically
       const result = await pool.query(`
-        UPDATE posts
+        UPDATE post_targets
         SET
           status = 'processing',
           processing_started_at = NOW()
         WHERE id IN (
-          SELECT id
-          FROM posts
+          SELECT pt.id
+          FROM post_targets pt
+          JOIN posts p
+            ON p.id = pt.post_id
           WHERE
-            status = 'scheduled'
-            AND schedule_time <= NOW()
+            pt.status = 'scheduled'
+            AND p.schedule_time <= NOW()
           LIMIT 20
         )
         RETURNING *
       `);
 
-      console.log("Claimed Posts:", result.rows.length);
+      console.log(
+        "Claimed Targets:",
+        result.rows.length
+      );
 
       if (result.rows.length === 0) {
-        console.log("No posts to process");
+        console.log(
+          "No targets to process"
+        );
         return;
       }
 
-      console.log(
-        "Post IDs:",
-        result.rows.map((p) => p.id),
-      );
-
-      for (const post of result.rows) {
+      for (const target of result.rows) {
         try {
-          console.log(`Processing Post ${post.id} (${post.platform})`);
+          console.log(
+            `Processing Target ${target.id} (${target.platform})`
+          );
 
           const publisher =
-            publishers[post.platform.toLowerCase() as keyof typeof publishers];
+            publishers[
+              target.platform.toLowerCase() as keyof typeof publishers
+            ];
 
           if (!publisher) {
-            throw new Error(`Unsupported platform`);
+            throw new Error(
+              `Unsupported platform: ${target.platform}`
+            );
           }
+
+          /*
+            TEMPORARY BRIDGE
+          */
+
+          const postResult =
+            await pool.query(
+              `
+              SELECT *
+              FROM posts
+              WHERE id = $1
+              `,
+              [target.post_id]
+            );
+
+          const post =
+            postResult.rows[0];
+
+          if (!post) {
+            throw new Error(
+              "Post not found"
+            );
+          }
+
+          /*
+            Temporary compatibility
+          */
+
+          await pool.query(
+            `
+            UPDATE posts
+            SET
+              social_account_id = $1,
+              platform = $2
+            WHERE id = $3
+            `,
+            [
+              target.social_account_id,
+              target.platform,
+              post.id,
+            ]
+          );
 
           await publisher(post.id);
 
           await pool.query(
             `
-            UPDATE posts
+            UPDATE post_targets
             SET
               status = 'published',
               published_at = NOW(),
               processing_started_at = NULL
             WHERE id = $1
             `,
-            [post.id],
+            [target.id]
           );
 
           await pool.query(
@@ -106,23 +146,35 @@ export function startScheduler() {
               $3
             )
             `,
-            [post.id, "success", "Published successfully"],
+            [
+              target.post_id,
+              "success",
+              `Published to ${target.platform}`,
+            ]
           );
 
-          console.log(`Post ${post.id} published successfully`);
+          console.log(
+            `Target ${target.id} published`
+          );
         } catch (error) {
-          console.error(`Post ${post.id} failed`, error);
+          console.error(
+            `Target ${target.id} failed`,
+            error
+          );
 
           await pool.query(
             `
-            UPDATE posts
+            UPDATE post_targets
             SET
               status = 'failed',
               publish_message = $1,
               processing_started_at = NULL
             WHERE id = $2
             `,
-            [String(error), post.id],
+            [
+              String(error),
+              target.id,
+            ]
           );
 
           await pool.query(
@@ -140,14 +192,23 @@ export function startScheduler() {
               $3
             )
             `,
-            [post.id, "failed", String(error)],
+            [
+              target.post_id,
+              "failed",
+              String(error),
+            ]
           );
         }
       }
 
-      console.log("Scheduler cycle completed");
+      console.log(
+        "Scheduler cycle completed"
+      );
     } catch (error) {
-      console.error("Scheduler Error:", error);
+      console.error(
+        "Scheduler Error:",
+        error
+      );
     }
   });
 }
