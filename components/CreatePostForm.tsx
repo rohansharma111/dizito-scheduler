@@ -119,339 +119,127 @@ export default function CreatePostForm({ posts, setPosts }: any) {
     }
   }
   return (
-    <div className="bg-white p-6 rounded shadow mt-8">
-      <h2 className="text-2xl font-bold mb-4">Create Post</h2>
+    <>
+      <div className="bg-white p-6 rounded shadow mt-8">
+        <h2 className="text-2xl font-bold mb-4">Create Post</h2>
 
-      <div className="space-y-4">
-        <textarea
-          placeholder="Write your post..."
-          className="w-full border p-3 rounded"
-          rows={5}
-          value={post}
-          onChange={(e) => setPost(e.target.value)}
-        />
+        <div className="space-y-4">
+          <textarea
+            placeholder="Write your post..."
+            className="w-full border p-3 rounded"
+            rows={5}
+            value={post}
+            onChange={(e) => setPost(e.target.value)}
+          />
 
-        <input
-          type="datetime-local"
-          className="w-full border p-3 rounded"
-          min={minScheduleTime}
-          value={scheduleTime || ""}
-          onChange={(e) => setScheduleTime(e.target.value)}
-        />
-        <div className="border p-3 rounded">
-          <h4 className="font-medium mb-2">Select Accounts</h4>
+          <input
+            type="datetime-local"
+            className="w-full border p-3 rounded"
+            min={minScheduleTime}
+            value={scheduleTime || ""}
+            onChange={(e) => setScheduleTime(e.target.value)}
+          />
+          <div className="border p-3 rounded">
+            <h4 className="font-medium mb-2">Select Accounts</h4>
 
-          {accounts.map((account) => (
-            <label key={account.id} className="flex items-center gap-2 mb-2">
-              <input
-                type="checkbox"
-                checked={selectedAccounts.includes(account.id)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedAccounts([...selectedAccounts, account.id]);
-                  } else {
-                    setSelectedAccounts(
-                      selectedAccounts.filter((id) => id !== account.id),
-                    );
-                  }
-                }}
-              />
+            {accounts.map((account) => (
+              <label key={account.id} className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  checked={selectedAccounts.includes(account.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedAccounts([...selectedAccounts, account.id]);
+                    } else {
+                      setSelectedAccounts(
+                        selectedAccounts.filter((id) => id !== account.id),
+                      );
+                    }
+                  }}
+                />
 
-              <span>{account.account_name}</span>
+                <span>{account.account_name}</span>
 
-              <span className="text-gray-500">({account.platform})</span>
-            </label>
-          ))}
-        </div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              setImage(e.target.files[0]);
-            }
-          }}
-        />
+                <span className="text-gray-500">({account.platform})</span>
+              </label>
+            ))}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files?.[0]) {
+                setImage(e.target.files[0]);
+              }
+            }}
+          />
 
-        <button
-          disabled={actionLoading !== null}
-          className="bg-gray-600 text-white px-6 py-3 rounded"
-          onClick={() => savePost("draft")}
-        >
-          {actionLoading === "draft" ? "Saving Draft..." : "Save Draft"}
-        </button>
+          <button
+            disabled={actionLoading !== null}
+            className="bg-gray-600 text-white px-6 py-3 rounded"
+            onClick={() => savePost("draft")}
+          >
+            {actionLoading === "draft" ? "Saving Draft..." : "Save Draft"}
+          </button>
 
-        <button
-          disabled={actionLoading !== null}
-          className="px-6 py-3 rounded text-white bg-blue-600"
-          onClick={() => savePost("scheduled")}
-        >
-          {actionLoading === "scheduled" ? "Scheduling..." : "Schedule Post"}
-        </button>
+          <button
+            disabled={actionLoading !== null}
+            className="px-6 py-3 rounded text-white bg-blue-600"
+            onClick={() => savePost("scheduled")}
+          >
+            {actionLoading === "scheduled" ? "Scheduling..." : "Schedule Post"}
+          </button>
 
-        {successMessage && (
-          <div className="text-green-600 font-medium">{successMessage}</div>
-        )}
+          {successMessage && (
+            <div className="text-green-600 font-medium">{successMessage}</div>
+          )}
 
-        <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">Draft Posts</h3>
+          <div className="mt-8">
+            <h3 className="text-xl font-bold mb-4">Draft Posts</h3>
 
-          <table className="w-full border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2">Post</th>
-                <th className="border p-2">Targets</th>
-                <th className="border p-2">Actions</th>
-              </tr>
-            </thead>
+            <table className="w-full border">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">Post</th>
+                  <th className="border p-2">Targets</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {posts
-                .filter(
-                  (item: Post) =>
-                    item.status === "draft" && item.schedule_time == null,
-                )
-                .map((item: Post, index: number) => (
-                  <tr key={index}>
-                    <td className="border p-2">{item.post}</td>
+              <tbody>
+                {posts
+                  .filter(
+                    (item: Post) =>
+                      item.status === "draft" && item.schedule_time == null,
+                  )
+                  .map((item: Post, index: number) => (
+                    <tr key={index}>
+                      <td className="border p-2">{item.post}</td>
 
-                    <td className="border p-2">
-                      <div className="flex items-center gap-3">
-                        {item.targets?.map((target) => (
-                          <div
-                            key={target.id}
-                            title={`${target.platform} - ${target.status}`}
-                          >
-                            {target.platform === "instagram" && (
-                              <FaInstagram className="text-pink-500 text-xl" />
-                            )}
+                      <td className="border p-2">
+                        <div className="flex items-center gap-3">
+                          {item.targets?.map((target) => (
+                            <div
+                              key={target.id}
+                              title={`${target.platform} - ${target.status}`}
+                            >
+                              {target.platform === "instagram" && (
+                                <FaInstagram className="text-pink-500 text-xl" />
+                              )}
 
-                            {target.platform === "facebook" && (
-                              <FaFacebook className="text-blue-600 text-xl" />
-                            )}
+                              {target.platform === "facebook" && (
+                                <FaFacebook className="text-blue-600 text-xl" />
+                              )}
 
-                            {target.platform === "linkedin" && (
-                              <FaLinkedin className="text-blue-700 text-xl" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </td>
+                              {target.platform === "linkedin" && (
+                                <FaLinkedin className="text-blue-700 text-xl" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
 
-                    <td className="border p-2">
-                      <button
-                        className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
-                        onClick={() => {
-                          window.location.href = `/posts/${item.id}/edit`;
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        className="bg-red-500 text-white px-3 py-1 rounded"
-                        onClick={async () => {
-                          await fetch("/api/posts", {
-                            method: "DELETE",
-
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-
-                            body: JSON.stringify({
-                              id: item.id,
-                            }),
-                          });
-
-                          const response = await fetch("/api/posts");
-
-                          const latestPosts = await response.json();
-
-                          setPosts(latestPosts);
-                        }}
-                      >
-                        Delete
-                      </button>
-
-                      <button
-                        className="bg-green-600 text-white px-3 py-1 rounded ml-2"
-                        onClick={async () => {
-                          await fetch(`/api/posts/${item.id}/duplicate`, {
-                            method: "POST",
-                          });
-
-                          window.location.reload();
-                        }}
-                      >
-                        Duplicate
-                      </button>
-                      <button
-                        className="bg-blue-600 text-white px-3 py-1 rounded ml-2"
-                        onClick={() => {
-                          window.location.href = `/posts/${item.id}/edit?schedule=true`;
-                        }}
-                      >
-                        Schedule
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">
-            Scheduled / Published Posts
-          </h3>
-
-          <table className="w-full border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2">Post</th>
-                <th className="border p-2">Targets</th>
-                <th className="border p-2">Time</th>
-                <th className="border p-2">Status</th>
-                <th className="border p-2">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {posts
-                .filter((item: Post) => item.status !== "draft")
-                .map((item: Post, index: number) => (
-                  <tr key={index}>
-                    <td className="border p-2">{item.post}</td>
-
-                    <td className="border p-2">
-                      <div className="flex items-center gap-3">
-                        {item.targets?.map((target) => (
-                          <div
-                            key={target.id}
-                            className="relative"
-                            title={`${target.platform} - ${target.status}`}
-                          >
-                            {target.platform === "instagram" && (
-                              <FaInstagram className="text-pink-500 text-xl" />
-                            )}
-
-                            {target.platform === "facebook" && (
-                              <FaFacebook className="text-blue-600 text-xl" />
-                            )}
-
-                            {target.platform === "linkedin" && (
-                              <FaLinkedin className="text-blue-700 text-xl" />
-                            )}
-
-                            <span
-                              className={`
-            absolute
-            -bottom-1
-            -right-1
-            w-2.5
-            h-2.5
-            rounded-full
-            ${
-              target.status === "published"
-                ? "bg-green-500"
-                : target.status === "failed"
-                  ? "bg-red-500"
-                  : target.status === "processing"
-                    ? "bg-yellow-500"
-                    : "bg-blue-500"
-            }
-          `}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-
-                    <td className="border p-2">
-                      {new Date(item.schedule_time).toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </td>
-
-                    <td className="border p-2">
-                      {item.status === "published" && (
-                        <span className="text-green-600">Published</span>
-                      )}
-
-                      {item.status === "scheduled" && (
-                        <span className="text-blue-600">Scheduled</span>
-                      )}
-                      {item.status === "draft" && (
-                        <span className="text-gray-500">Draft</span>
-                      )}
-                      {item.status === "processing" && (
-                        <span className="text-green-600">Processing</span>
-                      )}
-
-                      {item.status === "failed" && (
-                        <span className="text-red-600">Failed</span>
-                      )}
-
-                      {item.status === "failed" && (
-                        <button
-                          className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded"
-                          onClick={async () => {
-                            await fetch(`/api/posts/retry`, {
-                              method: "POST",
-
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-
-                              body: JSON.stringify({
-                                id: item.id,
-                              }),
-                            });
-
-                            const response = await fetch("/api/posts");
-
-                            const latestPosts = await response.json();
-
-                            setPosts(latestPosts);
-                          }}
-                        >
-                          Retry
-                        </button>
-                      )}
-                      {item.publish_message && (
-                        <button
-                          className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
-                          onClick={() => {
-                            alert(item.publish_message);
-                          }}
-                        >
-                          View Error
-                        </button>
-                      )}
-                      <button
-                        className="bg-gray-700 text-white px-3 py-1 rounded ml-2"
-                        onClick={async () => {
-                          const response = await fetch(
-                            `/api/posts/${item.id}/targets`,
-                          );
-
-                          const data = await response.json();
-
-                          setSelectedTargets(data);
-
-                          setShowTargetsModal(true);
-                        }}
-                      >
-                        Details
-                      </button>
-                    </td>
-
-                    <td className="border p-2">
-                      {["scheduled", "failed", "draft"].includes(
-                        item.status,
-                      ) && (
+                      <td className="border p-2">
                         <button
                           className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
                           onClick={() => {
@@ -460,8 +248,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         >
                           Edit
                         </button>
-                      )}
-                      {item.status !== "processing" && (
+
                         <button
                           className="bg-red-500 text-white px-3 py-1 rounded"
                           onClick={async () => {
@@ -486,8 +273,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         >
                           Delete
                         </button>
-                      )}
-                      {item.status !== "published" && (
+
                         <button
                           className="bg-green-600 text-white px-3 py-1 rounded ml-2"
                           onClick={async () => {
@@ -500,63 +286,363 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         >
                           Duplicate
                         </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+                        <button
+                          className="bg-blue-600 text-white px-3 py-1 rounded ml-2"
+                          onClick={() => {
+                            window.location.href = `/posts/${item.id}/edit?schedule=true`;
+                          }}
+                        >
+                          Schedule
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-8">
+            <h3 className="text-xl font-bold mb-4">
+              Scheduled / Published Posts
+            </h3>
+
+            <table className="w-full border">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">Post</th>
+                  <th className="border p-2">Targets</th>
+                  <th className="border p-2">Time</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {posts
+                  .filter((item: Post) => item.status !== "draft")
+                  .map((item: Post, index: number) => (
+                    <tr key={index}>
+                      <td className="border p-2">{item.post}</td>
+
+                      <td className="border p-2">
+                        <div className="flex items-center gap-3">
+                          {item.targets?.map((target) => (
+                            <div
+                              key={target.id}
+                              className="relative"
+                              title={`${target.platform} - ${target.status}`}
+                            >
+                              {target.platform === "instagram" && (
+                                <FaInstagram className="text-pink-500 text-xl" />
+                              )}
+
+                              {target.platform === "facebook" && (
+                                <FaFacebook className="text-blue-600 text-xl" />
+                              )}
+
+                              {target.platform === "linkedin" && (
+                                <FaLinkedin className="text-blue-700 text-xl" />
+                              )}
+
+                              <span
+                                className={`
+            absolute
+            -bottom-1
+            -right-1
+            w-2.5
+            h-2.5
+            rounded-full
+            ${
+              target.status === "published"
+                ? "bg-green-500"
+                : target.status === "failed"
+                  ? "bg-red-500"
+                  : target.status === "processing"
+                    ? "bg-yellow-500"
+                    : "bg-blue-500"
+            }
+          `}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className="border p-2">
+                        {new Date(item.schedule_time).toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata",
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </td>
+
+                      <td className="border p-2">
+                        {item.status === "published" && (
+                          <span className="text-green-600">Published</span>
+                        )}
+
+                        {item.status === "scheduled" && (
+                          <span className="text-blue-600">Scheduled</span>
+                        )}
+                        {item.status === "draft" && (
+                          <span className="text-gray-500">Draft</span>
+                        )}
+                        {item.status === "processing" && (
+                          <span className="text-green-600">Processing</span>
+                        )}
+
+                        {item.status === "failed" && (
+                          <span className="text-red-600">Failed</span>
+                        )}
+
+                        {item.status === "failed" && (
+                          <button
+                            className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded"
+                            onClick={async () => {
+                              await fetch(`/api/posts/retry`, {
+                                method: "POST",
+
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+
+                                body: JSON.stringify({
+                                  id: item.id,
+                                }),
+                              });
+
+                              const response = await fetch("/api/posts");
+
+                              const latestPosts = await response.json();
+
+                              setPosts(latestPosts);
+                            }}
+                          >
+                            Retry
+                          </button>
+                        )}
+                        {item.publish_message && (
+                          <button
+                            className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
+                            onClick={() => {
+                              alert(item.publish_message);
+                            }}
+                          >
+                            View Error
+                          </button>
+                        )}
+                        <button
+                          className="bg-gray-700 text-white px-3 py-1 rounded ml-2"
+                          onClick={async () => {
+                            const response = await fetch(
+                              `/api/posts/${item.id}/targets`,
+                            );
+
+                            const data = await response.json();
+
+                            setSelectedTargets(data);
+
+                            setShowTargetsModal(true);
+                          }}
+                        >
+                          Details
+                        </button>
+                      </td>
+
+                      <td className="border p-2">
+                        {["scheduled", "failed", "draft"].includes(
+                          item.status,
+                        ) && (
+                          <button
+                            className="bg-yellow-500 text-white px-3 py-1 rounded ml-2"
+                            onClick={() => {
+                              window.location.href = `/posts/${item.id}/edit`;
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {item.status !== "processing" && (
+                          <button
+                            className="bg-red-500 text-white px-3 py-1 rounded"
+                            onClick={async () => {
+                              await fetch("/api/posts", {
+                                method: "DELETE",
+
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+
+                                body: JSON.stringify({
+                                  id: item.id,
+                                }),
+                              });
+
+                              const response = await fetch("/api/posts");
+
+                              const latestPosts = await response.json();
+
+                              setPosts(latestPosts);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {item.status !== "published" && (
+                          <button
+                            className="bg-green-600 text-white px-3 py-1 rounded ml-2"
+                            onClick={async () => {
+                              await fetch(`/api/posts/${item.id}/duplicate`, {
+                                method: "POST",
+                              });
+
+                              window.location.reload();
+                            }}
+                          >
+                            Duplicate
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  );
-
-  {
-  showTargetsModal && (
-    <div className="
+      {showTargetsModal && (
+        <div
+          className="
       fixed inset-0
       bg-black/50
       flex
       items-center
       justify-center
       z-50
-    ">
-
-      <div className="
+    "
+          onClick={() => setShowTargetsModal(false)}
+        >
+          <div
+            className="
         bg-white
         rounded-lg
         p-6
         w-[600px]
-      ">
-
-        <div className="
-          flex
-          justify-between
-          mb-4
-        ">
-
-          <h2 className="
-            text-xl
-            font-bold
-          ">
-            Publish Details
-          </h2>
-
-          <button
-            onClick={() =>
-              setShowTargetsModal(
-                false
-              )
-            }
+        max-h-[80vh]
+        overflow-y-auto
+      "
+            onClick={(e) => e.stopPropagation()}
           >
-            ✕
-          </button>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-bold">Publish Details</h2>
 
+                <div className="text-sm text-gray-500 mt-1">
+                  {
+                    selectedTargets.filter((t: any) => t.status === "published")
+                      .length
+                  }{" "}
+                  Published •{" "}
+                  {
+                    selectedTargets.filter((t: any) => t.status === "failed")
+                      .length
+                  }{" "}
+                  Failed • {selectedTargets.length} Platforms
+                </div>
+              </div>
+
+              <button
+                className="text-xl"
+                onClick={() => setShowTargetsModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {selectedTargets.map((target: any) => (
+                <div
+                  key={target.id}
+                  className="
+                border
+                rounded-lg
+                p-4
+                flex
+                justify-between
+                items-start
+              "
+                >
+                  <div className="flex items-start gap-3">
+                    {target.platform === "instagram" && (
+                      <FaInstagram className="text-pink-500 text-2xl mt-1" />
+                    )}
+
+                    {target.platform === "facebook" && (
+                      <FaFacebook className="text-blue-600 text-2xl mt-1" />
+                    )}
+
+                    {target.platform === "linkedin" && (
+                      <FaLinkedin className="text-blue-700 text-2xl mt-1" />
+                    )}
+
+                    <div>
+                      <div className="font-semibold">{target.account_name}</div>
+
+                      <div className="text-sm text-gray-500 capitalize">
+                        {target.platform}
+                      </div>
+
+                      {target.published_at && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Published:{" "}
+                          {new Date(target.published_at).toLocaleString(
+                            "en-IN",
+                            {
+                              timeZone: "Asia/Kolkata",
+                            },
+                          )}
+                        </div>
+                      )}
+
+                      {target.publish_message && (
+                        <div className="mt-2 text-sm text-red-500 break-words max-w-[350px]">
+                          {target.publish_message}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    {target.status === "published" && (
+                      <span className="text-green-600 font-medium">
+                        ✅ Published
+                      </span>
+                    )}
+
+                    {target.status === "scheduled" && (
+                      <span className="text-blue-600 font-medium">
+                        ⏳ Scheduled
+                      </span>
+                    )}
+
+                    {target.status === "processing" && (
+                      <span className="text-yellow-600 font-medium">
+                        🔄 Processing
+                      </span>
+                    )}
+
+                    {target.status === "failed" && (
+                      <span className="text-red-600 font-medium">
+                        ❌ Failed
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-
-      </div>
-
-    </div>
-  )
-}
+      )}
+    </>
+  );
 }

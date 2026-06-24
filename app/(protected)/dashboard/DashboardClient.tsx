@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { Post } from "../../../types";
 
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState< []>([]);
   const [stats, setStats] = useState({
     scheduled: 0,
     published: 0,
