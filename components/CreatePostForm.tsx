@@ -21,7 +21,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [selectedTargets, setSelectedTargets] = useState([]);
-
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [showTargetsModal, setShowTargetsModal] = useState(false);
   useEffect(() => {
     async function loadAccounts() {
@@ -440,6 +440,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
                             const data = await response.json();
 
+                            setSelectedPostId(item.id);
+
                             setSelectedTargets(data);
 
                             setShowTargetsModal(true);
@@ -632,9 +634,48 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                     )}
 
                     {target.status === "failed" && (
-                      <span className="text-red-600 font-medium">
-                        ❌ Failed
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="text-red-600 font-medium">
+                          ❌ Failed
+                        </span>
+
+                        <button
+                          className="
+        bg-yellow-500
+        text-white
+        px-3
+        py-1
+        rounded
+      "
+                          onClick={async () => {
+                            const response = await fetch(
+                              `/api/post-targets/${target.id}/retry`,
+                              {
+                                method: "POST",
+                              },
+                            );
+
+                            const data = await response.json();
+
+                            if (!response.ok) {
+                              alert(data.error || "Retry failed");
+                              return;
+                            }
+
+                            const refresh = await fetch(
+                              `/api/posts/${selectedPostId}/targets`,
+                            );
+
+                            const latestTargets = await refresh.json();
+
+                            setSelectedTargets(latestTargets);
+
+                            alert("Queued for retry");
+                          }}
+                        >
+                          Retry
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
