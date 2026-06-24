@@ -1,6 +1,6 @@
-import { pool } from "../../../../lib/db";
+import { pool } from "../../../../../lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth";
+import { authOptions } from "../../../../../lib/auth";
 
 export async function POST(
   request: Request,
