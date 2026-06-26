@@ -1,273 +1,240 @@
-import { pool } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextRequest } from "next/server";
+"use client";
 
-export async function GET(
-  request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{
-      id: string;
-    }>;
-  },
-) {
-  const session = await getServerSession(authOptions);
+import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 
-  if (!session?.user) {
-    return Response.json(
-      {
-        error: "Unauthorized",
-      },
-      {
-        status: 401,
-      },
-    );
-  }
-
-  const { id } = await params;
-
-  const result = await pool.query(
-    `
-      SELECT
-        p.*,
-
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', pt.id,
-              'platform', pt.platform,
-              'social_account_id',
-              pt.social_account_id,
-              'status',
-              pt.status
-            )
-          )
-          FILTER (
-            WHERE pt.id IS NOT NULL
-          ),
-          '[]'
-        ) AS targets
-
-      FROM posts p
-
-      LEFT JOIN post_targets pt
-      ON pt.post_id = p.id
-
-      WHERE
-        p.id = $1
-        AND p.user_id = $2
-
-      GROUP BY p.id
-      `,
-    [id, (session.user as any).id],
-  );
-
-  if (result.rows.length === 0) {
-    return Response.json(
-      {
-        error: "Post not found",
-      },
-      {
-        status: 404,
-      },
-    );
-  }
-
-  return Response.json(result.rows[0]);
+interface Account {
+  id: number;
+  account_name: string;
+  platform: string;
 }
 
-export async function PUT(
-  request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{
-      id: string;
-    }>;
-  },
-) {
-  const session = await getServerSession(authOptions);
+export default function EditPostPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  if (!session?.user) {
-    return Response.json(
-      {
-        error: "Unauthorized",
-      },
-      {
-        status: 401,
-      },
-    );
-  }
+  const searchParams = useSearchParams();
+  const scheduleMode = searchParams.get("schedule") === "true";
 
-  const { id } = await params;
+  const [post, setPost] = useState("");
 
-  const body = await request.json();
+  const [status, setStatus] = useState("");
 
-  if (body.scheduleMode && !body.schedule_time) {
-    return Response.json(
-      {
-        error: "Please select a schedule time",
-      },
-      {
-        status: 400,
-      },
-    );
-  }
+  const [scheduleTime, setScheduleTime] = useState("");
 
-  const postResult = await pool.query(
-    `
-      SELECT *
-      FROM posts
-      WHERE
-        id = $1
-        AND user_id = $2
-      `,
-    [id, (session.user as any).id],
-  );
+  const [imageUrl, setImageUrl] = useState("");
 
-  if (postResult.rows.length === 0) {
-    return Response.json(
-      {
-        error: "Post not found",
-      },
-      {
-        status: 404,
-      },
-    );
-  }
+  const [image, setImage] = useState<File | null>(null);
 
-  const post = postResult.rows[0];
+  const [accounts, setAccounts] = useState<Account[]>([]);
 
-  if (!["draft", "scheduled", "failed"].includes(post.status)) {
-    return Response.json(
-      {
-        error: "Cannot edit this post",
-      },
-      {
-        status: 400,
-      },
-    );
-  }
+  const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
 
-  let newStatus = post.status;
+  const [loading, setLoading] = useState(false);
 
-  if (post.status === "draft" && body.scheduleMode && body.schedule_time) {
-    newStatus = "scheduled";
-  }
+  const [pageLoading, setPageLoading] = useState(true);
 
-  const client = await pool.connect();
+  const minScheduleTime = (() => {
+    const now = new Date();
 
-  try {
-    await client.query("BEGIN");
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    await client.query(
-      `
-      UPDATE posts
-      SET
-        post = $1,
-        image_url =
-          COALESCE(
-            $2,
-            image_url
-          ),
-        schedule_time =
-          $3,
-        status = $4
-      WHERE id = $5
-      `,
-      [
-        body.post,
-        body.image_url,
-        body.schedule_time ?? post.schedule_time,
-        newStatus,
-        id,
-      ],
-    );
+    return local.toISOString().slice(0, 16);
+  })();
 
-    /*
-      Update targets
-    */
+  useEffect(() => {
+    if (!id) return;
 
-    if (Array.isArray(body.targets)) {
-      await client.query(
-        `
-        DELETE
-        FROM post_targets
-        WHERE post_id = $1
-        `,
-        [id],
-      );
+    async function load() {
+      try {
+        const [postResponse, accountResponse] = await Promise.all([
+          fetch(`/api/posts/${id}`),
+          fetch("/api/accounts"),
+        ]);
 
-      for (const target of body.targets) {
-        await client.query(
-          `
-          INSERT INTO
-          post_targets
-          (
-            post_id,
-            social_account_id,
-            platform,
-            status
-          )
-          VALUES
-          (
-            $1,
-            $2,
-            $3,
-            $4
-          )
-          `,
-          [
-            id,
-            target.social_account_id,
-            target.platform,
-            newStatus === "draft" ? "draft" : "scheduled",
-          ],
+        const postData = await postResponse.json();
+
+        const accountData = await accountResponse.json();
+
+        setAccounts(accountData);
+
+        setPost(postData.post || "");
+
+        setStatus(postData.status || "");
+
+        setImageUrl(postData.image_url || "");
+
+        setScheduleTime(
+          postData.schedule_time ? postData.schedule_time.slice(0, 16) : "",
         );
+
+        setSelectedAccounts(
+          postData.targets.map((t: any) => t.social_account_id),
+        );
+      } catch (error) {
+        console.error(error);
+
+        alert("Failed to load post");
+      } finally {
+        setPageLoading(false);
       }
     }
 
-    /*
-      Draft -> Scheduled
-    */
+    load();
+  }, [id]);
 
-    if (post.status === "draft" && newStatus === "scheduled") {
-      await client.query(
-        `
-        UPDATE
-          post_targets
-        SET
-          status =
-            'scheduled'
-        WHERE
-          post_id = $1
-        `,
-        [id],
-      );
-    }
-
-    await client.query("COMMIT");
-
-    return Response.json({
-      success: true,
-      status: newStatus,
-    });
-  } catch (error) {
-    await client.query("ROLLBACK");
-
-    console.error(error);
-
-    return Response.json(
-      {
-        error: "Failed to update post",
-      },
-      {
-        status: 500,
-      },
-    );
-  } finally {
-    client.release();
+  if (pageLoading) {
+    return <div className="p-8">Loading...</div>;
   }
+
+  return (
+    <div className="max-w-3xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">Edit Campaign</h1>
+
+      {/* POST */}
+
+      <div className="mb-6">
+        <label className="font-bold">Caption</label>
+
+        <textarea
+          rows={6}
+          className="w-full border p-3 rounded mt-2"
+          value={post}
+          onChange={(e) => setPost(e.target.value)}
+        />
+      </div>
+
+      {/* IMAGE */}
+
+      <div className="mb-6">
+        <label className="font-bold">Image</label>
+
+        {imageUrl && (
+          <img src={imageUrl} className="w-48 rounded border mt-2 mb-3" />
+        )}
+
+        <input
+          type="file"
+          onChange={(e) => setImage(e.target.files?.[0] || null)}
+        />
+      </div>
+
+      {/* TARGETS */}
+
+      <div className="mb-6">
+        <label className="font-bold">Targets</label>
+
+        <div className="mt-3 space-y-2">
+          {accounts.map((account) => (
+            <label key={account.id} className="flex gap-3">
+              <input
+                type="checkbox"
+                checked={selectedAccounts.includes(account.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedAccounts([...selectedAccounts, account.id]);
+                  } else {
+                    setSelectedAccounts(
+                      selectedAccounts.filter((x) => x !== account.id),
+                    );
+                  }
+                }}
+              />
+
+              <span>
+                {account.platform}
+                {" - "}
+                {account.account_name}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* SCHEDULE */}
+
+      {(status !== "draft" || scheduleMode) && (
+        <div className="mb-6">
+          <label className="font-bold">Schedule</label>
+
+          <input
+            type="datetime-local"
+            className="w-full border p-3 rounded mt-2"
+            min={minScheduleTime}
+            value={scheduleTime}
+            onChange={(e) => setScheduleTime(e.target.value)}
+          />
+        </div>
+      )}
+
+      {/* SAVE */}
+
+      <button
+        disabled={loading}
+        className={`px-6 py-3 rounded text-white ${
+          loading ? "bg-gray-400" : "bg-blue-600"
+        }`}
+        onClick={async () => {
+          setLoading(true);
+
+          try {
+            let uploadedImage = imageUrl;
+
+            if (image) {
+              const formData = new FormData();
+
+              formData.append("file", image);
+
+              const upload = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+              });
+
+              const uploadData = await upload.json();
+
+              uploadedImage = uploadData.url;
+            }
+
+            const response = await fetch(`/api/posts/${id}`, {
+              method: "PUT",
+
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+              body: JSON.stringify({
+                post,
+                image_url: uploadedImage,
+
+                social_account_ids: selectedAccounts,
+
+                schedule_time: scheduleTime
+                  ? new Date(scheduleTime).toISOString()
+                  : null,
+
+                scheduleMode,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              alert(data.error);
+              return;
+            }
+
+            window.location.href = "/dashboard";
+          } catch (error) {
+            console.error(error);
+
+            alert("Failed to save");
+          } finally {
+            setLoading(false);
+          }
+        }}
+      >
+        {loading ? "Saving..." : "Save Changes"}
+      </button>
+    </div>
+  );
 }
