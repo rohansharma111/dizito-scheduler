@@ -66,7 +66,12 @@ export async function POST(
     );
   }
 
-  if (target.status !== "failed") {
+  /*
+      Allow both:
+      failed
+      permanent_failed
+    */
+  if (!["failed", "permanent_failed"].includes(target.status)) {
     return Response.json(
       {
         error: "Only failed targets can be retried",
@@ -77,8 +82,9 @@ export async function POST(
     );
   }
 
-  // Get current attempt count
-
+  /*
+      Get attempt count
+    */
   const attemptResult = await pool.query(
     `
       SELECT COUNT(*) AS count
@@ -91,8 +97,9 @@ export async function POST(
 
   const nextAttempt = Number(attemptResult.rows[0].count) + 1;
 
-  // Save retry history
-
+  /*
+      Save retry history
+    */
   await pool.query(
     `
     INSERT INTO
@@ -114,13 +121,15 @@ export async function POST(
     [target.id, nextAttempt, "retry", `Retry requested for ${target.platform}`],
   );
 
-  // Reset target
-
+  /*
+      Reset target
+    */
   await pool.query(
     `
     UPDATE post_targets
     SET
       status = 'scheduled',
+      retry_count = 0,
       publish_message = NULL,
       processing_started_at = NULL
     WHERE id = $1
@@ -128,8 +137,22 @@ export async function POST(
     [id],
   );
 
-  // Legacy publish log
+  /*
+      Recompute post status
+    */
+  await pool.query(
+    `
+    UPDATE posts
+    SET
+      updated_at = NOW()
+    WHERE id = $1
+    `,
+    [target.post_id],
+  );
 
+  /*
+      Legacy publish log
+    */
   await pool.query(
     `
     INSERT INTO publish_logs

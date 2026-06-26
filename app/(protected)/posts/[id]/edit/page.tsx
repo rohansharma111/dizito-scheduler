@@ -150,7 +150,11 @@ export default function EditPostPage() {
           ))}
         </div>
       </div>
-
+      {selectedAccounts.length === 0 && (
+        <p className="text-red-500 text-sm mt-2">
+          Please select at least one target account
+        </p>
+      )}
       {/* SCHEDULE */}
 
       {(status !== "draft" || scheduleMode) && (
@@ -170,9 +174,11 @@ export default function EditPostPage() {
       {/* SAVE */}
 
       <button
-        disabled={loading}
+        disabled={loading || selectedAccounts.length === 0}
         className={`px-6 py-3 rounded text-white ${
-          loading ? "bg-gray-400" : "bg-blue-600"
+          loading || selectedAccounts.length === 0
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-600"
         }`}
         onClick={async () => {
           if (!post.trim()) {

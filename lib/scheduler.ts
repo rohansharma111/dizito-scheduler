@@ -5,7 +5,7 @@ import { updatePostStatus } from "./post-status";
 import { recordTargetAttempt } from "./attempts";
 
 let started = false;
-
+const MAX_RETRIES = 5;
 export function startScheduler() {
   if (started) return;
 
@@ -185,51 +185,85 @@ export function startScheduler() {
         } catch (error) {
           console.error(`Target ${target.id} failed`, error);
 
-          /*
-              Mark target failed
-            */
-          await pool.query(
-            `
-              UPDATE post_targets
-              SET
-                status = 'failed',
-                publish_message = $1,
-                processing_started_at = NULL
-              WHERE id = $2
-              `,
-            [String(error), target.id],
-          );
+          try {
+            /*
+      Get current retry count
+    */
+            const retryResult = await pool.query(
+              `
+        SELECT retry_count
+        FROM post_targets
+        WHERE id = $1
+        `,
+              [target.id],
+            );
 
-          /*
-              Save attempt history
-            */
-          await recordTargetAttempt(target.id, "failed", String(error));
+            const currentRetry = retryResult.rows[0]?.retry_count || 0;
 
-          /*
-              Recompute post status
-            */
-          await updatePostStatus(target.post_id);
+            const nextRetry = currentRetry + 1;
 
-          /*
-              Publish log
-            */
-          await pool.query(
-            `
-              INSERT INTO publish_logs
-              (
-                post_id,
-                status,
-                message
-              )
-              VALUES
-              (
-                $1,
-                $2,
-                $3
-              )
-              `,
-            [target.post_id, "failed", String(error)],
-          );
+            const nextStatus =
+              nextRetry >= MAX_RETRIES ? "permanent_failed" : "failed";
+
+            /*
+      Update target
+    */
+            await pool.query(
+              `
+      UPDATE post_targets
+      SET
+        status = $1,
+        retry_count = $2,
+        publish_message = $3,
+        processing_started_at = NULL
+      WHERE id = $4
+      `,
+              [nextStatus, nextRetry, String(error), target.id],
+            );
+
+            /*
+      Save attempt history
+    */
+            await recordTargetAttempt(target.id, nextStatus, String(error));
+
+            /*
+      Recompute post status
+    */
+            await updatePostStatus(target.post_id);
+
+            /*
+      Publish log
+    */
+            await pool.query(
+              `
+      INSERT INTO publish_logs
+      (
+        post_id,
+        status,
+        message
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3
+      )
+      `,
+              [target.post_id, nextStatus, String(error)],
+            );
+
+            if (nextStatus === "permanent_failed") {
+              console.error(
+                `Target ${target.id} permanently failed after ${MAX_RETRIES} attempts`,
+              );
+            } else {
+              console.log(
+                `Target ${target.id} failed (${nextRetry}/${MAX_RETRIES})`,
+              );
+            }
+          } catch (failureHandlerError) {
+            console.error("Failure handler crashed:", failureHandlerError);
+          }
         }
       }
 

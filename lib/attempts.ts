@@ -2,7 +2,7 @@ import { pool } from "./db";
 
 export async function recordTargetAttempt(
   targetId: number,
-  status: "success" | "failed",
+  status: "success" | "failed" | "permanent_failed",
   message: string,
 ) {
   const result = await pool.query(
