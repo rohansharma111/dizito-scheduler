@@ -16,12 +16,12 @@ export default function EditPostPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const searchParams = useSearchParams();
   const scheduleMode = searchParams.get("schedule") === "true";
-
   const minScheduleTime = (() => {
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     return local.toISOString().slice(0, 16);
   })();
+
 
   useEffect(() => {
     if (!id) return;

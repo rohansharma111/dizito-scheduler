@@ -27,7 +27,8 @@ export async function POST(
 
   const { id } = await params;
 
-  const result = await pool.query(
+  // Verify ownership
+  const postResult = await pool.query(
     `
       SELECT *
       FROM posts
@@ -38,7 +39,7 @@ export async function POST(
     [id, (session.user as any).id],
   );
 
-  if (result.rows.length === 0) {
+  if (postResult.rows.length === 0) {
     return Response.json(
       {
         error: "Post not found",
@@ -49,9 +50,22 @@ export async function POST(
     );
   }
 
-  const original = result.rows[0];
+  const original = postResult.rows[0];
 
-  if (original.status === "processing") {
+  // Prevent duplicating
+  // actively processing posts
+  const processing = await pool.query(
+    `
+      SELECT COUNT(*) AS count
+      FROM post_targets
+      WHERE
+        post_id = $1
+        AND status = 'processing'
+      `,
+    [id],
+  );
+
+  if (Number(processing.rows[0].count) > 0) {
     return Response.json(
       {
         error: "Cannot duplicate processing post",
@@ -61,19 +75,25 @@ export async function POST(
       },
     );
   }
-  const newStatus = "draft";
-  const newDate = null;
 
+  // Load targets
+  const targetsResult = await pool.query(
+    `
+      SELECT *
+      FROM post_targets
+      WHERE post_id = $1
+      `,
+    [id],
+  );
+
+  // Create duplicate post
   const duplicate = await pool.query(
     `
       INSERT INTO posts
       (
         post,
-        platform,
         schedule_time,
-        status,
         image_url,
-        social_account_id,
         user_id
       )
       VALUES
@@ -81,26 +101,46 @@ export async function POST(
         $1,
         $2,
         $3,
-        $4, 
-        $5,
-        $6,
-        $7
+        $4
       )
       RETURNING *
       `,
     [
       original.post,
-      original.platform,
-      newDate,
-      "draft",
+      null, // draft
       original.image_url,
-      original.social_account_id,
       original.user_id,
     ],
   );
 
+  const duplicatedPost = duplicate.rows[0];
+
+  // Duplicate all targets
+  for (const target of targetsResult.rows) {
+    await pool.query(
+      `
+      INSERT INTO post_targets
+      (
+        post_id,
+        social_account_id,
+        platform,
+        status
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4
+      )
+      `,
+      [duplicatedPost.id, target.social_account_id, target.platform, "draft"],
+    );
+  }
+
   return Response.json({
     success: true,
-    post: duplicate.rows[0],
+    post: duplicatedPost,
+    targets: targetsResult.rows.length,
   });
 }
