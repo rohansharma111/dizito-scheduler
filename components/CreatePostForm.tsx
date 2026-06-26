@@ -421,16 +421,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                             Retry
                           </button>
                         )}
-                        {item.publish_message && (
-                          <button
-                            className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
-                            onClick={() => {
-                              alert(item.publish_message);
-                            }}
-                          >
-                            View Error
-                          </button>
-                        )}
+
                         <button
                           className="bg-gray-700 text-white px-3 py-1 rounded ml-2"
                           onClick={async () => {

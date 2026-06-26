@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 export default function AccountsPage() {
-  
   const [accounts, setAccounts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -17,7 +16,7 @@ export default function AccountsPage() {
   const connectInstagram = () => {
     window.location.href = "/api/meta/connect";
   };
-const connectLinkedIn = () => {
+  const connectLinkedIn = () => {
     window.location.href = "/api/linkedin/login";
   };
   return (
@@ -81,11 +80,33 @@ const connectLinkedIn = () => {
           <button
             className="mt-3 bg-red-500 text-white px-3 py-1 rounded"
             onClick={async () => {
-              await fetch(`/api/accounts/${account.id}`, {
+              const confirmed = confirm("Disconnect this account?");
+
+              if (!confirmed) {
+                return;
+              }
+
+              const response = await fetch(`/api/accounts/${account.id}`, {
                 method: "DELETE",
               });
 
+              const data = await response.json();
+
+              if (!response.ok) {
+                alert(
+                  `${data.error}${
+                    data.scheduledPosts
+                      ? ` (${data.scheduledPosts} scheduled posts)`
+                      : ""
+                  }`,
+                );
+
+                return;
+              }
+
               setAccounts(accounts.filter((a) => a.id !== account.id));
+
+              alert("Account disconnected");
             }}
           >
             Disconnect
