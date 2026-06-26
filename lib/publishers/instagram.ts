@@ -1,20 +1,9 @@
-import { pool } from "@/lib/db";
+import { PublisherContext } from "./types";
 
 export async function publishToInstagram(
-  postId: number,
+  context: PublisherContext,
 ) {
-  const result =
-    await pool.query(
-      `
-      SELECT *
-      FROM posts
-      WHERE id = $1
-      `,
-      [postId],
-    );
-
-  const post =
-    result.rows[0];
+  const { post, account } = context;
 
   if (!post) {
     throw new Error(
@@ -22,27 +11,21 @@ export async function publishToInstagram(
     );
   }
 
-  const accountResult =
-    await pool.query(
-      `
-      SELECT *
-      FROM social_accounts
-      WHERE
-        id = $1
-        AND user_id = $2
-      `,
-      [
-        post.social_account_id,
-        post.user_id,
-      ],
-    );
-
-  const account =
-    accountResult.rows[0];
-
   if (!account) {
     throw new Error(
-      "Account ownership mismatch",
+      "Instagram account not found",
+    );
+  }
+
+  if (!account.instagram_business_id) {
+    throw new Error(
+      "Instagram Business ID missing",
+    );
+  }
+
+  if (!account.access_token) {
+    throw new Error(
+      "Instagram access token missing",
     );
   }
 
@@ -72,8 +55,12 @@ export async function publishToInstagram(
     await containerResponse.json();
 
   console.log(
-    "Container:",
-    container,
+    "INSTAGRAM CONTAINER:",
+    JSON.stringify(
+      container,
+      null,
+      2,
+    ),
   );
 
   if (container.error) {
@@ -84,6 +71,7 @@ export async function publishToInstagram(
     );
   }
 
+  // Meta sometimes needs a few seconds
   await new Promise(
     (resolve) =>
       setTimeout(
@@ -116,8 +104,12 @@ export async function publishToInstagram(
     await publishResponse.json();
 
   console.log(
-    "Publish:",
-    publishData,
+    "INSTAGRAM PUBLISH:",
+    JSON.stringify(
+      publishData,
+      null,
+      2,
+    ),
   );
 
   if (publishData.error) {

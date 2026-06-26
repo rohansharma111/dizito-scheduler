@@ -1,80 +1,54 @@
-import { pool } from "@/lib/db";
+import { PublisherContext } from "./types";
 
-export async function publishToFacebook(
-  postId: number
-) {
-
-  const postResult =
-    await pool.query(
-      `
-      SELECT *
-      FROM posts
-      WHERE id = $1
-      `,
-      [postId]
-    );
-
-  const post =
-    postResult.rows[0];
+export async function publishToFacebook(context: PublisherContext) {
+  const { post, account } = context;
 
   if (!post) {
-    throw new Error(
-      "Post not found"
-    );
+    throw new Error("Post not found");
   }
-
-  const accountResult =
-    await pool.query(
-      `
-      SELECT *
-      FROM social_accounts
-      WHERE id = $1
-      AND user_id = $2
-      `,
-      [
-        post.social_account_id,
-        post.user_id,
-      ]
-    );
-
-  const account =
-    accountResult.rows[0];
 
   if (!account) {
-    throw new Error(
-      "Account ownership mismatch"
-    );
+    throw new Error("Facebook account not found");
   }
 
-  const response =
-    await fetch(
-      `https://graph.facebook.com/v19.0/${account.page_id}/photos`,
-      {
-        method: "POST",
+  if (!account.page_id) {
+    throw new Error("Facebook page id missing");
+  }
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
+  if (!account.page_access_token) {
+    throw new Error("Facebook page access token missing");
+  }
 
-        body: JSON.stringify({
-          url: post.image_url,
-          caption: post.post,
-          access_token:
-            account.page_access_token,
-        }),
-      }
-    );
+  console.log("FACEBOOK PUBLISH:", {
+    pageId: account.page_id,
+    postId: post.id,
+  });
 
-  const data =
-    await response.json();
+  const response = await fetch(
+    `https://graph.facebook.com/v19.0/${account.page_id}/photos`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        url: post.image_url,
+
+        caption: post.post,
+
+        access_token: account.page_access_token,
+      }),
+    },
+  );
+
+  const data = await response.json();
+
+  console.log("FACEBOOK RESPONSE:", JSON.stringify(data, null, 2));
 
   if (data.error) {
-    throw new Error(
-      JSON.stringify(
-        data.error
-      )
-    );
+    throw new Error(JSON.stringify(data.error));
   }
 
   return data;

@@ -1,163 +1,95 @@
-import { pool } from "@/lib/db";
+import { PublisherContext } from "./types";
 
-export async function publishToLinkedIn(
-  postId: number
-) {
-  const postResult =
-    await pool.query(
-      `
-      SELECT *
-      FROM posts
-      WHERE id = $1
-      `,
-      [postId]
-    );
+export async function publishToLinkedIn(context: PublisherContext) {
+  const { post, account, target } = context;
 
-  const post =
-    postResult.rows[0];
+  const accessToken = account.access_token;
 
-  if (!post) {
-    throw new Error(
-      "Post not found"
-    );
-  }
-
-  const accountResult =
-    await pool.query(
-      `
-      SELECT *
-      FROM social_accounts
-      WHERE id = $1
-      `,
-      [post.social_account_id]
-    );
-
-  const account =
-    accountResult.rows[0];
-
-  if (!account) {
-    throw new Error(
-      "LinkedIn account not found"
-    );
-  }
-
-  const accessToken =
-    account.access_token;
-
-  const memberId =
-    account.linkedin_member_id;
+  const memberId = account.linkedin_member_id;
 
   if (!accessToken) {
-    throw new Error(
-      "LinkedIn access token missing"
-    );
+    throw new Error("LinkedIn access token missing");
   }
 
   if (!memberId) {
-    throw new Error(
-      "LinkedIn member id missing"
-    );
+    throw new Error("LinkedIn member id missing");
   }
 
-  console.log(
-    "Publishing LinkedIn Post:",
-    {
-      postId,
-      memberId,
-    }
-  );
+  console.log("Publishing LinkedIn Post:", {
+    postId: post.id,
+    targetId: target.id,
+    memberId,
+  });
 
-  const response =
-    await fetch(
-      "https://api.linkedin.com/rest/posts",
-      {
-        method: "POST",
+  const response = await fetch("https://api.linkedin.com/rest/posts", {
+    method: "POST",
 
-        headers: {
-          Authorization:
-            `Bearer ${accessToken}`,
-          "Content-Type":
-            "application/json",
-          "LinkedIn-Version":
-            "202506",
-          "X-Restli-Protocol-Version":
-            "2.0.0",
-        },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
 
-        body: JSON.stringify({
-          author:
-            `urn:li:person:${memberId}`,
+      "Content-Type": "application/json",
 
-          commentary:
-            post.post,
+      "LinkedIn-Version": "202506",
 
-          visibility:
-            "PUBLIC",
+      "X-Restli-Protocol-Version": "2.0.0",
+    },
 
-          distribution: {
-            feedDistribution:
-              "MAIN_FEED",
+    body: JSON.stringify({
+      author: `urn:li:person:${memberId}`,
 
-            targetEntities:
-              [],
+      commentary: post.post,
 
-            thirdPartyDistributionChannels:
-              [],
-          },
+      visibility: "PUBLIC",
 
-          lifecycleState:
-            "PUBLISHED",
+      distribution: {
+        feedDistribution: "MAIN_FEED",
 
-          isReshareDisabledByAuthor:
-            false,
-        }),
-      }
-    );
+        targetEntities: [],
 
-  const rawResponse =
-    await response.text();
+        thirdPartyDistributionChannels: [],
+      },
 
-  console.log(
-    "LINKEDIN STATUS:",
-    response.status
-  );
+      lifecycleState: "PUBLISHED",
 
-  console.log(
-    "LINKEDIN RAW RESPONSE:",
-    rawResponse
-  );
+      isReshareDisabledByAuthor: false,
+    }),
+  });
+
+  const rawResponse = await response.text();
+
+  console.log("LINKEDIN STATUS:", response.status);
+
+  console.log("LINKEDIN RAW RESPONSE:", rawResponse);
 
   let data: any = {};
 
   try {
-    data =
-      rawResponse
-        ? JSON.parse(
-            rawResponse
-          )
-        : {};
+    data = rawResponse ? JSON.parse(rawResponse) : {};
   } catch {
     data = {
-      raw:
-        rawResponse,
+      raw: rawResponse,
     };
   }
 
   if (!response.ok) {
-    throw new Error(
-      JSON.stringify(data)
-    );
+    throw new Error(JSON.stringify(data));
   }
 
-  console.log(
-    "LINKEDIN SUCCESS:",
-    data
-  );
+  console.log("LINKEDIN SUCCESS:", {
+    postId: post.id,
+
+    targetId: target.id,
+
+    status: response.status,
+
+    data,
+  });
 
   return {
     success: true,
-    status:
-      response.status,
+
+    status: response.status,
+
     data,
   };
 }
