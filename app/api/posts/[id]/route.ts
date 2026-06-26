@@ -30,11 +30,36 @@ export async function GET(
 
   const result = await pool.query(
     `
-      SELECT *
-      FROM posts
+      SELECT
+        p.*,
+
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', pt.id,
+              'platform', pt.platform,
+              'status', pt.status,
+              'social_account_id',
+              pt.social_account_id
+            )
+          )
+          FILTER (
+            WHERE pt.id
+            IS NOT NULL
+          ),
+          '[]'
+        ) AS targets
+
+      FROM posts p
+
+      LEFT JOIN post_targets pt
+      ON pt.post_id = p.id
+
       WHERE
-        id = $1
-        AND user_id = $2
+        p.id = $1
+        AND p.user_id = $2
+
+      GROUP BY p.id
       `,
     [id, (session.user as any).id],
   );
@@ -80,7 +105,6 @@ export async function PUT(
 
   const body = await request.json();
 
-  // Validate schedule mode
   if (body.scheduleMode && !body.schedule_time) {
     return Response.json(
       {
@@ -116,7 +140,7 @@ export async function PUT(
 
   const post = postResult.rows[0];
 
-  if (!["scheduled", "failed", "draft"].includes(post.status)) {
+  if (!["draft", "scheduled", "failed"].includes(post.status)) {
     return Response.json(
       {
         error: "Cannot edit this post",
@@ -129,25 +153,101 @@ export async function PUT(
 
   let newStatus = post.status;
 
-  // Draft -> Scheduled
   if (post.status === "draft" && body.scheduleMode && body.schedule_time) {
     newStatus = "scheduled";
   }
 
-  await pool.query(
-    `
-    UPDATE posts
-    SET
-      post = $1,
-      schedule_time = $2,
-      status = $3
-    WHERE id = $4
-    `,
-    [body.post, body.schedule_time ?? post.schedule_time, newStatus, id],
-  );
+  try {
+    await pool.query("BEGIN");
 
-  return Response.json({
-    success: true,
-    status: newStatus,
-  });
+    await pool.query(
+      `
+      UPDATE posts
+      SET
+        post = $1,
+        image_url = $2,
+        schedule_time = $3,
+        status = $4,
+        updated_at = NOW()
+      WHERE id = $5
+      `,
+      [
+        body.post,
+        body.image_url ?? post.image_url,
+        body.schedule_time ?? post.schedule_time,
+        newStatus,
+        id,
+      ],
+    );
+
+    if (Array.isArray(body.targets)) {
+      await pool.query(
+        `
+        DELETE
+        FROM post_targets
+        WHERE post_id = $1
+        `,
+        [id],
+      );
+
+      for (const target of body.targets) {
+        await pool.query(
+          `
+          INSERT INTO
+          post_targets
+          (
+            post_id,
+            social_account_id,
+            platform,
+            status
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4
+          )
+          `,
+          [
+            id,
+            target.social_account_id,
+            target.platform,
+            newStatus === "draft" ? "draft" : "scheduled",
+          ],
+        );
+      }
+    } else if (post.status === "draft" && newStatus === "scheduled") {
+      await pool.query(
+        `
+        UPDATE post_targets
+        SET status =
+          'scheduled'
+        WHERE
+          post_id = $1
+        `,
+        [id],
+      );
+    }
+
+    await pool.query("COMMIT");
+
+    return Response.json({
+      success: true,
+      status: newStatus,
+    });
+  } catch (error) {
+    await pool.query("ROLLBACK");
+
+    console.error(error);
+
+    return Response.json(
+      {
+        error: "Failed to update post",
+      },
+      {
+        status: 500,
+      },
+    );
+  }
 }
