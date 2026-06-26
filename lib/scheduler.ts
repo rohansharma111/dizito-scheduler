@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { pool } from "./db";
 import { publishers } from "./publishers";
+import { updatePostStatus } from "./post-status";
 
 let started = false;
 
@@ -9,18 +10,17 @@ export function startScheduler() {
 
   started = true;
 
-  console.log("DIZITO_V4_SCHEDULER_STARTED");
+  console.log("DIZITO_V5_SCHEDULER_STARTED");
 
   cron.schedule("* * * * *", async () => {
     try {
       console.log("=================================");
-      console.log("DIZITO_V4_SCHEDULER_RUNNING");
+      console.log("DIZITO_V5_SCHEDULER_RUNNING");
       console.log("Time:", new Date().toISOString());
 
       /*
         Recover stuck targets
       */
-
       await pool.query(`
         UPDATE post_targets
         SET
@@ -33,32 +33,30 @@ export function startScheduler() {
       `);
 
       /*
-        Atomically claim targets
+        Claim targets atomically
       */
-
       const result = await pool.query(`
-          UPDATE post_targets
-          SET
-            status = 'processing',
-            processing_started_at = NOW()
-          WHERE id IN (
-            SELECT pt.id
-            FROM post_targets pt
-            JOIN posts p
-              ON p.id = pt.post_id
-            WHERE
-              pt.status = 'scheduled'
-              AND p.schedule_time <= NOW()
-            LIMIT 20
-          )
-          RETURNING *
-        `);
+        UPDATE post_targets
+        SET
+          status = 'processing',
+          processing_started_at = NOW()
+        WHERE id IN (
+          SELECT pt.id
+          FROM post_targets pt
+          JOIN posts p
+            ON p.id = pt.post_id
+          WHERE
+            pt.status = 'scheduled'
+            AND p.schedule_time <= NOW()
+          LIMIT 20
+        )
+        RETURNING *
+      `);
 
       console.log("Claimed Targets:", result.rows.length);
 
       if (result.rows.length === 0) {
         console.log("No targets to process");
-
         return;
       }
 
@@ -66,6 +64,9 @@ export function startScheduler() {
         try {
           console.log(`Processing Target ${target.id} (${target.platform})`);
 
+          /*
+            Find publisher
+          */
           const publisher =
             publishers[
               target.platform.toLowerCase() as keyof typeof publishers
@@ -78,7 +79,6 @@ export function startScheduler() {
           /*
             Load post
           */
-
           const postResult = await pool.query(
             `
               SELECT *
@@ -97,7 +97,6 @@ export function startScheduler() {
           /*
             Load account
           */
-
           const accountResult = await pool.query(
             `
               SELECT *
@@ -116,7 +115,6 @@ export function startScheduler() {
           /*
             Publisher context
           */
-
           const context = {
             post,
             target,
@@ -126,59 +124,32 @@ export function startScheduler() {
           /*
             Publish
           */
-
           await publisher(context);
 
           /*
             Mark target success
           */
-
           await pool.query(
             `
             UPDATE post_targets
             SET
               status = 'published',
               published_at = NOW(),
-              processing_started_at = NULL
+              processing_started_at = NULL,
+              publish_message = NULL
             WHERE id = $1
             `,
             [target.id],
           );
 
           /*
-            Check remaining
+            Recompute post status
           */
-
-          const remainingTargets = await pool.query(
-            `
-              SELECT COUNT(*) AS count
-              FROM post_targets
-              WHERE
-                post_id = $1
-                AND status != 'published'
-              `,
-            [target.post_id],
-          );
-
-          if (Number(remainingTargets.rows[0].count) === 0) {
-            await pool.query(
-              `
-              UPDATE posts
-              SET
-                status = 'published',
-                published_at = NOW()
-              WHERE id = $1
-              `,
-              [target.post_id],
-            );
-
-            console.log(`Post ${target.post_id} fully published`);
-          }
+          await updatePostStatus(target.post_id);
 
           /*
-            Logs
+            Publish log
           */
-
           await pool.query(
             `
             INSERT INTO publish_logs
@@ -204,7 +175,6 @@ export function startScheduler() {
           /*
             Mark target failed
           */
-
           await pool.query(
             `
             UPDATE post_targets
@@ -218,24 +188,13 @@ export function startScheduler() {
           );
 
           /*
-            Temporary aggregate
+            Recompute post status
           */
-
-          await pool.query(
-            `
-            UPDATE posts
-            SET
-              status = 'failed',
-              publish_message = $1
-            WHERE id = $2
-            `,
-            [String(error), target.post_id],
-          );
+          await updatePostStatus(target.post_id);
 
           /*
-            Logs
+            Publish log
           */
-
           await pool.query(
             `
             INSERT INTO publish_logs
