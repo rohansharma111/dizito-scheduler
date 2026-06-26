@@ -175,6 +175,20 @@ export default function EditPostPage() {
           loading ? "bg-gray-400" : "bg-blue-600"
         }`}
         onClick={async () => {
+          if (!post.trim()) {
+            alert("Please enter a post");
+            return;
+          }
+
+          if (selectedAccounts.length === 0) {
+            alert("Please select at least one target account");
+            return;
+          }
+
+          if ((status !== "draft" || scheduleMode) && !scheduleTime) {
+            alert("Please select a schedule time");
+            return;
+          }
           setLoading(true);
 
           try {

@@ -104,7 +104,19 @@ export async function PUT(
   const { id } = await params;
 
   const body = await request.json();
-
+  if (
+    !Array.isArray(body.social_account_ids) ||
+    body.social_account_ids.length === 0
+  ) {
+    return Response.json(
+      {
+        error: "Please select at least one target account",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
   if (body.scheduleMode && !body.schedule_time) {
     return Response.json(
       {
