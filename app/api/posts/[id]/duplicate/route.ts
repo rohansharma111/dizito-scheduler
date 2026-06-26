@@ -94,14 +94,16 @@ export async function POST(
         post,
         schedule_time,
         image_url,
-        user_id
+        user_id,
+        status
       )
       VALUES
       (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
       )
       RETURNING *
       `,
@@ -110,6 +112,7 @@ export async function POST(
       null, // draft
       original.image_url,
       original.user_id,
+      "draft",
     ],
   );
 
