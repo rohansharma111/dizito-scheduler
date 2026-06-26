@@ -10,7 +10,7 @@ export async function updatePostStatus(postId: number) {
     [postId],
   );
 
-  const statuses = result.rows.map((row) => row.status);
+  const statuses = result.rows.map((r) => r.status);
 
   if (statuses.length === 0) {
     return;
@@ -35,11 +35,20 @@ export async function updatePostStatus(postId: number) {
     Fully Published
   */
     postStatus = "published";
-  } else if (statuses.includes("failed") && statuses.includes("published")) {
+  } else if (statuses.every((s) => s === "permanent_failed")) {
+
+  /*
+    Permanent Failed
+  */
+    postStatus = "permanent_failed";
+  } else if (
 
   /*
     Partial Failed
   */
+    statuses.some((s) => s === "failed" || s === "permanent_failed") &&
+    statuses.some((s) => s === "published")
+  ) {
     postStatus = "partial_failed";
   } else if (statuses.every((s) => s === "failed")) {
 
@@ -53,23 +62,47 @@ export async function updatePostStatus(postId: number) {
     Scheduled
   */
     postStatus = "scheduled";
+  } else {
+
+  /*
+    Mixed state fallback
+  */
+    postStatus = "partial_failed";
   }
 
+  /*
+    Update status
+  */
   await pool.query(
     `
     UPDATE posts
     SET
-      status = $1,
-      published_at =
-        CASE
-          WHEN $1 = 'published'
-          THEN NOW()
-          ELSE published_at
-        END
+      status = $1
     WHERE id = $2
     `,
     [postStatus, postId],
   );
 
+  /*
+    First successful publish
+  */
+  if (postStatus === "published") {
+    await pool.query(
+      `
+      UPDATE posts
+      SET
+        published_at =
+          COALESCE(
+            published_at,
+            NOW()
+          )
+      WHERE id = $1
+      `,
+      [postId],
+    );
+  }
+
   console.log(`POST ${postId} STATUS => ${postStatus}`);
+
+  return postStatus;
 }
