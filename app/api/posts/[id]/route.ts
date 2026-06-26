@@ -160,6 +160,8 @@ export async function PUT(
   try {
     await pool.query("BEGIN");
 
+    // update post
+
     await pool.query(
       `
       UPDATE posts
@@ -180,7 +182,11 @@ export async function PUT(
       ],
     );
 
-    if (Array.isArray(body.targets)) {
+    // update targets
+
+    if (Array.isArray(body.social_account_ids)) {
+      // remove old targets
+
       await pool.query(
         `
         DELETE
@@ -190,7 +196,24 @@ export async function PUT(
         [id],
       );
 
-      for (const target of body.targets) {
+      // fetch selected accounts
+
+      const accounts = await pool.query(
+        `
+          SELECT
+            id,
+            platform
+          FROM social_accounts
+          WHERE
+            id = ANY($1)
+            AND user_id = $2
+          `,
+        [body.social_account_ids, (session.user as any).id],
+      );
+
+      // recreate targets
+
+      for (const account of accounts.rows) {
         await pool.query(
           `
           INSERT INTO
@@ -211,18 +234,23 @@ export async function PUT(
           `,
           [
             id,
-            target.social_account_id,
-            target.platform,
+            account.id,
+            account.platform,
             newStatus === "draft" ? "draft" : "scheduled",
           ],
         );
       }
-    } else if (post.status === "draft" && newStatus === "scheduled") {
+    }
+
+    // draft -> scheduled migration
+
+    if (post.status === "draft" && newStatus === "scheduled") {
       await pool.query(
         `
         UPDATE post_targets
-        SET status =
-          'scheduled'
+        SET
+          status =
+            'scheduled'
         WHERE
           post_id = $1
         `,
