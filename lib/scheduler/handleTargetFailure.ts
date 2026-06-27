@@ -172,8 +172,7 @@ export async function handleTargetFailure({
       `Target ${target.id} permanently failed after ${MAX_RETRIES} attempts`,
     );
   } else {
-
-  /*
+    /*
     Retry scheduled
   */
     await createEvent(
@@ -196,4 +195,7 @@ export async function handleTargetFailure({
 
     console.log(`Target ${target.id} failed (${nextRetry}/${MAX_RETRIES})`);
   }
+  return {
+    status: nextStatus,
+  };
 }

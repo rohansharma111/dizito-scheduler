@@ -5,7 +5,7 @@ export async function createEvent(
   entityType: string,
   entityId: number,
   userId?: number,
-  payload?: any
+  payload?: any,
 ) {
   await pool.query(
     `
@@ -26,12 +26,6 @@ export async function createEvent(
       $5
     )
     `,
-    [
-      eventType,
-      entityType,
-      entityId,
-      userId || null,
-      payload || {}
-    ]
+    [eventType, entityType, entityId, userId || null, payload ?? {}],
   );
 }

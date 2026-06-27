@@ -1,11 +1,10 @@
 import cron from "node-cron";
 import { recoverTargets } from "./scheduler/recoverTargets";
 import { claimTargets } from "./scheduler/claimTargets";
-import { processTarget } from "./scheduler/processTarget";
-import { handleTargetSuccess } from "./scheduler/handleTargetSuccess";
-import { handleTargetFailure } from "./scheduler/handleTargetFailure";
 import { createEvent } from "./events";
 import { logger } from "./logger";
+import { updateHeartbeat } from "./scheduler/updateHeartbeat";
+import { processOneTarget } from "./scheduler/processOneTarget";
 
 let started = false;
 
@@ -37,7 +36,13 @@ export function startScheduler() {
           Claim targets
         */
       const targets = await claimTargets();
-
+      const metrics = {
+        claimed: targets.length,
+        published: 0,
+        failed: 0,
+        permanentFailed: 0,
+        retried: 0,
+      };
       logger.info(`Claimed Targets: ${targets.length}`);
 
       if (targets.length === 0) {
@@ -46,13 +51,17 @@ export function startScheduler() {
           "scheduler",
           0,
           undefined,
-          {
-            processed: 0,
-          },
+          metrics,
         );
 
         logger.info("No targets to process");
-
+        await updateHeartbeat({
+          claimed: 0,
+          published: 0,
+          failed: 0,
+          permanentFailed: 0,
+          retried: 0,
+        });
         return;
       }
 
@@ -60,27 +69,19 @@ export function startScheduler() {
           Process targets
         */
       for (const target of targets) {
-        let post = null;
-        let account = null;
-        let userId = null;
+        const result = await processOneTarget(target);
 
-        try {
-          ({ post, account, userId } = await processTarget(target));
+        if (result.success) {
+          metrics.published++;
+        } else {
+          metrics.failed++;
 
-          await handleTargetSuccess(target, post, account);
-        } catch (error) {
-          logger.error(`Target ${target.id} failed`, error);
+          if (result.status === "permanent_failed") {
+            metrics.permanentFailed++;
+          }
 
-          try {
-            await handleTargetFailure({
-              target,
-              post,
-              account,
-              userId,
-              error,
-            });
-          } catch (failureHandlerError) {
-            logger.error("Failure handler crashed", failureHandlerError);
+          if (result.status === "retry_scheduled") {
+            metrics.retried++;
           }
         }
       }
@@ -90,11 +91,9 @@ export function startScheduler() {
         "scheduler",
         0,
         undefined,
-        {
-          processed: targets.length,
-        },
+        metrics,
       );
-
+      await updateHeartbeat(metrics);
       logger.info("Scheduler cycle completed");
     } catch (error) {
       logger.error("Scheduler Error", error);
