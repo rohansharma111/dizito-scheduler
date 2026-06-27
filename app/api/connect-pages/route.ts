@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { createEvent } from "@/lib/events";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -15,6 +16,8 @@ export async function POST(request: Request) {
       },
     );
   }
+
+  const userId = (session.user as any).id;
 
   const body = await request.json();
 
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
       ORDER BY id DESC
       LIMIT 1
       `,
-    [(session.user as any).id],
+    [userId],
   );
 
   if (selectionResult.rows.length === 0) {
@@ -59,139 +62,222 @@ export async function POST(request: Request) {
 
   const accessToken = oauthData.access_token;
 
-  const connectedAccounts = [];
+  const connectedAccounts: string[] = [];
 
-  for (const selectedId of selectedPages) {
-    const page = pages.find((p: any) => p.id === selectedId);
+  try {
+    await pool.query("BEGIN");
 
-    if (!page) {
-      continue;
-    }
+    for (const selectedId of selectedPages) {
+      const page = pages.find((p: any) => p.id === selectedId);
 
-    const userId = (session.user as any).id;
+      if (!page) {
+        continue;
+      }
 
-    /*
-    FACEBOOK ACCOUNT
-  */
+      /*
+        FACEBOOK
+      */
 
-    const existingFacebook = await pool.query(
-      `
-      SELECT id
-      FROM social_accounts
-      WHERE
-        page_id = $1
-        AND platform = 'facebook'
-        AND user_id = $2
-      `,
-      [page.id, userId],
-    );
-
-    if (existingFacebook.rows.length === 0) {
-      await pool.query(
+      const existingFacebook = await pool.query(
         `
-      INSERT INTO social_accounts
-      (
-        platform,
-        account_name,
-        access_token,
-        page_id,
-        user_id,
-        page_access_token
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
-      )
-      `,
-        [
-          "facebook",
-          page.name,
-          accessToken,
-          page.id,
-          userId,
-          page.access_token,
-        ],
+          SELECT id
+          FROM social_accounts
+          WHERE
+            page_id = $1
+            AND platform = 'facebook'
+            AND user_id = $2
+          `,
+        [page.id, userId],
       );
 
-      connectedAccounts.push(`${page.name} (Facebook)`);
+      if (existingFacebook.rows.length === 0) {
+        const facebook = await pool.query(
+          `
+            INSERT INTO social_accounts
+            (
+              platform,
+              account_name,
+              access_token,
+              page_id,
+              user_id,
+              page_access_token
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6
+            )
+            RETURNING id
+            `,
+          [
+            "facebook",
+            page.name,
+            accessToken,
+            page.id,
+            userId,
+            page.access_token,
+          ],
+        );
+
+        await createEvent(
+          "ACCOUNT_CONNECTED",
+          "social_account",
+          facebook.rows[0].id,
+          userId,
+          {
+            platform: "facebook",
+            accountName: page.name,
+            pageId: page.id,
+          },
+        );
+
+        connectedAccounts.push(`${page.name} (Facebook)`);
+      } else {
+        await createEvent(
+          "ACCOUNT_CONNECTION_SKIPPED",
+          "social_account",
+          existingFacebook.rows[0].id,
+          userId,
+          {
+            platform: "facebook",
+            reason: "duplicate",
+          },
+        );
+      }
+
+      /*
+        INSTAGRAM
+      */
+
+      const instagramResponse = await fetch(
+        `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+      );
+
+      const instagramData = await instagramResponse.json();
+
+      const instagramId = instagramData?.instagram_business_account?.id;
+
+      if (!instagramId) {
+        console.log("No Instagram account linked:", page.name);
+
+        continue;
+      }
+
+      const existingInstagram = await pool.query(
+        `
+          SELECT id
+          FROM social_accounts
+          WHERE
+            instagram_business_id = $1
+            AND platform = 'instagram'
+            AND user_id = $2
+          `,
+        [instagramId, userId],
+      );
+
+      if (existingInstagram.rows.length === 0) {
+        const instagram = await pool.query(
+          `
+            INSERT INTO social_accounts
+            (
+              platform,
+              account_name,
+              access_token,
+              page_id,
+              instagram_business_id,
+              user_id,
+              page_access_token
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7
+            )
+            RETURNING id
+            `,
+          [
+            "instagram",
+            page.name,
+            accessToken,
+            page.id,
+            instagramId,
+            userId,
+            page.access_token,
+          ],
+        );
+
+        await createEvent(
+          "ACCOUNT_CONNECTED",
+          "social_account",
+          instagram.rows[0].id,
+          userId,
+          {
+            platform: "instagram",
+            accountName: page.name,
+            instagramBusinessId: instagramId,
+          },
+        );
+
+        connectedAccounts.push(`${page.name} (Instagram)`);
+      } else {
+        await createEvent(
+          "ACCOUNT_CONNECTION_SKIPPED",
+          "social_account",
+          existingInstagram.rows[0].id,
+          userId,
+          {
+            platform: "instagram",
+            reason: "duplicate",
+          },
+        );
+      }
     }
 
     /*
-    INSTAGRAM ACCOUNT
-  */
+      Cleanup OAuth cache
+    */
 
-    const instagramResponse = await fetch(
-      `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
-    );
-
-    const instagramData = await instagramResponse.json();
-
-    const instagramId = instagramData?.instagram_business_account?.id;
-
-    if (!instagramId) {
-      console.log("No Instagram account linked:", page.name);
-
-      continue;
-    }
-
-    const existingInstagram = await pool.query(
+    await pool.query(
       `
-      SELECT id
-      FROM social_accounts
-      WHERE
-        instagram_business_id = $1
-        AND platform = 'instagram'
-        AND user_id = $2
+      DELETE
+      FROM oauth_page_selections
+      WHERE user_id = $1
       `,
-      [instagramId, userId],
+      [userId],
     );
 
-    if (existingInstagram.rows.length === 0) {
-      await pool.query(
-        `
-      INSERT INTO social_accounts
-      (
-        platform,
-        account_name,
-        access_token,
-        page_id,
-        instagram_business_id,
-        user_id,
-        page_access_token
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7
-      )
-      `,
-        [
-          "instagram",
-          page.name,
-          accessToken,
-          page.id,
-          instagramId,
-          userId,
-          page.access_token,
-        ],
-      );
+    await pool.query("COMMIT");
 
-      connectedAccounts.push(`${page.name} (Instagram)`);
-    }
+    return Response.json({
+      success: true,
+
+      total: connectedAccounts.length,
+
+      connectedAccounts,
+
+      message: `${connectedAccounts.length} account(s) connected`,
+    });
+  } catch (error) {
+    await pool.query("ROLLBACK");
+
+    console.error(error);
+
+    return Response.json(
+      {
+        error: "Failed to connect accounts",
+      },
+      {
+        status: 500,
+      },
+    );
   }
-
-  return Response.json({
-    success: true,
-    connectedAccounts,
-  });
 }

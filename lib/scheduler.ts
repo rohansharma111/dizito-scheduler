@@ -1,275 +1,107 @@
 import cron from "node-cron";
-import { pool } from "./db";
-import { publishers } from "./publishers";
-import { updatePostStatus } from "./post-status";
-import { recordTargetAttempt } from "./attempts";
+import { recoverTargets } from "./scheduler/recoverTargets";
+import { claimTargets } from "./scheduler/claimTargets";
+import { processTarget } from "./scheduler/processTarget";
+import { handleTargetSuccess } from "./scheduler/handleTargetSuccess";
+import { handleTargetFailure } from "./scheduler/handleTargetFailure";
+import { createEvent } from "./events";
+import { logger } from "./logger";
 
 let started = false;
-const MAX_RETRIES = 5;
+
 export function startScheduler() {
   if (started) return;
 
   started = true;
 
-  console.log("DIZITO_V6_SCHEDULER_STARTED");
+  logger.info("DIZITO_V7_SCHEDULER_STARTED");
 
   cron.schedule("* * * * *", async () => {
     try {
-      console.log("=================================");
-      console.log("DIZITO_V6_SCHEDULER_RUNNING");
-      console.log("Time:", new Date().toISOString());
+      logger.info("=================================");
+
+      logger.info("DIZITO_V7_SCHEDULER_RUNNING");
+
+      logger.info(new Date().toISOString());
+
+      await createEvent("SCHEDULER_CYCLE_STARTED", "scheduler", 0, undefined, {
+        timestamp: new Date(),
+      });
 
       /*
           Recover stuck targets
         */
-      await pool.query(`
-          UPDATE post_targets
-          SET
-            status = 'scheduled',
-            processing_started_at = NULL
-          WHERE
-            status = 'processing'
-            AND processing_started_at <
-                NOW() - INTERVAL '15 minutes'
-        `);
+      await recoverTargets();
 
       /*
-          Claim targets atomically
+          Claim targets
         */
-      const result = await pool.query(`
-            UPDATE post_targets
-            SET
-              status = 'processing',
-              processing_started_at = NOW()
-            WHERE id IN (
-              SELECT pt.id
-              FROM post_targets pt
-              JOIN posts p
-                ON p.id = pt.post_id
-              WHERE
-                pt.status = 'scheduled'
-                AND p.schedule_time <= NOW()
-              ORDER BY
-                p.schedule_time,
-                pt.id
-              LIMIT 20
-            )
-            RETURNING *
-          `);
+      const targets = await claimTargets();
 
-      console.log("Claimed Targets:", result.rows.length);
+      logger.info(`Claimed Targets: ${targets.length}`);
 
-      if (result.rows.length === 0) {
-        console.log("No targets to process");
+      if (targets.length === 0) {
+        await createEvent(
+          "SCHEDULER_CYCLE_COMPLETED",
+          "scheduler",
+          0,
+          undefined,
+          {
+            processed: 0,
+          },
+        );
+
+        logger.info("No targets to process");
+
         return;
       }
 
-      for (const target of result.rows) {
+      /*
+          Process targets
+        */
+      for (const target of targets) {
+        let post = null;
+        let account = null;
+        let userId = null;
+
         try {
-          console.log(`Processing Target ${target.id} (${target.platform})`);
+          ({ post, account, userId } = await processTarget(target));
 
-          /*
-              Find publisher
-            */
-          const publisher =
-            publishers[
-              target.platform.toLowerCase() as keyof typeof publishers
-            ];
-
-          if (!publisher) {
-            throw new Error(`Unsupported platform: ${target.platform}`);
-          }
-
-          /*
-              Load post
-            */
-          const postResult = await pool.query(
-            `
-                SELECT *
-                FROM posts
-                WHERE id = $1
-                `,
-            [target.post_id],
-          );
-
-          const post = postResult.rows[0];
-
-          if (!post) {
-            throw new Error("Post not found");
-          }
-
-          /*
-              Load account
-            */
-          const accountResult = await pool.query(
-            `
-                SELECT *
-                FROM social_accounts
-                WHERE id = $1
-                `,
-            [target.social_account_id],
-          );
-
-          const account = accountResult.rows[0];
-
-          if (!account) {
-            throw new Error("Account not found");
-          }
-
-          /*
-              Publisher context
-            */
-          const context = {
-            post,
-            target,
-            account,
-          };
-
-          /*
-              Publish
-            */
-          await publisher(context);
-
-          /*
-              Mark target success
-            */
-          await pool.query(
-            `
-              UPDATE post_targets
-              SET
-                status = 'published',
-                published_at = NOW(),
-                processing_started_at = NULL,
-                publish_message = NULL
-              WHERE id = $1
-              `,
-            [target.id],
-          );
-
-          /*
-              Save attempt history
-            */
-          await recordTargetAttempt(
-            target.id,
-            "success",
-            `Published to ${target.platform}`,
-          );
-
-          /*
-              Recompute post status
-            */
-          await updatePostStatus(target.post_id);
-
-          /*
-              Publish log
-            */
-          await pool.query(
-            `
-              INSERT INTO publish_logs
-              (
-                post_id,
-                status,
-                message
-              )
-              VALUES
-              (
-                $1,
-                $2,
-                $3
-              )
-              `,
-            [target.post_id, "success", `Published to ${target.platform}`],
-          );
-
-          console.log(`Target ${target.id} published`);
+          await handleTargetSuccess(target, post, account);
         } catch (error) {
-          console.error(`Target ${target.id} failed`, error);
+          logger.error(`Target ${target.id} failed`, error);
 
           try {
-            /*
-      Get current retry count
-    */
-            const retryResult = await pool.query(
-              `
-        SELECT retry_count
-        FROM post_targets
-        WHERE id = $1
-        `,
-              [target.id],
-            );
-
-            const currentRetry = retryResult.rows[0]?.retry_count || 0;
-
-            const nextRetry = currentRetry + 1;
-
-            const nextStatus =
-              nextRetry >= MAX_RETRIES ? "permanent_failed" : "failed";
-
-            /*
-      Update target
-    */
-            await pool.query(
-              `
-      UPDATE post_targets
-      SET
-        status = $1,
-        retry_count = $2,
-        publish_message = $3,
-        processing_started_at = NULL
-      WHERE id = $4
-      `,
-              [nextStatus, nextRetry, String(error), target.id],
-            );
-
-            /*
-      Save attempt history
-    */
-            await recordTargetAttempt(target.id, nextStatus, String(error));
-
-            /*
-      Recompute post status
-    */
-            await updatePostStatus(target.post_id);
-
-            /*
-      Publish log
-    */
-            await pool.query(
-              `
-      INSERT INTO publish_logs
-      (
-        post_id,
-        status,
-        message
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3
-      )
-      `,
-              [target.post_id, nextStatus, String(error)],
-            );
-
-            if (nextStatus === "permanent_failed") {
-              console.error(
-                `Target ${target.id} permanently failed after ${MAX_RETRIES} attempts`,
-              );
-            } else {
-              console.log(
-                `Target ${target.id} failed (${nextRetry}/${MAX_RETRIES})`,
-              );
-            }
+            await handleTargetFailure({
+              target,
+              post,
+              account,
+              userId,
+              error,
+            });
           } catch (failureHandlerError) {
-            console.error("Failure handler crashed:", failureHandlerError);
+            logger.error("Failure handler crashed", failureHandlerError);
           }
         }
       }
 
-      console.log("Scheduler cycle completed");
+      await createEvent(
+        "SCHEDULER_CYCLE_COMPLETED",
+        "scheduler",
+        0,
+        undefined,
+        {
+          processed: targets.length,
+        },
+      );
+
+      logger.info("Scheduler cycle completed");
     } catch (error) {
-      console.error("Scheduler Error:", error);
+      logger.error("Scheduler Error", error);
+
+      await createEvent("SCHEDULER_CYCLE_FAILED", "scheduler", 0, undefined, {
+        error: String(error),
+      });
     }
   });
 }

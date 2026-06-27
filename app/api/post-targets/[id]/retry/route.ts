@@ -1,6 +1,7 @@
 import { pool } from "../../../../../lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../../lib/auth";
+import { createEvent } from "../../../../../lib/events";
 
 export async function POST(
   request: Request,
@@ -27,152 +28,209 @@ export async function POST(
 
   const { id } = await params;
 
-  const result = await pool.query(
-    `
-      SELECT
-        pt.*,
-        p.user_id
-      FROM post_targets pt
+  const client = await pool.connect();
 
-      INNER JOIN posts p
-        ON p.id = pt.post_id
+  try {
+    await client.query("BEGIN");
 
-      WHERE pt.id = $1
+    const result = await client.query(
+      `
+        SELECT
+          pt.*,
+          p.user_id,
+          p.id AS post_id
+        FROM post_targets pt
+
+        INNER JOIN posts p
+          ON p.id = pt.post_id
+
+        WHERE
+          pt.id = $1
+        `,
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return Response.json(
+        {
+          error: "Target not found",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+
+    const target = result.rows[0];
+
+    if (target.user_id !== (session.user as any).id) {
+      await client.query("ROLLBACK");
+
+      return Response.json(
+        {
+          error: "Forbidden",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    if (!["failed", "permanent_failed"].includes(target.status)) {
+      await client.query("ROLLBACK");
+
+      return Response.json(
+        {
+          error: "Only failed targets can be retried",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    /*
+      Determine next attempt
+    */
+
+    const attemptResult = await client.query(
+      `
+        SELECT COUNT(*) AS count
+        FROM post_target_attempts
+        WHERE
+          post_target_id = $1
+        `,
+      [target.id],
+    );
+
+    const nextAttempt = Number(attemptResult.rows[0].count) + 1;
+
+    /*
+      Preserve retry history
+    */
+
+    await client.query(
+      `
+      INSERT INTO
+      post_target_attempts
+      (
+        post_target_id,
+        attempt_number,
+        status,
+        message
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4
+      )
       `,
-    [id],
-  );
-
-  if (result.rows.length === 0) {
-    return Response.json(
-      {
-        error: "Target not found",
-      },
-      {
-        status: 404,
-      },
+      [
+        target.id,
+        nextAttempt,
+        "retry",
+        `Retry requested for ${target.platform}`,
+      ],
     );
-  }
 
-  const target = result.rows[0];
-
-  if (target.user_id !== (session.user as any).id) {
-    return Response.json(
-      {
-        error: "Forbidden",
-      },
-      {
-        status: 403,
-      },
-    );
-  }
-
-  /*
-      Allow both:
-      failed
-      permanent_failed
-    */
-  if (!["failed", "permanent_failed"].includes(target.status)) {
-    return Response.json(
-      {
-        error: "Only failed targets can be retried",
-      },
-      {
-        status: 400,
-      },
-    );
-  }
-
-  /*
-      Get attempt count
-    */
-  const attemptResult = await pool.query(
-    `
-      SELECT COUNT(*) AS count
-      FROM post_target_attempts
-      WHERE
-        post_target_id = $1
-      `,
-    [target.id],
-  );
-
-  const nextAttempt = Number(attemptResult.rows[0].count) + 1;
-
-  /*
-      Save retry history
-    */
-  await pool.query(
-    `
-    INSERT INTO
-    post_target_attempts
-    (
-      post_target_id,
-      attempt_number,
-      status,
-      message
-    )
-    VALUES
-    (
-      $1,
-      $2,
-      $3,
-      $4
-    )
-    `,
-    [target.id, nextAttempt, "retry", `Retry requested for ${target.platform}`],
-  );
-
-  /*
+    /*
       Reset target
     */
-  await pool.query(
-    `
-    UPDATE post_targets
-    SET
-      status = 'scheduled',
-      retry_count = 0,
-      publish_message = NULL,
-      processing_started_at = NULL
-    WHERE id = $1
-    `,
-    [id],
-  );
 
-  /*
-      Recompute post status
+    await client.query(
+      `
+      UPDATE post_targets
+      SET
+        status = 'scheduled',
+        retry_count = 0,
+        next_retry_at = NULL,
+        publish_message = NULL,
+        processing_started_at = NULL,
+        publish_lock_uuid = NULL
+      WHERE
+        id = $1
+      `,
+      [target.id],
+    );
+
+    /*
+      Trigger post recomputation
     */
-  await pool.query(
-    `
-    UPDATE posts
-    SET
-      updated_at = NOW()
-    WHERE id = $1
-    `,
-    [target.post_id],
-  );
 
-  /*
+    await client.query(
+      `
+      UPDATE posts
+      SET
+        updated_at = NOW()
+      WHERE
+        id = $1
+      `,
+      [target.post_id],
+    );
+
+    /*
       Legacy publish log
     */
-  await pool.query(
-    `
-    INSERT INTO publish_logs
-    (
-      post_id,
-      status,
-      message
-    )
-    VALUES
-    (
-      $1,
-      $2,
-      $3
-    )
-    `,
-    [target.post_id, "retry", `Retry requested for ${target.platform}`],
-  );
 
-  return Response.json({
-    success: true,
-    retryAttempt: nextAttempt,
-  });
+    await client.query(
+      `
+      INSERT INTO
+      publish_logs
+      (
+        post_id,
+        status,
+        message
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3
+      )
+      `,
+      [target.post_id, "retry", `Retry requested for ${target.platform}`],
+    );
+
+    /*
+      System Event
+    */
+
+    await createEvent(
+      "RETRY_TRIGGERED",
+      "post_target",
+      target.id,
+      target.user_id,
+      {
+        platform: target.platform,
+        postId: target.post_id,
+        retryAttempt: nextAttempt,
+      },
+    );
+
+    await client.query("COMMIT");
+
+    return Response.json({
+      success: true,
+      retryAttempt: nextAttempt,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error(error);
+
+    return Response.json(
+      {
+        error: "Retry failed",
+      },
+      {
+        status: 500,
+      },
+    );
+  } finally {
+    client.release();
+  }
 }
