@@ -21,6 +21,11 @@ export default function Sidebar({
             Dashboard
           </Link>
 
+          <Link className="block px-3 py-2 rounded hover:bg-gray-100"
+                href="/bulk-upload">
+            Bulk Upload
+          </Link>
+
           <Link
             className="block px-3 py-2 rounded hover:bg-gray-100"
             href="/posts"
