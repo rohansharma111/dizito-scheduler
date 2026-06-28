@@ -68,20 +68,30 @@ export default function BulkUploadPage() {
     Papa.parse<CsvRow>(file, {
       header: true,
       skipEmptyLines: true,
+      delimiter: ",",
 
       transformHeader: (header) =>
         header
-          .replace(/^\uFEFF/, "") // remove BOM
+          .replace(/^\uFEFF/, "")
           .trim()
           .toLowerCase(),
 
       complete: (result) => {
         console.log("PARSED:", result.data);
 
-        const parsedRows = result.data;
+        const parsedRows = result.data as CsvRow[];
+
+        /*
+        Reject malformed CSVs
+      */
+        if (parsedRows.length && Object.keys(parsedRows[0]).length === 1) {
+          alert("Invalid CSV format.\n\nPlease use the downloadable template.");
+
+          setLoading(false);
+          return;
+        }
 
         setRows(parsedRows);
-
         setValidations(parsedRows.map(validateRow));
 
         setLoading(false);
@@ -110,16 +120,11 @@ export default function BulkUploadPage() {
 
     if (validRows.length === 0) {
       alert("No valid rows found");
-
       return;
     }
 
     try {
       setImporting(true);
-
-      /*
-        API next step
-      */
 
       const response = await fetch("/api/posts/bulk", {
         method: "POST",
@@ -136,19 +141,16 @@ export default function BulkUploadPage() {
       const result = await response.json();
 
       setMessage(
-        `
-Created:
-${result.created}
+        `✅ Created: ${result.created}
 
-Failed:
-${result.failed}
-`,
+❌ Failed: ${result.failed}`,
       );
 
-      setMessage(`Ready to import ${validRows.length} rows`);
+      if (result.errors?.length) {
+        console.log("Bulk Errors:", result.errors);
+      }
     } catch (error) {
       console.error(error);
-
       alert("Import failed");
     } finally {
       setImporting(false);
@@ -174,6 +176,10 @@ Hello World,2026-07-01T10:00:00,https://picsum.photos/400,1|2
 Another Post,2026-07-02T15:00:00,,2|3`}
         </pre>
       </div>
+
+      <a href="/bulk-template.csv" download className="text-blue-600 underline">
+        Download CSV Template
+      </a>
 
       <div className="bg-white border rounded-lg p-6">
         <input
