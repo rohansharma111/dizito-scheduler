@@ -34,7 +34,7 @@ export async function handleTargetSuccess(
 
   /*
     Event
-  */
+  
   await createEvent(
     "TARGET_PUBLISHED",
     "post_target",
@@ -54,7 +54,7 @@ export async function handleTargetSuccess(
       publishedAt: new Date().toISOString(),
     },
   );
-
+*/
   /*
     Attempt history
   */

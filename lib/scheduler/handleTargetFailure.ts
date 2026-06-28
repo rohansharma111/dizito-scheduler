@@ -111,7 +111,7 @@ export async function handleTargetFailure({
 
   /*
     Generic failure event
-  */
+  
   await createEvent("TARGET_FAILED", "post_target", target.id, userId, {
     platform: target.platform,
 
@@ -125,7 +125,7 @@ export async function handleTargetFailure({
 
     error: errorMessage,
   });
-
+  */
   /*
     Publish log
   */
@@ -174,7 +174,7 @@ export async function handleTargetFailure({
   } else {
     /*
     Retry scheduled
-  */
+  
     await createEvent(
       "TARGET_RETRY_SCHEDULED",
       "post_target",
@@ -192,7 +192,7 @@ export async function handleTargetFailure({
         retryAt: new Date(Date.now() + retryDelay * 60000),
       },
     );
-
+*/
     console.log(`Target ${target.id} failed (${nextRetry}/${MAX_RETRIES})`);
   }
   return {

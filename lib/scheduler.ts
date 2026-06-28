@@ -23,9 +23,9 @@ export function startScheduler() {
 
       logger.info(new Date().toISOString());
 
-      await createEvent("SCHEDULER_CYCLE_STARTED", "scheduler", 0, undefined, {
+      /*await createEvent("SCHEDULER_CYCLE_STARTED", "scheduler", 0, undefined, {
         timestamp: new Date(),
-      });
+      });*/
 
       /*
           Recover stuck targets
@@ -46,13 +46,13 @@ export function startScheduler() {
       logger.info(`Claimed Targets: ${targets.length}`);
 
       if (targets.length === 0) {
-        await createEvent(
+        /*await createEvent(
           "SCHEDULER_CYCLE_COMPLETED",
           "scheduler",
           0,
           undefined,
           metrics,
-        );
+        );*/
 
         logger.info("No targets to process");
         await updateHeartbeat({
@@ -86,21 +86,27 @@ export function startScheduler() {
         }
       }
 
-      await createEvent(
+      /*await createEvent(
         "SCHEDULER_CYCLE_COMPLETED",
         "scheduler",
         0,
         undefined,
         metrics,
-      );
+      );*/
       await updateHeartbeat(metrics);
       logger.info("Scheduler cycle completed");
     } catch (error) {
       logger.error("Scheduler Error", error);
 
-      await createEvent("SCHEDULER_CYCLE_FAILED", "scheduler", 0, undefined, {
-        error: String(error),
-      });
+      /*await createEvent(
+        "SCHEDULER_CYCLE_FAILED",
+        "scheduler",
+        0,
+        undefined,
+        {
+          error: String(error),
+        },
+      );*/
     }
   });
 }
