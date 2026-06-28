@@ -69,7 +69,15 @@ export default function BulkUploadPage() {
       header: true,
       skipEmptyLines: true,
 
+      transformHeader: (header) =>
+        header
+          .replace(/^\uFEFF/, "") // remove BOM
+          .trim()
+          .toLowerCase(),
+
       complete: (result) => {
+        console.log("PARSED:", result.data);
+
         const parsedRows = result.data;
 
         setRows(parsedRows);
@@ -81,7 +89,6 @@ export default function BulkUploadPage() {
 
       error: (error) => {
         setLoading(false);
-
         alert(error.message);
       },
     });
