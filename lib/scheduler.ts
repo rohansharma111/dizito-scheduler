@@ -7,6 +7,8 @@ import { updateHeartbeat } from "./scheduler/updateHeartbeat";
 import { processOneTarget } from "./scheduler/processOneTarget";
 
 let started = false;
+const CRON_SCHEDULE =
+  process.env.SCHEDULER_CRON || "* * * * *";
 
 export function startScheduler() {
   if (started) return;
@@ -15,7 +17,7 @@ export function startScheduler() {
 
   logger.info("DIZITO_V7_SCHEDULER_STARTED");
 
-  cron.schedule("* * * * *", async () => {
+  cron.schedule(CRON_SCHEDULE, async () => { // Run every hour at minute 0
     try {
       logger.info("=================================");
 
