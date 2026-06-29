@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Papa from "papaparse";
+import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import Link from "next/link";
 
 type CsvRow = {
   content?: string;
@@ -20,6 +22,22 @@ type SocialAccount = {
   platform: string;
 };
 
+function getPlatformIcon(platform: string) {
+  switch (platform.toLowerCase()) {
+    case "instagram":
+      return <FaInstagram />;
+
+    case "facebook":
+      return <FaFacebook />;
+
+    case "linkedin":
+      return <FaLinkedin />;
+
+    default:
+      return platform;
+  }
+}
+
 export default function BulkUploadPage() {
   const [rows, setRows] = useState<CsvRow[]>([]);
   const [validations, setValidations] = useState<ValidationResult[]>([]);
@@ -28,6 +46,10 @@ export default function BulkUploadPage() {
   const [message, setMessage] = useState("");
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const selectedValidCount = selectedRows.filter(
+    (i) => validations[i]?.valid,
+  ).length;
   const [importErrors, setImportErrors] = useState<
     {
       row: number;
@@ -68,7 +90,7 @@ export default function BulkUploadPage() {
     }
 
     /*
-      Optional image
+      optional Image
   */
 
     if (row.image_url && row.image_url.trim()) {
@@ -116,8 +138,14 @@ export default function BulkUploadPage() {
           return;
         }
 
+        const nextValidations = parsedRows.map(validateRow);
+
         setRows(parsedRows);
-        setValidations(parsedRows.map(validateRow));
+        setValidations(nextValidations);
+
+        setSelectedRows(
+          parsedRows.map((_, i) => i).filter((i) => nextValidations[i].valid),
+        );
 
         setLoading(false);
       },
@@ -130,7 +158,9 @@ export default function BulkUploadPage() {
   }
 
   async function importPosts() {
-    const validRows = rows.filter((_, index) => validations[index].valid);
+    const validRows = rows.filter(
+      (_, index) => validations[index].valid && selectedRows.includes(index),
+    );
 
     if (validRows.length === 0) {
       alert("No valid rows found");
@@ -143,7 +173,13 @@ export default function BulkUploadPage() {
     }
     try {
       setImporting(true);
-
+      if (
+        !confirm(
+          `Import ${selectedValidCount} posts to ${selectedAccounts.length} accounts?`,
+        )
+      ) {
+        return;
+      }
       const response = await fetch("/api/posts/bulk", {
         method: "POST",
 
@@ -160,11 +196,25 @@ export default function BulkUploadPage() {
       const result = await response.json();
 
       setMessage(
-        `Successfully imported ${result.created} posts. Failed imports: ${result.failed}.`,
+        `
+✅ Imported:
+${result.created} posts
+
+🎯 Created:
+${result.created * selectedAccounts.length}
+ targets
+
+❌ Failed:
+${result.failed}
+`,
       );
 
       setImportErrors(result.errors || []);
-
+      if (result.failed === 0) {
+        setRows([]);
+        setValidations([]);
+        setSelectedRows([]);
+      }
       if (result.errors?.length) {
         console.log("Bulk Errors:", result.errors);
       }
@@ -202,6 +252,7 @@ Another Post,2026-07-02T15:00:00,`}
 
       <div className="bg-white border rounded-lg p-6">
         <input
+          disabled={importing}
           type="file"
           accept=".csv"
           onChange={(e) => {
@@ -228,130 +279,156 @@ Another Post,2026-07-02T15:00:00,`}
             </div>
           </div>
 
-          {rows.length > 0 && (
-            <div className="bg-white border rounded-lg p-6">
-              <h2 className="font-semibold mb-4">Publish To Accounts</h2>
+          <div className="bg-white border rounded-lg p-6">
+            <h2 className="font-semibold mb-4">Publish To Accounts</h2>
 
-              <div className="flex gap-4 mb-4">
-                <button
-                  type="button"
-                  className="px-3 py-1 bg-blue-100 rounded"
-                  onClick={() => setSelectedAccounts(accounts.map((a) => a.id))}
+            {accounts.length === 0 ? (
+              <div
+                className="
+        py-8
+        text-center
+        text-gray-500
+      "
+              >
+                <div className="mb-2">No social accounts connected.</div>
+
+                <Link
+                  href="/accounts"
+                  className="
+    text-blue-600
+    underline
+  "
                 >
-                  Select All
-                </button>
-
-                <button
-                  type="button"
-                  className="px-3 py-1 bg-gray-100 rounded"
-                  onClick={() => setSelectedAccounts([])}
-                >
-                  Clear All
-                </button>
+                  Connect Account
+                </Link>
               </div>
-
-              <div className="text-sm text-gray-500 mb-4">
-                Selected: {selectedAccounts.length}/{accounts.length} accounts
-              </div>
-
-              <div className="space-y-2">
-                {accounts.map((account) => (
-                  <label
-                    key={account.id}
+            ) : (
+              <>
+                <div className="flex gap-4 mb-4">
+                  <button
+                    disabled={importing}
+                    type="button"
                     className="
-            flex
-            items-center
-            gap-3
-            p-3
-            border
-            rounded
-            hover:bg-gray-50
-            cursor-pointer
-          "
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAccounts.includes(account.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedAccounts([
-                            ...selectedAccounts,
-                            account.id,
-                          ]);
-                        } else {
-                          setSelectedAccounts(
-                            selectedAccounts.filter((id) => id !== account.id),
-                          );
-                        }
-                      }}
-                    />
-
-                    <span
-                      className="
-              px-2
-              py-1
-              rounded
-              text-xs
-              bg-blue-100
-            "
-                    >
-                      {account.platform}
-                    </span>
-
-                    <span>{account.account_name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Bulk Publish Targets</h3>
-
-            <div className="flex flex-wrap gap-2">
-              {accounts
-                .filter((a) => selectedAccounts.includes(a.id))
-                .map((a) => (
-                  <div
-                    key={a.id}
-                    className="
-            flex
-            items-center
-            gap-2
             px-3
-            py-2
-            bg-white
-            border
+            py-1
+            bg-blue-100
             rounded
           "
+                    onClick={() =>
+                      setSelectedAccounts(accounts.map((a) => a.id))
+                    }
                   >
-                    <span
-                      className="
-              px-2
-              py-1
-              rounded
-              text-xs
-              bg-blue-100
-            "
-                    >
-                      {a.platform}
-                    </span>
+                    Select All
+                  </button>
 
-                    <span>{a.account_name}</span>
-                  </div>
-                ))}
-            </div>
+                  <button
+                    disabled={importing}
+                    type="button"
+                    className="
+            px-3
+            py-1
+            bg-gray-100
+            rounded
+          "
+                    onClick={() => setSelectedAccounts([])}
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                <div className="text-sm text-gray-500 mb-4">
+                  Selected: {selectedAccounts.length}/{accounts.length} accounts
+                </div>
+
+                <div className="space-y-2">
+                  {accounts.map((account) => (
+                    <label
+                      key={account.id}
+                      className="
+                flex
+                items-center
+                gap-3
+                p-3
+                border
+                rounded
+                hover:bg-gray-50
+                cursor-pointer
+              "
+                    >
+                      <input
+                        disabled={importing}
+                        type="checkbox"
+                        checked={selectedAccounts.includes(account.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedAccounts(
+                              Array.from(
+                                new Set([...selectedAccounts, account.id]),
+                              ),
+                            );
+                          } else {
+                            setSelectedAccounts(
+                              selectedAccounts.filter(
+                                (id) => id !== account.id,
+                              ),
+                            );
+                          }
+                        }}
+                      />
+
+                      <span
+                        className="
+                  px-2
+                  py-1
+                  rounded
+                  text-xs
+                  bg-gray-100
+                "
+                      >
+                        {getPlatformIcon(account.platform)} {account.platform}
+                      </span>
+
+                      <span>{account.account_name}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="bg-white border rounded-lg overflow-hidden">
             <div className="p-4 border-b">
-              <h2 className="font-semibold">Preview ({rows.length} rows)</h2>
+              <h2 className="font-semibold">
+                Preview(
+                {selectedValidCount}
+                selected posts,
+                {selectedValidCount * selectedAccounts.length}
+                targets )
+              </h2>
             </div>
 
             <div className="overflow-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50">
+                    <th className="p-4">
+                      <input
+                        disabled={importing}
+                        type="checkbox"
+                        checked={selectedValidCount === validCount}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRows(
+                              rows
+                                .map((_, i) => i)
+                                .filter((i) => validations[i]?.valid),
+                            );
+                          } else {
+                            setSelectedRows([]);
+                          }
+                        }}
+                      />
+                    </th>
                     <th className="p-4 text-left">#</th>
 
                     <th className="p-4 text-left">Content</th>
@@ -369,7 +446,29 @@ Another Post,2026-07-02T15:00:00,`}
                     const validation = validations[index];
 
                     return (
-                      <tr key={index} className="border-t">
+                      <tr
+                        className={
+                          validation?.valid ? "border-t" : "border-t bg-red-50"
+                        }
+                      >
+                        <td className="p-4">
+                          <input
+                            type="checkbox"
+                            disabled={importing || !validation?.valid}
+                            checked={selectedRows.includes(index)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedRows(
+                                  Array.from(new Set([...selectedRows, index])),
+                                );
+                              } else {
+                                setSelectedRows(
+                                  selectedRows.filter((i) => i !== index),
+                                );
+                              }
+                            }}
+                          />
+                        </td>
                         <td className="p-4">{index + 1}</td>
 
                         <td className="p-4 max-w-md">{row.content}</td>
@@ -378,13 +477,19 @@ Another Post,2026-07-02T15:00:00,`}
 
                         <td className="p-4">
                           {row.image_url ? (
-                            <a
-                              href={row.image_url}
-                              target="_blank"
-                              className="text-blue-600"
-                            >
-                              View
-                            </a>
+                            <img
+                              src={row.image_url}
+                              alt=""
+                              loading="lazy"
+                              className="
+                                w-12
+                                h-12
+                                rounded
+                                object-cover
+                                border
+    border-gray-200
+        "
+                            />
                           ) : (
                             "-"
                           )}
@@ -412,34 +517,41 @@ Another Post,2026-07-02T15:00:00,`}
           <div className="flex gap-4">
             <button
               disabled={
-                importing || validCount === 0 || selectedAccounts.length === 0
+                importing ||
+                selectedValidCount === 0 ||
+                selectedAccounts.length === 0
               }
               onClick={importPosts}
               className="bg-blue-600 text-white px-6 py-3 rounded"
             >
               {importing
                 ? "Importing..."
-                : `Import ${validCount} Posts → ${
-                    validCount * selectedAccounts.length
-                  } Targets`}
+                : `Import ${selectedValidCount} Posts (${selectedValidCount * selectedAccounts.length} Targets)`}
             </button>
 
             <button
+              disabled={importing}
               onClick={() => {
+                setSelectedRows([]);
                 setRows([]);
                 setValidations([]);
                 setMessage("");
                 setSelectedAccounts(accounts.map((a) => a.id));
                 setImportErrors([]);
               }}
-              className="bg-gray-200 px-6 py-3 rounded"
+              className={`
+  px-6 py-3 rounded
+  ${importing ? "bg-gray-100 cursor-not-allowed" : "bg-gray-200"}
+`}
             >
               Clear
             </button>
 
-            <div className="text-sm text-gray-500">
-              Will create <b>{validCount}</b> posts and{" "}
-              <b>{validCount * selectedAccounts.length}</b> publish targets
+            <div className="text-sm">
+              Selected:
+              <b>{selectedValidCount}</b>
+              posts →<b>{selectedValidCount * selectedAccounts.length}</b>
+              targets
             </div>
           </div>
         </>
