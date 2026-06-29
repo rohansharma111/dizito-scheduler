@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Papa from "papaparse";
 
 type CsvRow = {
   content?: string;
   schedule_time?: string;
   image_url?: string;
-  accounts?: string;
 };
 
 type ValidationResult = {
   valid: boolean;
   errors: string[];
+};
+
+type SocialAccount = {
+  id: number;
+  account_name: string;
+  platform: string;
 };
 
 export default function BulkUploadPage() {
@@ -21,7 +26,30 @@ export default function BulkUploadPage() {
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState("");
+  const [accounts, setAccounts] = useState<SocialAccount[]>([]);
+  const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
+  const [importErrors, setImportErrors] = useState<
+    {
+      row: number;
+      error: string;
+    }[]
+  >([]);
+  useEffect(() => {
+    async function loadAccounts() {
+      try {
+        const response = await fetch("/api/accounts");
 
+        const data = await response.json();
+
+        setAccounts(data);
+        setSelectedAccounts(data.map((a: SocialAccount) => a.id));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    loadAccounts();
+  }, []);
   function validateRow(row: CsvRow): ValidationResult {
     const errors: string[] = [];
 
@@ -37,10 +65,6 @@ export default function BulkUploadPage() {
       if (isNaN(date.getTime())) {
         errors.push("Invalid schedule time");
       }
-    }
-
-    if (!row.accounts?.trim()) {
-      errors.push("Missing accounts");
     }
 
     /*
@@ -62,6 +86,7 @@ export default function BulkUploadPage() {
   }
 
   function handleFile(file: File) {
+    setImportErrors([]);
     setLoading(true);
     setMessage("");
 
@@ -105,24 +130,17 @@ export default function BulkUploadPage() {
   }
 
   async function importPosts() {
-    const validRows = rows
-      .map((row, index) => ({
-        row,
-        validation: validations[index],
-      }))
-      .filter((x) => x.validation.valid)
-      .map((x) => ({
-        content: x.row.content,
-        schedule_time: x.row.schedule_time,
-        image_url: x.row.image_url || "",
-        accounts: x.row.accounts?.split("|").map(Number) || [],
-      }));
+    const validRows = rows.filter((_, index) => validations[index].valid);
 
     if (validRows.length === 0) {
       alert("No valid rows found");
       return;
     }
+    if (selectedAccounts.length === 0) {
+      alert("Please select at least one account");
 
+      return;
+    }
     try {
       setImporting(true);
 
@@ -134,6 +152,7 @@ export default function BulkUploadPage() {
         },
 
         body: JSON.stringify({
+          accounts: selectedAccounts,
           rows: validRows,
         }),
       });
@@ -141,10 +160,10 @@ export default function BulkUploadPage() {
       const result = await response.json();
 
       setMessage(
-        `✅ Created: ${result.created}
-
-❌ Failed: ${result.failed}`,
+        `Successfully imported ${result.created} posts. Failed imports: ${result.failed}.`,
       );
+
+      setImportErrors(result.errors || []);
 
       if (result.errors?.length) {
         console.log("Bulk Errors:", result.errors);
@@ -170,10 +189,10 @@ export default function BulkUploadPage() {
       <div className="bg-white border rounded-lg p-6">
         <h2 className="font-semibold mb-4">CSV Format</h2>
 
-        <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
-          {`content,schedule_time,image_url,accounts
-Hello World,2026-07-01T10:00:00,https://picsum.photos/400,1|2
-Another Post,2026-07-02T15:00:00,,2|3`}
+        <pre>
+          {`content,schedule_time,image_url
+Hello World,2026-07-01T10:00:00,https://picsum.photos/400
+Another Post,2026-07-02T15:00:00,`}
         </pre>
       </div>
 
@@ -209,6 +228,121 @@ Another Post,2026-07-02T15:00:00,,2|3`}
             </div>
           </div>
 
+          {rows.length > 0 && (
+            <div className="bg-white border rounded-lg p-6">
+              <h2 className="font-semibold mb-4">Publish To Accounts</h2>
+
+              <div className="flex gap-4 mb-4">
+                <button
+                  type="button"
+                  className="px-3 py-1 bg-blue-100 rounded"
+                  onClick={() => setSelectedAccounts(accounts.map((a) => a.id))}
+                >
+                  Select All
+                </button>
+
+                <button
+                  type="button"
+                  className="px-3 py-1 bg-gray-100 rounded"
+                  onClick={() => setSelectedAccounts([])}
+                >
+                  Clear All
+                </button>
+              </div>
+
+              <div className="text-sm text-gray-500 mb-4">
+                Selected: {selectedAccounts.length}/{accounts.length} accounts
+              </div>
+
+              <div className="space-y-2">
+                {accounts.map((account) => (
+                  <label
+                    key={account.id}
+                    className="
+            flex
+            items-center
+            gap-3
+            p-3
+            border
+            rounded
+            hover:bg-gray-50
+            cursor-pointer
+          "
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAccounts.includes(account.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedAccounts([
+                            ...selectedAccounts,
+                            account.id,
+                          ]);
+                        } else {
+                          setSelectedAccounts(
+                            selectedAccounts.filter((id) => id !== account.id),
+                          );
+                        }
+                      }}
+                    />
+
+                    <span
+                      className="
+              px-2
+              py-1
+              rounded
+              text-xs
+              bg-blue-100
+            "
+                    >
+                      {account.platform}
+                    </span>
+
+                    <span>{account.account_name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold mb-3">Bulk Publish Targets</h3>
+
+            <div className="flex flex-wrap gap-2">
+              {accounts
+                .filter((a) => selectedAccounts.includes(a.id))
+                .map((a) => (
+                  <div
+                    key={a.id}
+                    className="
+            flex
+            items-center
+            gap-2
+            px-3
+            py-2
+            bg-white
+            border
+            rounded
+          "
+                  >
+                    <span
+                      className="
+              px-2
+              py-1
+              rounded
+              text-xs
+              bg-blue-100
+            "
+                    >
+                      {a.platform}
+                    </span>
+
+                    <span>{a.account_name}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+
           <div className="bg-white border rounded-lg overflow-hidden">
             <div className="p-4 border-b">
               <h2 className="font-semibold">Preview ({rows.length} rows)</h2>
@@ -225,8 +359,6 @@ Another Post,2026-07-02T15:00:00,,2|3`}
                     <th className="p-4 text-left">Schedule</th>
 
                     <th className="p-4 text-left">Image</th>
-
-                    <th className="p-4 text-left">Accounts</th>
 
                     <th className="p-4 text-left">Status</th>
                   </tr>
@@ -258,8 +390,6 @@ Another Post,2026-07-02T15:00:00,,2|3`}
                           )}
                         </td>
 
-                        <td className="p-4">{row.accounts}</td>
-
                         <td className="p-4">
                           {validation?.valid ? (
                             <span className="text-green-600">✓ Valid</span>
@@ -281,11 +411,17 @@ Another Post,2026-07-02T15:00:00,,2|3`}
 
           <div className="flex gap-4">
             <button
-              disabled={importing}
+              disabled={
+                importing || validCount === 0 || selectedAccounts.length === 0
+              }
               onClick={importPosts}
               className="bg-blue-600 text-white px-6 py-3 rounded"
             >
-              {importing ? "Importing..." : `Import ${validCount} Posts`}
+              {importing
+                ? "Importing..."
+                : `Import ${validCount} Posts → ${
+                    validCount * selectedAccounts.length
+                  } Targets`}
             </button>
 
             <button
@@ -293,18 +429,55 @@ Another Post,2026-07-02T15:00:00,,2|3`}
                 setRows([]);
                 setValidations([]);
                 setMessage("");
+                setSelectedAccounts(accounts.map((a) => a.id));
+                setImportErrors([]);
               }}
               className="bg-gray-200 px-6 py-3 rounded"
             >
               Clear
             </button>
+
+            <div className="text-sm text-gray-500">
+              Will create <b>{validCount}</b> posts and{" "}
+              <b>{validCount * selectedAccounts.length}</b> publish targets
+            </div>
           </div>
         </>
       )}
 
       {message && (
-        <div className="bg-green-50 border border-green-200 rounded p-4">
-          {message}
+        <div className="space-y-4">
+          <div
+            className="
+      bg-green-50
+      border
+      border-green-200
+      rounded
+      p-4
+    "
+          >
+            {message}
+          </div>
+
+          {importErrors.length > 0 && (
+            <div
+              className="
+        bg-red-50
+        border
+        border-red-200
+        rounded
+        p-4
+      "
+            >
+              <h3 className="font-semibold mb-2">Import Errors</h3>
+
+              {importErrors.map((error, index) => (
+                <div key={index}>
+                  Row {error.row}: {error.error}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
