@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
@@ -47,9 +47,12 @@ export default function BulkUploadPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedValidCount = selectedRows.filter(
     (i) => validations[i]?.valid,
   ).length;
+  const importDisabled =
+    importing || selectedValidCount === 0 || selectedAccounts.length === 0;
   const [importErrors, setImportErrors] = useState<
     {
       row: number;
@@ -252,6 +255,7 @@ Another Post,2026-07-02T15:00:00,`}
 
       <div className="bg-white border rounded-lg p-6">
         <input
+          ref={fileInputRef}
           disabled={importing}
           type="file"
           accept=".csv"
@@ -516,13 +520,28 @@ Another Post,2026-07-02T15:00:00,`}
 
           <div className="flex gap-4">
             <button
-              disabled={
-                importing ||
-                selectedValidCount === 0 ||
-                selectedAccounts.length === 0
-              }
+              disabled={importDisabled}
               onClick={importPosts}
-              className="bg-blue-600 text-white px-6 py-3 rounded"
+              className={`
+    px-6
+    py-3
+    rounded
+    text-white
+    transition
+
+    ${
+      importDisabled
+        ? `
+          bg-gray-300
+          cursor-not-allowed
+          opacity-60
+        `
+        : `
+          bg-blue-600
+          hover:bg-blue-700
+        `
+    }
+  `}
             >
               {importing
                 ? "Importing..."
@@ -538,6 +557,9 @@ Another Post,2026-07-02T15:00:00,`}
                 setMessage("");
                 setSelectedAccounts(accounts.map((a) => a.id));
                 setImportErrors([]);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
               }}
               className={`
   px-6 py-3 rounded
