@@ -192,25 +192,17 @@ export default function ScheduledPosts({
                   {/* ACTIONS */}
                   <td className="border p-2">
                     <div className="flex items-center gap-2">
-                      {/* DETAILS */}
+                      {/* VIEW */}
                       <button
-                        title="Details"
+                        title="View"
                         className="
-        p-2
-        rounded
-        hover:bg-gray-100
-        text-gray-700
-      "
-                        onClick={async () => {
-                          const response = await fetch(
-                            `/api/posts/${item.id}/targets`,
-                          );
-
-                          const data = await response.json();
-
-                          setSelectedPostId(item.id);
-                          setSelectedTargets(data);
-                          setShowTargetsModal(true);
+    p-2
+    rounded
+    hover:bg-gray-100
+    text-gray-700
+  "
+                        onClick={() => {
+                          window.location.href = `/posts/${item.id}/edit?view=true`;
                         }}
                       >
                         <Eye size={18} />

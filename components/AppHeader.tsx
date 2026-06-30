@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, Search, User, Menu } from "lucide-react";
+import Link from "next/link";
 
 export default function AppHeader({
   onMenuClick,
@@ -37,7 +38,18 @@ export default function AppHeader({
         </button>
 
         {/* MOBILE LOGO */}
-        <h1 className="font-bold text-lg lg:hidden">Dizito</h1>
+        <Link
+          href="/dashboard"
+          className="
+    font-bold
+    text-lg
+    lg:hidden
+    hover:text-blue-600
+    transition-colors
+  "
+        >
+          Dizito
+        </Link>
 
         {/* DESKTOP SEARCH */}
         <div className="relative hidden md:block">

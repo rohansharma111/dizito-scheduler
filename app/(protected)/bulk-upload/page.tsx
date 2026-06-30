@@ -232,7 +232,7 @@ ${result.failed}
   const validCount = validations.filter((v) => v.valid).length;
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Bulk Upload</h1>
 
@@ -242,7 +242,18 @@ ${result.failed}
       <div className="bg-white border rounded-lg p-6">
         <h2 className="font-semibold mb-4">CSV Format</h2>
 
-        <pre>
+        <pre
+          className="
+    bg-gray-100
+    p-3
+    rounded
+    text-xs
+    md:text-sm
+    overflow-x-auto
+    whitespace-pre-wrap
+    break-all
+  "
+        >
           {`content,schedule_time,image_url
 Hello World,2026-07-01T10:00:00,https://picsum.photos/400
 Another Post,2026-07-02T15:00:00,`}
