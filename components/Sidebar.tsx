@@ -2,6 +2,7 @@ import SidebarClient from "./SidebarClient";
 
 export default function Sidebar({
   user,
+  plan,
   mobileOpen,
   onClose,
 }: {
@@ -9,10 +10,16 @@ export default function Sidebar({
     name?: string | null;
     email?: string | null;
   };
+  plan: string;
   mobileOpen?: boolean;
   onClose?: () => void;
 }) {
   return (
-    <SidebarClient user={user} mobileOpen={mobileOpen} onClose={onClose} />
+    <SidebarClient
+      user={user}
+      plan={plan}
+      mobileOpen={mobileOpen}
+      onClose={onClose}
+    />
   );
 }

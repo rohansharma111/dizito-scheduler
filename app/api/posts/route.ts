@@ -2,6 +2,8 @@ import { pool } from "@/lib/db";
 import { startScheduler } from "@/lib/scheduler";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getPlan, canCreatePost } from "@/lib/plans";
+import { createEvent } from "@/lib/events";
 
 startScheduler();
 
@@ -72,6 +74,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const userId = (session.user as any).id;
+
+  /*
+    VALIDATE STATUS
+  */
+
   const allowedStatuses = ["draft", "scheduled"];
 
   const status = body.status || "scheduled";
@@ -87,6 +95,10 @@ export async function POST(request: Request) {
     );
   }
 
+  /*
+    SCHEDULE REQUIRED
+  */
+
   if (status === "scheduled" && !body.scheduleTime) {
     return Response.json(
       {
@@ -97,6 +109,10 @@ export async function POST(request: Request) {
       },
     );
   }
+
+  /*
+    ACCOUNT REQUIRED
+  */
 
   if (!body.selectedAccounts || body.selectedAccounts.length === 0) {
     return Response.json(
@@ -109,6 +125,10 @@ export async function POST(request: Request) {
     );
   }
 
+  /*
+    VERIFY OWNERSHIP
+  */
+
   const accounts = await pool.query(
     `
       SELECT *
@@ -117,7 +137,7 @@ export async function POST(request: Request) {
         id = ANY($1)
         AND user_id = $2
       `,
-    [body.selectedAccounts, (session.user as any).id],
+    [body.selectedAccounts, userId],
   );
 
   if (accounts.rows.length !== body.selectedAccounts.length) {
@@ -131,64 +151,177 @@ export async function POST(request: Request) {
     );
   }
 
-  const postResult = await pool.query(
+  /*
+    LOAD USER PLAN
+  */
+
+  const userResult = await pool.query(
     `
-      INSERT INTO posts
-      (
-        post,
-        schedule_time,
-        status,
-        image_url,
-        user_id
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5
-      )
-      RETURNING *
+      SELECT plan
+      FROM users
+      WHERE id = $1
       `,
-    [
-      body.post,
-      body.scheduleTime,
-      status,
-      body.imageUrl,
-      (session.user as any).id,
-    ],
+    [userId],
   );
 
-  const postId = postResult.rows[0].id;
+  const userPlan = userResult.rows[0]?.plan || "free";
 
-  for (const account of accounts.rows) {
-    await pool.query(
-      `
-    INSERT INTO post_targets
-    (
-      post_id,
-      social_account_id,
-      platform,
-      status
-    )
-    VALUES
-    (
-      $1,
-      $2,
-      $3,
-      $4
-    )
-    `,
-      [postResult.rows[0].id, account.id, account.platform, status],
+  const plan = getPlan(userPlan);
+
+  /*
+    COUNT POSTS THIS MONTH
+    (exclude drafts)
+  */
+
+  const monthlyPosts = await pool.query(
+    `
+      SELECT COUNT(*)
+      FROM posts
+      WHERE
+        user_id = $1
+        AND status IN
+        (
+          'scheduled',
+          'published',
+          'failed'
+        )
+        AND created_at >=
+            date_trunc(
+              'month',
+              NOW()
+            )
+      `,
+    [userId],
+  );
+
+  const currentPosts = Number(monthlyPosts.rows[0].count);
+
+  /*
+    ENFORCE PLAN
+  */
+
+  if (!canCreatePost(userPlan, currentPosts)) {
+    await createEvent("PLAN_LIMIT_REACHED", "user", userId, userId, {
+      type: "posts",
+
+      plan: userPlan,
+
+      currentPosts,
+
+      maxPosts: plan.monthlyPosts,
+    });
+
+    return Response.json(
+      {
+        error: `Your ${plan.name} plan allows only ${plan.monthlyPosts} posts per month. Please upgrade your plan.`,
+      },
+      {
+        status: 403,
+      },
     );
   }
 
-  return Response.json({
-    success: true,
-    post: postResult.rows[0],
-    targets: accounts.rows.length,
-  });
+  /*
+    TRANSACTION
+  */
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    /*
+      CREATE POST
+    */
+
+    const postResult = await client.query(
+      `
+        INSERT INTO posts
+        (
+          post,
+          schedule_time,
+          status,
+          image_url,
+          user_id
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5
+        )
+        RETURNING *
+        `,
+      [body.post, body.scheduleTime, status, body.imageUrl, userId],
+    );
+
+    const post = postResult.rows[0];
+
+    /*
+      CREATE TARGETS
+    */
+
+    for (const account of accounts.rows) {
+      await client.query(
+        `
+        INSERT INTO post_targets
+        (
+          post_id,
+          social_account_id,
+          platform,
+          status
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4
+        )
+        `,
+        [post.id, account.id, account.platform, status],
+      );
+    }
+
+    await client.query("COMMIT");
+
+    /*
+      AUDIT EVENT
+    */
+
+    await createEvent("POST_CREATED", "post", post.id, userId, {
+      status,
+
+      targets: accounts.rows.length,
+
+      plan: userPlan,
+    });
+
+    return Response.json({
+      success: true,
+
+      post,
+
+      targets: accounts.rows.length,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error(error);
+
+    return Response.json(
+      {
+        error: "Failed to create post",
+      },
+      {
+        status: 500,
+      },
+    );
+  } finally {
+    client.release();
+  }
 }
 
 export async function DELETE(request: Request) {

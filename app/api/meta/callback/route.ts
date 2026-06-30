@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { canConnectAccount } from "@/lib/plans";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -16,11 +17,54 @@ export async function GET(request: Request) {
     );
   }
 
+  const userId = (session.user as any).id;
+
   const { searchParams } = new URL(request.url);
 
   const code = searchParams.get("code");
 
   const state = searchParams.get("state");
+
+  const isReconnect = state?.startsWith("reconnect:");
+
+  /*
+    PLAN LIMIT CHECK
+    Skip reconnects
+  */
+  if (!isReconnect) {
+    const userResult = await pool.query(
+      `
+        SELECT plan
+        FROM users
+        WHERE id = $1
+        `,
+      [userId],
+    );
+
+    const userPlan = userResult.rows[0]?.plan ?? "free";
+
+    const accountResult = await pool.query(
+      `
+        SELECT COUNT(*)
+        FROM social_accounts
+        WHERE user_id = $1
+        `,
+      [userId],
+    );
+
+    const accountCount = Number(accountResult.rows[0].count);
+
+    if (!canConnectAccount(userPlan, accountCount)) {
+      return Response.json(
+        {
+          error: "Your plan account limit has been reached. Please upgrade.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+  }
 
   if (!code) {
     return Response.json(
@@ -33,8 +77,13 @@ export async function GET(request: Request) {
     );
   }
 
+  /*
+    Exchange code
+  */
   const tokenResponse = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(process.env.META_REDIRECT_URI!)}&client_secret=${process.env.META_APP_SECRET}&code=${code}`,
+    `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(
+      process.env.META_REDIRECT_URI!,
+    )}&client_secret=${process.env.META_APP_SECRET}&code=${code}`,
   );
 
   const tokenData = await tokenResponse.json();
@@ -47,9 +96,11 @@ export async function GET(request: Request) {
     });
   }
 
-  // RECONNECT FLOW
-  if (state?.startsWith("reconnect:")) {
-    const accountId = state.split(":")[1];
+  /*
+    RECONNECT FLOW
+  */
+  if (isReconnect) {
+    const accountId = state!.split(":")[1];
 
     const existing = await pool.query(
       `
@@ -59,7 +110,7 @@ export async function GET(request: Request) {
           id = $1
           AND user_id = $2
         `,
-      [accountId, (session.user as any).id],
+      [accountId, userId],
     );
 
     if (existing.rows.length === 0) {
@@ -75,16 +126,16 @@ export async function GET(request: Request) {
 
     await pool.query(
       `
-  UPDATE social_accounts
-  SET
-    access_token = $1,
-    status = 'connected',
-    last_checked_at = NOW()
-  WHERE
-    id = $2
-    AND user_id = $3
-  `,
-      [accessToken, accountId, (session.user as any).id],
+      UPDATE social_accounts
+      SET
+        access_token = $1,
+        status = 'connected',
+        last_checked_at = NOW()
+      WHERE
+        id = $2
+        AND user_id = $3
+      `,
+      [accessToken, accountId, userId],
     );
 
     return Response.redirect(
@@ -92,8 +143,9 @@ export async function GET(request: Request) {
     );
   }
 
-  // NORMAL CONNECT FLOW
-
+  /*
+    NORMAL CONNECT FLOW
+  */
   const pagesResponse = await fetch(
     `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`,
   );
@@ -126,7 +178,7 @@ export async function GET(request: Request) {
       $3
     )
     `,
-    [(session.user as any).id, accessToken, JSON.stringify(pagesData.data)],
+    [userId, accessToken, JSON.stringify(pagesData.data)],
   );
 
   return Response.redirect(

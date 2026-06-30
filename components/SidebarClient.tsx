@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import LogoutButton from "./LogoutButton";
+import { hasFeature } from "@/lib/plans";
 
 import {
   LayoutDashboard,
@@ -15,10 +16,19 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  Crown,
 } from "lucide-react";
+
+type MenuItem = {
+  href: string;
+  label: string;
+  icon: any;
+  premium?: boolean;
+};
 
 export default function SidebarClient({
   user,
+  plan,
   mobileOpen = false,
   onClose,
 }: {
@@ -26,6 +36,7 @@ export default function SidebarClient({
     name?: string | null;
     email?: string | null;
   };
+  plan: string;
   mobileOpen?: boolean;
   onClose?: () => void;
 }) {
@@ -49,32 +60,38 @@ export default function SidebarClient({
     localStorage.setItem("sidebar-collapsed", JSON.stringify(next));
   }
 
-  const menu = [
+  const menu: MenuItem[] = [
     {
       href: "/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
     },
+
     {
       href: "/bulk-upload",
       label: "Bulk Upload",
       icon: Upload,
+      premium: !hasFeature(plan, "bulkUpload"),
     },
+
     {
       href: "/posts",
       label: "Posts",
       icon: FileText,
     },
+
     {
       href: "/drafts",
       label: "Drafts",
       icon: FilePen,
     },
+
     {
       href: "/accounts",
       label: "Accounts",
       icon: Link2,
     },
+
     {
       href: "/settings",
       label: "Settings",
@@ -182,42 +199,83 @@ export default function SidebarClient({
                   href={item.href}
                   onClick={() => onClose?.()}
                   className={`
-                      relative
-                      flex
-                      items-center
-                      ${collapsed ? "lg:justify-center" : "gap-3"}
-                      px-3
-                      py-3
-                      rounded-xl
-                      transition-all
-                      duration-200
-                      ${
-                        isActive
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }
-                    `}
+                    relative
+                    flex
+                    items-center
+                    ${collapsed ? "lg:justify-center" : "gap-3"}
+                    px-3
+                    py-3
+                    rounded-xl
+                    transition-all
+                    duration-200
+                    ${
+                      isActive
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }
+                  `}
                 >
                   <div
                     className={`
-                        absolute
-                        left-0
-                        top-1
-                        bottom-1
-                        w-1
-                        rounded-r-full
-                        ${isActive ? "bg-white" : "bg-transparent"}
-                      `}
+                      absolute
+                      left-0
+                      top-1
+                      bottom-1
+                      w-1
+                      rounded-r-full
+                      ${isActive ? "bg-white" : "bg-transparent"}
+                    `}
                   />
 
                   <Icon size={20} />
 
-                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && (
+                    <>
+                      <span>{item.label}</span>
+
+                      {item.premium && (
+                        <span className="ml-auto flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                          <Crown size={12} />
+                          PRO
+                        </span>
+                      )}
+                    </>
+                  )}
                 </Link>
               );
             })}
           </nav>
         </div>
+
+        {/* PLAN */}
+        {!collapsed && (
+          <div className="px-4 mb-4">
+            <div className="text-xs text-gray-500">Current Plan</div>
+
+            <div className="inline-flex mt-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+              {plan.toUpperCase()}
+            </div>
+
+            {plan === "free" && (
+              <Link
+                href="/pricing"
+                className="
+                  block
+                  mt-4
+                  text-center
+                  bg-blue-600
+                  text-white
+                  rounded-lg
+                  py-2
+                  text-sm
+                  font-medium
+                "
+              >
+                Upgrade Plan
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* USER */}
         <div className="mt-auto border-t p-4">

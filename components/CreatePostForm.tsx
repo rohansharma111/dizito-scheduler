@@ -173,7 +173,13 @@ export default function CreatePostForm({ posts, setPosts }: any) {
             "
           />
 
-          <div>
+          <div
+            className="
+              border
+              rounded-lg
+              p-4
+            "
+          >
             <label className="block mb-2 font-medium">
               Schedule Date & Time
             </label>

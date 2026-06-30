@@ -2,6 +2,7 @@ import { pool } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createEvent } from "@/lib/events";
+import { getPlan } from "@/lib/plans";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -18,6 +19,49 @@ export async function POST(request: Request) {
   }
 
   const userId = (session.user as any).id;
+
+  /*
+    User plan
+  */
+  const userResult = await pool.query(
+    `
+    SELECT plan
+    FROM users
+    WHERE id = $1
+    `,
+    [userId],
+  );
+
+  const plan = userResult.rows[0]?.plan ?? "free";
+
+  const userPlan = getPlan(plan);
+
+  /*
+    Current account count
+  */
+  const connectedAccountsResult = await pool.query(
+    `
+      SELECT COUNT(*) AS count
+      FROM social_accounts
+      WHERE user_id = $1
+      `,
+    [userId],
+  );
+
+  const connectedAccountsCount = Number(connectedAccountsResult.rows[0].count);
+
+  if (connectedAccountsCount >= userPlan.accounts) {
+    return Response.json(
+      {
+        error: `Your ${userPlan.name} plan allows only ${userPlan.accounts} connected account(s). Please upgrade your plan.`,
+      },
+      {
+        status: 403,
+      },
+    );
+  }
+
+  let accountCount = connectedAccountsCount;
 
   const body = await request.json();
 
@@ -77,7 +121,6 @@ export async function POST(request: Request) {
       /*
         FACEBOOK
       */
-
       const existingFacebook = await pool.query(
         `
           SELECT id
@@ -91,6 +134,10 @@ export async function POST(request: Request) {
       );
 
       if (existingFacebook.rows.length === 0) {
+        if (accountCount >= userPlan.accounts) {
+          throw new Error(`PLAN_LIMIT:${userPlan.accounts}`);
+        }
+
         const facebook = await pool.query(
           `
             INSERT INTO social_accounts
@@ -123,6 +170,8 @@ export async function POST(request: Request) {
           ],
         );
 
+        accountCount++;
+
         await createEvent(
           "ACCOUNT_CONNECTED",
           "social_account",
@@ -152,7 +201,6 @@ export async function POST(request: Request) {
       /*
         INSTAGRAM
       */
-
       const instagramResponse = await fetch(
         `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
       );
@@ -180,6 +228,10 @@ export async function POST(request: Request) {
       );
 
       if (existingInstagram.rows.length === 0) {
+        if (accountCount >= userPlan.accounts) {
+          throw new Error(`PLAN_LIMIT:${userPlan.accounts}`);
+        }
+
         const instagram = await pool.query(
           `
             INSERT INTO social_accounts
@@ -215,6 +267,8 @@ export async function POST(request: Request) {
           ],
         );
 
+        accountCount++;
+
         await createEvent(
           "ACCOUNT_CONNECTED",
           "social_account",
@@ -245,7 +299,6 @@ export async function POST(request: Request) {
     /*
       Cleanup OAuth cache
     */
-
     await pool.query(
       `
       DELETE
@@ -259,17 +312,25 @@ export async function POST(request: Request) {
 
     return Response.json({
       success: true,
-
       total: connectedAccounts.length,
-
       connectedAccounts,
-
       message: `${connectedAccounts.length} account(s) connected`,
     });
   } catch (error) {
     await pool.query("ROLLBACK");
 
     console.error(error);
+
+    if (error instanceof Error && error.message.startsWith("PLAN_LIMIT:")) {
+      return Response.json(
+        {
+          error: `Your ${userPlan.name} plan allows only ${userPlan.accounts} connected account(s). Please upgrade your plan.`,
+        },
+        {
+          status: 403,
+        },
+      );
+    }
 
     return Response.json(
       {

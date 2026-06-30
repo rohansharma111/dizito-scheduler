@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
+import { hasFeature } from "@/lib/plans";
+import { useDropzone } from "react-dropzone";
 
 type CsvRow = {
   content?: string;
@@ -48,6 +50,18 @@ export default function BulkUploadPage() {
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [plan, setPlan] = useState("free");
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: {
+      "text/csv": [".csv"],
+    },
+
+    onDrop: (files) => {
+      if (files[0]) {
+        handleFile(files[0]);
+      }
+    },
+  });
   const selectedValidCount = selectedRows.filter(
     (i) => validations[i]?.valid,
   ).length;
@@ -59,22 +73,28 @@ export default function BulkUploadPage() {
       error: string;
     }[]
   >([]);
+
   useEffect(() => {
-    async function loadAccounts() {
-      try {
-        const response = await fetch("/api/accounts");
+    async function initialize() {
+      const [planResponse, accountResponse] = await Promise.all([
+        fetch("/api/me"),
+        fetch("/api/accounts"),
+      ]);
 
-        const data = await response.json();
+      const plan = await planResponse.json();
 
-        setAccounts(data);
-        setSelectedAccounts(data.map((a: SocialAccount) => a.id));
-      } catch (error) {
-        console.error(error);
-      }
+      const accounts = await accountResponse.json();
+
+      setPlan(plan.plan || "free");
+
+      setAccounts(accounts);
+
+      setSelectedAccounts(accounts.map((a: any) => a.id));
     }
 
-    loadAccounts();
+    initialize();
   }, []);
+
   function validateRow(row: CsvRow): ValidationResult {
     const errors: string[] = [];
 
@@ -111,6 +131,11 @@ export default function BulkUploadPage() {
   }
 
   function handleFile(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Maximum CSV size is 5MB");
+
+      return;
+    }
     setImportErrors([]);
     setLoading(true);
     setMessage("");
@@ -130,7 +155,12 @@ export default function BulkUploadPage() {
         console.log("PARSED:", result.data);
 
         const parsedRows = result.data as CsvRow[];
+        if (parsedRows.length > 1000) {
+          setLoading(false);
+          alert("Maximum 1000 rows");
 
+          return;
+        }
         /*
         Reject malformed CSVs
       */
@@ -141,7 +171,22 @@ export default function BulkUploadPage() {
           return;
         }
 
-        const nextValidations = parsedRows.map(validateRow);
+        const seen = new Set<string>();
+
+        const nextValidations = parsedRows.map((row) => {
+          const validation = validateRow(row);
+
+          const key = `${row.content}-${row.schedule_time}`;
+
+          if (seen.has(key)) {
+            validation.valid = false;
+            validation.errors.push("Duplicate row");
+          }
+
+          seen.add(key);
+
+          return validation;
+        });
 
         setRows(parsedRows);
         setValidations(nextValidations);
@@ -161,6 +206,17 @@ export default function BulkUploadPage() {
   }
 
   async function importPosts() {
+    const targetCount = selectedValidCount * selectedAccounts.length;
+
+    if (targetCount > 500) {
+      if (
+        !confirm(
+          `You are about to create ${targetCount} publishing targets. Continue?`,
+        )
+      ) {
+        return;
+      }
+    }
     const validRows = rows.filter(
       (_, index) => validations[index].valid && selectedRows.includes(index),
     );
@@ -175,7 +231,6 @@ export default function BulkUploadPage() {
       return;
     }
     try {
-      setImporting(true);
       if (
         !confirm(
           `Import ${selectedValidCount} posts to ${selectedAccounts.length} accounts?`,
@@ -183,6 +238,7 @@ export default function BulkUploadPage() {
       ) {
         return;
       }
+      setImporting(true);
       const response = await fetch("/api/posts/bulk", {
         method: "POST",
 
@@ -231,6 +287,35 @@ ${result.failed}
 
   const validCount = validations.filter((v) => v.valid).length;
 
+  if (!hasFeature(plan, "bulkUpload")) {
+    return (
+      <div className="p-8">
+        <div className="bg-yellow-50 border rounded p-6">
+          <h2 className="text-xl font-bold">Bulk Upload</h2>
+
+          <p className="mt-2">
+            Bulk upload is available on Creator and Agency plans.
+          </p>
+
+          <Link
+            href="/pricing"
+            className="
+            mt-4
+            inline-block
+            bg-blue-600
+            text-white
+            px-4
+            py-2
+            rounded
+          "
+          >
+            Upgrade Plan
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div>
@@ -264,7 +349,17 @@ Another Post,2026-07-02T15:00:00,`}
         Download CSV Template
       </a>
 
-      <div className="bg-white border rounded-lg p-6">
+      <div
+        {...getRootProps()}
+        className="
+    border-2
+    border-dashed
+    rounded-lg
+    p-10
+    text-center
+    cursor-pointer
+  "
+      >
         <input
           ref={fileInputRef}
           disabled={importing}
@@ -277,7 +372,9 @@ Another Post,2026-07-02T15:00:00,`}
               handleFile(file);
             }
           }}
+          {...getInputProps()}
         />
+        Drop CSV here or click to upload
       </div>
 
       {loading && <div>Parsing CSV...</div>}
@@ -462,6 +559,7 @@ Another Post,2026-07-02T15:00:00,`}
 
                     return (
                       <tr
+                        key={index}
                         className={
                           validation?.valid ? "border-t" : "border-t bg-red-50"
                         }
@@ -496,6 +594,9 @@ Another Post,2026-07-02T15:00:00,`}
                               src={row.image_url}
                               alt=""
                               loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.src = "/image-error.svg";
+                              }}
                               className="
                                 w-12
                                 h-12

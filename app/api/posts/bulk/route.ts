@@ -1,12 +1,16 @@
 import { pool } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { hasFeature, canCreatePost } from "@/lib/plans";
+import { createEvent } from "@/lib/events";
 
 type BulkRow = {
   content: string;
   schedule_time: string;
   image_url?: string;
 };
+
+const MAX_BULK_ROWS = 1000;
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -63,11 +67,92 @@ export async function POST(request: Request) {
     );
   }
 
+  if (rows.length > MAX_BULK_ROWS) {
+    return Response.json(
+      {
+        error: `Maximum ${MAX_BULK_ROWS} rows allowed`,
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
   const client = await pool.connect();
 
   try {
     /*
-      Validate selected accounts once
+      Load user plan
+    */
+    const userResult = await client.query(
+      `
+        SELECT plan
+        FROM users
+        WHERE id = $1
+        `,
+      [userId],
+    );
+
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return Response.json(
+        {
+          error: "User not found",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+
+    /*
+      Bulk upload access
+    */
+    if (!hasFeature(user.plan, "bulkUpload")) {
+      return Response.json(
+        {
+          error: "Bulk upload requires Creator plan",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    /*
+      Monthly limit
+    */
+    const countResult = await client.query(
+      `
+        SELECT COUNT(*)
+        FROM posts
+        WHERE
+          user_id = $1
+          AND created_at >=
+              date_trunc(
+                'month',
+                NOW()
+              )
+        `,
+      [userId],
+    );
+
+    const currentPosts = Number(countResult.rows[0].count);
+
+    if (!canCreatePost(user.plan, currentPosts + rows.length)) {
+      return Response.json(
+        {
+          error: "Monthly post limit exceeded",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    /*
+      Validate accounts once
     */
     const accountResult = await client.query(
       `
@@ -115,14 +200,23 @@ export async function POST(request: Request) {
         await client.query("BEGIN");
 
         /*
-          Validate row
+          Validate content
         */
         if (!row.content?.trim()) {
           throw new Error("Missing content");
         }
 
+        /*
+          Validate date
+        */
         if (!row.schedule_time) {
           throw new Error("Missing schedule time");
+        }
+
+        const date = new Date(row.schedule_time);
+
+        if (isNaN(date.getTime())) {
+          throw new Error("Invalid schedule time");
         }
 
         /*
@@ -187,6 +281,14 @@ export async function POST(request: Request) {
         }
 
         await client.query("COMMIT");
+
+        /*
+          Event
+        */
+        await createEvent("BULK_POST_CREATED", "post", postId, userId, {
+          source: "bulk_upload",
+          targets: validAccounts.length,
+        });
 
         result.created++;
       } catch (error) {

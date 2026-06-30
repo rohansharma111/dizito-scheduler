@@ -2,6 +2,7 @@ import { pool } from "@/lib/db";
 import { createEvent } from "@/lib/events";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getPlan, canConnectAccount } from "@/lib/plans";
 
 export async function GET(request: Request) {
   try {
@@ -20,6 +21,57 @@ export async function GET(request: Request) {
 
     const userId = (session.user as any).id;
 
+    /*
+      PLAN CHECK
+    */
+
+    const userResult = await pool.query(
+      `
+        SELECT plan
+        FROM users
+        WHERE id = $1
+        `,
+      [userId],
+    );
+
+    const userPlan = userResult.rows[0]?.plan || "free";
+
+    const currentPlan = getPlan(userPlan);
+
+    const connectedAccounts = await pool.query(
+      `
+    SELECT COUNT(*)
+    FROM social_accounts
+    WHERE
+      user_id = $1
+      AND account_status != 'deleted'
+    `,
+      [userId],
+    );
+
+    const currentAccounts = Number(connectedAccounts.rows[0].count);
+
+    if (!canConnectAccount(userPlan, currentAccounts)) {
+      await createEvent("ACCOUNT_CONNECTION_BLOCKED", "user", userId, userId, {
+        platform: "linkedin",
+
+        plan: userPlan,
+
+        currentAccounts,
+
+        maxAccounts: currentPlan.accounts,
+      });
+
+      return Response.json(
+        {
+          error: `Your ${currentPlan.name} plan allows only ${currentPlan.accounts} connected account(s). Please upgrade your plan.`,
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const code = searchParams.get("code");
@@ -36,7 +88,7 @@ export async function GET(request: Request) {
     }
 
     /*
-      Exchange code for token
+      Exchange code
     */
 
     const tokenResponse = await fetch(
@@ -131,6 +183,7 @@ export async function GET(request: Request) {
         userId,
         {
           platform: "linkedin",
+
           memberId,
         },
       );
@@ -139,41 +192,37 @@ export async function GET(request: Request) {
     }
 
     /*
-      Save account
-    */
+  Save account + audit atomically
+*/
 
     const result = await pool.query(
       `
-        INSERT INTO social_accounts
-        (
-          platform,
-          account_name,
-          access_token,
-          linkedin_member_id,
-          user_id,
-          account_status,
-          last_checked_at
-        )
-        VALUES
-        (
-          $1,
-          $2,
-          $3,
-          $4,
-          $5,
-          $6,
-          NOW()
-        )
-        RETURNING id
-        `,
+  INSERT INTO social_accounts
+  (
+    platform,
+    account_name,
+    access_token,
+    linkedin_member_id,
+    user_id,
+    account_status,
+    last_checked_at
+  )
+  VALUES
+  (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    NOW()
+  )
+  RETURNING id
+  `,
       ["linkedin", accountName, accessToken, memberId, userId, "active"],
     );
 
     const accountId = result.rows[0].id;
-
-    /*
-      Audit event
-    */
 
     await createEvent(
       "ACCOUNT_CONNECTED",
@@ -182,18 +231,11 @@ export async function GET(request: Request) {
       userId,
       {
         platform: "linkedin",
-
         accountName,
-
         memberId,
+        plan: userPlan,
       },
     );
-
-    console.log("LINKEDIN ACCOUNT CONNECTED", accountId);
-
-    /*
-      Production redirect
-    */
 
     return Response.redirect(new URL("/accounts", request.url));
   } catch (error) {
