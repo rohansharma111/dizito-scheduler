@@ -2,6 +2,7 @@
 
 import { Post } from "../types";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { Pencil, Trash2, Copy, Eye, RotateCcw } from "lucide-react";
 
 type Props = {
   posts: Post[];
@@ -132,14 +133,14 @@ export default function ScheduledPosts({
                         <span className="text-red-600">Failed</span>
 
                         <button
+                          title="Retry"
                           className="
-                              ml-2
-                              bg-yellow-500
-                              text-white
-                              px-2
-                              py-1
-                              rounded
-                            "
+    ml-2
+    p-2
+    rounded
+    hover:bg-yellow-100
+    text-yellow-600
+  "
                           onClick={async () => {
                             await fetch("/api/posts/retry", {
                               method: "POST",
@@ -156,7 +157,7 @@ export default function ScheduledPosts({
                             await refreshPosts();
                           }}
                         >
-                          Retry
+                          <RotateCcw size={16} />
                         </button>
                       </>
                     )}
@@ -190,74 +191,103 @@ export default function ScheduledPosts({
 
                   {/* ACTIONS */}
                   <td className="border p-2">
-                    {["scheduled", "failed", "draft"].includes(item.status) && (
+                    <div className="flex items-center gap-2">
+                      {/* DETAILS */}
                       <button
+                        title="Details"
                         className="
-                            bg-yellow-500
-                            text-white
-                            px-3
-                            py-1
-                            rounded
-                          "
-                        onClick={() => {
-                          window.location.href = `/posts/${item.id}/edit`;
-                        }}
-                      >
-                        Edit
-                      </button>
-                    )}
-
-                    {item.status !== "processing" && (
-                      <button
-                        className="
-                            ml-2
-                            bg-red-500
-                            text-white
-                            px-3
-                            py-1
-                            rounded
-                          "
+        p-2
+        rounded
+        hover:bg-gray-100
+        text-gray-700
+      "
                         onClick={async () => {
-                          await fetch("/api/posts", {
-                            method: "DELETE",
+                          const response = await fetch(
+                            `/api/posts/${item.id}/targets`,
+                          );
 
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
+                          const data = await response.json();
 
-                            body: JSON.stringify({
-                              id: item.id,
-                            }),
-                          });
-
-                          await refreshPosts();
+                          setSelectedPostId(item.id);
+                          setSelectedTargets(data);
+                          setShowTargetsModal(true);
                         }}
                       >
-                        Delete
+                        <Eye size={18} />
                       </button>
-                    )}
 
-                    {item.status !== "published" && (
-                      <button
-                        className="
-                            ml-2
-                            bg-green-600
-                            text-white
-                            px-3
-                            py-1
-                            rounded
-                          "
-                        onClick={async () => {
-                          await fetch(`/api/posts/${item.id}/duplicate`, {
-                            method: "POST",
-                          });
+                      {/* EDIT */}
+                      {["scheduled", "failed", "draft"].includes(
+                        item.status,
+                      ) && (
+                        <button
+                          title="Edit"
+                          className="
+          p-2
+          rounded
+          hover:bg-yellow-100
+          text-yellow-600
+        "
+                          onClick={() => {
+                            window.location.href = `/posts/${item.id}/edit`;
+                          }}
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      )}
 
-                          await refreshPosts();
-                        }}
-                      >
-                        Duplicate
-                      </button>
-                    )}
+                      {/* DELETE */}
+                      {item.status !== "processing" && (
+                        <button
+                          title="Delete"
+                          className="
+          p-2
+          rounded
+          hover:bg-red-100
+          text-red-600
+        "
+                          onClick={async () => {
+                            await fetch("/api/posts", {
+                              method: "DELETE",
+
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+
+                              body: JSON.stringify({
+                                id: item.id,
+                              }),
+                            });
+
+                            await refreshPosts();
+                          }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+
+                      {/* DUPLICATE */}
+                      {item.status !== "published" && (
+                        <button
+                          title="Duplicate"
+                          className="
+          p-2
+          rounded
+          hover:bg-green-100
+          text-green-600
+        "
+                          onClick={async () => {
+                            await fetch(`/api/posts/${item.id}/duplicate`, {
+                              method: "POST",
+                            });
+
+                            await refreshPosts();
+                          }}
+                        >
+                          <Copy size={18} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

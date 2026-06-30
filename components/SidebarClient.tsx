@@ -212,9 +212,7 @@ export default function SidebarClient({
 
                   <Icon size={20} />
 
-                  {(!collapsed || window.innerWidth < 1024) && (
-                    <span className="font-medium">{item.label}</span>
-                  )}
+                  {!collapsed && <span>{item.label}</span>}
                 </Link>
               );
             })}
