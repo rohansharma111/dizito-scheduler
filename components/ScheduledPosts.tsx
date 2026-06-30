@@ -336,30 +336,127 @@ export default function ScheduledPosts({
 
               <div className="mt-3">{item.status}</div>
 
-              <div className="flex gap-2 mt-4">
+              <div
+                className="
+    grid
+    grid-cols-4
+    gap-2
+    mt-4
+  "
+              >
+                {/* VIEW */}
                 <button
+                  title="View"
                   className="
-                      bg-gray-700
-                      text-white
-                      px-3
-                      py-2
-                      rounded
-                    "
+      flex
+      flex-col
+      items-center
+      justify-center
+      gap-1
+      p-3
+      rounded-lg
+      bg-gray-100
+      hover:bg-gray-200
+    "
+                  onClick={() => {
+                    window.location.href = `/posts/${item.id}/edit?view=true`;
+                  }}
                 >
-                  Details
+                  <Eye size={18} className="text-gray-700" />
+
+                  <span className="text-xs">View</span>
                 </button>
 
-                <button
-                  className="
-                      bg-yellow-500
-                      text-white
-                      px-3
-                      py-2
-                      rounded
-                    "
-                >
-                  Edit
-                </button>
+                {/* EDIT */}
+                {["scheduled", "failed"].includes(item.status) && (
+                  <button
+                    title="Edit"
+                    className="
+        flex
+        flex-col
+        items-center
+        justify-center
+        gap-1
+        p-3
+        rounded-lg
+        bg-yellow-50
+        hover:bg-yellow-100
+      "
+                    onClick={() => {
+                      window.location.href = `/posts/${item.id}/edit`;
+                    }}
+                  >
+                    <Pencil size={18} className="text-yellow-600" />
+
+                    <span className="text-xs">Edit</span>
+                  </button>
+                )}
+
+                {/* DELETE */}
+                {item.status !== "processing" && (
+                  <button
+                    title="Delete"
+                    className="
+        flex
+        flex-col
+        items-center
+        justify-center
+        gap-1
+        p-3
+        rounded-lg
+        bg-red-50
+        hover:bg-red-100
+      "
+                    onClick={async () => {
+                      await fetch("/api/posts", {
+                        method: "DELETE",
+
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+
+                        body: JSON.stringify({
+                          id: item.id,
+                        }),
+                      });
+
+                      await refreshPosts();
+                    }}
+                  >
+                    <Trash2 size={18} className="text-red-600" />
+
+                    <span className="text-xs">Delete</span>
+                  </button>
+                )}
+
+                {/* DUPLICATE */}
+                {item.status !== "published" && (
+                  <button
+                    title="Duplicate"
+                    className="
+        flex
+        flex-col
+        items-center
+        justify-center
+        gap-1
+        p-3
+        rounded-lg
+        bg-green-50
+        hover:bg-green-100
+      "
+                    onClick={async () => {
+                      await fetch(`/api/posts/${item.id}/duplicate`, {
+                        method: "POST",
+                      });
+
+                      await refreshPosts();
+                    }}
+                  >
+                    <Copy size={18} className="text-green-600" />
+
+                    <span className="text-xs">Copy</span>
+                  </button>
+                )}
               </div>
             </div>
           ))}

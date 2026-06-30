@@ -42,6 +42,8 @@ export default function EditPostPage() {
     return local.toISOString().slice(0, 16);
   })();
 
+  const isView = searchParams.get("view") === "true";
+
   useEffect(() => {
     if (!id) return;
 
@@ -89,7 +91,24 @@ export default function EditPostPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Edit Campaign</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        {isView ? "View Post" : "Edit Campaign"}
+      </h1>
+      {isView && (
+        <div
+          className="
+      mb-6
+      bg-blue-50
+      border
+      border-blue-200
+      text-blue-700
+      rounded-lg
+      p-4
+    "
+        >
+          Viewing post in read-only mode.
+        </div>
+      )}
 
       {/* POST */}
 
@@ -97,6 +116,7 @@ export default function EditPostPage() {
         <label className="font-bold">Caption</label>
 
         <textarea
+          disabled={isView}
           rows={6}
           className="w-full border p-3 rounded mt-2"
           value={post}
@@ -114,6 +134,7 @@ export default function EditPostPage() {
         )}
 
         <input
+          disabled={isView}
           type="file"
           onChange={(e) => setImage(e.target.files?.[0] || null)}
         />
@@ -128,6 +149,7 @@ export default function EditPostPage() {
           {accounts.map((account) => (
             <label key={account.id} className="flex gap-3">
               <input
+                disabled={isView}
                 type="checkbox"
                 checked={selectedAccounts.includes(account.id)}
                 onChange={(e) => {
@@ -162,6 +184,7 @@ export default function EditPostPage() {
           <label className="font-bold">Schedule</label>
 
           <input
+            disabled={isView}
             type="datetime-local"
             className="w-full border p-3 rounded mt-2"
             min={minScheduleTime}
@@ -173,88 +196,113 @@ export default function EditPostPage() {
 
       {/* SAVE */}
 
-      <button
-        disabled={loading || selectedAccounts.length === 0}
-        className={`px-6 py-3 rounded text-white ${
-          loading || selectedAccounts.length === 0
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600"
-        }`}
-        onClick={async () => {
-          if (!post.trim()) {
-            alert("Please enter a post");
-            return;
-          }
-
-          if (selectedAccounts.length === 0) {
-            alert("Please select at least one target account");
-            return;
-          }
-
-          if ((status !== "draft" || scheduleMode) && !scheduleTime) {
-            alert("Please select a schedule time");
-            return;
-          }
-          setLoading(true);
-
-          try {
-            let uploadedImage = imageUrl;
-
-            if (image) {
-              const formData = new FormData();
-
-              formData.append("file", image);
-
-              const upload = await fetch("/api/upload", {
-                method: "POST",
-                body: formData,
-              });
-
-              const uploadData = await upload.json();
-
-              uploadedImage = uploadData.url;
-            }
-
-            const response = await fetch(`/api/posts/${id}`, {
-              method: "PUT",
-
-              headers: {
-                "Content-Type": "application/json",
-              },
-
-              body: JSON.stringify({
-                post,
-                image_url: uploadedImage,
-
-                social_account_ids: selectedAccounts,
-
-                schedule_time: scheduleTime
-                  ? new Date(scheduleTime).toISOString()
-                  : null,
-
-                scheduleMode,
-              }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-              alert(data.error);
+      {!isView && (
+        <button
+          disabled={loading || selectedAccounts.length === 0}
+          className={`
+      px-6
+      py-3
+      rounded
+      text-white
+      ${
+        loading || selectedAccounts.length === 0
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-blue-600"
+      }
+    `}
+          onClick={async () => {
+            if (!post.trim()) {
+              alert("Please enter a post");
               return;
             }
 
-            window.location.href = "/dashboard";
-          } catch (error) {
-            console.error(error);
+            if (selectedAccounts.length === 0) {
+              alert("Please select at least one target account");
+              return;
+            }
 
-            alert("Failed to save");
-          } finally {
-            setLoading(false);
-          }
-        }}
-      >
-        {loading ? "Saving..." : "Save Changes"}
-      </button>
+            if ((status !== "draft" || scheduleMode) && !scheduleTime) {
+              alert("Please select a schedule time");
+              return;
+            }
+            setLoading(true);
+
+            try {
+              let uploadedImage = imageUrl;
+
+              if (image) {
+                const formData = new FormData();
+
+                formData.append("file", image);
+
+                const upload = await fetch("/api/upload", {
+                  method: "POST",
+                  body: formData,
+                });
+
+                const uploadData = await upload.json();
+
+                uploadedImage = uploadData.url;
+              }
+
+              const response = await fetch(`/api/posts/${id}`, {
+                method: "PUT",
+
+                headers: {
+                  "Content-Type": "application/json",
+                },
+
+                body: JSON.stringify({
+                  post,
+                  image_url: uploadedImage,
+
+                  social_account_ids: selectedAccounts,
+
+                  schedule_time: scheduleTime
+                    ? new Date(scheduleTime).toISOString()
+                    : null,
+
+                  scheduleMode,
+                }),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                alert(data.error);
+                return;
+              }
+
+              window.location.href = "/dashboard";
+            } catch (error) {
+              console.error(error);
+
+              alert("Failed to save");
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          {loading ? "Saving..." : "Save Changes"}
+        </button>
+      )}
+
+      {isView && (
+        <button
+          className="
+      bg-yellow-500
+      text-white
+      px-6
+      py-3
+      rounded
+    "
+          onClick={() => {
+            window.location.href = `/posts/${id}/edit`;
+          }}
+        >
+          Edit Post
+        </button>
+      )}
     </div>
   );
 }

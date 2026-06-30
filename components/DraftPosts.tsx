@@ -2,6 +2,7 @@
 
 import { Post } from "../types";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { Eye, Pencil, Trash2, Copy, CalendarPlus } from "lucide-react";
 
 export default function DraftPosts({
   posts,
@@ -82,57 +83,123 @@ export default function DraftPosts({
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-4">
+            <div
+              className="
+    grid
+    grid-cols-5
+    gap-2
+    mt-4
+  "
+            >
+              {/* VIEW */}
               <button
+                title="View"
                 className="
-                    bg-yellow-500
-                    text-white
-                    py-2
-                    rounded
-                  "
+      flex
+      flex-col
+      items-center
+      justify-center
+      gap-1
+      p-3
+      rounded-lg
+      bg-gray-100
+      hover:bg-gray-200
+    "
+                onClick={() => {
+                  window.location.href = `/posts/${item.id}/edit?view=true`;
+                }}
+              >
+                <Eye size={18} className="text-gray-700" />
+
+                <span className="text-xs">View</span>
+              </button>
+
+              {/* EDIT */}
+              <button
+                title="Edit"
+                className="
+      flex
+      flex-col
+      items-center
+      justify-center
+      gap-1
+      p-3
+      rounded-lg
+      bg-yellow-50
+      hover:bg-yellow-100
+    "
                 onClick={() => {
                   window.location.href = `/posts/${item.id}/edit`;
                 }}
               >
-                Edit
+                <Pencil size={18} className="text-yellow-600" />
+
+                <span className="text-xs">Edit</span>
               </button>
 
+              {/* DELETE */}
               <button
+                title="Delete"
                 className="
-                    bg-red-500
-                    text-white
-                    py-2
-                    rounded
-                  "
+      flex
+      flex-col
+      items-center
+      justify-center
+      gap-1
+      p-3
+      rounded-lg
+      bg-red-50
+      hover:bg-red-100
+    "
                 onClick={() => deletePost(item.id)}
               >
-                Delete
+                <Trash2 size={18} className="text-red-600" />
+
+                <span className="text-xs">Delete</span>
               </button>
 
+              {/* DUPLICATE */}
               <button
+                title="Duplicate"
                 className="
-                    bg-green-600
-                    text-white
-                    py-2
-                    rounded
-                  "
+      flex
+      flex-col
+      items-center
+      justify-center
+      gap-1
+      p-3
+      rounded-lg
+      bg-green-50
+      hover:bg-green-100
+    "
                 onClick={() => duplicatePost(item.id)}
               >
-                Duplicate
+                <Copy size={18} className="text-green-600" />
+
+                <span className="text-xs">Copy</span>
               </button>
 
+              {/* SCHEDULE */}
               <button
+                title="Schedule"
                 className="
-                    bg-blue-600
-                    text-white
-                    py-2
-                    rounded
-                  "
+      flex
+      flex-col
+      items-center
+      justify-center
+      gap-1
+      p-3
+      rounded-lg
+      bg-blue-50
+      hover:bg-blue-100
+    "
                 onClick={() => {
                   window.location.href = `/posts/${item.id}/edit?schedule=true`;
                 }}
               >
-                Schedule
+                <CalendarPlus size={18} className="text-blue-600" />
+
+                <span className="text-xs">Schedule</span>
               </button>
             </div>
           </div>
@@ -178,61 +245,81 @@ export default function DraftPosts({
                 </td>
 
                 <td className="border p-2">
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    {/* VIEW */}
                     <button
+                      title="View"
                       className="
-                          bg-yellow-500
-                          text-white
-                          px-3
-                          py-1
-                          rounded
-                        "
+      p-2
+      rounded
+      hover:bg-gray-100
+      text-gray-700
+    "
+                      onClick={() => {
+                        window.location.href = `/posts/${item.id}/edit?view=true`;
+                      }}
+                    >
+                      <Eye size={18} />
+                    </button>
+
+                    {/* EDIT */}
+                    <button
+                      title="Edit"
+                      className="
+      p-2
+      rounded
+      hover:bg-yellow-100
+      text-yellow-600
+    "
                       onClick={() => {
                         window.location.href = `/posts/${item.id}/edit`;
                       }}
                     >
-                      Edit
+                      <Pencil size={18} />
                     </button>
 
+                    {/* DELETE */}
                     <button
+                      title="Delete"
                       className="
-                          bg-red-500
-                          text-white
-                          px-3
-                          py-1
-                          rounded
-                        "
+      p-2
+      rounded
+      hover:bg-red-100
+      text-red-600
+    "
                       onClick={() => deletePost(item.id)}
                     >
-                      Delete
+                      <Trash2 size={18} />
                     </button>
 
+                    {/* DUPLICATE */}
                     <button
+                      title="Duplicate"
                       className="
-                          bg-green-600
-                          text-white
-                          px-3
-                          py-1
-                          rounded
-                        "
+      p-2
+      rounded
+      hover:bg-green-100
+      text-green-600
+    "
                       onClick={() => duplicatePost(item.id)}
                     >
-                      Duplicate
+                      <Copy size={18} />
                     </button>
 
+                    {/* SCHEDULE */}
                     <button
+                      title="Schedule"
                       className="
-                          bg-blue-600
-                          text-white
-                          px-3
-                          py-1
-                          rounded
-                        "
+      p-2
+      rounded
+      hover:bg-blue-100
+      text-blue-600
+    "
                       onClick={() => {
                         window.location.href = `/posts/${item.id}/edit?schedule=true`;
                       }}
                     >
-                      Schedule
+                      <CalendarPlus size={18} />
                     </button>
                   </div>
                 </td>
