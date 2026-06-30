@@ -22,8 +22,6 @@ export default function DraftsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Draft Posts</h1>
-
       <DraftPosts posts={drafts} setPosts={setDrafts} />
     </div>
   );

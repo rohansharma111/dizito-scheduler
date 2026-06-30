@@ -173,18 +173,23 @@ export default function CreatePostForm({ posts, setPosts }: any) {
             "
           />
 
-          <input
-            type="datetime-local"
-            min={minScheduleTime}
-            value={scheduleTime}
-            onChange={(e) => setScheduleTime(e.target.value)}
-            className="
+          <div>
+            <label className="block mb-2 font-medium">
+              Schedule Date & Time
+            </label>
+            <input
+              type="datetime-local"
+              min={minScheduleTime}
+              value={scheduleTime}
+              onChange={(e) => setScheduleTime(e.target.value)}
+              className="
               w-full
               border
               rounded-lg
               p-3
             "
-          />
+            />
+          </div>
 
           <div
             className="

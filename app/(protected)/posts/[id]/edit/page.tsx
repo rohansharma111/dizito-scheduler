@@ -287,7 +287,7 @@ export default function EditPostPage() {
         </button>
       )}
 
-      {isView && (
+      {isView && status !== "published" && (
         <button
           className="
       bg-yellow-500
