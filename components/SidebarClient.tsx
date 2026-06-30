@@ -5,6 +5,17 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import LogoutButton from "./LogoutButton";
 
+import {
+  LayoutDashboard,
+  Upload,
+  FileText,
+  FilePen,
+  Link2,
+  Settings,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
+
 export default function SidebarClient({
   user,
 }: {
@@ -37,91 +48,136 @@ export default function SidebarClient({
     {
       href: "/dashboard",
       label: "Dashboard",
-      icon: "🏠",
+      icon: LayoutDashboard,
     },
     {
       href: "/bulk-upload",
       label: "Bulk Upload",
-      icon: "📁",
+      icon: Upload,
     },
     {
       href: "/posts",
       label: "Posts",
-      icon: "📝",
+      icon: FileText,
     },
     {
       href: "/drafts",
       label: "Drafts",
-      icon: "📄",
+      icon: FilePen,
     },
     {
       href: "/accounts",
       label: "Accounts",
-      icon: "🔗",
+      icon: Link2,
     },
     {
       href: "/settings",
       label: "Settings",
-      icon: "⚙️",
+      icon: Settings,
     },
   ];
 
   return (
     <aside
       className={`
-        border-r
         bg-white
+        border-r
         flex
         flex-col
         transition-all
-        duration-300
+        duration-200
+        ease-in-out
+        h-screen
+        sticky
+        top-0
         ${collapsed ? "w-20" : "w-64"}
       `}
     >
+      {/* HEADER */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-8">
           {!collapsed && <h1 className="text-2xl font-bold">Dizito</h1>}
 
-          <button onClick={toggleSidebar} className="border rounded px-2 py-1">
-            {collapsed ? "→" : "←"}
+          <button
+            onClick={toggleSidebar}
+            className="
+              p-2
+              rounded-lg
+              hover:bg-gray-100
+              transition-colors
+            "
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={20} />
+            ) : (
+              <PanelLeftClose size={20} />
+            )}
           </button>
         </div>
 
-        <nav className="space-y-2">
-          {menu.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`
-                  flex
-                  items-center
-                  gap-3
-                  px-3
-                  py-2
-                  rounded
-                  transition-colors
-                  ${
-                    pathname === item.href
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-gray-100"
-                  }
-                `}
-            >
-              <span>{item.icon}</span>
+        {/* NAVIGATION */}
+        <nav className="space-y-1">
+          {menu.map((item) => {
+            const Icon = item.icon;
 
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          ))}
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
+                    relative
+                    flex
+                    items-center
+                    ${collapsed ? "justify-center" : "gap-3"}
+                    px-3
+                    py-3
+                    rounded-xl
+                    transition-all
+                    duration-200
+                    ${
+                      isActive
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }
+                  `}
+              >
+                {/* ACTIVE BAR */}
+                <div
+                  className={`
+                      absolute
+                      left-0
+                      top-1
+                      bottom-1
+                      w-1
+                      rounded-r-full
+                      ${isActive ? "bg-white" : "bg-transparent"}
+                    `}
+                />
+
+                <Icon size={20} />
+
+                {!collapsed && (
+                  <span className="font-medium">{item.label}</span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
+      {/* USER */}
       <div className="mt-auto border-t p-4">
         {!collapsed && (
-          <>
+          <div className="mb-4">
             <div className="font-medium">{user.name}</div>
 
-            <div className="text-sm text-gray-500 mb-3">{user.email}</div>
-          </>
+            <div className="text-sm text-gray-500">{user.email}</div>
+          </div>
         )}
 
         <LogoutButton />

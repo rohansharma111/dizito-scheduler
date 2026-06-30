@@ -1,47 +1,51 @@
 "use client";
 
-import Navbar from "../../../components/Navbar";
-import StatsCards from "../../../components/StatsCards";
-import CreatePostForm from "../../../components/CreatePostForm";
-import PostCalendar from "../../../components/PostCalendar";
-import { useState, useEffect } from "react";
-import { Post } from "../../../types";
+import { useEffect, useState } from "react";
 
-export default function Home() {
-  const [posts, setPosts] = useState< []>([]);
+import StatsCards from "@/components/StatsCards";
+import CreatePostForm from "@/components/CreatePostForm";
+import PostCalendar from "@/components/PostCalendar";
+
+import { Post } from "@/types";
+
+export default function DashboardPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+
   const [stats, setStats] = useState({
     scheduled: 0,
     published: 0,
     failed: 0,
     accounts: 0,
   });
-  
+
   async function loadPosts() {
-    const response = await fetch("/api/posts");
-    const data = await response.json();
-    setPosts(data);
+    try {
+      const response = await fetch("/api/posts");
+
+      const data = await response.json();
+
+      setPosts(data);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-useEffect(() => {
+  async function loadStats() {
+    try {
+      const response = await fetch("/api/dashboard/stats");
 
-  loadPosts();
-  loadStats();
+      const data = await response.json();
 
-}, []);
+      setStats(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
-const loadStats = async () => {
-
-  const response =
-    await fetch(
-      "/api/dashboard/stats"
-    );
-
-  const data =
-    await response.json();
-
-  setStats(data);
-
-};
+  useEffect(() => {
+    loadPosts();
+    loadStats();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,16 +56,24 @@ const loadStats = async () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="space-y-6">
+      {/* PAGE HEADER */}
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
 
-      <div className="flex-1 p-6">
-        <Navbar />
-        <StatsCards stats={stats} />
-
-        <PostCalendar posts={posts} />
-
-        <CreatePostForm posts={posts} setPosts={setPosts} />
+        <p className="text-gray-500 mt-1">
+          Manage your scheduled posts and social accounts.
+        </p>
       </div>
+
+      {/* STATS */}
+      <StatsCards stats={stats} />
+
+      {/* CALENDAR */}
+      <PostCalendar posts={posts} />
+
+      {/* CREATE POST */}
+      <CreatePostForm posts={posts} setPosts={setPosts} />
     </div>
   );
 }
