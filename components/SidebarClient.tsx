@@ -14,15 +14,20 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  X,
 } from "lucide-react";
 
 export default function SidebarClient({
   user,
+  mobileOpen = false,
+  onClose,
 }: {
   user: {
     name?: string | null;
     email?: string | null;
   };
+  mobileOpen?: boolean;
+  onClose?: () => void;
 }) {
   const pathname = usePathname();
 
@@ -78,110 +83,157 @@ export default function SidebarClient({
   ];
 
   return (
-    <aside
-      className={`
-        bg-white
-        border-r
-        flex
-        flex-col
-        transition-all
-        duration-200
-        ease-in-out
-        h-screen
-        sticky
-        top-0
-        ${collapsed ? "w-20" : "w-64"}
-      `}
-    >
-      {/* HEADER */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-8">
-          {!collapsed && <h1 className="text-2xl font-bold">Dizito</h1>}
+    <>
+      {/* MOBILE OVERLAY */}
+      {mobileOpen && (
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/50
+            z-40
+            lg:hidden
+          "
+          onClick={onClose}
+        />
+      )}
 
-          <button
-            onClick={toggleSidebar}
-            className="
-              p-2
-              rounded-lg
-              hover:bg-gray-100
-              transition-colors
-            "
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={20} />
-            ) : (
-              <PanelLeftClose size={20} />
-            )}
-          </button>
+      <aside
+        className={`
+          bg-white
+          border-r
+          flex
+          flex-col
+          transition-all
+          duration-200
+          ease-in-out
+
+          lg:relative
+          lg:translate-x-0
+
+          fixed
+          left-0
+          top-0
+          z-50
+
+          h-screen
+
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+
+          lg:flex
+
+          ${collapsed ? "lg:w-20" : "lg:w-64"}
+
+          w-64
+        `}
+      >
+        {/* HEADER */}
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-8">
+            {!collapsed && <h1 className="text-2xl font-bold">Dizito</h1>}
+
+            <div className="flex gap-2">
+              {/* MOBILE CLOSE */}
+              <button
+                onClick={onClose}
+                className="
+                  lg:hidden
+                  p-2
+                  rounded-lg
+                  hover:bg-gray-100
+                "
+              >
+                <X size={20} />
+              </button>
+
+              {/* DESKTOP COLLAPSE */}
+              <button
+                onClick={toggleSidebar}
+                className="
+                  hidden
+                  lg:block
+                  p-2
+                  rounded-lg
+                  hover:bg-gray-100
+                "
+              >
+                {collapsed ? (
+                  <PanelLeftOpen size={20} />
+                ) : (
+                  <PanelLeftClose size={20} />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* NAV */}
+          <nav className="space-y-1">
+            {menu.map((item) => {
+              const Icon = item.icon;
+
+              const isActive =
+                item.href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => onClose?.()}
+                  className={`
+                      relative
+                      flex
+                      items-center
+                      ${collapsed ? "lg:justify-center" : "gap-3"}
+                      px-3
+                      py-3
+                      rounded-xl
+                      transition-all
+                      duration-200
+                      ${
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }
+                    `}
+                >
+                  <div
+                    className={`
+                        absolute
+                        left-0
+                        top-1
+                        bottom-1
+                        w-1
+                        rounded-r-full
+                        ${isActive ? "bg-white" : "bg-transparent"}
+                      `}
+                  />
+
+                  <Icon size={20} />
+
+                  {(!collapsed || window.innerWidth < 1024) && (
+                    <span className="font-medium">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* NAVIGATION */}
-        <nav className="space-y-1">
-          {menu.map((item) => {
-            const Icon = item.icon;
+        {/* USER */}
+        <div className="mt-auto border-t p-4">
+          {!collapsed && (
+            <div className="mb-4">
+              <div className="font-medium">{user.name}</div>
 
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(item.href);
+              <div className="text-sm text-gray-500">{user.email}</div>
+            </div>
+          )}
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                    relative
-                    flex
-                    items-center
-                    ${collapsed ? "justify-center" : "gap-3"}
-                    px-3
-                    py-3
-                    rounded-xl
-                    transition-all
-                    duration-200
-                    ${
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }
-                  `}
-              >
-                {/* ACTIVE BAR */}
-                <div
-                  className={`
-                      absolute
-                      left-0
-                      top-1
-                      bottom-1
-                      w-1
-                      rounded-r-full
-                      ${isActive ? "bg-white" : "bg-transparent"}
-                    `}
-                />
-
-                <Icon size={20} />
-
-                {!collapsed && (
-                  <span className="font-medium">{item.label}</span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* USER */}
-      <div className="mt-auto border-t p-4">
-        {!collapsed && (
-          <div className="mb-4">
-            <div className="font-medium">{user.name}</div>
-
-            <div className="text-sm text-gray-500">{user.email}</div>
-          </div>
-        )}
-
-        <LogoutButton />
-      </div>
-    </aside>
+          <LogoutButton />
+        </div>
+      </aside>
+    </>
   );
 }

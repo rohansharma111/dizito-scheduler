@@ -1,15 +1,20 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, Menu } from "lucide-react";
 
-export default function AppHeader() {
+export default function AppHeader({
+  onMenuClick,
+}: {
+  onMenuClick: () => void;
+}) {
   return (
     <header
       className="
         h-16
         bg-white
         border-b
-        px-6
+        px-4
+        md:px-6
         flex
         items-center
         justify-between
@@ -18,7 +23,24 @@ export default function AppHeader() {
     >
       {/* LEFT */}
       <div className="flex items-center gap-4">
-        <div className="relative">
+        {/* MOBILE MENU */}
+        <button
+          onClick={onMenuClick}
+          className="
+            lg:hidden
+            p-2
+            rounded-lg
+            hover:bg-gray-100
+          "
+        >
+          <Menu size={22} />
+        </button>
+
+        {/* MOBILE LOGO */}
+        <h1 className="font-bold text-lg lg:hidden">Dizito</h1>
+
+        {/* DESKTOP SEARCH */}
+        <div className="relative hidden md:block">
           <Search
             size={18}
             className="
@@ -48,7 +70,7 @@ export default function AppHeader() {
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 md:gap-5">
         <button
           className="
             p-2
