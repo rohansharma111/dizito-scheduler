@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Post } from "../types";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
-export default function CreatePostForm({ posts, setPosts }: any) {
+export default function CreatePostForm1({ posts, setPosts }: any) {
   const [post, setPost] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [scheduleTime, setScheduleTime] = useState<string>("");
