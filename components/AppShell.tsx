@@ -14,15 +14,18 @@ export default function AppShell({
   user: {
     name?: string | null;
     email?: string | null;
+    plan?: string;
   };
 }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const closeSidebar = () => setMobileSidebarOpen(false);
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* DESKTOP SIDEBAR */}
       <div className="hidden lg:flex">
-        <Sidebar user={user} />
+        <Sidebar user={user} plan={user.plan || "free"} />
       </div>
 
       {/* MOBILE OVERLAY */}
@@ -31,11 +34,11 @@ export default function AppShell({
           className="
             fixed
             inset-0
-            bg-black/50
             z-40
+            bg-black/50
             lg:hidden
           "
-          onClick={() => setMobileSidebarOpen(false)}
+          onClick={closeSidebar}
         />
       )}
 
@@ -56,8 +59,9 @@ export default function AppShell({
       >
         <Sidebar
           user={user}
+          plan={user.plan || "free"}
           mobileOpen={mobileSidebarOpen}
-          onClose={() => setMobileSidebarOpen(false)}
+          onClose={closeSidebar}
         />
       </div>
 
