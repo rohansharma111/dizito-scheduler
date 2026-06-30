@@ -19,8 +19,13 @@ export default async function ProtectedLayout({
   return (
     <AppShell
       user={{
+        id: (session.user as any).id,
+
         name: session.user?.name,
+
         email: session.user?.email,
+
+        plan: (session.user as any).plan || "free",
       }}
     >
       {children}

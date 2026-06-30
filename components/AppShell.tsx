@@ -12,6 +12,7 @@ export default function AppShell({
   children: ReactNode;
 
   user: {
+    id: number;
     name?: string | null;
     email?: string | null;
     plan?: string;

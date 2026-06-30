@@ -4,10 +4,8 @@ import GoogleProvider from "next-auth/providers/google";
 export const authOptions = {
   providers: [
     GoogleProvider({
-      clientId:
-        process.env.GOOGLE_CLIENT_ID!,
-      clientSecret:
-        process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
 
@@ -17,31 +15,32 @@ export const authOptions = {
         return false;
       }
 
-      const existingUser =
-        await pool.query(
-          `
-          SELECT *
+      const existingUser = await pool.query(
+        `
+          SELECT
+            id,
+            plan
           FROM users
           WHERE email = $1
           `,
-          [user.email]
-        );
+        [user.email],
+      );
 
-      if (
-        existingUser.rows.length === 0
-      ) {
+      if (existingUser.rows.length === 0) {
         await pool.query(
           `
           INSERT INTO users
           (
-            email
+            email,
+            plan
           )
           VALUES
           (
-            $1
+            $1,
+            $2
           )
           `,
-          [user.email]
+          [user.email, "free"],
         );
       }
 
@@ -50,34 +49,32 @@ export const authOptions = {
 
     async jwt({ token }: any) {
       if (token.email) {
-        const result =
-          await pool.query(
-            `
-            SELECT id
+        const result = await pool.query(
+          `
+            SELECT
+              id,
+              plan
             FROM users
             WHERE email = $1
             `,
-            [token.email]
-          );
+          [token.email],
+        );
 
-        if (
-          result.rows.length > 0
-        ) {
-          token.userId =
-            result.rows[0].id;
+        if (result.rows.length > 0) {
+          token.userId = result.rows[0].id;
+
+          token.plan = result.rows[0].plan;
         }
       }
 
       return token;
     },
 
-    async session({
-      session,
-      token,
-    }: any) {
+    async session({ session, token }: any) {
       if (session.user) {
-        session.user.id =
-          token.userId;
+        session.user.id = token.userId;
+
+        session.user.plan = token.plan || "free";
       }
 
       return session;
