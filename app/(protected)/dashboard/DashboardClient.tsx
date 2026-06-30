@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import StatsCards from "@/components/StatsCards";
-import CreatePostForm from "@/components/CreatePostForm";
+import CreatePostForm from "@/components/CreatePostForm1";
 import PostCalendar from "@/components/PostCalendar";
 
 import { Post } from "@/types";
