@@ -54,7 +54,11 @@ export default function AppShell({
           ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <Sidebar user={user} />
+        <Sidebar
+          user={user}
+          mobileOpen={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+        />
       </div>
 
       {/* MAIN AREA */}
