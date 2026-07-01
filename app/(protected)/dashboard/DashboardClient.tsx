@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import StatsCards from "@/components/StatsCards";
 import CreatePostForm from "@/components/CreatePostForm";
 import PostCalendar from "@/components/PostCalendar";
-
 import { Post } from "@/types";
+import Footer from "@/components/Footer";
 
 export default function DashboardPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -56,24 +56,27 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-6 md:space-y-6">
-      {/* PAGE HEADER */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+    <>
+      <div className="space-y-6 md:space-y-6">
+        {/* PAGE HEADER */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
 
-        <p className="text-sm md:text-base text-gray-500 mt-1">
-          Manage your scheduled posts and social accounts.
-        </p>
+          <p className="text-sm md:text-base text-gray-500 mt-1">
+            Manage your scheduled posts and social accounts.
+          </p>
+        </div>
+
+        {/* STATS */}
+        <StatsCards stats={stats} />
+
+        {/* CALENDAR */}
+        <PostCalendar posts={posts} />
+
+        {/* CREATE POST */}
+        <CreatePostForm posts={posts} setPosts={setPosts} />
       </div>
-
-      {/* STATS */}
-      <StatsCards stats={stats} />
-
-      {/* CALENDAR */}
-      <PostCalendar posts={posts} />
-
-      {/* CREATE POST */}
-      <CreatePostForm posts={posts} setPosts={setPosts} />
-    </div>
+      <Footer />
+    </>
   );
 }

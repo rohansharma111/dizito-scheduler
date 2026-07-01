@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { plans } from "@/lib/plans";
+import Footer from "@/components/Footer";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -267,6 +268,7 @@ export default async function Home() {
           </Link>
         </div>
       </section>
+      <Footer />
     </main>
   );
 }

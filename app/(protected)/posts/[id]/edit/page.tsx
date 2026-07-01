@@ -58,7 +58,7 @@ export default function EditPostPage() {
 
         const accountData = await accountResponse.json();
 
-        setAccounts(accountData);
+        setAccounts(accountData || []);
 
         setPost(postData.post || "");
 
@@ -146,7 +146,7 @@ export default function EditPostPage() {
         <label className="font-bold">Targets</label>
 
         <div className="mt-3 space-y-2">
-          {accounts.map((account) => (
+          {Array.isArray(accounts) && accounts.map((account) => (
             <label key={account.id} className="flex gap-3">
               <input
                 disabled={isView}

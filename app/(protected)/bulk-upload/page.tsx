@@ -113,10 +113,12 @@ export default function BulkUploadPage() {
     }
 
     /*
-      optional Image
+      Mandatory Image
   */
 
-    if (row.image_url && row.image_url.trim()) {
+    if (!row.image_url?.trim()) {
+      errors.push("Missing image URL");
+    } else {
       try {
         new URL(row.image_url);
       } catch {
