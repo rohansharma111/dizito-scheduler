@@ -51,6 +51,7 @@ export default function BulkUploadPage() {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [plan, setPlan] = useState("free");
+  const [selectedFileName, setSelectedFileName] = useState("");
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
       "text/csv": [".csv"],
@@ -156,6 +157,7 @@ export default function BulkUploadPage() {
   }
 
   function handleFile(file: File) {
+    setSelectedFileName(file.name);
     if (file.size > 5 * 1024 * 1024) {
       alert("Maximum CSV size is 5MB");
 
@@ -399,7 +401,23 @@ Another Post,2026-07-02T15:00:00,`}
           }}
           {...getInputProps()}
         />
-        Drop CSV here or click to upload
+        {selectedFileName ? (
+          <div>
+            <div className="text-green-600 text-xl">✓ CSV Selected</div>
+
+            <div className="mt-2 font-medium">{selectedFileName}</div>
+
+            <div className="text-sm text-gray-500 mt-1">
+              Click or drop another CSV to replace
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="text-lg">Drop CSV here or click to upload</div>
+
+            <div className="text-sm text-gray-500 mt-2">Maximum size: 5 MB</div>
+          </div>
+        )}
       </div>
 
       {loading && <div>Parsing CSV...</div>}
@@ -536,11 +554,11 @@ Another Post,2026-07-02T15:00:00,`}
           <div className="bg-white border rounded-lg overflow-hidden">
             <div className="p-4 border-b">
               <h2 className="font-semibold">
-                Preview(
-                {selectedValidCount}
-                selected posts,
-                {selectedValidCount * selectedAccounts.length}
-                targets )
+                Preview
+                <span className="ml-2 text-gray-500">
+                  ({selectedValidCount} posts,{" "}
+                  {selectedValidCount * selectedAccounts.length} targets)
+                </span>
               </h2>
             </div>
 
@@ -696,6 +714,7 @@ Another Post,2026-07-02T15:00:00,`}
                 setMessage("");
                 setSelectedAccounts(accounts.map((a) => a.id));
                 setImportErrors([]);
+                setSelectedFileName("");
                 if (fileInputRef.current) {
                   fileInputRef.current.value = "";
                 }
@@ -708,11 +727,13 @@ Another Post,2026-07-02T15:00:00,`}
               Clear
             </button>
 
-            <div className="text-sm">
-              Selected:
+            <div className="flex items-center gap-1 text-sm">
+              <span>Selected:</span>
               <b>{selectedValidCount}</b>
-              posts → <b>{selectedValidCount * selectedAccounts.length}</b>
-              targets
+              <span>posts</span>
+              <span>→</span>
+              <b>{selectedValidCount * selectedAccounts.length}</b>
+              <span>targets</span>
             </div>
           </div>
         </>
