@@ -6,7 +6,7 @@ import { pool } from "@/lib/db";
 
 export default async function PricingPage() {
   const session = await getServerSession(authOptions);
-  let userPlan = "free";
+  let userPlan: string | null = null;
 
   if (session?.user) {
     const result = await pool.query(
@@ -25,12 +25,11 @@ export default async function PricingPage() {
       key: "free",
       ...plans.free,
       description: "Perfect for getting started",
-      button:
-        userPlan === "free"
-          ? "Current Plan"
-          : session
-            ? "Included"
-            : "Create Free Account",
+      button: !session
+        ? "Create Free Account"
+        : userPlan === "free"
+          ? "Current Plan" 
+          : "View Dashboard",
       href: session ? "/dashboard" : "/login",
       popular: false,
       disabled: userPlan === "free",
