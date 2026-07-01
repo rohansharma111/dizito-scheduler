@@ -87,9 +87,9 @@ export default function BulkUploadPage() {
 
       setPlan(plan.plan || "free");
 
-      setAccounts(accounts);
+      setAccounts(accounts || []);
 
-      setSelectedAccounts(accounts.map((a: any) => a.id));
+      setSelectedAccounts(accounts?.map((a: any) => a.id) || []);
     }
 
     initialize();
