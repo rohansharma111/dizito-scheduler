@@ -1,31 +1,60 @@
 import Link from "next/link";
 import { plans } from "@/lib/plans";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { pool } from "@/lib/db";
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const session = await getServerSession(authOptions);
+  let userPlan = "free";
+
+  if (session?.user) {
+    const result = await pool.query(
+      `
+      SELECT plan
+      FROM users
+      WHERE id = $1
+      `,
+      [(session.user as any).id],
+    );
+
+    userPlan = result.rows[0]?.plan || "free";
+  }
   const pricingPlans = [
     {
       key: "free",
       ...plans.free,
-      description: "Perfect for trying Dizito",
-      button: "Start Free",
-      href: "/login",
+      description: "Perfect for getting started",
+      button:
+        userPlan === "free"
+          ? "Current Plan"
+          : session
+            ? "Included"
+            : "Create Free Account",
+      href: session ? "/dashboard" : "/login",
       popular: false,
+      disabled: userPlan === "free",
     },
+
     {
       key: "creator",
       ...plans.creator,
       description: "Best for creators and small businesses",
-      button: "Join Creator Early Access",
-      href: "/login",
+      button:
+        userPlan === "creator" ? "Current Plan" : "Request Creator Access",
+      href: userPlan === "creator" ? "/dashboard" : "/contact?plan=creator",
       popular: true,
+      disabled: userPlan === "creator",
     },
+
     {
       key: "agency",
       ...plans.agency,
       description: "Built for agencies and teams",
-      button: "Join Agency Early Access",
-      href: "/login",
+      button: userPlan === "agency" ? "Current Plan" : "Contact Sales",
+      href: userPlan === "agency" ? "/dashboard" : "/contact?plan=agency",
       popular: false,
+      disabled: userPlan === "agency",
     },
   ];
 
@@ -33,19 +62,19 @@ export default function PricingPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Early Access Banner */}
       <div className="bg-blue-600 text-white text-center py-3 font-medium">
-        🚀 Early Access Launch • First 100 users get discounted pricing
+        🚀 Launch Offer • Founding users get lifetime discounted pricing
       </div>
 
       {/* Hero */}
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
-            Simple, Transparent Pricing
+            Schedule Instagram, Facebook & LinkedIn posts from one dashboard.
           </h1>
 
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Schedule Instagram, Facebook and LinkedIn posts from one dashboard.
-            Start free and upgrade when you grow.
+            Create once. Publish everywhere. Built for creators, businesses and
+            agencies.
           </p>
 
           <div className="mt-8 flex justify-center gap-6 text-sm font-medium">
@@ -80,12 +109,20 @@ export default function PricingPage() {
 
               <p className="mt-2 text-gray-500">{plan.description}</p>
 
-              <div className="mt-8 flex items-end">
-                <span className="text-5xl font-bold">₹{plan.price}</span>
+              <div className="mt-8">
+                <div className="flex items-end">
+                  <span className="text-5xl font-bold">₹{plan.price}</span>
 
-                <span className="ml-2 text-gray-500">
-                  {plan.price === 0 ? "Forever" : "/month"}
-                </span>
+                  <span className="ml-2 text-gray-500">
+                    {plan.price === 0 ? "Forever" : "/month"}
+                  </span>
+                </div>
+
+                {plan.price !== 0 && (
+                  <div className="mt-2 text-sm text-green-600 font-medium">
+                    Founding member pricing
+                  </div>
+                )}
               </div>
 
               <ul className="mt-8 space-y-4">
@@ -112,16 +149,36 @@ export default function PricingPage() {
                 <li>{plan.prioritySupport ? "✓" : "❌"} Priority support</li>
               </ul>
 
-              <Link
-                href={plan.href}
-                className={`mt-10 block w-full rounded-lg px-6 py-3 text-center font-medium transition ${
-                  plan.popular
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-              >
-                {plan.button}
-              </Link>
+              {plan.disabled ? (
+                <div
+                  className="
+      mt-10
+      block
+      w-full
+      rounded-lg
+      px-6
+      py-3
+      text-center
+      font-medium
+      bg-gray-300
+      text-gray-700
+      cursor-default
+    "
+                >
+                  {plan.button}
+                </div>
+              ) : (
+                <Link
+                  href={plan.href}
+                  className={`mt-10 block w-full rounded-lg px-6 py-3 text-center font-medium transition ${
+                    plan.popular
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  }`}
+                >
+                  {plan.button}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -144,18 +201,18 @@ export default function PricingPage() {
             </div>
 
             <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-3">Bulk Upload</h3>
+              <h3 className="font-bold mb-3">Bulk CSV Upload</h3>
 
               <p className="text-gray-600">
-                Upload hundreds of posts using CSV.
+                Schedule hundreds of posts in seconds.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-3">Smart Retry System</h3>
+              <h3 className="font-bold mb-3">Reliable Publishing</h3>
 
               <p className="text-gray-600">
-                Automatic retries and recovery ensure reliable publishing.
+                Automatic retries ensure your posts get published.
               </p>
             </div>
           </div>
@@ -270,6 +327,32 @@ export default function PricingPage() {
                 Yes, Creator and Agency plans support CSV bulk uploads.
               </p>
             </div>
+
+            <div className="bg-white p-6 rounded-xl border">
+              <h3 className="font-bold mb-2">Are my social accounts secure?</h3>
+
+              <p className="text-gray-600">
+                Yes. Dizito uses official OAuth authentication from Meta and
+                LinkedIn. We never store your passwords.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border">
+              <h3 className="font-bold mb-2">Does Dizito use official APIs?</h3>
+
+              <p className="text-gray-600">
+                Yes. Dizito publishes through the official Meta and LinkedIn
+                APIs.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border">
+              <h3 className="font-bold mb-2">Can I upgrade later?</h3>
+
+              <p className="text-gray-600">
+                Yes. You can start free and upgrade anytime.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -286,10 +369,10 @@ export default function PricingPage() {
           </p>
 
           <Link
-            href="/login"
+            href="/dashboard"
             className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold"
           >
-            Start Free
+            {session ? "Go to Dashboard" : "Create Free Account"}
           </Link>
         </div>
       </section>

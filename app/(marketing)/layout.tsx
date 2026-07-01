@@ -17,10 +17,7 @@ export default async function MarketingLayout({
             <h1 className="text-2xl font-bold cursor-pointer">Dizito</h1>
           </Link>
 
-          <nav className="flex items-center gap-6">
-            <a href="#features">Features</a>
-
-            <Link href="/pricing">Pricing</Link>
+          <nav className="flex items-center gap-6">                      
 
             {session?.user ? (
               <Link

@@ -60,7 +60,7 @@ export const plans: Record<PlanName, Plan> = {
   creator: {
     name: "Creator",
 
-    price: 299,
+    price: 499,
 
     accounts: 5,
 
@@ -88,9 +88,9 @@ export const plans: Record<PlanName, Plan> = {
   agency: {
     name: "Agency",
 
-    price: 999,
+    price: 1499,
 
-    accounts: 25,
+    accounts: 50,
 
     monthlyPosts: Number.MAX_SAFE_INTEGER,
 
