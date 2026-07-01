@@ -28,8 +28,8 @@ export default async function PricingPage() {
       button: !session
         ? "Create Free Account"
         : userPlan === "free"
-          ? "Current Plan" 
-          : "View Dashboard",
+          ? "Current Plan"
+          : "Included",
       href: session ? "/dashboard" : "/login",
       popular: false,
       disabled: userPlan === "free",
@@ -41,7 +41,10 @@ export default async function PricingPage() {
       description: "Best for creators and small businesses",
       button:
         userPlan === "creator" ? "Current Plan" : "Request Creator Access",
-      href: userPlan === "creator" ? "/dashboard" : "/contact?plan=creator",
+      href:
+        userPlan === "creator"
+          ? "/dashboard"
+          : "https://forms.gle/srHKFfxHertsQBH36",
       popular: true,
       disabled: userPlan === "creator",
     },
@@ -51,7 +54,10 @@ export default async function PricingPage() {
       ...plans.agency,
       description: "Built for agencies and teams",
       button: userPlan === "agency" ? "Current Plan" : "Contact Sales",
-      href: userPlan === "agency" ? "/dashboard" : "/contact?plan=agency",
+      href:
+        userPlan === "agency"
+          ? "/dashboard"
+          : "mailto:hello@dizito.in?subject=Agency%20Plan",
       popular: false,
       disabled: userPlan === "agency",
     },
@@ -119,7 +125,7 @@ export default async function PricingPage() {
 
                 {plan.price !== 0 && (
                   <div className="mt-2 text-sm text-green-600 font-medium">
-                    Founding member pricing
+                    Limited-time launch pricing
                   </div>
                 )}
               </div>
@@ -252,7 +258,54 @@ export default async function PricingPage() {
                 </tr>
 
                 <tr className="border-b">
-                  <td className="p-5">Bulk Upload</td>
+                  <td className="p-5">Instagram Publishing</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Facebook Publishing</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">LinkedIn Publishing</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Calendar View</td>
+                  <td className="text-center">
+                    {plans.free.calendar ? "✅" : "❌"}
+                  </td>
+                  <td className="text-center">
+                    {plans.creator.calendar ? "✅" : "❌"}
+                  </td>
+                  <td className="text-center">
+                    {plans.agency.calendar ? "✅" : "❌"}
+                  </td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Draft Posts</td>
+                  <td className="text-center">
+                    {plans.free.drafts ? "✅" : "❌"}
+                  </td>
+                  <td className="text-center">
+                    {plans.creator.drafts ? "✅" : "❌"}
+                  </td>
+                  <td className="text-center">
+                    {plans.agency.drafts ? "✅" : "❌"}
+                  </td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Bulk CSV Upload</td>
                   <td className="text-center">
                     {plans.free.bulkUpload ? "✅" : "❌"}
                   </td>
@@ -265,7 +318,7 @@ export default async function PricingPage() {
                 </tr>
 
                 <tr className="border-b">
-                  <td className="p-5">Retry System</td>
+                  <td className="p-5">Smart Retry System</td>
                   <td className="text-center">
                     {plans.free.retrySystem ? "✅" : "❌"}
                   </td>
@@ -274,6 +327,19 @@ export default async function PricingPage() {
                   </td>
                   <td className="text-center">
                     {plans.agency.retrySystem ? "✅" : "❌"}
+                  </td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Analytics</td>
+                  <td className="text-center">
+                    {plans.free.analytics ? "✅" : "❌"}
+                  </td>
+                  <td className="text-center">
+                    {plans.creator.analytics ? "✅" : "❌"}
+                  </td>
+                  <td className="text-center">
+                    {plans.agency.analytics ? "✅" : "❌"}
                   </td>
                 </tr>
 
@@ -368,7 +434,7 @@ export default async function PricingPage() {
           </p>
 
           <Link
-            href="/dashboard"
+            href={session ? "/dashboard" : "/login"}
             className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold"
           >
             {session ? "Go to Dashboard" : "Create Free Account"}

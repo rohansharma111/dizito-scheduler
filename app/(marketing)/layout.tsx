@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import Footer
+from "@/components/Footer";
 
 export default async function MarketingLayout({
   children,
@@ -39,6 +41,7 @@ export default async function MarketingLayout({
       </header>
 
       {children}
+      <Footer />
     </div>
   );
 }
