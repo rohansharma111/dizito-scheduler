@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import DraftPosts from "./DraftPosts";
 import ScheduledPosts from "./ScheduledPosts";
 import PublishDetailsModal from "./PublishDetailsModal";
@@ -29,6 +29,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
   const [showTargetsModal, setShowTargetsModal] = useState(false);
 
+  const [imagePreview, setImagePreview] = useState("");
+
   useEffect(() => {
     async function loadAccounts() {
       const response = await fetch("/api/social-accounts");
@@ -40,6 +42,14 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
     loadAccounts();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const minScheduleTime = (() => {
     const now = new Date();
@@ -122,6 +132,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
       setPost("");
       setScheduleTime("");
       setImage(null);
+      setImagePreview("");
 
       setSuccessMessage(status === "draft" ? "✅ Draft saved" : "✅ Scheduled");
     } catch (error) {
@@ -248,14 +259,25 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                   />
 
                   <div>
-                    <div>{account.account_name}</div>
+                    <div className="flex items-center gap-2">
+                      {account.platform === "instagram" && (
+                        <FaInstagram className="text-pink-500" />
+                      )}
 
-                    <div
-                      className="
-                          text-sm
-                          text-gray-500
-                        "
-                    >
+                      {account.platform === "facebook" && (
+                        <FaFacebook className="text-blue-600" />
+                      )}
+
+                      {account.platform === "linkedin" && (
+                        <FaLinkedin className="text-blue-700" />
+                      )}
+
+                      <span className="font-medium">
+                        {account.account_name}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-gray-500 ml-6">
                       {account.platform}
                     </div>
                   </div>
@@ -266,16 +288,36 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
           <input
             className="
-              w-full
-            "
+    w-full
+  "
             type="file"
             accept="image/*"
             onChange={(e) => {
-              if (e.target.files?.[0]) {
-                setImage(e.target.files[0]);
-              }
+              const file = e.target.files?.[0];
+
+              if (!file) return;
+
+              setImage(file);
+
+              setImagePreview(URL.createObjectURL(file));
             }}
           />
+          {imagePreview && (
+            <div className="mt-4">
+              <div className="font-medium mb-2">Preview</div>
+
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="
+        max-h-80
+        rounded-lg
+        border
+        shadow
+      "
+              />
+            </div>
+          )}
 
           <div
             className="

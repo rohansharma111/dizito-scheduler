@@ -81,9 +81,9 @@ export default function BulkUploadPage() {
         fetch("/api/accounts"),
       ]);
 
-      const plan = await planResponse.json();
+      const session = await planResponse.json();
 
-      setPlan(plan.plan || "free");
+      setPlan(session?.user?.plan || "free");
 
       const accountData = await accountResponse.json();
 

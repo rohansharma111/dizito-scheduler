@@ -4,6 +4,7 @@ import { ReactNode, useState } from "react";
 
 import Sidebar from "./Sidebar";
 import AppHeader from "./AppHeader";
+import Footer from "./Footer";
 
 export default function AppShell({
   children,
@@ -80,6 +81,8 @@ export default function AppShell({
         >
           {children}
         </main>
+
+        <Footer />
       </div>
     </div>
   );

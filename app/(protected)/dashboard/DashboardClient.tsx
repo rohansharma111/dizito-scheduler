@@ -6,7 +6,6 @@ import StatsCards from "@/components/StatsCards";
 import CreatePostForm from "@/components/CreatePostForm";
 import PostCalendar from "@/components/PostCalendar";
 import { Post } from "@/types";
-import Footer from "@/components/Footer";
 
 export default function DashboardPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -75,8 +74,7 @@ export default function DashboardPage() {
 
         {/* CREATE POST */}
         <CreatePostForm posts={posts} setPosts={setPosts} />
-      </div>
-      <Footer />
+      </div>      
     </>
   );
 }
