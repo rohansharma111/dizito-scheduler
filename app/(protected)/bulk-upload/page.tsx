@@ -83,13 +83,17 @@ export default function BulkUploadPage() {
 
       const plan = await planResponse.json();
 
-      const accounts = await accountResponse.json();
-
       setPlan(plan.plan || "free");
 
-      setAccounts(accounts || []);
+      const accountData = await accountResponse.json();
 
-      setSelectedAccounts(accounts?.map((a: any) => a.id) || []);
+      const accountList = Array.isArray(accountData.accounts)
+        ? accountData.accounts
+        : [];
+
+      setAccounts(accountList);
+
+      setSelectedAccounts(accountList.map((a: SocialAccount) => a.id));
     }
 
     initialize();
