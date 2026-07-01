@@ -99,6 +99,25 @@ export default function BulkUploadPage() {
     initialize();
   }, []);
 
+  function formatSchedule(dateString?: string) {
+    if (!dateString) return "-";
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+
+    return date.toLocaleString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
   function validateRow(row: CsvRow): ValidationResult {
     const errors: string[] = [];
 
@@ -592,7 +611,9 @@ Another Post,2026-07-02T15:00:00,`}
 
                         <td className="p-4 max-w-md">{row.content}</td>
 
-                        <td className="p-4">{row.schedule_time}</td>
+                        <td className="p-4 whitespace-nowrap">
+                          {formatSchedule(row.schedule_time)}
+                        </td>
 
                         <td className="p-4">
                           {row.image_url ? (
@@ -690,7 +711,7 @@ Another Post,2026-07-02T15:00:00,`}
             <div className="text-sm">
               Selected:
               <b>{selectedValidCount}</b>
-              posts →<b>{selectedValidCount * selectedAccounts.length}</b>
+              posts → <b>{selectedValidCount * selectedAccounts.length}</b>
               targets
             </div>
           </div>
