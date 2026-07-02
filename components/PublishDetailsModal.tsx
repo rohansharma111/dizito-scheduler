@@ -11,6 +11,8 @@ type Target = {
 
   account_name?: string;
 
+  social_account_id: number;
+
   published_at?: string | null;
 
   publish_message?: string | null;
@@ -53,9 +55,12 @@ export default function PublishDetailsModal({
     if (!message) return false;
 
     return (
-      message.includes("OAuthException") ||
       message.includes("Malformed access token") ||
-      message.includes('"code":190')
+      message.includes("OAuthException") ||
+      message.includes('"code":190') ||
+      message.includes("Invalid OAuth") ||
+      message.includes("Permission denied") ||
+      message.includes("Session has expired")
     );
   }
 
@@ -207,8 +212,30 @@ export default function PublishDetailsModal({
                       )}
                     </div>
 
+                    {needsReconnect(target.publish_message) && (
+                      <div
+                        className="
+      mt-4
+      p-3
+      rounded-lg
+      bg-yellow-50
+      border
+      border-yellow-300
+    "
+                      >
+                        <div className="font-medium text-yellow-800">
+                          ⚠ {target.platform} session expired
+                        </div>
+
+                        <div className="text-sm text-yellow-700 mt-1">
+                          This error cannot be fixed by retrying. Please
+                          reconnect your account.
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex gap-3 mt-5">
-                      {canRetry && (
+                      {canRetry && !needsReconnect(target.publish_message) && (
                         <button
                           className="
                               bg-yellow-500
@@ -254,14 +281,12 @@ export default function PublishDetailsModal({
 
                       {needsReconnect(target.publish_message) && (
                         <button
-                          className="
-                              bg-blue-600
-                              hover:bg-blue-700
-                              text-white
-                              px-4
-                              py-2
-                              rounded
-                            "
+                          onClick={() => {
+                            window.open(
+                              `/api/meta/reconnect?accountId=${target.social_account_id}`,
+                              "_blank",
+                            );
+                          }}
                         >
                           Reconnect
                         </button>

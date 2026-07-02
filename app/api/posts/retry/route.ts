@@ -117,17 +117,16 @@ export async function POST(request: Request) {
   await pool.query(
     `
     UPDATE post_targets
-    SET
-      status = 'scheduled',
-      retry_count = 0,
-      manual_retry_count =
-        manual_retry_count + 1,
-      next_retry_at = NULL,
-      publish_message = NULL,
-      processing_started_at = NULL,
-      publish_lock_uuid = NULL,
-      published_at = NULL
-    WHERE id = $1
+SET
+  status='scheduled',
+  manual_retry_count=
+      manual_retry_count+1,
+  next_retry_at=NULL,
+  publish_message=NULL,
+  processing_started_at=NULL,
+  publish_lock_uuid=NULL,
+  published_at=NULL
+WHERE id=$1
     `,
     [body.targetId],
   );
@@ -148,7 +147,7 @@ export async function POST(request: Request) {
     {
       platform: target.platform,
       postId: target.post_id,
-      automaticRetriesReset: true,
+      automaticRetriesUsed: target.retry_count,
       manualRetryNumber: target.manual_retry_count + 1,
       remainingManualRetries:
         MAX_MANUAL_RETRIES - target.manual_retry_count - 1,
