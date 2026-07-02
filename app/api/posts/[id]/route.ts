@@ -152,7 +152,15 @@ export async function PUT(
 
   const post = postResult.rows[0];
 
-  if (!["draft", "scheduled", "failed"].includes(post.status)) {
+  if (
+    ![
+      "draft",
+      "scheduled",
+      "retry_scheduled",
+      "permanent_failed",
+      "failure_handler_crashed",
+    ].includes(post.status)
+  ) {
     return Response.json(
       {
         error: "Cannot edit this post",

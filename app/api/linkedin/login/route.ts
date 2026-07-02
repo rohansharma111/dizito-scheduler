@@ -1,4 +1,30 @@
-export async function GET() {
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return Response.json(
+      {
+        error: "Unauthorized",
+      },
+      {
+        status: 401,
+      },
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+
+  const reconnect = searchParams.get("reconnect");
+
+  const reconnectType = searchParams.get("type") ?? "account";
+
+  const state = reconnect
+    ? `reconnect:${reconnect}:${reconnectType}`
+    : "connect";
+
   const clientId = process.env.LINKEDIN_CLIENT_ID;
 
   const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
@@ -10,7 +36,8 @@ export async function GET() {
     `?response_type=code` +
     `&client_id=${clientId}` +
     `&redirect_uri=${encodeURIComponent(redirectUri!)}` +
-    `&scope=${encodeURIComponent(scope)}`;
+    `&scope=${encodeURIComponent(scope)}` +
+    `&state=${encodeURIComponent(state)}`;
 
   return Response.redirect(url);
 }
