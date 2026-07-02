@@ -180,8 +180,9 @@ export default function PublishDetailsModal({
 
                       {/* RETRY INFO */}
                       {(target.status !== "published" ||
-                        (target.retry_count ?? 0) > 0 ||
-                        (target.manual_retry_count ?? 0) > 0) && (
+                        (target.status === "published" &&
+                          ((target.retry_count ?? 0) > 0 ||
+                            (target.manual_retry_count ?? 0) > 0))) && (
                         <>
                           <div>
                             <span className="font-semibold">

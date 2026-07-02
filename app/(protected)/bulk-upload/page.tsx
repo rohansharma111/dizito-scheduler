@@ -52,6 +52,7 @@ export default function BulkUploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [plan, setPlan] = useState("free");
   const [selectedFileName, setSelectedFileName] = useState("");
+  const [planLoading, setPlanLoading] = useState(true);
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
       "text/csv": [".csv"],
@@ -77,24 +78,28 @@ export default function BulkUploadPage() {
 
   useEffect(() => {
     async function initialize() {
-      const [planResponse, accountResponse] = await Promise.all([
-        fetch("/api/me"),
-        fetch("/api/accounts"),
-      ]);
+      try {
+        const [planResponse, accountResponse] = await Promise.all([
+          fetch("/api/me"),
+          fetch("/api/accounts"),
+        ]);
 
-      const session = await planResponse.json();
+        const session = await planResponse.json();
 
-      setPlan(session?.user?.plan || "free");
+        setPlan(session?.user?.plan || "free");
 
-      const accountData = await accountResponse.json();
+        const accountData = await accountResponse.json();
 
-      const accountList = Array.isArray(accountData.accounts)
-        ? accountData.accounts
-        : [];
+        const accountList = Array.isArray(accountData.accounts)
+          ? accountData.accounts
+          : [];
 
-      setAccounts(accountList);
+        setAccounts(accountList);
 
-      setSelectedAccounts(accountList.map((a: SocialAccount) => a.id));
+        setSelectedAccounts(accountList.map((a: SocialAccount) => a.id));
+      } finally {
+        setPlanLoading(false);
+      }
     }
 
     initialize();
@@ -313,6 +318,14 @@ ${result.failed}
   }
 
   const validCount = validations.filter((v) => v.valid).length;
+
+  if (planLoading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
 
   if (!hasFeature(plan, "bulkUpload")) {
     return (

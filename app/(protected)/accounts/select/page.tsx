@@ -63,7 +63,7 @@ export default function SelectAccountsPage() {
           console.log(data);
 
           if (response.ok) {
-            window.location.href = "/accounts";
+            window.location.href = data.redirect || "/accounts";
           } else {
             alert(data.error || "Failed to connect accounts");
           }

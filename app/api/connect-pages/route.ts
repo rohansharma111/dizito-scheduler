@@ -102,6 +102,40 @@ export async function POST(request: Request) {
 
   const oauthData = selectionResult.rows[0];
 
+  const reconnectAccountId = oauthData.reconnect_account_id;
+
+  const reconnectType = oauthData.reconnect_type;
+
+  const isReconnect = !!reconnectAccountId;
+
+  let reconnectAccount = null;
+
+  if (isReconnect) {
+    const reconnectResult = await pool.query(
+      `
+    SELECT *
+    FROM social_accounts
+    WHERE
+      id = $1
+      AND user_id = $2
+    `,
+      [reconnectAccountId, userId],
+    );
+
+    reconnectAccount = reconnectResult.rows[0];
+
+    if (!reconnectAccount) {
+      return Response.json(
+        {
+          error: "Reconnect account not found",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+  }
+
   const pages = oauthData.pages;
 
   const accessToken = oauthData.access_token;
@@ -119,17 +153,84 @@ export async function POST(request: Request) {
       }
 
       /*
-        FACEBOOK
-      */
+  FACEBOOK
+*/
+
+      /*
+   RECONNECT
+*/
+      if (isReconnect && reconnectAccount.platform === "facebook") {
+        await pool.query(
+          `
+    UPDATE social_accounts
+    SET
+      account_name = $1,
+      access_token = $2,
+      page_access_token = $3,
+      page_id = $4,
+      status = 'connected',
+      last_checked_at = NOW()
+    WHERE
+      id = $5
+      AND user_id = $6
+    `,
+          [
+            page.name,
+            accessToken,
+            page.access_token,
+            page.id,
+            reconnectAccountId,
+            userId,
+          ],
+        );
+
+        await createEvent(
+          "ACCOUNT_RECONNECTED",
+          "social_account",
+          reconnectAccountId,
+          userId,
+          {
+            platform: "facebook",
+            reconnectType,
+            pageId: page.id,
+          },
+        );
+
+        connectedAccounts.push(`${page.name} (Facebook Reconnected)`);
+
+        if (reconnectType === "recover") {
+          try {
+            await fetch(
+              `${process.env.NEXTAUTH_URL}/api/post-targets/recover-auth`,
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type": "application/json",
+                },
+
+                body: JSON.stringify({
+                  socialAccountId: reconnectAccountId,
+                }),
+              },
+            );
+          } catch (error) {
+            console.error("Recover auth failed", error);
+          }
+        }
+
+        continue;
+      }
+
       const existingFacebook = await pool.query(
         `
-          SELECT id
-          FROM social_accounts
-          WHERE
-            page_id = $1
-            AND platform = 'facebook'
-            AND user_id = $2
-          `,
+  SELECT id
+  FROM social_accounts
+  WHERE
+    page_id = $1
+    AND platform='facebook'
+    AND user_id=$2
+  `,
         [page.id, userId],
       );
 
@@ -140,26 +241,26 @@ export async function POST(request: Request) {
 
         const facebook = await pool.query(
           `
-            INSERT INTO social_accounts
-            (
-              platform,
-              account_name,
-              access_token,
-              page_id,
-              user_id,
-              page_access_token
-            )
-            VALUES
-            (
-              $1,
-              $2,
-              $3,
-              $4,
-              $5,
-              $6
-            )
-            RETURNING id
-            `,
+    INSERT INTO social_accounts
+    (
+      platform,
+      account_name,
+      access_token,
+      page_id,
+      user_id,
+      page_access_token
+    )
+    VALUES
+    (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6
+    )
+    RETURNING id
+    `,
           [
             "facebook",
             page.name,
@@ -208,6 +309,74 @@ export async function POST(request: Request) {
       const instagramData = await instagramResponse.json();
 
       const instagramId = instagramData?.instagram_business_account?.id;
+
+      /*
+  INSTAGRAM RECONNECT
+*/
+      if (isReconnect && reconnectAccount.platform === "instagram") {
+        await pool.query(
+          `
+    UPDATE social_accounts
+    SET
+      account_name = $1,
+      access_token = $2,
+      page_access_token = $3,
+      page_id = $4,
+      instagram_business_id = $5,
+      status = 'connected',
+      last_checked_at = NOW()
+    WHERE
+      id = $6
+      AND user_id = $7
+    `,
+          [
+            page.name,
+            accessToken,
+            page.access_token,
+            page.id,
+            instagramId,
+            reconnectAccountId,
+            userId,
+          ],
+        );
+
+        await createEvent(
+          "ACCOUNT_RECONNECTED",
+          "social_account",
+          reconnectAccountId,
+          userId,
+          {
+            platform: "instagram",
+            reconnectType,
+            instagramBusinessId: instagramId,
+          },
+        );
+
+        connectedAccounts.push(`${page.name} (Instagram Reconnected)`);
+
+        if (reconnectType === "recover") {
+          try {
+            await fetch(
+              `${process.env.NEXTAUTH_URL}/api/post-targets/recover-auth`,
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type": "application/json",
+                },
+
+                body: JSON.stringify({
+                  socialAccountId: reconnectAccountId,
+                }),
+              },
+            );
+          } catch (error) {
+            console.error("Recover auth failed", error);
+          }
+        }
+
+        continue;
+      }
 
       if (!instagramId) {
         console.log("No Instagram account linked:", page.name);
@@ -312,9 +481,20 @@ export async function POST(request: Request) {
 
     return Response.json({
       success: true,
+
       total: connectedAccounts.length,
+
       connectedAccounts,
-      message: `${connectedAccounts.length} account(s) connected`,
+
+      redirect:
+        reconnectType === "recover"
+          ? "/dashboard?recovered=true"
+          : "/accounts?reconnected=true",
+
+      message:
+        reconnectType === "recover"
+          ? "Publishing recovered"
+          : `${connectedAccounts.length} account(s) connected`,
     });
   } catch (error) {
     await pool.query("ROLLBACK");

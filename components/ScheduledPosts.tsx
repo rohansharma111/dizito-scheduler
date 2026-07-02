@@ -419,7 +419,47 @@ export default function ScheduledPosts({
                     new Date(item.schedule_time).toLocaleString("en-IN")}
                 </div>
 
-                <div className="mt-3">{item.status}</div>
+                <div className="mt-3">
+                  {item.status === "published" && (
+                    <span className="text-green-600 font-medium">
+                      Published
+                    </span>
+                  )}
+
+                  {item.status === "scheduled" && (
+                    <span className="text-blue-600 font-medium">Scheduled</span>
+                  )}
+
+                  {item.status === "processing" && (
+                    <span className="text-yellow-600 font-medium">
+                      Processing
+                    </span>
+                  )}
+
+                  {item.status === "retry_scheduled" && (
+                    <span className="text-orange-600 font-medium">
+                      Retrying
+                    </span>
+                  )}
+
+                  {item.status === "permanent_failed" && (
+                    <span className="text-red-600 font-medium">
+                      Automatic retries exhausted
+                    </span>
+                  )}
+
+                  {item.status === "failure_handler_crashed" && (
+                    <span className="text-red-700 font-medium">
+                      System Error
+                    </span>
+                  )}
+
+                  {item.status === "partial_failed" && (
+                    <span className="text-orange-600 font-medium">
+                      Partially Published
+                    </span>
+                  )}
+                </div>
 
                 <div
                   className="
@@ -450,6 +490,40 @@ export default function ScheduledPosts({
                     <Eye size={18} className="text-gray-700" />
 
                     <span className="text-xs">View</span>
+                  </button>
+
+                  {/* DETAILS */}
+                  <button
+                    title="Details"
+                    className="
+    flex
+    flex-col
+    items-center
+    justify-center
+    gap-1
+    p-3
+    rounded-lg
+    bg-gray-700
+    hover:bg-gray-800
+    text-white
+  "
+                    onClick={async () => {
+                      const response = await fetch(
+                        `/api/posts/${item.id}/targets`,
+                      );
+
+                      const data = await response.json();
+
+                      setSelectedPostId(item.id);
+
+                      setSelectedTargets(data);
+
+                      setShowTargetsModal(true);
+                    }}
+                  >
+                    <Eye size={18} />
+
+                    <span className="text-xs">Details</span>
                   </button>
 
                   {/* EDIT */}
