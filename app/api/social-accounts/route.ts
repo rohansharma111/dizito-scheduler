@@ -32,7 +32,8 @@ export async function GET() {
       `
       SELECT
         id,
-        account_name
+        account_name,
+        platform
       FROM social_accounts
       WHERE user_id = $1
       ORDER BY id

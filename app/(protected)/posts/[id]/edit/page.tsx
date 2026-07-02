@@ -58,7 +58,7 @@ export default function EditPostPage() {
 
         const accountData = await accountResponse.json();
 
-        setAccounts(accountData || []);
+        setAccounts(accountData.accounts || []);
 
         setPost(postData.post || "");
 
