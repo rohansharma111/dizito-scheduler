@@ -276,10 +276,6 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                         {account.account_name}
                       </span>
                     </div>
-
-                    <div className="text-sm text-gray-500 ml-6">
-                      {account.platform}
-                    </div> 
                   </div>
                 </label>
               ))}

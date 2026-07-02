@@ -51,6 +51,17 @@ export async function handleTargetFailure({
   /*
     Update target
   */
+ let retryAt = null;
+
+if (
+  retryDelay !== null &&
+  retryDelay !== undefined
+) {
+  retryAt = new Date(
+    Date.now() +
+    retryDelay * 60 * 1000
+  );
+}
   const failedUpdate = await pool.query(
     `
       UPDATE post_targets
@@ -61,15 +72,7 @@ export async function handleTargetFailure({
 
         publish_message = $3,
 
-        next_retry_at =
-          CASE
-            WHEN $4 IS NULL
-            THEN NULL
-            ELSE
-              NOW() +
-              ($4 || ' minutes')
-                ::interval
-          END,
+        next_retry_at =$4,
 
         processing_started_at =
           NULL,
@@ -89,7 +92,7 @@ export async function handleTargetFailure({
       nextStatus,
       nextRetry,
       errorMessage,
-      nextStatus === "retry_scheduled" ? retryDelay : null,
+      retryAt,
       target.id,
       target.publish_lock_uuid,
     ],
