@@ -27,4 +27,21 @@ export type PostTarget = {
   account_name?: string;
 
   published_at?: string;
+
+  /*
+    Automatic retry system
+  */
+  retry_count: number;
+
+  next_retry_at?: string | null;
+
+  /*
+    Manual retry system
+  */
+  manual_retry_count: number;
+
+  /*
+    Optional helper
+  */
+  reconnect_required?: boolean;
 };
