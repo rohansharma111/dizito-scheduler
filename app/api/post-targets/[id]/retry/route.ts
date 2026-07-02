@@ -78,7 +78,7 @@ export async function POST(
       );
     }
 
-    if (!["failed", "permanent_failed"].includes(target.status)) {
+    if (!["failed", "permanent_failed", "retry_scheduled", "failure_handler_crashed"].includes(target.status)) {
       await client.query("ROLLBACK");
 
       return Response.json(

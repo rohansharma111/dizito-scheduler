@@ -33,17 +33,6 @@ export async function POST(request: Request) {
         WHERE
           pt.social_account_id = $1
           AND pt.status = 'permanent_failed'
-          AND (
-            pt.publish_message ILIKE '%OAuth%'
-            OR
-            pt.publish_message ILIKE '%token%'
-            OR
-            pt.publish_message ILIKE '%190%'
-            OR
-            pt.publish_message ILIKE '%Malformed access token%'
-            OR
-            pt.publish_message ILIKE '%Permission denied%'
-          )
         `,
       [socialAccountId],
     );

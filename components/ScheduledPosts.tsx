@@ -182,6 +182,19 @@ export default function ScheduledPosts({
                         </div>
                       )}
 
+                      {/* Partial failed */}
+                      {item.status === "partial_failed" && (
+                        <div>
+                          <div className="text-orange-600 font-medium">
+                            Partially Published
+                          </div>
+
+                          <div className="text-xs text-gray-500">
+                            Some platforms failed. Check Details.
+                          </div>
+                        </div>
+                      )}
+
                       {/* Failure handler crashed */}
                       {item.status === "failure_handler_crashed" && (
                         <div>

@@ -60,7 +60,8 @@ export default function PublishDetailsModal({
       message.includes('"code":190') ||
       message.includes("Invalid OAuth") ||
       message.includes("Permission denied") ||
-      message.includes("Session has expired")
+      message.includes("Session has expired")||
+      message.includes("INVALID_ACCESS_TOKEN")
     );
   }
 
