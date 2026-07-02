@@ -128,6 +128,9 @@ export async function GET(request: Request) {
       );
     }
 
+    /*
+      Update token
+    */
     await pool.query(
       `
       UPDATE social_accounts
@@ -143,9 +146,8 @@ export async function GET(request: Request) {
     );
 
     /*
-    Recover auth failures
-    ONLY after reconnect
-  */
+      Recover auth failures
+    */
     if (reconnectType === "recover") {
       try {
         const response = await fetch(
@@ -166,13 +168,24 @@ export async function GET(request: Request) {
         if (!response.ok) {
           console.error("Recover auth failed", await response.text());
         }
+
+        return Response.redirect(
+          `${process.env.NEXTAUTH_URL}/dashboard?recovered=true`,
+        );
       } catch (error) {
         console.error("Recover auth crashed", error);
+
+        return Response.redirect(
+          `${process.env.NEXTAUTH_URL}/dashboard?recover_error=true`,
+        );
       }
     }
 
+    /*
+      Normal account reconnect
+    */
     return Response.redirect(
-      "https://dizito-scheduler-production.up.railway.app/accounts",
+      `${process.env.NEXTAUTH_URL}/accounts?reconnected=true`,
     );
   }
 
@@ -214,7 +227,5 @@ export async function GET(request: Request) {
     [userId, accessToken, JSON.stringify(pagesData.data)],
   );
 
-  return Response.redirect(
-    "https://dizito-scheduler-production.up.railway.app/accounts/select",
-  );
+  return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select`);
 }

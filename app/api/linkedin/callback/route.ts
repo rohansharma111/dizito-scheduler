@@ -218,8 +218,8 @@ export async function GET(request: Request) {
       );
 
       /*
-        Recover auth failures
-      */
+  Recover auth failures
+*/
       if (reconnectType === "recover") {
         try {
           const response = await fetch(
@@ -240,12 +240,25 @@ export async function GET(request: Request) {
           if (!response.ok) {
             console.error("Recover auth failed", await response.text());
           }
+
+          return Response.redirect(
+            `${process.env.NEXTAUTH_URL}/dashboard?recovered=true`,
+          );
         } catch (error) {
           console.error("Recover auth crashed", error);
+
+          return Response.redirect(
+            `${process.env.NEXTAUTH_URL}/dashboard?recover_error=true`,
+          );
         }
       }
 
-      return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts`);
+      /*
+  Normal account reconnect
+*/
+      return Response.redirect(
+        `${process.env.NEXTAUTH_URL}/accounts?reconnected=true`,
+      );
     }
 
     /*
@@ -276,7 +289,7 @@ export async function GET(request: Request) {
         },
       );
 
-      return Response.redirect(new URL("/accounts", request.url));
+      return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts`);
     }
 
     /*
@@ -330,7 +343,7 @@ export async function GET(request: Request) {
       },
     );
 
-    return Response.redirect(new URL("/accounts", request.url));
+    return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts`);
   } catch (error) {
     console.error("LINKEDIN CALLBACK ERROR", error);
 

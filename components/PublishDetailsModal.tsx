@@ -315,17 +315,11 @@ export default function PublishDetailsModal({
                               target.platform === "facebook" ||
                               target.platform === "instagram"
                             ) {
-                              window.open(
-                                `/api/meta/connect?reconnect=${target.social_account_id}&type=recover`,
-                                "_blank",
-                              );
+                              window.location.href = `/api/meta/connect?reconnect=${target.social_account_id}&type=recover`;
                             }
 
                             if (target.platform === "linkedin") {
-                              window.open(
-                                `/api/linkedin/login?reconnect=${target.social_account_id}&type=recover`,
-                                "_blank",
-                              );
+                              window.location.href = `/api/linkedin/login?reconnect=${target.social_account_id}&type=recover`;
                             }
                           }}
                         >

@@ -32,7 +32,11 @@ export async function POST(request: Request) {
           ON p.id = pt.post_id
         WHERE
           pt.social_account_id = $1
-          AND pt.status = 'permanent_failed'
+          AND pt.status IN (
+  'retry_scheduled',
+  'permanent_failed',
+  'failure_handler_crashed'
+)
         `,
       [socialAccountId],
     );
