@@ -53,7 +53,7 @@ export async function GET(request: Request) {
           FROM social_accounts
           WHERE
             user_id = $1
-            AND account_status != 'deleted'
+            AND status != 'deleted'
           `,
         [userId],
       );
@@ -208,7 +208,7 @@ export async function GET(request: Request) {
         UPDATE social_accounts
         SET
           access_token = $1,
-          account_status = 'active',
+          status = 'active',
           last_checked_at = NOW()
         WHERE
           id = $2
@@ -304,7 +304,7 @@ export async function GET(request: Request) {
           access_token,
           linkedin_member_id,
           user_id,
-          account_status,
+          status,
           last_checked_at
         )
         VALUES

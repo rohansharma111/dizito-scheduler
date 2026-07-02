@@ -97,101 +97,8 @@ export async function GET(request: Request) {
   }
 
   /*
-    RECONNECT FLOW
-  */
-  if (isReconnect) {
-    const parts = state!.split(":");
-
-    const accountId = parts[1];
-
-    const reconnectType = parts[2] ?? "account";
-
-    const existing = await pool.query(
-      `
-        SELECT *
-        FROM social_accounts
-        WHERE
-          id = $1
-          AND user_id = $2
-        `,
-      [accountId, userId],
-    );
-
-    if (existing.rows.length === 0) {
-      return Response.json(
-        {
-          error: "Account not found",
-        },
-        {
-          status: 404,
-        },
-      );
-    }
-
-    /*
-      Update token
-    */
-    await pool.query(
-      `
-      UPDATE social_accounts
-      SET
-        access_token = $1,
-        status = 'connected',
-        last_checked_at = NOW()
-      WHERE
-        id = $2
-        AND user_id = $3
-      `,
-      [accessToken, accountId, userId],
-    );
-
-    /*
-      Recover auth failures
-    */
-    if (reconnectType === "recover") {
-      try {
-        const response = await fetch(
-          `${process.env.NEXTAUTH_URL}/api/post-targets/recover-auth`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-            },
-
-            body: JSON.stringify({
-              socialAccountId: accountId,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          console.error("Recover auth failed", await response.text());
-        }
-
-        return Response.redirect(
-          `${process.env.NEXTAUTH_URL}/dashboard?recovered=true`,
-        );
-      } catch (error) {
-        console.error("Recover auth crashed", error);
-
-        return Response.redirect(
-          `${process.env.NEXTAUTH_URL}/dashboard?recover_error=true`,
-        );
-      }
-    }
-
-    /*
-      Normal account reconnect
-    */
-    return Response.redirect(
-      `${process.env.NEXTAUTH_URL}/accounts?reconnected=true`,
-    );
-  }
-
-  /*
-    NORMAL CONNECT FLOW
-  */
+  Fetch pages
+*/
   const pagesResponse = await fetch(
     `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`,
   );
@@ -209,23 +116,56 @@ export async function GET(request: Request) {
     );
   }
 
+  /*
+  Extract reconnect metadata
+*/
+  let reconnectAccountId = null;
+  let reconnectType = null;
+
+  if (isReconnect) {
+    const parts = state!.split(":");
+
+    reconnectAccountId = parts[1];
+
+    reconnectType = parts[2] ?? "account";
+  }
+
+  /*
+  Store OAuth session
+  for BOTH connect and reconnect
+*/
   await pool.query(
     `
-    INSERT INTO oauth_page_selections
-    (
-      user_id,
-      access_token,
-      pages
-    )
-    VALUES
-    (
-      $1,
-      $2,
-      $3
-    )
-    `,
-    [userId, accessToken, JSON.stringify(pagesData.data)],
+  INSERT INTO oauth_page_selections
+  (
+    user_id,
+    access_token,
+    pages,
+    reconnect_account_id,
+    reconnect_type,
+    created_at
+  )
+  VALUES
+  (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    NOW()
+  )
+  `,
+    [
+      userId,
+      accessToken,
+      JSON.stringify(pagesData.data),
+      reconnectAccountId,
+      reconnectType,
+    ],
   );
 
+  /*
+  Always go to account selection
+*/
   return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select`);
 }
