@@ -4,18 +4,33 @@ import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 
 type Target = {
   id: number;
+
   platform: string;
+
   status: string;
+
   account_name?: string;
+
   published_at?: string | null;
+
   publish_message?: string | null;
+
+  retry_count?: number;
+
+  manual_retry_count?: number;
+
+  next_retry_at?: string | null;
 };
 
 type Props = {
   open: boolean;
+
   onClose: () => void;
-  targets: any[];
+
+  targets: Target[];
+
   postId: number | null;
+
   setTargets: React.Dispatch<React.SetStateAction<any[]>>;
 };
 
@@ -30,7 +45,19 @@ export default function PublishDetailsModal({
 
   const publishedCount = targets.filter((t) => t.status === "published").length;
 
-  const failedCount = targets.filter((t) => t.status === "failed").length;
+  const failedCount = targets.filter((t) =>
+    ["permanent_failed", "failure_handler_crashed"].includes(t.status),
+  ).length;
+
+  function needsReconnect(message?: string | null) {
+    if (!message) return false;
+
+    return (
+      message.includes("OAuthException") ||
+      message.includes("Malformed access token") ||
+      message.includes('"code":190')
+    );
+  }
 
   return (
     <div
@@ -52,7 +79,7 @@ export default function PublishDetailsModal({
           rounded-xl
           p-6
           w-[95vw]
-          md:w-[600px]
+          md:w-[700px]
           max-h-[90vh]
           overflow-y-auto
           shadow-xl
@@ -65,11 +92,12 @@ export default function PublishDetailsModal({
             <h2 className="text-xl font-bold">Publish Details</h2>
 
             <div className="text-sm text-gray-500 mt-1">
-              {publishedCount} Published
-              {" • "}
-              {failedCount} Failed
-              {" • "}
-              {targets.length} Platforms
+              {publishedCount}
+              {" Published • "}
+              {failedCount}
+              {" Failed • "}
+              {targets.length}
+              {" Platforms"}
             </div>
           </div>
 
@@ -86,129 +114,164 @@ export default function PublishDetailsModal({
 
         {/* TARGETS */}
         <div className="space-y-4">
-          {targets.map((target) => (
-            <div
-              key={target.id}
-              className="
-                  border
-                  rounded-xl
-                  p-4
-                  flex
-                  flex-col
-                  md:flex-row
-                  md:justify-between
-                  gap-4
-                "
-            >
-              {/* LEFT */}
-              <div className="flex gap-3">
-                {target.platform === "instagram" && (
-                  <FaInstagram className="text-pink-500 text-2xl mt-1" />
-                )}
+          {targets.map((target) => {
+            const canRetry =
+              [
+                "retry_scheduled",
+                "permanent_failed",
+                "failure_handler_crashed",
+              ].includes(target.status) && (target.manual_retry_count ?? 0) < 3;
 
-                {target.platform === "facebook" && (
-                  <FaFacebook className="text-blue-600 text-2xl mt-1" />
-                )}
+            return (
+              <div
+                key={target.id}
+                className="
+                    border
+                    rounded-xl
+                    p-5
+                  "
+              >
+                <div className="flex gap-3">
+                  {target.platform === "instagram" && (
+                    <FaInstagram className="text-pink-500 text-2xl mt-1" />
+                  )}
 
-                {target.platform === "linkedin" && (
-                  <FaLinkedin className="text-blue-700 text-2xl mt-1" />
-                )}
+                  {target.platform === "facebook" && (
+                    <FaFacebook className="text-blue-600 text-2xl mt-1" />
+                  )}
 
-                <div>
-                  <div className="font-semibold">{target.account_name}</div>
+                  {target.platform === "linkedin" && (
+                    <FaLinkedin className="text-blue-700 text-2xl mt-1" />
+                  )}
 
-                  <div className="text-sm text-gray-500 capitalize">
-                    {target.platform}
+                  <div className="flex-1">
+                    <div className="font-semibold">{target.account_name}</div>
+
+                    <div className="text-sm text-gray-500 capitalize">
+                      {target.platform}
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-sm">
+                      <div>
+                        <span className="font-semibold">Status:</span>{" "}
+                        {target.status === "published" && "Published"}
+                        {target.status === "scheduled" && "Scheduled"}
+                        {target.status === "processing" && "Processing"}
+                        {target.status === "retry_scheduled" && "Retrying"}
+                        {target.status === "permanent_failed" &&
+                          "Automatic retries exhausted"}
+                        {target.status === "failure_handler_crashed" &&
+                          "System Error"}
+                      </div>
+
+                      <div>
+                        <span className="font-semibold">
+                          Automatic retries:
+                        </span>{" "}
+                        {target.retry_count ?? 0}
+                        /5
+                      </div>
+
+                      <div>
+                        <span className="font-semibold">Manual retries:</span>{" "}
+                        {target.manual_retry_count ?? 0}
+                        /3
+                      </div>
+
+                      {target.next_retry_at && (
+                        <div>
+                          <span className="font-semibold">Next retry:</span>{" "}
+                          {new Date(target.next_retry_at).toLocaleString(
+                            "en-IN",
+                          )}
+                        </div>
+                      )}
+
+                      {target.published_at && (
+                        <div>
+                          <span className="font-semibold">Published:</span>{" "}
+                          {new Date(target.published_at).toLocaleString(
+                            "en-IN",
+                          )}
+                        </div>
+                      )}
+
+                      {target.publish_message && (
+                        <>
+                          <div className="font-semibold mt-4">Last error:</div>
+
+                          <div className="text-red-500 break-all">
+                            {target.publish_message}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 mt-5">
+                      {canRetry && (
+                        <button
+                          className="
+                              bg-yellow-500
+                              hover:bg-yellow-600
+                              text-white
+                              px-4
+                              py-2
+                              rounded
+                            "
+                          onClick={async () => {
+                            const response = await fetch(
+                              `/api/post-targets/${target.id}/retry`,
+                              {
+                                method: "POST",
+                              },
+                            );
+
+                            const data = await response.json();
+
+                            if (!response.ok) {
+                              alert(data.error || "Retry failed");
+                              return;
+                            }
+
+                            if (!postId) {
+                              return;
+                            }
+
+                            const refresh = await fetch(
+                              `/api/posts/${postId}/targets`,
+                            );
+
+                            const latest = await refresh.json();
+
+                            setTargets(latest);
+
+                            alert("Queued for retry");
+                          }}
+                        >
+                          Retry Now
+                        </button>
+                      )}
+
+                      {needsReconnect(target.publish_message) && (
+                        <button
+                          className="
+                              bg-blue-600
+                              hover:bg-blue-700
+                              text-white
+                              px-4
+                              py-2
+                              rounded
+                            "
+                        >
+                          Reconnect
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  {target.published_at && (
-                    <div className="text-xs text-gray-500 mt-2">
-                      Published:{" "}
-                      {new Date(target.published_at).toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                      })}
-                    </div>
-                  )}
-
-                  {target.publish_message && (
-                    <div className="mt-2 text-sm text-red-500 break-words">
-                      {target.publish_message}
-                    </div>
-                  )}
                 </div>
               </div>
-
-              {/* RIGHT */}
-              <div className="flex flex-col items-start md:items-end gap-2">
-                {target.status === "published" && (
-                  <span className="text-green-600 font-medium">
-                    ✅ Published
-                  </span>
-                )}
-
-                {target.status === "scheduled" && (
-                  <span className="text-blue-600 font-medium">
-                    ⏳ Scheduled
-                  </span>
-                )}
-
-                {target.status === "processing" && (
-                  <span className="text-yellow-600 font-medium">
-                    🔄 Processing
-                  </span>
-                )}
-
-                {target.status === "failed" && (
-                  <>
-                    <span className="text-red-600 font-medium">❌ Failed</span>
-
-                    <button
-                      className="
-                          bg-yellow-500
-                          hover:bg-yellow-600
-                          text-white
-                          px-3
-                          py-1
-                          rounded
-                        "
-                      onClick={async () => {
-                        const response = await fetch(
-                          `/api/post-targets/${target.id}/retry`,
-                          {
-                            method: "POST",
-                          },
-                        );
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                          alert(data.error || "Retry failed");
-                          return;
-                        }
-
-                        if (!postId) {
-                          alert("Post ID missing");
-                          return;
-                        }
-
-                        const refresh = await fetch(
-                          `/api/posts/${postId}/targets`,
-                        );
-
-                        const latest = await refresh.json();
-
-                        setTargets(latest);
-
-                        alert("Queued for retry");
-                      }}
-                    >
-                      Retry
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
