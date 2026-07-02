@@ -100,7 +100,11 @@ export async function GET(request: Request) {
     RECONNECT FLOW
   */
   if (isReconnect) {
-    const accountId = state!.split(":")[1];
+    const parts = state!.split(":");
+
+    const accountId = parts[1];
+
+    const reconnectType = parts[2] ?? "account";
 
     const existing = await pool.query(
       `
@@ -137,6 +141,35 @@ export async function GET(request: Request) {
       `,
       [accessToken, accountId, userId],
     );
+
+    /*
+    Recover auth failures
+    ONLY after reconnect
+  */
+    if (reconnectType === "recover") {
+      try {
+        const response = await fetch(
+          `${process.env.NEXTAUTH_URL}/api/post-targets/recover-auth`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              socialAccountId: accountId,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          console.error("Recover auth failed", await response.text());
+        }
+      } catch (error) {
+        console.error("Recover auth crashed", error);
+      }
+    }
 
     return Response.redirect(
       "https://dizito-scheduler-production.up.railway.app/accounts",

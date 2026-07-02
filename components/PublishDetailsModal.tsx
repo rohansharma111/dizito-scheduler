@@ -281,14 +281,22 @@ export default function PublishDetailsModal({
 
                       {needsReconnect(target.publish_message) && (
                         <button
+                          className="
+      bg-blue-600
+      hover:bg-blue-700
+      text-white
+      px-4
+      py-2
+      rounded
+    "
                           onClick={() => {
                             window.open(
-                              `/api/meta/reconnect?accountId=${target.social_account_id}`,
+                              `/api/meta/connect?reconnect=${target.social_account_id}&type=recover`,
                               "_blank",
                             );
                           }}
                         >
-                          Reconnect
+                          Reconnect {target.platform}
                         </button>
                       )}
                     </div>

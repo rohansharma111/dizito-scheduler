@@ -129,7 +129,7 @@ export default function AccountsPage() {
                 <button
                   className="bg-blue-600 text-white px-3 py-1 rounded mt-2"
                   onClick={() => {
-                    window.location.href = `/api/meta/connect?reconnect=${account.id}`;
+                    window.location.href = `/api/meta/connect?reconnect=${account.id}&type=account`;
                   }}
                 >
                   Reconnect
