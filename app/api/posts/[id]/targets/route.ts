@@ -45,8 +45,6 @@ export async function GET(
 
         pt.processing_started_at,
 
-        pt.processing_completed_at,
-
         pt.published_at,
 
         pt.created_at,
