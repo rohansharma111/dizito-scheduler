@@ -279,7 +279,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
                     <div className="text-sm text-gray-500 ml-6">
                       {account.platform}
-                    </div>
+                    </div> 
                   </div>
                 </label>
               ))}
