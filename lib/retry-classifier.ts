@@ -5,6 +5,7 @@ export function isPermanentError(error: string) {
     "Invalid OAuth",
     "Permission denied",
     "Page not found",
+    "INVALID_ACCESS_TOKEN"
   ];
 
   return permanent.some((e) => error.includes(e));

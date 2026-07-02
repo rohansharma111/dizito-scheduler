@@ -60,7 +60,7 @@ export default function PublishDetailsModal({
       message.includes('"code":190') ||
       message.includes("Invalid OAuth") ||
       message.includes("Permission denied") ||
-      message.includes("Session has expired")||
+      message.includes("Session has expired") ||
       message.includes("INVALID_ACCESS_TOKEN")
     );
   }
@@ -127,6 +127,10 @@ export default function PublishDetailsModal({
                 "permanent_failed",
                 "failure_handler_crashed",
               ].includes(target.status) && (target.manual_retry_count ?? 0) < 3;
+            const showRetryInfo =
+              target.status !== "published" ||
+              (target.retry_count ?? 0) > 0 ||
+              (target.manual_retry_count ?? 0) > 0;
 
             return (
               <div
@@ -158,32 +162,46 @@ export default function PublishDetailsModal({
                     </div>
 
                     <div className="mt-4 space-y-2 text-sm">
+                      {/* STATUS */}
                       <div>
                         <span className="font-semibold">Status:</span>{" "}
                         {target.status === "published" && "Published"}
                         {target.status === "scheduled" && "Scheduled"}
                         {target.status === "processing" && "Processing"}
                         {target.status === "retry_scheduled" && "Retrying"}
-                        {target.status === "permanent_failed" &&
-                          "Automatic retries exhausted"}
                         {target.status === "failure_handler_crashed" &&
                           "System Error"}
+                        {target.status === "permanent_failed" && (
+                          <span className="text-red-600 font-semibold">
+                            Automatic retries exhausted
+                          </span>
+                        )}
                       </div>
 
-                      <div>
-                        <span className="font-semibold">
-                          Automatic retries:
-                        </span>{" "}
-                        {target.retry_count ?? 0}
-                        /5
-                      </div>
+                      {/* RETRY INFO */}
+                      {(target.status !== "published" ||
+                        (target.retry_count ?? 0) > 0 ||
+                        (target.manual_retry_count ?? 0) > 0) && (
+                        <>
+                          <div>
+                            <span className="font-semibold">
+                              Automatic retries:
+                            </span>{" "}
+                            {target.status === "permanent_failed"
+                              ? "5/5"
+                              : `${target.retry_count ?? 0}/5`}
+                          </div>
 
-                      <div>
-                        <span className="font-semibold">Manual retries:</span>{" "}
-                        {target.manual_retry_count ?? 0}
-                        /3
-                      </div>
+                          <div>
+                            <span className="font-semibold">
+                              Manual retries:
+                            </span>{" "}
+                            {target.manual_retry_count ?? 0}/3
+                          </div>
+                        </>
+                      )}
 
+                      {/* NEXT RETRY */}
                       {target.next_retry_at && (
                         <div>
                           <span className="font-semibold">Next retry:</span>{" "}
@@ -193,6 +211,7 @@ export default function PublishDetailsModal({
                         </div>
                       )}
 
+                      {/* PUBLISHED */}
                       {target.published_at && (
                         <div>
                           <span className="font-semibold">Published:</span>{" "}
@@ -202,6 +221,7 @@ export default function PublishDetailsModal({
                         </div>
                       )}
 
+                      {/* ERROR */}
                       {target.publish_message && (
                         <>
                           <div className="font-semibold mt-4">Last error:</div>
@@ -291,10 +311,22 @@ export default function PublishDetailsModal({
       rounded
     "
                           onClick={() => {
-                            window.open(
-                              `/api/meta/connect?reconnect=${target.social_account_id}&type=recover`,
-                              "_blank",
-                            );
+                            if (
+                              target.platform === "facebook" ||
+                              target.platform === "instagram"
+                            ) {
+                              window.open(
+                                `/api/meta/connect?reconnect=${target.social_account_id}&type=recover`,
+                                "_blank",
+                              );
+                            }
+
+                            if (target.platform === "linkedin") {
+                              window.open(
+                                `/api/linkedin/login?reconnect=${target.social_account_id}&type=recover`,
+                                "_blank",
+                              );
+                            }
                           }}
                         >
                           Reconnect {target.platform}
