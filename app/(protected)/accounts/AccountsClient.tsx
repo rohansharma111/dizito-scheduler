@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [plan, setPlan] = useState("free");
+  const [loading, setLoading] = useState(true);
   const [limits, setLimits] = useState({
     used: 0,
     allowed: 1,
@@ -17,8 +18,15 @@ export default function AccountsPage() {
         setAccounts(data.accounts);
         setPlan(data.user.plan);
         setLimits(data.limits);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
+
+  if (loading) {
+    return <div className="p-8">Loading...</div>;
+  }
 
   const accountLimitReached = limits.used >= limits.allowed;
 

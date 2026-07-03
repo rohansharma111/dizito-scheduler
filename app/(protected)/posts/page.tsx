@@ -7,6 +7,8 @@ import PublishDetailsModal from "../../../components/PublishDetailsModal";
 export default function PostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
 
+  const [loading, setLoading] = useState(true);
+
   const [showTargetsModal, setShowTargetsModal] = useState(false);
 
   const [selectedTargets, setSelectedTargets] = useState<any[]>([]);
@@ -14,22 +16,31 @@ export default function PostsPage() {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
   async function loadPosts() {
-    const response = await fetch("/api/posts");
+    try {
+      const response = await fetch("/api/posts");
 
-    const data = await response.json();
+      const data = await response.json();
 
-    const scheduledPosts = data.filter((post: any) => post.status !== "draft");
+      const scheduledPosts = data.filter(
+        (post: any) => post.status !== "draft",
+      );
 
-    setPosts(scheduledPosts);
+      setPosts(scheduledPosts);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     loadPosts();
   }, []);
 
+  if (loading) {
+    return <div className="p-6">Loading posts...</div>;
+  }
+
   return (
     <div className="p-6">
-
       <ScheduledPosts
         posts={posts}
         setPosts={setPosts}
