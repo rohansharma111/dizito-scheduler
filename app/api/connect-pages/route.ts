@@ -164,7 +164,7 @@ export async function POST(request: Request) {
     }
 
     for (const selection of selectedPages) {
-      const page = pages.find((p: any) => p.id === selection.pageId);
+      const page = pages.find((p: any) => p.pageId === selection.pageId);
 
       if (!page) {
         continue;

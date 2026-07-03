@@ -288,9 +288,11 @@ export async function GET(request: Request) {
     const instagramData = await instagramResponse.json();
 
     enrichedPages.push({
-      pageId: page.id,
+      id: page.id,
 
-      pageName: page.name,
+      name: page.name,
+
+      access_token: page.access_token,
 
       hasFacebook: true,
 
@@ -304,11 +306,11 @@ export async function GET(request: Request) {
   /*
     NEW CONNECTION
   */
- console.log("INSERTING", {
-  userId,
-  pages: enrichedPages.length,
-  enrichedPages,
-});
+  console.log("INSERTING", {
+    userId,
+    pages: enrichedPages.length,
+    enrichedPages,
+  });
   await pool.query(
     `
     INSERT INTO oauth_page_selections
@@ -328,9 +330,7 @@ export async function GET(request: Request) {
     `,
     [userId, accessToken, JSON.stringify(enrichedPages)],
   );
-  console.log(
-  "INSERT SUCCESS"
-);
+  console.log("INSERT SUCCESS");
 
   return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select`);
 }
