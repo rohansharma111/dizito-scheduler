@@ -137,33 +137,11 @@ export default function SelectAccountsPage() {
       <div className="space-y-4">
         {pages.map((page) => (
           <div key={page.pageId} className="border rounded-lg p-5 bg-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex gap-2">
-                {page.hasFacebook && (
-                  <FaFacebook
-                    className="
-          text-blue-600
-          text-xl
-        "
-                  />
-                )}
+            <div className="font-semibold text-lg mb-4">{page.pageName}</div>
 
-                {page.hasInstagram && (
-                  <FaInstagram
-                    className="
-          text-pink-500
-          text-xl
-        "
-                  />
-                )}
-              </div>
-
-              <div className="font-semibold text-lg">{page.pageName}</div>
-            </div>
-
-            <div className="flex gap-8">
+            <div className="flex flex-wrap gap-4">
               {page.hasFacebook && (
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 min-w-fit">
                   <input
                     type="checkbox"
                     checked={selected[page.pageId]?.facebook || false}
@@ -185,7 +163,7 @@ export default function SelectAccountsPage() {
               )}
 
               {page.hasInstagram ? (
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 min-w-fit">
                   <input
                     type="checkbox"
                     checked={selected[page.pageId]?.instagram || false}
