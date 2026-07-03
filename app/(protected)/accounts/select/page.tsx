@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FaFacebook, FaInstagram } from "react-icons/fa";
 
 type Page = {
   pageId: string;
@@ -136,7 +137,29 @@ export default function SelectAccountsPage() {
       <div className="space-y-4">
         {pages.map((page) => (
           <div key={page.pageId} className="border rounded-lg p-5 bg-white">
-            <div className="font-semibold text-lg mb-4">{page.pageName}</div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex gap-2">
+                {page.hasFacebook && (
+                  <FaFacebook
+                    className="
+          text-blue-600
+          text-xl
+        "
+                  />
+                )}
+
+                {page.hasInstagram && (
+                  <FaInstagram
+                    className="
+          text-pink-500
+          text-xl
+        "
+                  />
+                )}
+              </div>
+
+              <div className="font-semibold text-lg">{page.pageName}</div>
+            </div>
 
             <div className="flex gap-8">
               {page.hasFacebook && (
@@ -147,15 +170,15 @@ export default function SelectAccountsPage() {
                     onChange={(e) =>
                       setSelected((prev) => ({
                         ...prev,
-
                         [page.pageId]: {
                           ...prev[page.pageId],
-
                           facebook: e.target.checked,
                         },
                       }))
                     }
                   />
+
+                  <FaFacebook className="text-blue-600" />
 
                   <span>Facebook</span>
                 </label>
@@ -169,20 +192,24 @@ export default function SelectAccountsPage() {
                     onChange={(e) =>
                       setSelected((prev) => ({
                         ...prev,
-
                         [page.pageId]: {
                           ...prev[page.pageId],
-
                           instagram: e.target.checked,
                         },
                       }))
                     }
                   />
 
+                  <FaInstagram className="text-pink-500" />
+
                   <span>Instagram</span>
                 </label>
               ) : (
-                <div className="text-gray-400">Instagram unavailable</div>
+                <div className="flex items-center gap-2 text-gray-400">
+                  <FaInstagram />
+
+                  <span>Instagram not linked</span>
+                </div>
               )}
             </div>
           </div>
