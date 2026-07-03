@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getPlan, canCreatePost } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
+import { getCurrentUsage } from "@/lib/usage/getCurrentUsage";
+import { incrementPostsCreated } from "@/lib/usage/incrementPostsCreated";
 
 startScheduler();
 
@@ -173,28 +175,9 @@ export async function POST(request: Request) {
     (exclude drafts)
   */
 
-  const monthlyPosts = await pool.query(
-    `
-      SELECT COUNT(*)
-      FROM posts
-      WHERE
-        user_id = $1
-        AND status IN
-        (
-          'scheduled',
-          'published',
-          'failed'
-        )
-        AND created_at >=
-            date_trunc(
-              'month',
-              NOW()
-            )
-      `,
-    [userId],
-  );
+  const usage = await getCurrentUsage(userId);
 
-  const currentPosts = Number(monthlyPosts.rows[0].count);
+  const currentPosts = usage.posts_created;
 
   /*
     ENFORCE PLAN
@@ -286,6 +269,7 @@ export async function POST(request: Request) {
     }
 
     await client.query("COMMIT");
+    await incrementPostsCreated(userId);
 
     /*
       AUDIT EVENT

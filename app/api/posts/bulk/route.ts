@@ -3,6 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { hasFeature, canCreatePost } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
+import { getCurrentUsage } from "@/lib/usage/getCurrentUsage";
+import { incrementPostsCreated } from "@/lib/usage/incrementPostsCreated";
 
 type BulkRow = {
   content: string;
@@ -119,26 +121,11 @@ export async function POST(request: Request) {
         },
       );
     }
+    /* Monthly limit */
 
-    /*
-      Monthly limit
-    */
-    const countResult = await client.query(
-      `
-        SELECT COUNT(*)
-        FROM posts
-        WHERE
-          user_id = $1
-          AND created_at >=
-              date_trunc(
-                'month',
-                NOW()
-              )
-        `,
-      [userId],
-    );
+    const usage = await getCurrentUsage(userId);
 
-    const currentPosts = Number(countResult.rows[0].count);
+    const currentPosts = usage.posts_created;
 
     if (!canCreatePost(user.plan, currentPosts + rows.length)) {
       return Response.json(
@@ -281,14 +268,11 @@ export async function POST(request: Request) {
         }
 
         await client.query("COMMIT");
+        await incrementPostsCreated(userId);
 
         /*
           Event
         */
-        await createEvent("BULK_POST_CREATED", "post", postId, userId, {
-          source: "bulk_upload",
-          targets: validAccounts.length,
-        });
 
         result.created++;
       } catch (error) {
@@ -302,7 +286,12 @@ export async function POST(request: Request) {
         });
       }
     }
-
+    await createEvent("BULK_UPLOAD_COMPLETED", "bulk_upload", 0, userId, {
+      totalRows: rows.length,
+      created: result.created,
+      failed: result.failed,
+      errors: result.errors.length,
+    });
     return Response.json(result);
   } finally {
     client.release();

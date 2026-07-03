@@ -23,6 +23,14 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
 
+    const error = searchParams.get("error");
+
+    if (error) {
+      return Response.redirect(
+        `${process.env.NEXTAUTH_URL}/accounts?error=oauth_cancelled`,
+      );
+    }
+
     const code = searchParams.get("code");
 
     const state = searchParams.get("state");

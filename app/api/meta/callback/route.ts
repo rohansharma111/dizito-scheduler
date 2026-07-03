@@ -28,6 +28,16 @@ export async function GET(request: Request) {
 
   const isReconnect = state?.startsWith("reconnect:");
 
+  const error = searchParams.get("error");
+
+  const errorReason = searchParams.get("error_reason");
+
+  if (error) {
+    return Response.redirect(
+      `${process.env.NEXTAUTH_URL}/accounts?error=oauth_cancelled`,
+    );
+  }
+
   /*
     PLAN CHECK
     ONLY FOR NEW CONNECTIONS
@@ -268,6 +278,29 @@ export async function GET(request: Request) {
     }
   }
 
+  const enrichedPages = [];
+
+  for (const page of pagesData.data) {
+    const instagramResponse = await fetch(
+      `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`,
+    );
+
+    const instagramData = await instagramResponse.json();
+
+    enrichedPages.push({
+      pageId: page.id,
+
+      pageName: page.name,
+
+      hasFacebook: true,
+
+      hasInstagram: !!instagramData?.instagram_business_account,
+
+      instagramBusinessId:
+        instagramData?.instagram_business_account?.id || null,
+    });
+  }
+
   /*
     NEW CONNECTION
   */
@@ -288,7 +321,7 @@ export async function GET(request: Request) {
       NOW()
     )
     `,
-    [userId, accessToken, JSON.stringify(pagesData.data)],
+    [userId, accessToken, JSON.stringify(enrichedPages)],
   );
 
   return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select`);
