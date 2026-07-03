@@ -518,7 +518,9 @@ export async function POST(request: Request) {
       redirect:
         reconnectType === "recover"
           ? "/dashboard?recovered=true"
-          : "/accounts?reconnected=true",
+          : isReconnect
+            ? "/accounts?reconnected=true"
+            : "/accounts?connected=true",
 
       message:
         reconnectType === "recover"
@@ -527,7 +529,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     await pool.query("ROLLBACK");
-    
+
     if (error instanceof Error && error.message === "INVALID_RECONNECT_PAGE") {
       return Response.json(
         {

@@ -29,8 +29,15 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
     return postDate.toDateString() === selectedDate.toDateString();
   });
 
+  const now = new Date();
+
   const upcomingPosts = posts
-    .filter((post: any) => post.status !== "draft" && post.schedule_time)
+    .filter(
+      (post) =>
+        ["scheduled", "processing"].includes(post.status) &&
+        post.schedule_time &&
+        new Date(post.schedule_time) >= now,
+    )
     .sort(
       (a, b) =>
         new Date(a.schedule_time).getTime() -
