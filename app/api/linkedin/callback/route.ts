@@ -29,6 +29,8 @@ export async function GET(request: Request) {
 
     const isReconnect = state?.startsWith("reconnect:");
 
+    let userPlan = "free";
+
     /*
       PLAN CHECK
       Skip reconnects
@@ -43,7 +45,7 @@ export async function GET(request: Request) {
         [userId],
       );
 
-      const userPlan = userResult.rows[0]?.plan || "free";
+      userPlan = userResult.rows[0]?.plan || "free";
 
       const currentPlan = getPlan(userPlan);
 
@@ -169,23 +171,29 @@ export async function GET(request: Request) {
     }
 
     /*
-      RECONNECT FLOW
-    */
+  STRICT RECONNECT FLOW
+
+  Rules:
+  - Must reconnect SAME LinkedIn account
+  - Never creates account
+  - Never changes account
+  - Never consumes plan
+*/
     if (isReconnect) {
       const parts = state!.split(":");
 
-      const accountId = parts[1];
+      const accountId = Number(parts[1]);
 
       const reconnectType = parts[2] ?? "account";
 
       const existing = await pool.query(
         `
-          SELECT *
-          FROM social_accounts
-          WHERE
-            id = $1
-            AND user_id = $2
-          `,
+      SELECT *
+      FROM social_accounts
+      WHERE
+        id = $1
+        AND user_id = $2
+      `,
         [accountId, userId],
       );
 
@@ -200,26 +208,90 @@ export async function GET(request: Request) {
         );
       }
 
+      const existingAccount = existing.rows[0];
+
       /*
-        Update token
-      */
+    Safety check
+  */
+      if (existingAccount.platform !== "linkedin") {
+        return Response.json(
+          {
+            error: "Invalid reconnect platform",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      /*
+    STRICT MATCH CHECK
+
+    User must reconnect
+    the SAME LinkedIn account
+  */
+      if (existingAccount.linkedin_member_id !== memberId) {
+        await createEvent(
+          "ACCOUNT_RECONNECT_REJECTED",
+          "social_account",
+          existingAccount.id,
+          userId,
+          {
+            reason: "linkedin_member_mismatch",
+
+            expected: existingAccount.linkedin_member_id,
+
+            received: memberId,
+          },
+        );
+
+        return Response.json(
+          {
+            error:
+              "This LinkedIn account does not match the original connected account. Disconnect the account and connect a new account instead.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      /*
+    Update token
+  */
       await pool.query(
         `
-        UPDATE social_accounts
-        SET
-          access_token = $1,
-          status = 'active',
-          last_checked_at = NOW()
-        WHERE
-          id = $2
-          AND user_id = $3
-        `,
-        [accessToken, accountId, userId],
+    UPDATE social_accounts
+    SET
+      access_token = $1,
+      account_name = $2,
+      status = 'active',
+      last_checked_at = NOW(),
+      updated_at = NOW()
+    WHERE
+      id = $3
+      AND user_id = $4
+    `,
+        [accessToken, accountName, accountId, userId],
+      );
+
+      await createEvent(
+        "ACCOUNT_RECONNECTED",
+        "social_account",
+        existingAccount.id,
+        userId,
+        {
+          platform: "linkedin",
+
+          account: existingAccount.account_name,
+
+          linkedinMemberId: memberId,
+        },
       );
 
       /*
-  Recover auth failures
-*/
+    Recover failed auth targets
+  */
       if (reconnectType === "recover") {
         try {
           const response = await fetch(
@@ -254,8 +326,8 @@ export async function GET(request: Request) {
       }
 
       /*
-  Normal account reconnect
-*/
+    Normal reconnect
+  */
       return Response.redirect(
         `${process.env.NEXTAUTH_URL}/accounts?reconnected=true`,
       );
@@ -336,10 +408,7 @@ export async function GET(request: Request) {
 
         memberId,
 
-        plan: !isReconnect
-          ? (await pool.query("SELECT plan FROM users WHERE id=$1", [userId]))
-              .rows[0]?.plan
-          : undefined,
+        plan: !isReconnect ? userPlan : undefined,
       },
     );
 

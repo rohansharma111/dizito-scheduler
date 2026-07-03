@@ -29,6 +29,53 @@ export default function ScheduledPosts({
 
     setPosts(data);
   }
+  const scheduledPosts = posts.filter((item) => item.status !== "draft");
+
+  if (scheduledPosts.length === 0) {
+    return (
+      <div className="mt-8">
+        <h3 className="text-xl font-bold mb-4">Scheduled / Published Posts</h3>
+
+        <div
+          className="
+          bg-white
+          border
+          rounded-xl
+          p-12
+          text-center
+        "
+        >
+          <div className="text-5xl mb-4">🚀</div>
+
+          <h4 className="text-lg font-semibold">No posts yet</h4>
+
+          <p className="text-gray-500 mt-2">
+            Create your first post and schedule it across your social accounts.
+          </p>
+
+          <button
+            className="
+            mt-6
+            bg-blue-600
+            text-white
+            px-5
+            py-3
+            rounded-lg
+            hover:bg-blue-700
+          "
+            onClick={() => {
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }}
+          >
+            Create Post
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">

@@ -22,7 +22,7 @@ export interface Plan {
   prioritySupport: boolean;
 
   linkedinPublishing: boolean;
-
+ 
   facebookPublishing: boolean;
 
   instagramPublishing: boolean;

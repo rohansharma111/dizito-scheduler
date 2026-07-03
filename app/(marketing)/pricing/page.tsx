@@ -57,7 +57,7 @@ export default async function PricingPage() {
       href:
         userPlan === "agency"
           ? "/dashboard"
-          : "mailto:hello@dizito.in?subject=Agency%20Plan",
+          : "mailto:dizito2@gmail.com?subject=Agency%20Plan&body=Hello%2C%0A%0AI%20am%20interested%20in%20your%20Agency%20Plan.%20Could%20you%20please%20share%20more%20details%20about%20the%20features%2C%20pricing%2C%20and%20how%20to%20get%20started%3F%0A%0AThank%20you.",
       popular: false,
       disabled: userPlan === "agency",
     },

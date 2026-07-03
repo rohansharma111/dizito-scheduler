@@ -47,6 +47,52 @@ export default function DraftPosts({
     (item) => item.status === "draft" && item.schedule_time == null,
   );
 
+  if (drafts.length === 0) {
+    return (
+      <div className="mt-8">
+        <h3 className="text-xl font-bold mb-4">Draft Posts</h3>
+
+        <div
+          className="
+          bg-white
+          border
+          rounded-xl
+          p-12
+          text-center
+        "
+        >
+          <div className="text-5xl mb-4">📝</div>
+
+          <h4 className="text-lg font-semibold">No draft posts yet</h4>
+
+          <p className="text-gray-500 mt-2">
+            Save posts as drafts to continue working on them later.
+          </p>
+
+          <button
+            className="
+            mt-6
+            bg-blue-600
+            text-white
+            px-5
+            py-3
+            rounded-lg
+            hover:bg-blue-700
+          "
+            onClick={() => {
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }}
+          >
+            Create Draft
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-8">
       <h3 className="text-xl font-bold mb-4">Draft Posts</h3>

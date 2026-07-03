@@ -381,7 +381,7 @@ ${result.failed}
         >
           {`content,schedule_time,image_url
 Hello World,2026-07-01T10:00:00,https://picsum.photos/400
-Another Post,2026-07-02T15:00:00,`}
+Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
         </pre>
       </div>
 
