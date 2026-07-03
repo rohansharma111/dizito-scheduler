@@ -48,24 +48,11 @@ export async function POST(request: Request) {
     [userId],
   );
 
-  const connectedAccountsCount = Number(connectedAccountsResult.rows[0].count);
-
-  if (connectedAccountsCount >= userPlan.accounts) {
-    return Response.json(
-      {
-        error: `Your ${userPlan.name} plan allows only ${userPlan.accounts} connected account(s). Please upgrade your plan.`,
-      },
-      {
-        status: 403,
-      },
-    );
-  }
-
-  let accountCount = connectedAccountsCount;
+  let accountCount = Number(connectedAccountsResult.rows[0].count);
 
   const body = await request.json();
 
-  const selectedPages = body.selectedPages;
+  const selectedPages = body.pages;
 
   if (!selectedPages || selectedPages.length === 0) {
     return Response.json(
@@ -106,9 +93,20 @@ export async function POST(request: Request) {
 
   const reconnectType = oauthData.reconnect_type;
 
+  let reconnectAccount = null;
+
   const isReconnect = !!reconnectAccountId;
 
-  let reconnectAccount = null;
+  if (isReconnect && selectedPages.length > 1) {
+    return Response.json(
+      {
+        error: "Reconnect only supports one account.",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
 
   if (isReconnect) {
     const reconnectResult = await pool.query(
@@ -145,12 +143,36 @@ export async function POST(request: Request) {
   try {
     await pool.query("BEGIN");
 
-    for (const selectedId of selectedPages) {
-      const page = pages.find((p: any) => p.id === selectedId);
+    if (isReconnect) {
+      const selected = selectedPages[0];
+
+      if (selected.pageId !== reconnectAccount.page_id) {
+        throw new Error("INVALID_RECONNECT_PAGE");
+      }
+
+      if (reconnectAccount.platform === "facebook") {
+        if (!selected.facebook) throw new Error("INVALID_RECONNECT_PLATFORM");
+
+        if (selected.instagram) throw new Error("INVALID_RECONNECT_PLATFORM");
+      }
+
+      if (reconnectAccount.platform === "instagram") {
+        if (!selected.instagram) throw new Error("INVALID_RECONNECT_PLATFORM");
+
+        if (selected.facebook) throw new Error("INVALID_RECONNECT_PLATFORM");
+      }
+    }
+
+    for (const selection of selectedPages) {
+      const page = pages.find((p: any) => p.id === selection.pageId);
 
       if (!page) {
         continue;
       }
+
+      const connectFacebook = selection.facebook;
+
+      const connectInstagram = selection.instagram;
 
       /*
   FACEBOOK
@@ -159,7 +181,11 @@ export async function POST(request: Request) {
       /*
    RECONNECT
 */
-      if (isReconnect && reconnectAccount.platform === "facebook") {
+      if (
+        connectFacebook &&
+        isReconnect &&
+        reconnectAccount.platform === "facebook"
+      ) {
         await pool.query(
           `
     UPDATE social_accounts
@@ -167,18 +193,16 @@ export async function POST(request: Request) {
       account_name = $1,
       access_token = $2,
       page_access_token = $3,
-      page_id = $4,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
-      id = $5
-      AND user_id = $6
+      id = $4
+      AND user_id = $5
     `,
           [
-            page.name,
+            reconnectAccount.account_name,
             accessToken,
             page.access_token,
-            page.id,
             reconnectAccountId,
             userId,
           ],
@@ -192,11 +216,13 @@ export async function POST(request: Request) {
           {
             platform: "facebook",
             reconnectType,
-            pageId: page.id,
+            pageId: reconnectAccount.page_id,
           },
         );
 
-        connectedAccounts.push(`${page.name} (Facebook Reconnected)`);
+        connectedAccounts.push(
+          `${reconnectAccount.account_name} (Facebook Reconnected)`,
+        );
 
         if (reconnectType === "recover") {
           try {
@@ -204,11 +230,9 @@ export async function POST(request: Request) {
               `${process.env.NEXTAUTH_URL}/api/post-targets/recover-auth`,
               {
                 method: "POST",
-
                 headers: {
                   "Content-Type": "application/json",
                 },
-
                 body: JSON.stringify({
                   socialAccountId: reconnectAccountId,
                 }),
@@ -222,8 +246,9 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const existingFacebook = await pool.query(
-        `
+      if (connectFacebook) {
+        const existingFacebook = await pool.query(
+          `
   SELECT id
   FROM social_accounts
   WHERE
@@ -231,16 +256,16 @@ export async function POST(request: Request) {
     AND platform='facebook'
     AND user_id=$2
   `,
-        [page.id, userId],
-      );
+          [page.id, userId],
+        );
 
-      if (existingFacebook.rows.length === 0) {
-        if (accountCount >= userPlan.accounts) {
-          throw new Error(`PLAN_LIMIT:${userPlan.accounts}`);
-        }
+        if (existingFacebook.rows.length === 0) {
+          if (accountCount >= userPlan.accounts) {
+            throw new Error(`PLAN_LIMIT:${userPlan.accounts}`);
+          }
 
-        const facebook = await pool.query(
-          `
+          const facebook = await pool.query(
+            `
     INSERT INTO social_accounts
     (
       platform,
@@ -261,59 +286,53 @@ export async function POST(request: Request) {
     )
     RETURNING id
     `,
-          [
-            "facebook",
-            page.name,
-            accessToken,
-            page.id,
+            [
+              "facebook",
+              page.name,
+              accessToken,
+              page.id,
+              userId,
+              page.access_token,
+            ],
+          );
+
+          accountCount++;
+
+          await createEvent(
+            "ACCOUNT_CONNECTED",
+            "social_account",
+            facebook.rows[0].id,
             userId,
-            page.access_token,
-          ],
-        );
+            {
+              platform: "facebook",
+              accountName: page.name,
+              pageId: page.id,
+            },
+          );
 
-        accountCount++;
-
-        await createEvent(
-          "ACCOUNT_CONNECTED",
-          "social_account",
-          facebook.rows[0].id,
-          userId,
-          {
-            platform: "facebook",
-            accountName: page.name,
-            pageId: page.id,
-          },
-        );
-
-        connectedAccounts.push(`${page.name} (Facebook)`);
-      } else {
-        await createEvent(
-          "ACCOUNT_CONNECTION_SKIPPED",
-          "social_account",
-          existingFacebook.rows[0].id,
-          userId,
-          {
-            platform: "facebook",
-            reason: "duplicate",
-          },
-        );
+          connectedAccounts.push(`${page.name} (Facebook)`);
+        } else {
+          await createEvent(
+            "ACCOUNT_CONNECTION_SKIPPED",
+            "social_account",
+            existingFacebook.rows[0].id,
+            userId,
+            {
+              platform: "facebook",
+              reason: "duplicate",
+            },
+          );
+        }
       }
-
-      /*
-        INSTAGRAM
-      */
-      const instagramResponse = await fetch(
-        `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
-      );
-
-      const instagramData = await instagramResponse.json();
-
-      const instagramId = instagramData?.instagram_business_account?.id;
 
       /*
   INSTAGRAM RECONNECT
 */
-      if (isReconnect && reconnectAccount.platform === "instagram") {
+      if (
+        connectInstagram &&
+        isReconnect &&
+        reconnectAccount.platform === "instagram"
+      ) {
         await pool.query(
           `
     UPDATE social_accounts
@@ -321,20 +340,16 @@ export async function POST(request: Request) {
       account_name = $1,
       access_token = $2,
       page_access_token = $3,
-      page_id = $4,
-      instagram_business_id = $5,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
-      id = $6
-      AND user_id = $7
+      id = $4
+      AND user_id = $5
     `,
           [
-            page.name,
+            reconnectAccount.account_name,
             accessToken,
             page.access_token,
-            page.id,
-            instagramId,
             reconnectAccountId,
             userId,
           ],
@@ -348,11 +363,13 @@ export async function POST(request: Request) {
           {
             platform: "instagram",
             reconnectType,
-            instagramBusinessId: instagramId,
+            instagramBusinessId: reconnectAccount.instagram_business_id,
           },
         );
 
-        connectedAccounts.push(`${page.name} (Instagram Reconnected)`);
+        connectedAccounts.push(
+          `${reconnectAccount.account_name} (Instagram Reconnected)`,
+        );
 
         if (reconnectType === "recover") {
           try {
@@ -378,14 +395,26 @@ export async function POST(request: Request) {
         continue;
       }
 
-      if (!instagramId) {
-        console.log("No Instagram account linked:", page.name);
+      /*
+        INSTAGRAM
+      */
+      if (connectInstagram) {
+        const instagramResponse = await fetch(
+          `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+        );
 
-        continue;
-      }
+        const instagramData = await instagramResponse.json();
 
-      const existingInstagram = await pool.query(
-        `
+        const instagramId = instagramData?.instagram_business_account?.id;
+
+        if (!instagramId) {
+          console.log("No Instagram account linked:", page.name);
+
+          continue;
+        }
+
+        const existingInstagram = await pool.query(
+          `
           SELECT id
           FROM social_accounts
           WHERE
@@ -393,16 +422,16 @@ export async function POST(request: Request) {
             AND platform = 'instagram'
             AND user_id = $2
           `,
-        [instagramId, userId],
-      );
+          [instagramId, userId],
+        );
 
-      if (existingInstagram.rows.length === 0) {
-        if (accountCount >= userPlan.accounts) {
-          throw new Error(`PLAN_LIMIT:${userPlan.accounts}`);
-        }
+        if (existingInstagram.rows.length === 0) {
+          if (accountCount >= userPlan.accounts) {
+            throw new Error(`PLAN_LIMIT:${userPlan.accounts}`);
+          }
 
-        const instagram = await pool.query(
-          `
+          const instagram = await pool.query(
+            `
             INSERT INTO social_accounts
             (
               platform,
@@ -425,46 +454,46 @@ export async function POST(request: Request) {
             )
             RETURNING id
             `,
-          [
-            "instagram",
-            page.name,
-            accessToken,
-            page.id,
-            instagramId,
+            [
+              "instagram",
+              page.name,
+              accessToken,
+              page.id,
+              instagramId,
+              userId,
+              page.access_token,
+            ],
+          );
+
+          accountCount++;
+
+          await createEvent(
+            "ACCOUNT_CONNECTED",
+            "social_account",
+            instagram.rows[0].id,
             userId,
-            page.access_token,
-          ],
-        );
+            {
+              platform: "instagram",
+              accountName: page.name,
+              instagramBusinessId: instagramId,
+            },
+          );
 
-        accountCount++;
-
-        await createEvent(
-          "ACCOUNT_CONNECTED",
-          "social_account",
-          instagram.rows[0].id,
-          userId,
-          {
-            platform: "instagram",
-            accountName: page.name,
-            instagramBusinessId: instagramId,
-          },
-        );
-
-        connectedAccounts.push(`${page.name} (Instagram)`);
-      } else {
-        await createEvent(
-          "ACCOUNT_CONNECTION_SKIPPED",
-          "social_account",
-          existingInstagram.rows[0].id,
-          userId,
-          {
-            platform: "instagram",
-            reason: "duplicate",
-          },
-        );
+          connectedAccounts.push(`${page.name} (Instagram)`);
+        } else {
+          await createEvent(
+            "ACCOUNT_CONNECTION_SKIPPED",
+            "social_account",
+            existingInstagram.rows[0].id,
+            userId,
+            {
+              platform: "instagram",
+              reason: "duplicate",
+            },
+          );
+        }
       }
     }
-
     /*
       Cleanup OAuth cache
     */
@@ -498,6 +527,40 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     await pool.query("ROLLBACK");
+    
+    if (error instanceof Error && error.message === "INVALID_RECONNECT_PAGE") {
+      return Response.json(
+        {
+          error: "Please reconnect the same account.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+    if (
+      error instanceof Error &&
+      error.message === "INVALID_RECONNECT_PLATFORM"
+    ) {
+      return Response.json(
+        {
+          error: "Please reconnect the same platform.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+    if (error instanceof Error && error.message === "NO_PLATFORM_SELECTED") {
+      return Response.json(
+        {
+          error: "Please select at least one platform.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
 
     console.error(error);
 

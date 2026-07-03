@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 
 interface Account {
   id: number;
@@ -15,6 +15,8 @@ export default function EditPostPage() {
 
   const searchParams = useSearchParams();
   const scheduleMode = searchParams.get("schedule") === "true";
+
+  const router = useRouter();
 
   const [post, setPost] = useState("");
 
@@ -91,6 +93,17 @@ export default function EditPostPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-8">
+      <button
+        onClick={() => router.back()}
+        className="
+    mb-6
+    text-blue-600
+    hover:underline
+  "
+      >
+        ← Back
+      </button>
+
       <h1 className="text-3xl font-bold mb-6">
         {isView ? "View Post" : "Edit Campaign"}
       </h1>
@@ -146,30 +159,31 @@ export default function EditPostPage() {
         <label className="font-bold">Targets</label>
 
         <div className="mt-3 space-y-2">
-          {Array.isArray(accounts) && accounts.map((account) => (
-            <label key={account.id} className="flex gap-3">
-              <input
-                disabled={isView}
-                type="checkbox"
-                checked={selectedAccounts.includes(account.id)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedAccounts([...selectedAccounts, account.id]);
-                  } else {
-                    setSelectedAccounts(
-                      selectedAccounts.filter((x) => x !== account.id),
-                    );
-                  }
-                }}
-              />
+          {Array.isArray(accounts) &&
+            accounts.map((account) => (
+              <label key={account.id} className="flex gap-3">
+                <input
+                  disabled={isView}
+                  type="checkbox"
+                  checked={selectedAccounts.includes(account.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedAccounts([...selectedAccounts, account.id]);
+                    } else {
+                      setSelectedAccounts(
+                        selectedAccounts.filter((x) => x !== account.id),
+                      );
+                    }
+                  }}
+                />
 
-              <span>
-                {account.platform}
-                {" - "}
-                {account.account_name}
-              </span>
-            </label>
-          ))}
+                <span>
+                  {account.platform}
+                  {" - "}
+                  {account.account_name}
+                </span>
+              </label>
+            ))}
         </div>
       </div>
       {selectedAccounts.length === 0 && (

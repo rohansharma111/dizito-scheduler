@@ -1,10 +1,12 @@
 "use client";
 
+import { Post } from "@/types";
 import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 
-export default function PostCalendar({ posts }: any) {
+export default function PostCalendar({ posts }: { posts: Post[] }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [mobile, setMobile] = useState(false);
@@ -27,7 +29,8 @@ export default function PostCalendar({ posts }: any) {
     return postDate.toDateString() === selectedDate.toDateString();
   });
 
-  const upcomingPosts = [...posts]
+  const upcomingPosts = posts
+    .filter((post: any) => post.status !== "draft" && post.schedule_time)
     .sort(
       (a, b) =>
         new Date(a.schedule_time).getTime() -
@@ -82,18 +85,37 @@ export default function PostCalendar({ posts }: any) {
                   {new Date(post.schedule_time).toLocaleString()}
                 </div>
 
-                <div className="mt-2 flex gap-2">
-                  <span
-                    className="
-                      px-2
-                      py-1
-                      bg-gray-100
-                      rounded
-                      text-xs
-                    "
-                  >
-                    {post.platform}
-                  </span>
+                <div className="mt-3 flex gap-3">
+                  {post.targets?.map((target: any) => (
+                    <div key={target.id}>
+                      {target.platform === "instagram" && (
+                        <FaInstagram
+                          className="
+            text-pink-500
+            text-xl
+          "
+                        />
+                      )}
+
+                      {target.platform === "facebook" && (
+                        <FaFacebook
+                          className="
+            text-blue-600
+            text-xl
+          "
+                        />
+                      )}
+
+                      {target.platform === "linkedin" && (
+                        <FaLinkedin
+                          className="
+            text-blue-700
+            text-xl
+          "
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
 
                 <div className="mt-3">{renderStatus(post.status)}</div>

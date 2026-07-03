@@ -5,6 +5,7 @@ import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import DraftPosts from "./DraftPosts";
 import ScheduledPosts from "./ScheduledPosts";
 import PublishDetailsModal from "./PublishDetailsModal";
+import { useRouter } from "next/navigation";
 
 export default function CreatePostForm({ posts, setPosts }: any) {
   const [post, setPost] = useState("");
@@ -30,6 +31,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [showTargetsModal, setShowTargetsModal] = useState(false);
 
   const [imagePreview, setImagePreview] = useState("");
+
+  const router = useRouter();
 
   useEffect(() => {
     async function loadAccounts() {
@@ -209,78 +212,104 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           </div>
 
           <div
-            className="
-              border
-              rounded-lg
-              p-4
-            "
-          >
-            <h4
-              className="
-                font-medium
-                mb-3
-              "
-            >
-              Select Accounts
-            </h4>
+  className="
+    grid
+    grid-cols-1
+    sm:grid-cols-2
+    gap-3
+  "
+>
+  {accounts.length === 0 ? (
+    <div
+      className="
+        col-span-full
+        border
+        border-dashed
+        rounded-lg
+        p-8
+        text-center
+        text-gray-500
+      "
+    >
+      <div className="text-lg font-medium mb-2">
+        No accounts connected
+      </div>
 
-            <div
-              className="
-                grid
-                grid-cols-1
-                sm:grid-cols-2
-                gap-3
-              "
-            >
-              {accounts.map((account) => (
-                <label
-                  key={account.id}
-                  className="
-                      border
-                      rounded-lg
-                      p-3
-                      flex
-                      items-center
-                      gap-3
-                    "
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedAccounts.includes(account.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedAccounts([...selectedAccounts, account.id]);
-                      } else {
-                        setSelectedAccounts(
-                          selectedAccounts.filter((id) => id !== account.id),
-                        );
-                      }
-                    }}
-                  />
+      <p className="mb-4">
+        Connect your Instagram, Facebook or LinkedIn account
+        before creating a post.
+      </p>
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      {account.platform === "instagram" && (
-                        <FaInstagram className="text-pink-500" />
-                      )}
+      <button
+        onClick={() =>
+          router.push("/accounts?connect=true")
+        }
+        className="
+          bg-blue-600
+          text-white
+          px-4
+          py-2
+          rounded
+        "
+      >
+        Connect Account
+      </button>
+    </div>
+  ) : (
+    accounts.map((account) => (
+      <label
+        key={account.id}
+        className="
+          border
+          rounded-lg
+          p-3
+          flex
+          items-center
+          gap-3
+        "
+      >
+        <input
+          type="checkbox"
+          checked={selectedAccounts.includes(account.id)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedAccounts([
+                ...selectedAccounts,
+                account.id,
+              ]);
+            } else {
+              setSelectedAccounts(
+                selectedAccounts.filter(
+                  (id) => id !== account.id,
+                ),
+              );
+            }
+          }}
+        />
 
-                      {account.platform === "facebook" && (
-                        <FaFacebook className="text-blue-600" />
-                      )}
+        <div>
+          <div className="flex items-center gap-2">
+            {account.platform === "instagram" && (
+              <FaInstagram className="text-pink-500" />
+            )}
 
-                      {account.platform === "linkedin" && (
-                        <FaLinkedin className="text-blue-700" />
-                      )}
+            {account.platform === "facebook" && (
+              <FaFacebook className="text-blue-600" />
+            )}
 
-                      <span className="font-medium">
-                        {account.account_name}
-                      </span>
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
+            {account.platform === "linkedin" && (
+              <FaLinkedin className="text-blue-700" />
+            )}
+
+            <span className="font-medium">
+              {account.account_name}
+            </span>
           </div>
+        </div>
+      </label>
+    ))
+  )}
+</div>
 
           <input
             className="
