@@ -108,7 +108,7 @@ export default function PrivacyPage() {
             For privacy-related questions or data deletion requests, contact:
           </p>
 
-          <p className="font-medium">support@dizito.in</p>
+          <p className="font-medium">contact@dizito.in</p>
         </section>
       </div>
     </main>

@@ -90,13 +90,13 @@ export default function SidebarClient({
     {
       href: "/accounts",
       label: "Accounts",
-      icon: Activity,
+      icon: Link2,
     },
 
     {
       href: "/activity",
       label: "Activity",
-      icon: Link2,
+      icon: Activity,
     },
 
     {
