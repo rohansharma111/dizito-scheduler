@@ -53,25 +53,21 @@ export default function ScheduledPosts({
             Create your first post and schedule it across your social accounts.
           </p>
 
-          <button
+          <a
+            href="#draft"
             className="
-            mt-6
-            bg-blue-600
-            text-white
-            px-5
-            py-3
-            rounded-lg
-            hover:bg-blue-700
-          "
-            onClick={() => {
-              window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-              });
-            }}
+    mt-6
+    bg-blue-600
+    text-white
+    px-5
+    py-3
+    rounded-lg
+    hover:bg-blue-700
+    inline-block
+  "
           >
             Create Post
-          </button>
+          </a>
         </div>
       </div>
     );

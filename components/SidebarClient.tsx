@@ -17,6 +17,7 @@ import {
   PanelLeftOpen,
   X,
   Crown,
+  Activity 
 } from "lucide-react";
 
 type MenuItem = {
@@ -89,6 +90,12 @@ export default function SidebarClient({
     {
       href: "/accounts",
       label: "Accounts",
+      icon: Activity,
+    },
+
+    {
+      href: "/activity",
+      label: "Activity",
       icon: Link2,
     },
 

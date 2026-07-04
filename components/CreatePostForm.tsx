@@ -149,7 +149,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
   return (
     <>
-      <div
+      <div id="draft"
         className="
           bg-white
           rounded-xl
