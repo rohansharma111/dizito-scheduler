@@ -3,12 +3,33 @@
 import { useEffect, useState } from "react";
 
 type Usage = {
-  plan: string;
-  accountsUsed: number;
-  accountsLimit: number;
-  postsUsed: number;
-  postsLimit: number;
-  bulkUpload: boolean;
+  plan: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  accounts: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
+
+  posts: {
+    created: number;
+    published: number;
+    limit: number;
+    remaining: number | null;
+  };
+
+  features: {
+    bulkUpload: boolean;
+    retrySystem: boolean;
+    calendar: boolean;
+    drafts: boolean;
+    analytics: boolean;
+    prioritySupport: boolean;
+  };
 };
 
 export default function UsageCard() {
@@ -47,14 +68,14 @@ export default function UsageCard() {
   }
 
   const accountPercent =
-    usage.accountsLimit === 0
+    usage.accounts.limit === 0
       ? 0
-      : Math.min(100, (usage.accountsUsed / usage.accountsLimit) * 100);
+      : Math.min(100, (usage.accounts.used / usage.accounts.limit) * 100);
 
   const postPercent =
-    usage.postsLimit === Number.MAX_SAFE_INTEGER
+    usage.posts.limit === Number.MAX_SAFE_INTEGER
       ? 0
-      : Math.min(100, (usage.postsUsed / usage.postsLimit) * 100);
+      : Math.min(100, (usage.posts.created / usage.posts.limit) * 100);
 
   return (
     <div className="bg-white border rounded-xl p-6 shadow-sm">
@@ -67,7 +88,7 @@ export default function UsageCard() {
         </div>
 
         <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium capitalize">
-          {usage.plan}
+          {usage.plan.name}
         </span>
       </div>
 
@@ -77,7 +98,7 @@ export default function UsageCard() {
           <span className="font-medium">Accounts</span>
 
           <span className="text-gray-500">
-            {usage.accountsUsed} / {usage.accountsLimit}
+            {usage.accounts.used} / {usage.accounts.limit}
           </span>
         </div>
 
@@ -97,10 +118,10 @@ export default function UsageCard() {
           <span className="font-medium">Monthly Posts</span>
 
           <span className="text-gray-500">
-            {usage.postsUsed} /{" "}
-            {usage.postsLimit === Number.MAX_SAFE_INTEGER
+            {usage.posts.created} /{" "}
+            {usage.posts.limit === Number.MAX_SAFE_INTEGER
               ? "∞"
-              : usage.postsLimit}
+              : usage.posts.limit}
           </span>
         </div>
 
@@ -122,7 +143,7 @@ export default function UsageCard() {
           <div className="flex justify-between">
             <span>Bulk Upload</span>
 
-            <span>{usage.bulkUpload ? "✅" : "❌"}</span>
+            <span>{usage.features.bulkUpload ? "✅" : "❌"}</span>
           </div>
 
           <div className="flex justify-between">
@@ -140,7 +161,7 @@ export default function UsageCard() {
       </div>
 
       {/* Upgrade */}
-      {usage.plan === "free" && (
+      {usage.plan.name === "free" && (
         <button className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
           Upgrade Plan
         </button>
