@@ -54,6 +54,16 @@ export default function CreatePostForm({ posts, setPosts }: any) {
     };
   }, [imagePreview]);
 
+  useEffect(() => {
+    if (!successMessage) return;
+
+    const timer = setTimeout(() => {
+      setSuccessMessage("");
+    }, 3000); // disappears after 3 seconds
+
+    return () => clearTimeout(timer);
+  }, [successMessage]);
+
   const minScheduleTime = (() => {
     const now = new Date();
 
@@ -149,7 +159,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
   return (
     <>
-      <div id="draft"
+      <div
+        id="draft"
         className="
           bg-white
           rounded-xl
@@ -212,16 +223,16 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           </div>
 
           <div
-  className="
+            className="
     grid
     grid-cols-1
     sm:grid-cols-2
     gap-3
   "
->
-  {accounts.length === 0 ? (
-    <div
-      className="
+          >
+            {accounts.length === 0 ? (
+              <div
+                className="
         col-span-full
         border
         border-dashed
@@ -230,36 +241,34 @@ export default function CreatePostForm({ posts, setPosts }: any) {
         text-center
         text-gray-500
       "
-    >
-      <div className="text-lg font-medium mb-2">
-        No accounts connected
-      </div>
+              >
+                <div className="text-lg font-medium mb-2">
+                  No accounts connected
+                </div>
 
-      <p className="mb-4">
-        Connect your Instagram, Facebook or LinkedIn account
-        before creating a post.
-      </p>
+                <p className="mb-4">
+                  Connect your Instagram, Facebook or LinkedIn account before
+                  creating a post.
+                </p>
 
-      <button
-        onClick={() =>
-          router.push("/accounts?connect=true")
-        }
-        className="
+                <button
+                  onClick={() => router.push("/accounts?connect=true")}
+                  className="
           bg-blue-600
           text-white
           px-4
           py-2
           rounded
         "
-      >
-        Connect Account
-      </button>
-    </div>
-  ) : (
-    accounts.map((account) => (
-      <label
-        key={account.id}
-        className="
+                >
+                  Connect Account
+                </button>
+              </div>
+            ) : (
+              accounts.map((account) => (
+                <label
+                  key={account.id}
+                  className="
           border
           rounded-lg
           p-3
@@ -267,49 +276,44 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           items-center
           gap-3
         "
-      >
-        <input
-          type="checkbox"
-          checked={selectedAccounts.includes(account.id)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedAccounts([
-                ...selectedAccounts,
-                account.id,
-              ]);
-            } else {
-              setSelectedAccounts(
-                selectedAccounts.filter(
-                  (id) => id !== account.id,
-                ),
-              );
-            }
-          }}
-        />
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedAccounts.includes(account.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAccounts([...selectedAccounts, account.id]);
+                      } else {
+                        setSelectedAccounts(
+                          selectedAccounts.filter((id) => id !== account.id),
+                        );
+                      }
+                    }}
+                  />
 
-        <div>
-          <div className="flex items-center gap-2">
-            {account.platform === "instagram" && (
-              <FaInstagram className="text-pink-500" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      {account.platform === "instagram" && (
+                        <FaInstagram className="text-pink-500" />
+                      )}
+
+                      {account.platform === "facebook" && (
+                        <FaFacebook className="text-blue-600" />
+                      )}
+
+                      {account.platform === "linkedin" && (
+                        <FaLinkedin className="text-blue-700" />
+                      )}
+
+                      <span className="font-medium">
+                        {account.account_name}
+                      </span>
+                    </div>
+                  </div>
+                </label>
+              ))
             )}
-
-            {account.platform === "facebook" && (
-              <FaFacebook className="text-blue-600" />
-            )}
-
-            {account.platform === "linkedin" && (
-              <FaLinkedin className="text-blue-700" />
-            )}
-
-            <span className="font-medium">
-              {account.account_name}
-            </span>
           </div>
-        </div>
-      </label>
-    ))
-  )}
-</div>
 
           <input
             className="
@@ -388,7 +392,21 @@ export default function CreatePostForm({ posts, setPosts }: any) {
           </div>
 
           {successMessage && (
-            <div className="text-green-600">{successMessage}</div>
+            <div
+              className="
+      bg-green-50
+      border
+      border-green-200
+      text-green-700
+      px-4
+      py-3
+      rounded-lg
+      transition-all
+      duration-300
+    "
+            >
+              {successMessage}
+            </div>
           )}
         </div>
       </div>

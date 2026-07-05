@@ -37,7 +37,7 @@ export default function Footer() {
             <div>
               <h4 className="font-semibold mb-3">Contact</h4>
 
-              <div>contact@dizito.in</div>
+              <a className="font-medium" href="mailto:contact@dizito.in">contact@dizito.in</a>
             </div>
           </div>
         </div>
