@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell, Search, User, Menu } from "lucide-react";
+import { Search, User, Menu } from "lucide-react";
 import Link from "next/link";
+import NotificationDropdown from "@/components/NotificationDropdown";
 
 export default function AppHeader({
   onMenuClick,
@@ -83,18 +84,17 @@ export default function AppHeader({
 
       {/* RIGHT */}
       <div className="flex items-center gap-2 md:gap-5">
-        <button
+        <div
           className="
-            p-2
-            rounded-lg
-            hover:bg-gray-100
-          "
+    p-1
+    rounded-lg
+    hover:bg-gray-100
+  "
         >
-          <Bell size={20} />
-        </button>
+          <NotificationDropdown />
+        </div>
 
         <button
-        
           className="
             p-2
             rounded-lg

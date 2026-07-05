@@ -141,6 +141,7 @@ export default function SidebarClient({
           z-50
 
           h-screen
+          overflow-hidden
 
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
 
@@ -152,7 +153,7 @@ export default function SidebarClient({
         `}
       >
         {/* HEADER */}
-        <div className="p-4">
+        <div className="p-4 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-8">
             {!collapsed && <h1 className="text-2xl font-bold">Dizito</h1>}
 
