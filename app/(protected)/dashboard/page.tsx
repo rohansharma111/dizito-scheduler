@@ -20,21 +20,19 @@ export default function Page() {
         <UsageCard />
       </div>
 
-      {/* Desktop Sidebar */}
+      {/* Desktop */}
       <div
         className={`
-          hidden lg:block
-          relative
-          transition-all duration-300
-          ${usageCollapsed ? "w-12" : "w-80"}
+          hidden lg:block relative transition-all duration-300
+          ${usageCollapsed ? "w-12" : "w-[350px]"}
         `}
       >
-        {/* Toggle Button */}
+        {/* Collapse Button */}
         <button
           onClick={() => setUsageCollapsed(!usageCollapsed)}
           className="
             absolute
-            -left-4
+            -left-5
             top-4
             z-10
             bg-white
@@ -52,12 +50,11 @@ export default function Page() {
           )}
         </button>
 
-        {/* Keep mounted, just collapse */}
+        {/* Keep the panel mounted */}
         <div
           className={`
-            overflow-hidden
-            transition-all duration-300
-            ${usageCollapsed ? "opacity-0 w-0" : "opacity-100 w-full"}
+            overflow-hidden transition-all duration-300
+            ${usageCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"}
           `}
         >
           <UsageCard />
