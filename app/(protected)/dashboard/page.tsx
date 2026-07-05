@@ -9,9 +9,9 @@ export default function Page() {
   const [usageCollapsed, setUsageCollapsed] = useState(false);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="flex gap-6">
       {/* Dashboard */}
-      <div className={usageCollapsed ? "lg:col-span-3" : "lg:col-span-2"}>
+      <div className="flex-1">
         <DashboardClient />
       </div>
 
@@ -20,14 +20,21 @@ export default function Page() {
         <UsageCard />
       </div>
 
-      {/* Desktop */}
-      <div className="hidden lg:block relative">
-        {/* Collapse Button */}
+      {/* Desktop Sidebar */}
+      <div
+        className={`
+          hidden lg:block
+          relative
+          transition-all duration-300
+          ${usageCollapsed ? "w-12" : "w-80"}
+        `}
+      >
+        {/* Toggle Button */}
         <button
           onClick={() => setUsageCollapsed(!usageCollapsed)}
           className="
             absolute
-            -left-5
+            -left-4
             top-4
             z-10
             bg-white
@@ -45,7 +52,16 @@ export default function Page() {
           )}
         </button>
 
-        {!usageCollapsed && <UsageCard />}
+        {/* Keep mounted, just collapse */}
+        <div
+          className={`
+            overflow-hidden
+            transition-all duration-300
+            ${usageCollapsed ? "opacity-0 w-0" : "opacity-100 w-full"}
+          `}
+        >
+          <UsageCard />
+        </div>
       </div>
     </div>
   );

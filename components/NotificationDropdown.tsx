@@ -32,7 +32,19 @@ export default function NotificationDropdown() {
 
   useEffect(() => {
     loadCount();
-  }, []);
+
+    const handler = () => {
+      loadCount();
+
+      if (open) {
+        loadNotifications();
+      }
+    };
+
+    window.addEventListener("notificationsUpdated", handler);
+
+    return () => window.removeEventListener("notificationsUpdated", handler);
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -109,6 +121,7 @@ export default function NotificationDropdown() {
       );
 
       setCount((c) => Math.max(0, c - 1));
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (error) {
       console.error(error);
     }
@@ -136,6 +149,7 @@ export default function NotificationDropdown() {
       );
 
       setCount(0);
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (error) {
       console.error(error);
     }
@@ -166,7 +180,7 @@ export default function NotificationDropdown() {
               text-center
             "
           >
-            {count}
+            {count > 99 ? "99+" : count}
           </span>
         )}
       </button>
@@ -176,9 +190,13 @@ export default function NotificationDropdown() {
         <div
           className="
             absolute
+            top-full
             right-0
+            sm:right-0
             mt-3
-            w-96
+            w-[calc(100vw-32px)]
+            sm:w-96
+            max-w-md
             bg-white
             border
             rounded-xl
@@ -192,7 +210,8 @@ export default function NotificationDropdown() {
               flex
               justify-between
               items-center
-              p-4
+              p-3
+              sm:p-4
               border-b
             "
           >
@@ -201,7 +220,7 @@ export default function NotificationDropdown() {
             {count > 0 && (
               <button
                 className="
-                  text-sm
+                  text-xs sm:text-sm
                   text-blue-600
                 "
                 onClick={markAllRead}
@@ -232,12 +251,17 @@ export default function NotificationDropdown() {
                   key={notification.id}
                   className={`
                     border-b
-                    p-4
+                    p-3
+                    sm:p-4
                     cursor-pointer
                     hover:bg-gray-50
                     ${!notification.isRead ? "bg-blue-50" : ""}
                   `}
-                  onClick={() => markRead(notification.id)}
+                  onClick={() => {
+                    if (!notification.isRead) {
+                      markRead(notification.id);
+                    }
+                  }}
                 >
                   <div className="flex gap-3">
                     <div className={getNotificationColor(notification.type)}>
@@ -245,13 +269,18 @@ export default function NotificationDropdown() {
                     </div>
 
                     <div className="flex-1">
-                      <div className="font-medium">{notification.title}</div>
+                      <div className="font-medium text-sm">
+                        {notification.title}
+                      </div>
 
                       <div
                         className="
-                          text-sm
-                          text-gray-600
-                          mt-1
+                          text-xs
+                            sm:text-sm
+                            text-gray-600
+                            mt-1
+                            break-words
+                            line-clamp-2
                         "
                       >
                         {notification.message}

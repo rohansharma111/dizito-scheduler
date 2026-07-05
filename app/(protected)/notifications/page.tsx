@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo  } from "react";
 import {
   getNotificationIcon,
   getNotificationColor,
@@ -67,6 +67,7 @@ export default function NotificationsPage() {
             : n,
         ),
       );
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (error) {
       console.error(error);
     }
@@ -92,6 +93,7 @@ export default function NotificationsPage() {
           isRead: true,
         })),
       );
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (error) {
       console.error(error);
     }
@@ -101,8 +103,14 @@ export default function NotificationsPage() {
     return new Date(date).toLocaleString();
   }
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
+const unreadCount =
+  useMemo(
+    () =>
+      notifications.filter(
+        (n) => !n.isRead,
+      ).length,
+    [notifications],
+  );
   return (
     <div className="p-6">
       {/* Header */}
@@ -152,7 +160,10 @@ export default function NotificationsPage() {
 
           <h2 className="text-xl font-semibold">No notifications</h2>
 
-          <p className="text-gray-500 mt-2">Notifications will appear here.</p>
+          <p className="text-gray-500 mt-2">
+  Publish posts or connect accounts
+  to receive notifications.
+</p>
         </div>
       )}
 
@@ -166,20 +177,24 @@ export default function NotificationsPage() {
                     bg-white
                     border
                     rounded-xl
-                    p-5
+                    p-3 sm:p-5
                     shadow-sm
                     transition
                     hover:shadow-md
                     cursor-pointer
                     ${!notification.isRead ? "border-blue-300 bg-blue-50" : ""}
                   `}
-              onClick={() => markRead(notification.id)}
+              onClick={() => {
+                if (!notification.isRead) {
+                  markRead(notification.id);
+                }
+              }}
             >
               <div className="flex gap-4">
                 {/* Icon */}
                 <div
                   className={`
-                      text-2xl
+                      text-lg sm:text-2xl
                       ${getNotificationColor(notification.type)}
                     `}
                 >
@@ -189,7 +204,7 @@ export default function NotificationsPage() {
                 {/* Content */}
                 <div className="flex-1">
                   <div className="flex justify-between">
-                    <h2 className="font-semibold text-lg">
+                    <h2 className="font-semibold text-sm sm:text-lg">
                       {notification.title}
                     </h2>
 
@@ -206,29 +221,15 @@ export default function NotificationsPage() {
                     )}
                   </div>
 
-                  <p className="text-gray-600 mt-2">{notification.message}</p>
+                  <p className="text-sm
+    text-gray-600
+    mt-2
+    break-words
+    line-clamp-3">{notification.message}</p>
 
                   <div className="mt-3 text-sm text-gray-400">
                     {formatDate(notification.createdAt)}
                   </div>
-
-                  {/* Payload */}
-                  {notification.payload && (
-                    <div
-                      className="
-                          mt-3
-                          text-xs
-                          text-gray-500
-                          bg-gray-50
-                          p-3
-                          rounded
-                        "
-                    >
-                      <pre className="whitespace-pre-wrap">
-                        {JSON.stringify(notification.payload, null, 2)}
-                      </pre>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
