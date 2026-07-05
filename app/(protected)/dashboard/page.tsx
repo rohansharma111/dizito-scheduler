@@ -9,23 +9,25 @@ export default function Page() {
   const [usageCollapsed, setUsageCollapsed] = useState(false);
 
   return (
-    <div className="flex gap-6">
-      {/* Dashboard */}
+    <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1">
         <DashboardClient />
+
+        {/* Mobile usage below dashboard */}
+        <div className="mt-6 lg:hidden">
+          <UsageCard />
+        </div>
       </div>
 
-      {/* Mobile */}
-      <div className="lg:hidden">
-        <UsageCard />
-      </div>
-
-      {/* Desktop */}
+      {/* Desktop side panel */}
       <div
         className={`
-          hidden lg:block relative transition-all duration-300
-          ${usageCollapsed ? "w-12" : "w-[350px]"}
-        `}
+      hidden lg:block
+      relative
+      transition-all
+      duration-300
+      ${usageCollapsed ? "w-12" : "w-[350px]"}
+    `}
       >
         {/* Collapse Button */}
         <button

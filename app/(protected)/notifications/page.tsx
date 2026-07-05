@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo  } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   getNotificationIcon,
   getNotificationColor,
@@ -103,18 +103,24 @@ export default function NotificationsPage() {
     return new Date(date).toLocaleString();
   }
 
-const unreadCount =
-  useMemo(
-    () =>
-      notifications.filter(
-        (n) => !n.isRead,
-      ).length,
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
     [notifications],
   );
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div
+        className="
+    flex
+    flex-col
+    sm:flex-row
+    sm:justify-between
+    sm:items-center
+    gap-4
+    mb-8
+  "
+      >
         <div>
           <h1 className="text-3xl font-bold">Notifications</h1>
 
@@ -161,9 +167,8 @@ const unreadCount =
           <h2 className="text-xl font-semibold">No notifications</h2>
 
           <p className="text-gray-500 mt-2">
-  Publish posts or connect accounts
-  to receive notifications.
-</p>
+            Publish posts or connect accounts to receive notifications.
+          </p>
         </div>
       )}
 
@@ -221,11 +226,15 @@ const unreadCount =
                     )}
                   </div>
 
-                  <p className="text-sm
+                  <p
+                    className="text-sm
     text-gray-600
     mt-2
     break-words
-    line-clamp-3">{notification.message}</p>
+    line-clamp-3"
+                  >
+                    {notification.message}
+                  </p>
 
                   <div className="mt-3 text-sm text-gray-400">
                     {formatDate(notification.createdAt)}
