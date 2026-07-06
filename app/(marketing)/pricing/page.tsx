@@ -157,17 +157,17 @@ export default async function PricingPage() {
               {plan.disabled ? (
                 <div
                   className="
-      mt-10
-      block
-      w-full
-      rounded-lg
-      px-6
-      py-3
-      text-center
-      font-medium
-      bg-gray-300
-      text-gray-700
-      cursor-default
+                    mt-10
+                    block
+                    w-full
+                    rounded-lg
+                    px-6
+                    py-3
+                    text-center
+                    font-medium
+                    bg-gray-300
+                    text-gray-700
+                    cursor-default
     "
                 >
                   {plan.button}

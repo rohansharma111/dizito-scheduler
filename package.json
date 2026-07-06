@@ -16,6 +16,7 @@
     "node-cron": "^4.2.1",
     "papaparse": "^5.5.4",
     "pg": "^8.21.0",
+    "razorpay": "^2.9.6",
     "react": "19.2.4",
     "react-calendar": "^6.0.1",
     "react-dom": "19.2.4",

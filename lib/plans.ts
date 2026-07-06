@@ -60,7 +60,7 @@ export const plans: Record<PlanName, Plan> = {
   creator: {
     name: "Creator",
 
-    price: 499,
+    price: 299,
 
     accounts: 5,
 

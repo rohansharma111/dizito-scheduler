@@ -17,7 +17,8 @@ import {
   PanelLeftOpen,
   X,
   Crown,
-  Activity 
+  Activity,
+  BarChart3,
 } from "lucide-react";
 
 type MenuItem = {
@@ -97,6 +98,13 @@ export default function SidebarClient({
       href: "/activity",
       label: "Activity",
       icon: Activity,
+    },
+
+    {
+      href: "/analytics",
+      label: "Analytics",
+      icon: BarChart3,
+      premium: !hasFeature(plan, "analytics"),
     },
 
     {
