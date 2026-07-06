@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getEventIcon } from "@/lib/eventIcons";
+import { timeAgo } from "@/lib/timeAgo";
+import { groupEvents } from "@/lib/groupEvents";
+import PlatformBadge from "@/components/PlatformBadge";
 
 type ActivityEvent = {
   id: number;
@@ -15,6 +18,10 @@ type ActivityEvent = {
 export default function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     loadActivity();
@@ -49,16 +56,16 @@ export default function ActivityPage() {
         return `${event.payload?.platform ?? ""} permanently failed`;
 
       case "ACCOUNT_CONNECTED":
-        return `Account connected`;
+        return "Account connected";
 
       case "ACCOUNT_DISCONNECTED":
-        return `Account disconnected`;
+        return "Account disconnected";
 
       case "ACCOUNT_RECONNECTED":
-        return `Account reconnected`;
+        return "Account reconnected";
 
       case "POST_CREATED":
-        return `Post created`;
+        return "Post created";
 
       default:
         return event.event_type;
@@ -70,7 +77,7 @@ export default function ActivityPage() {
 
     switch (event.event_type) {
       case "TARGET_PUBLISHED":
-        return `${payload.accountName || ""}`;
+        return payload.accountName || "Published successfully";
 
       case "TARGET_FAILED":
         return payload.error || "Unknown error";
@@ -84,27 +91,71 @@ export default function ActivityPage() {
         return payload.error || "Permanent failure";
 
       case "ACCOUNT_CONNECTED":
-        return payload.accountName || "";
-
       case "ACCOUNT_DISCONNECTED":
-        return payload.accountName || "";
-
       case "ACCOUNT_RECONNECTED":
         return payload.accountName || "";
 
       default:
-        return JSON.stringify(payload);
+        return "";
     }
   }
 
+  const filtered = useMemo(() => {
+    return events.filter((event) => {
+      const title = getTitle(event).toLowerCase();
+
+      const desc = getDescription(event).toLowerCase();
+
+      const platform = (event.payload?.platform || "").toLowerCase();
+
+      const matchesSearch =
+        !search ||
+        title.includes(search.toLowerCase()) ||
+        desc.includes(search.toLowerCase()) ||
+        platform.includes(search.toLowerCase());
+
+      const matchesFilter =
+        filter === "all" || event.event_type.includes(filter);
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [events, search, filter]);
+
+  const grouped = groupEvents(filtered);
+
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Activity Feed</h1>
 
         <p className="text-gray-500 mt-2">
-          Recent activity across all your connected accounts
+          Recent activity across all your accounts
         </p>
+      </div>
+
+      <div className="flex gap-4 mb-8">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search activity..."
+          className="flex-1 border rounded-lg px-4 py-2"
+        />
+
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border rounded-lg px-4 py-2"
+        >
+          <option value="all">All</option>
+
+          <option value="PUBLISHED">Published</option>
+
+          <option value="FAILED">Failed</option>
+
+          <option value="RETRY">Retry</option>
+
+          <option value="ACCOUNT">Accounts</option>
+        </select>
       </div>
 
       {loading && (
@@ -113,58 +164,74 @@ export default function ActivityPage() {
         </div>
       )}
 
-      {!loading && events.length === 0 && (
-        <div className="bg-white border rounded-lg p-8 text-center">
-          <div className="text-5xl mb-4">📭</div>
+      {!loading && filtered.length === 0 && (
+        <div className="bg-white border rounded-lg p-12 text-center">
+          <div className="text-5xl">📭</div>
 
-          <div className="text-xl font-semibold">No activity yet</div>
+          <h2 className="text-xl font-semibold mt-4">No activity found</h2>
 
-          <div className="text-gray-500 mt-2">
-            Your publishing activity will appear here
-          </div>
+          <p className="text-gray-500 mt-2">Activity will appear here</p>
         </div>
       )}
 
-      <div className="space-y-4">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            className="bg-white border rounded-lg p-5 hover:shadow-sm transition"
-          >
-            <div className="flex gap-4">
-              <div className="text-2xl">{getEventIcon(event.event_type)}</div>
+      {!loading &&
+        grouped.map((group) => (
+          <div key={group.label} className="mb-10">
+            {" "}
+            <h2>{group.label}</h2>
+            <div className="space-y-6">
+              {group.events.map((event, index) => (
+                <div key={event.id} className="flex">
+                  <div className="flex flex-col items-center mr-6">
+                    <div className="w-10 h-10 rounded-full border bg-white flex items-center justify-center text-xl">
+                      {getEventIcon(event.event_type)}
+                    </div>
 
-              <div className="flex-1">
-                <div className="flex justify-between items-start gap-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{getTitle(event)}</h3>
-
-                    <p className="text-gray-600 mt-1">
-                      {getDescription(event)}
-                    </p>
+                    {index !== group.events.length - 1 && (
+                      <div className="w-px flex-1 bg-gray-300 mt-2" />
+                    )}
                   </div>
 
-                  <div className="text-sm text-gray-400 whitespace-nowrap">
-                    {new Date(event.created_at).toLocaleString()}
+                  <div className="flex-1 bg-white border rounded-xl p-5 shadow-sm">
+                    <div className="flex justify-between gap-4">
+                      <div>
+                        <div className="flex gap-2 items-center">
+                          <h3 className="font-semibold text-lg">
+                            {getTitle(event)}
+                          </h3>
+
+                          {event.payload?.platform && (
+                            <PlatformBadge platform={event.payload.platform} />
+                          )}
+                        </div>
+
+                        <p className="text-gray-600 mt-2">
+                          {getDescription(event)}
+                        </p>
+                      </div>
+
+                      <div className="text-sm text-gray-400 whitespace-nowrap">
+                        {timeAgo(event.created_at)}
+                      </div>
+                    </div>
+
+                    {event.payload && (
+                      <details className="mt-4">
+                        <summary className="cursor-pointer text-sm text-blue-600">
+                          View details
+                        </summary>
+
+                        <pre className="mt-3 bg-gray-50 rounded-lg p-4 text-xs overflow-auto">
+                          {JSON.stringify(event.payload, null, 2)}
+                        </pre>
+                      </details>
+                    )}
                   </div>
                 </div>
-
-                {event.payload && (
-                  <details className="mt-3">
-                    <summary className="cursor-pointer text-sm text-blue-600">
-                      View details
-                    </summary>
-
-                    <pre className="mt-2 bg-gray-50 p-3 rounded text-xs overflow-auto">
-                      {JSON.stringify(event.payload, null, 2)}
-                    </pre>
-                  </details>
-                )}
-              </div>
+              ))}
             </div>
           </div>
         ))}
-      </div>
     </div>
   );
 }
