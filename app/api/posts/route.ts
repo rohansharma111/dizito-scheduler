@@ -6,8 +6,10 @@ import { getPlan, canCreatePost } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
 import { getCurrentUsage } from "@/lib/usage/getCurrentUsage";
 import { incrementPostsCreated } from "@/lib/usage/incrementPostsCreated";
+import { startAccountHealthScheduler } from "@/scheduler/accountHealthScheduler";
 
 startScheduler();
+startAccountHealthScheduler();
 
 export async function GET() {
   const session = await getServerSession(authOptions);

@@ -42,6 +42,22 @@ export default function AccountsPage() {
     window.location.href = "/api/linkedin/login";
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function refreshHealth() {
+    setRefreshing(true);
+
+    await fetch("/api/accounts/health-check");
+
+    const response = await fetch("/api/accounts");
+
+    const data = await response.json();
+
+    setAccounts(data.accounts);
+
+    setRefreshing(false);
+  }
+
   return (
     <div className="p-8">
       {/* HEADER */}
@@ -49,6 +65,20 @@ export default function AccountsPage() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">Connected Accounts</h1>
 
+        <button
+          onClick={refreshHealth}
+          disabled={refreshing}
+          className="
+      bg-gray-800
+      text-white
+      px-4
+      py-2
+      rounded
+    "
+        >
+          {refreshing ? "Checking..." : "Refresh Status"}
+        </button>
+        
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             disabled={accountLimitReached}

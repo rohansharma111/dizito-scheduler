@@ -124,7 +124,7 @@ export default function ActivityPage() {
   const grouped = groupEvents(filtered);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="px-4 py-6 md:p-8 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Activity Feed</h1>
 
@@ -133,18 +133,27 @@ export default function ActivityPage() {
         </p>
       </div>
 
-      <div className="flex gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search activity..."
-          className="flex-1 border rounded-lg px-4 py-2"
+          className="
+            w-full
+            sm:flex-1
+            border
+            rounded-lg
+            px-4
+            py-2
+  "
         />
 
         <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2"
+          className="
+            w-full
+            sm:w-48
+            border
+            rounded-lg
+            px-4
+            py-2
+  "
         >
           <option value="all">All</option>
 
@@ -192,11 +201,11 @@ export default function ActivityPage() {
                     )}
                   </div>
 
-                  <div className="flex-1 bg-white border rounded-xl p-5 shadow-sm">
-                    <div className="flex justify-between gap-4">
+                  <div className="flex-1 bg-white border rounded-xl p-4 md:p-5 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                       <div>
-                        <div className="flex gap-2 items-center">
-                          <h3 className="font-semibold text-lg">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <h3 className="font-semibold text-base md:text-lg break-words">
                             {getTitle(event)}
                           </h3>
 
@@ -221,7 +230,19 @@ export default function ActivityPage() {
                           View details
                         </summary>
 
-                        <pre className="mt-3 bg-gray-50 rounded-lg p-4 text-xs overflow-auto">
+                        <pre
+                          className="
+                            mt-3
+                            bg-gray-50
+                            rounded-lg
+                            p-3
+                            text-[10px]
+                            md:text-xs
+                            overflow-x-auto
+                            whitespace-pre-wrap
+                            break-words
+  "
+                        >
                           {JSON.stringify(event.payload, null, 2)}
                         </pre>
                       </details>

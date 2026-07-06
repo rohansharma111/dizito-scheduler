@@ -1,14 +1,13 @@
 import cron from "node-cron";
 import { recoverTargets } from "./scheduler/recoverTargets";
 import { claimTargets } from "./scheduler/claimTargets";
-import { createEvent } from "./events";
+import { checkAccounts } from "@/lib/accountHealth/checkAccounts";
 import { logger } from "./logger";
 import { updateHeartbeat } from "./scheduler/updateHeartbeat";
 import { processOneTarget } from "./scheduler/processOneTarget";
 
 let started = false;
-const CRON_SCHEDULE =
-  process.env.SCHEDULER_CRON || "* * * * *";
+const CRON_SCHEDULE = process.env.SCHEDULER_CRON || "* * * * *";
 
 export function startScheduler() {
   if (started) return;
@@ -17,7 +16,8 @@ export function startScheduler() {
 
   logger.info("DIZITO_V7_SCHEDULER_STARTED");
 
-  cron.schedule(CRON_SCHEDULE, async () => { // Run every hour at minute 0
+  cron.schedule(CRON_SCHEDULE, async () => {
+    // Run every hour at minute 0
     try {
       logger.info("=================================");
 

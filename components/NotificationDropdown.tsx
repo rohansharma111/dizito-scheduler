@@ -189,20 +189,23 @@ export default function NotificationDropdown() {
       {open && (
         <div
           className="
-            absolute
-            top-full
-            right-0
+            fixed
+            top-16
+            left-4
+            right-4
+            sm:absolute
+            sm:top-full
+            sm:left-auto
             sm:right-0
-            mt-3
-            w-[calc(100vw-32px)]
+            mt-0
+            sm:mt-3
             sm:w-96
-            max-w-md
             bg-white
             border
             rounded-xl
             shadow-xl
             z-50
-          "
+  "
         >
           {/* Header */}
           <div
