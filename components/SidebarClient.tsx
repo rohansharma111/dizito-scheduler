@@ -19,13 +19,18 @@ import {
   Crown,
   Activity,
   BarChart3,
+  CreditCard,
 } from "lucide-react";
 
-type MenuItem = {
-  href: string;
-  label: string;
-  icon: any;
-  premium?: boolean;
+type SidebarSection = {
+  title: string;
+
+  items: {
+    href: string;
+    label: string;
+    icon: any;
+    premium?: boolean;
+  }[];
 };
 
 export default function SidebarClient({
@@ -62,55 +67,91 @@ export default function SidebarClient({
     localStorage.setItem("sidebar-collapsed", JSON.stringify(next));
   }
 
-  const menu: MenuItem[] = [
+  const sections: SidebarSection[] = [
     {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
+      title: "MAIN",
+
+      items: [
+        {
+          href: "/dashboard",
+          label: "Dashboard",
+          icon: LayoutDashboard,
+        },
+      ],
     },
 
     {
-      href: "/bulk-upload",
-      label: "Bulk Upload",
-      icon: Upload,
-      premium: !hasFeature(plan, "bulkUpload"),
+      title: "PUBLISHING",
+
+      items: [
+        {
+          href: "/posts",
+          label: "Posts",
+          icon: FileText,
+        },
+
+        {
+          href: "/drafts",
+          label: "Drafts",
+          icon: FilePen,
+        },
+
+        {
+          href: "/bulk-upload",
+          label: "Bulk Upload",
+          icon: Upload,
+          premium: !hasFeature(plan, "bulkUpload"),
+        },
+      ],
     },
 
     {
-      href: "/posts",
-      label: "Posts",
-      icon: FileText,
+      title: "SOCIAL",
+
+      items: [
+        {
+          href: "/accounts",
+          label: "Accounts",
+          icon: Link2,
+        },
+      ],
     },
 
     {
-      href: "/drafts",
-      label: "Drafts",
-      icon: FilePen,
+      title: "INSIGHTS",
+
+      items: [
+        {
+          href: "/analytics",
+          label: "Analytics",
+          icon: BarChart3,
+          premium: !hasFeature(plan, "analytics"),
+        },
+
+        {
+          href: "/activity",
+          label: "Activity",
+          icon: Activity,
+        },
+      ],
     },
 
     {
-      href: "/accounts",
-      label: "Accounts",
-      icon: Link2,
-    },
+      title: "ACCOUNT",
 
-    {
-      href: "/activity",
-      label: "Activity",
-      icon: Activity,
-    },
+      items: [
+        {
+          href: "/settings/billing",
+          label: "Billing",
+          icon: CreditCard,
+        },
 
-    {
-      href: "/analytics",
-      label: "Analytics",
-      icon: BarChart3,
-      premium: !hasFeature(plan, "analytics"),
-    },
-
-    {
-      href: "/settings",
-      label: "Settings",
-      icon: Settings,
+        {
+          href: "/settings",
+          label: "Settings",
+          icon: Settings,
+        },
+      ],
     },
   ];
 
@@ -200,66 +241,122 @@ export default function SidebarClient({
           </div>
 
           {/* NAV */}
-          <nav className="space-y-1">
-            {menu.map((item) => {
-              const Icon = item.icon;
-
-              const isActive =
-                item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(item.href);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => onClose?.()}
-                  className={`
-                    relative
-                    flex
-                    items-center
-                    ${collapsed ? "lg:justify-center" : "gap-3"}
-                    px-3
-                    py-3
-                    rounded-xl
-                    transition-all
-                    duration-200
-                    ${
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }
-                  `}
-                >
+          <nav className="space-y-6">
+            {sections.map((section) => (
+              <div key={section.title}>
+                {!collapsed && (
                   <div
-                    className={`
+                    className="
+            px-3
+            mb-2
+            text-[11px]
+            font-semibold
+            uppercase
+            tracking-wider
+            text-gray-400
+          "
+                  >
+                    {section.title}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+
+                    const isActive =
+                      item.href === "/dashboard"
+                        ? pathname === "/dashboard"
+                        : pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => onClose?.()}
+                        className={`
+                relative
+                flex
+                items-center
+                ${collapsed ? "lg:justify-center" : "gap-3"}
+                px-3
+                py-3
+                rounded-xl
+                transition-all
+                duration-200
+                ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }
+              `}
+                      >
+                        {/* Active Indicator */}
+                        <div
+                          className={`
+                  absolute
+                  left-0
+                  top-1
+                  bottom-1
+                  w-1
+                  rounded-r-full
+                  ${isActive ? "bg-white" : "bg-transparent"}
+                `}
+                        />
+
+                        {/* Icon */}
+                        <div className="relative">
+                          <Icon size={20} />
+
+                          {/* Premium Dot (Collapsed Mode) */}
+                          {collapsed && item.premium && (
+                            <span
+                              className="
                       absolute
-                      left-0
-                      top-1
-                      bottom-1
-                      w-1
-                      rounded-r-full
-                      ${isActive ? "bg-white" : "bg-transparent"}
-                    `}
-                  />
+                      -top-1
+                      -right-1
+                      w-2
+                      h-2
+                      rounded-full
+                      bg-amber-400
+                    "
+                            />
+                          )}
+                        </div>
 
-                  <Icon size={20} />
+                        {/* Label */}
+                        {!collapsed && (
+                          <>
+                            <span className="font-medium">{item.label}</span>
 
-                  {!collapsed && (
-                    <>
-                      <span>{item.label}</span>
-
-                      {item.premium && (
-                        <span className="ml-auto flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                          <Crown size={12} />
-                          PRO
-                        </span>
-                      )}
-                    </>
-                  )}
-                </Link>
-              );
-            })}
+                            {item.premium && (
+                              <span
+                                className="
+                        ml-auto
+                        flex
+                        items-center
+                        gap-1
+                        text-[10px]
+                        font-semibold
+                        bg-amber-100
+                        text-amber-700
+                        px-2
+                        py-1
+                        rounded-full
+                      "
+                              >
+                                <Crown size={11} />
+                                PRO
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
         </div>
 
