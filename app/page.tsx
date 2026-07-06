@@ -127,6 +127,27 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Demo Video */}
+
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold">See Dizito in action</h2>
+
+            <p className="text-gray-600 mt-4">
+              Watch how to schedule and publish posts across platforms in under
+              2 minutes.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border">
+            <video controls className="w-full" poster="/demo-poster.png">
+              <source src="/demo.mp4" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section id="features" className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">

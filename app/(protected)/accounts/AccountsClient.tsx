@@ -6,6 +6,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [limits, setLimits] = useState({
     used: 0,
     allowed: 1,
@@ -42,8 +43,6 @@ export default function AccountsPage() {
     window.location.href = "/api/linkedin/login";
   };
 
-  const [refreshing, setRefreshing] = useState(false);
-
   async function refreshHealth() {
     setRefreshing(true);
 
@@ -78,7 +77,7 @@ export default function AccountsPage() {
         >
           {refreshing ? "Checking..." : "Refresh Status"}
         </button>
-        
+
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             disabled={accountLimitReached}
