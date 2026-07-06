@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { hasFeature } from "@/lib/plans";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -19,6 +20,32 @@ export async function GET() {
   const userId = (session.user as any).id;
 
   try {
+    /*
+      User plan
+    */
+    const userResult = await pool.query(
+      `
+        SELECT plan
+        FROM users
+        WHERE id = $1
+        `,
+      [userId],
+    );
+
+    const user = userResult.rows[0];
+
+    if (!hasFeature(user.plan, "analytics")) {
+      return Response.json(
+        {
+          premium: true,
+          error: "Analytics requires Creator plan",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
     /*
       Published
     */
@@ -85,7 +112,7 @@ export async function GET() {
     );
 
     /*
-      Platform breakdown
+      Platform distribution
     */
     const platforms = await pool.query(
       `
@@ -106,6 +133,9 @@ export async function GET() {
       [userId],
     );
 
+    const topPlatform =
+      platforms.rows.length > 0 ? platforms.rows[0].platform : null;
+
     /*
       Daily publishing
     */
@@ -122,8 +152,8 @@ export async function GET() {
         WHERE
           p.user_id = $1
           AND pt.status = 'published'
-          AND pt.published_at
-              >= NOW() - INTERVAL '30 days'
+          AND pt.published_at >=
+              NOW() - INTERVAL '30 days'
         GROUP BY
           day
         ORDER BY
@@ -167,8 +197,51 @@ export async function GET() {
 
     const successRate =
       totalPublished + totalFailed === 0
-        ? 100
+        ? 0
         : Math.round((totalPublished / (totalPublished + totalFailed)) * 100);
+
+    /*
+      Insights
+    */
+    const insights: string[] = [];
+
+    if (successRate >= 95) {
+      insights.push("Excellent publishing success rate");
+    }
+
+    if (topPlatform) {
+      insights.push(`${topPlatform} is your most active platform`);
+    }
+
+    if (Number(failed.rows[0].count) === 0) {
+      insights.push("No permanent failures detected");
+    }
+
+    if (Number(published.rows[0].count) > 100) {
+      insights.push("You've published over 100 posts");
+    }
+
+    if (Number(accounts.rows[0].count) >= 3) {
+      insights.push("You're actively using multiple social accounts");
+    }
+
+    /*
+      Recent activity
+    */
+    const recent = await pool.query(
+      `
+        SELECT
+          event_type,
+          payload,
+          created_at
+        FROM system_events
+        WHERE user_id = $1
+        ORDER BY
+          created_at DESC
+        LIMIT 10
+        `,
+      [userId],
+    );
 
     return Response.json({
       cards: {
@@ -186,6 +259,12 @@ export async function GET() {
       platforms: platforms.rows,
 
       daily: daily.rows,
+
+      topPlatform,
+
+      insights,
+
+      recent: recent.rows,
     });
   } catch (error) {
     console.error(error);

@@ -273,7 +273,7 @@ export async function GET(request: Request) {
     SET
       access_token = $1,
       account_name = $2,
-      status = 'active',
+      status = 'connected',
       last_checked_at = NOW(),
       updated_at = NOW()
     WHERE
@@ -399,7 +399,7 @@ export async function GET(request: Request) {
         )
         RETURNING id
         `,
-      ["linkedin", accountName, accessToken, memberId, userId, "active"],
+      ["linkedin", accountName, accessToken, memberId, userId, "connected"],
     );
 
     const accountId = result.rows[0].id;
