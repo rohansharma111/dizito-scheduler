@@ -135,6 +135,9 @@ export default function ActivityPage() {
 
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search activity..."
           className="
             w-full
             sm:flex-1
@@ -146,6 +149,8 @@ export default function ActivityPage() {
         />
 
         <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
           className="
             w-full
             sm:w-48
