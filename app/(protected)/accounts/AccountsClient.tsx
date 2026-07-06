@@ -57,6 +57,20 @@ export default function AccountsPage() {
     setRefreshing(false);
   }
 
+  function getReconnectUrl(account: any) {
+    switch (account.platform.toLowerCase()) {
+      case "linkedin":
+        return `/api/linkedin/login?reconnect=${account.id}`;
+
+      case "facebook":
+      case "instagram":
+        return `/api/meta/connect?reconnect=${account.id}&type=account`;
+
+      default:
+        return "#";
+    }
+  }
+
   return (
     <div className="p-8">
       {/* HEADER */}
@@ -161,12 +175,18 @@ export default function AccountsPage() {
             {account.status === "connected" && <div>🟢 Connected</div>}
 
             {account.status === "expired" && (
-              <div>
+              <div className="flex items-center gap-2">
                 🔴 Expired
                 <button
-                  className="bg-blue-600 text-white px-3 py-1 rounded mt-2"
+                  className="
+        bg-blue-600
+        text-white
+        px-3
+        py-1
+        rounded
+      "
                   onClick={() => {
-                    window.location.href = `/api/meta/connect?reconnect=${account.id}&type=account`;
+                    window.location.href = getReconnectUrl(account);
                   }}
                 >
                   Reconnect
