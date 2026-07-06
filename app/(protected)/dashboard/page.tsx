@@ -4,6 +4,7 @@ import { useState } from "react";
 import DashboardClient from "./DashboardClient";
 import UsageCard from "@/components/dashboard/UsageCard";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
 
 export default function Page() {
   const [usageCollapsed, setUsageCollapsed] = useState(false);
@@ -16,6 +17,8 @@ export default function Page() {
         {/* Mobile usage below dashboard */}
         <div className="mt-6 lg:hidden">
           <UsageCard />
+
+          <RecentActivityCard />
         </div>
       </div>
 
@@ -60,6 +63,8 @@ export default function Page() {
           `}
         >
           <UsageCard />
+
+          <RecentActivityCard />
         </div>
       </div>
     </div>
