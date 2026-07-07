@@ -1,6 +1,6 @@
 "use client";
 
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 
 type Target = {
   id: number;
@@ -152,6 +152,10 @@ export default function PublishDetailsModal({
 
                   {target.platform === "linkedin" && (
                     <FaLinkedin className="text-blue-700 text-2xl mt-1" />
+                  )}
+
+                  {target.platform === "pinterest" && (
+                    <FaPinterest className="text-red-600 text-2xl mt-1" />
                   )}
 
                   <div className="flex-1">
@@ -321,6 +325,10 @@ export default function PublishDetailsModal({
 
                             if (target.platform === "linkedin") {
                               window.location.href = `/api/linkedin/login?reconnect=${target.social_account_id}&type=recover`;
+                            }
+
+                            if (target.platform === "pinterest") {
+                              window.location.href = `/api/pinterest/login?reconnect=${target.social_account_id}&type=recover`;
                             }
                           }}
                         >

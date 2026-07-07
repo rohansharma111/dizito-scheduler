@@ -12,7 +12,7 @@ export default function LoginPage() {
             <h1 className="text-5xl font-bold mb-6">Dizito</h1>
 
             <h2 className="text-3xl font-semibold leading-tight mb-6">
-              Schedule Instagram, Facebook & LinkedIn posts from one dashboard.
+              Schedule Instagram, Facebook, LinkedIn & Pinterest posts from one dashboard.
             </h2>
 
             <p className="text-lg text-blue-100 mb-10">

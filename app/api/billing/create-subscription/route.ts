@@ -106,6 +106,12 @@ export async function POST(request: Request) {
       Create Razorpay
       subscription
     */
+    console.log({
+      planName,
+      planId: plan.planId,
+      billingPlans,
+      keyId: process.env.RAZORPAY_KEY_ID,
+    });
     const subscription = await razorpay.subscriptions.create({
       plan_id: plan.planId,
 

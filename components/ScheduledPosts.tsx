@@ -1,7 +1,12 @@
 "use client";
 
 import { Post } from "../types";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaLinkedin,
+  FaPinterest,
+} from "react-icons/fa";
 import { Pencil, Trash2, Copy, Eye, RotateCcw } from "lucide-react";
 
 type Props = {
@@ -133,6 +138,10 @@ export default function ScheduledPosts({
 
                             {target.platform === "linkedin" && (
                               <FaLinkedin className="text-blue-700 text-xl" />
+                            )}
+
+                            {target.platform === "pinterest" && (
+                              <FaPinterest className="text-red-600 text-xl" />
                             )}
 
                             <span
@@ -452,6 +461,10 @@ export default function ScheduledPosts({
 
                       {target.platform === "linkedin" && (
                         <FaLinkedin className="text-blue-700 text-xl" />
+                      )}
+
+                      {target.platform === "pinterest" && (
+                        <FaPinterest className="text-red-600 text-xl" />
                       )}
                     </div>
                   ))}

@@ -331,5 +331,5 @@ export async function GET(request: Request) {
     [userId, accessToken, JSON.stringify(enrichedPages)],
   );
 
-  return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select`);
+  return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select/meta`);
 }

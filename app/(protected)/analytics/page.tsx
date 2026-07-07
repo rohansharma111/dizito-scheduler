@@ -5,7 +5,7 @@ import { getEventTitle } from "@/lib/eventFormatter";
 import { timeAgo } from "@/lib/timeAgo";
 import Link from "next/link";
 import { getEventDescription } from "@/lib/eventDescription";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 
 type PlatformStat = {
   platform: string;
@@ -256,6 +256,10 @@ export default function AnalyticsPage() {
                       <FaLinkedin className="text-blue-700" />
                     )}
 
+                    {platform.platform === "pinterest" && (
+                      <FaPinterest className="text-red-600" />
+                    )}
+
                     {platform.platform}
                   </span>
 
@@ -327,6 +331,13 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3 text-2xl font-bold">
             <FaLinkedin className="text-blue-700" />
             LinkedIn
+          </div>
+        )}
+
+        {analytics.topPlatform === "pinterest" && (
+          <div className="flex items-center gap-3 text-2xl font-bold">
+            <FaPinterest className="text-red-600" />
+            Pinterest
           </div>
         )}
       </div>

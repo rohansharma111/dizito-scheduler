@@ -162,7 +162,7 @@ export default async function Home() {
               </h3>
 
               <p className="text-gray-600">
-                Create once and publish to Instagram, Facebook and LinkedIn.
+                Create once and publish to Instagram, Facebook, LinkedIn and Pinterest.
               </p>
             </div>
 

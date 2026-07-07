@@ -43,6 +43,12 @@ export default function AccountsPage() {
     window.location.href = "/api/linkedin/login";
   };
 
+  const connectPinterest = () => {
+    if (accountLimitReached) return;
+
+    window.location.href = "/api/pinterest/login";
+  };
+
   async function refreshHealth() {
     setRefreshing(true);
 
@@ -61,6 +67,9 @@ export default function AccountsPage() {
     switch (account.platform.toLowerCase()) {
       case "linkedin":
         return `/api/linkedin/login?reconnect=${account.id}`;
+      
+      case "pinterest":
+        return `/api/pinterest/login?reconnect=${account.id}`;
 
       case "facebook":
       case "instagram":
@@ -115,6 +124,18 @@ export default function AccountsPage() {
             }`}
           >
             Connect LinkedIn
+          </button>
+
+          <button
+            disabled={accountLimitReached}
+            onClick={connectPinterest}
+            className={`px-4 py-2 rounded text-white ${
+              accountLimitReached
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600"
+            }`}
+          >
+            Connect Pinterest
           </button>
         </div>
       </div>

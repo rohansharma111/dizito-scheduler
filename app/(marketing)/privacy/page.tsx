@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           <p>
             Dizito is a social media scheduling platform that allows users to
             connect and manage their social media accounts across supported
-            platforms such as Instagram, Facebook, and LinkedIn.
+            platforms such as Instagram, Facebook, LinkedIn and Pinterest.
           </p>
         </section>
 

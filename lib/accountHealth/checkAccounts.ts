@@ -1,8 +1,50 @@
 import { pool } from "@/lib/db";
 
-async function checkMetaAccount(account: any) {
+async function checkInstagramAccount(account: any) {
   const response = await fetch(
     `https://graph.facebook.com/v19.0/me?access_token=${account.access_token}`,
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || data.error) {
+    await pool.query(
+      `
+      UPDATE social_accounts
+      SET
+        status = 'expired',
+        health_status = 'expired',
+        last_checked_at = NOW()
+      WHERE id = $1
+      `,
+      [account.id],
+    );
+
+    return {
+      status: "expired",
+    };
+  }
+
+  await pool.query(
+    `
+    UPDATE social_accounts
+    SET
+      status = 'connected',
+      health_status = 'healthy',
+      last_checked_at = NOW()
+    WHERE id = $1
+    `,
+    [account.id],
+  );
+
+  return {
+    status: "healthy",
+  };
+}
+
+async function checkFacebookAccount(account: any) {
+  const response = await fetch(
+    `https://graph.facebook.com/v19.0/me?access_token=${account.page_access_token}`,
   );
 
   const data = await response.json();
@@ -84,15 +126,64 @@ async function checkLinkedInAccount(account: any) {
   };
 }
 
+async function checkPinterestAccount(account: any) {
+  const response = await fetch("https://api.pinterest.com/v5/user_account", {
+    headers: {
+      Authorization: `Bearer ${account.access_token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.code || data.message) {
+    await pool.query(
+      `
+      UPDATE social_accounts
+      SET
+        status = 'expired',
+        health_status = 'expired',
+        last_checked_at = NOW()
+      WHERE id = $1
+      `,
+      [account.id],
+    );
+
+    return {
+      status: "expired",
+    };
+  }
+
+  await pool.query(
+    `
+    UPDATE social_accounts
+    SET
+      status = 'connected',
+      health_status = 'healthy',
+      last_checked_at = NOW()
+    WHERE id = $1
+    `,
+    [account.id],
+  );
+
+  return {
+    status: "healthy",
+  };
+}
+
 async function checkAccount(account: any) {
   try {
     switch (account.platform?.toLowerCase()) {
       case "instagram":
+        return await checkInstagramAccount(account);
+
       case "facebook":
-        return await checkMetaAccount(account);
+        return await checkFacebookAccount(account);
 
       case "linkedin":
         return await checkLinkedInAccount(account);
+
+      case "pinterest":
+        return await checkPinterestAccount(account);
 
       default:
         return {

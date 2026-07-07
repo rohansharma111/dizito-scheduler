@@ -161,6 +161,12 @@ export default function SettingsPage() {
 
             <span className="text-green-600">Connected</span>
           </div>
+
+          <div className="flex justify-between">
+            <span>Pinterest</span>
+
+            <span className="text-green-600">Connected</span>
+          </div>
         </div>
       </div>
 

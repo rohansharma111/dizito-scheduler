@@ -4,7 +4,7 @@ import { Post } from "@/types";
 import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 
 export default function PostCalendar({ posts }: { posts: Post[] }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -117,6 +117,15 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
                         <FaLinkedin
                           className="
             text-blue-700
+            text-xl
+          "
+                        />
+                      )}
+
+                      {target.platform === "pinterest" && (
+                        <FaPinterest
+                          className="
+            text-red-600
             text-xl
           "
                         />

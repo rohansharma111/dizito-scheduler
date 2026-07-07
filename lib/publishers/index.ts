@@ -1,21 +1,11 @@
-import { publishToInstagram }
-from "./instagram";
-
-import { publishToFacebook }
-from "./facebook";
-
-import { publishToLinkedIn }
-from "./linkedin";
+import { publishToFacebook } from "./facebook";
+import { publishToInstagram } from "./instagram";
+import { publishToLinkedIn } from "./linkedin";
+import { publishToPinterest } from "./pinterest";
 
 export const publishers = {
-
-  instagram:
-    publishToInstagram,
-
-  facebook:
-    publishToFacebook,
-
-  linkedin:
-    publishToLinkedIn,
-
+  facebook: publishToFacebook,
+  instagram: publishToInstagram,
+  linkedin: publishToLinkedIn,
+  pinterest: publishToPinterest,
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import DraftPosts from "./DraftPosts";
 import ScheduledPosts from "./ScheduledPosts";
 import PublishDetailsModal from "./PublishDetailsModal";
@@ -247,7 +247,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                 </div>
 
                 <p className="mb-4">
-                  Connect your Instagram, Facebook or LinkedIn account before
+                  Connect your Instagram, Facebook, LinkedIn or Pinterest account before
                   creating a post.
                 </p>
 
@@ -299,6 +299,10 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
                       {account.platform === "facebook" && (
                         <FaFacebook className="text-blue-600" />
+                      )}
+
+                      {account.platform === "pinterest" && (
+                        <FaPinterest className="text-red-500" />
                       )}
 
                       {account.platform === "linkedin" && (

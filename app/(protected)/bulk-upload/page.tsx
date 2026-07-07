@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import Link from "next/link";
 import { hasFeature } from "@/lib/plans";
 import { useDropzone } from "react-dropzone";
@@ -34,6 +34,9 @@ function getPlatformIcon(platform: string) {
 
     case "linkedin":
       return <FaLinkedin />;
+
+    case "pinterest":
+      return <FaPinterest />;
 
     default:
       return platform;

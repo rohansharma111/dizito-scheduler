@@ -74,7 +74,7 @@ export default async function PricingPage() {
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
-            Schedule Instagram, Facebook & LinkedIn posts from one dashboard.
+            Schedule Instagram, Facebook, LinkedIn & Pinterest posts from one dashboard.
           </h1>
 
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -86,6 +86,7 @@ export default async function PricingPage() {
             <span>✓ Instagram</span>
             <span>✓ Facebook</span>
             <span>✓ LinkedIn</span>
+            <span>✓ Pinterest</span>
           </div>
         </div>
       </section>
@@ -201,7 +202,7 @@ export default async function PricingPage() {
               <h3 className="font-bold mb-3">Multi Platform Publishing</h3>
 
               <p className="text-gray-600">
-                Create once and publish to Instagram, Facebook and LinkedIn.
+                Create once and publish to Instagram, Facebook, LinkedIn and Pinterest.
               </p>
             </div>
 
@@ -273,6 +274,13 @@ export default async function PricingPage() {
 
                 <tr className="border-b">
                   <td className="p-5">LinkedIn Publishing</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Pinterest Publishing</td>
                   <td className="text-center">✅</td>
                   <td className="text-center">✅</td>
                   <td className="text-center">✅</td>
@@ -380,7 +388,7 @@ export default async function PricingPage() {
             <div className="bg-white p-6 rounded-xl border">
               <h3 className="font-bold mb-2">Which platforms are supported?</h3>
 
-              <p className="text-gray-600">Instagram, Facebook and LinkedIn.</p>
+              <p className="text-gray-600">Instagram, Facebook, LinkedIn and Pinterest.</p>
             </div>
 
             <div className="bg-white p-6 rounded-xl border">

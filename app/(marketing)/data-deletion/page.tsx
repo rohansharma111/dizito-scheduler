@@ -26,7 +26,7 @@ export default function DataDeletionPage() {
             <li>User account information</li>
 
             <li>
-              Connected Facebook, Instagram, and LinkedIn account information
+              Connected Facebook, Instagram, LinkedIn and Pinterest account information
             </li>
 
             <li>OAuth access tokens and refresh tokens</li>
@@ -90,6 +90,7 @@ export default function DataDeletionPage() {
             <li>Facebook/Instagram: Settings → Business Integrations</li>
 
             <li>LinkedIn: Settings → Data Privacy → Authorized Applications</li>
+            <li>Pinterest: Settings → Privacy → Apps and Websites</li>
           </ul>
         </section>
 

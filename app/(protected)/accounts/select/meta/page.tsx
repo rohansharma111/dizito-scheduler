@@ -98,7 +98,7 @@ export default function SelectAccountsPage() {
     try {
       setConnecting(true);
 
-      const response = await fetch("/api/connect-pages", {
+      const response = await fetch("/api/meta/connect-pages", {
         method: "POST",
 
         headers: {

@@ -5,6 +5,7 @@ export default function HomePage() {
     "Instagram Publishing",
     "Facebook Publishing",
     "LinkedIn Publishing",
+    "Pinterest Publishing",
     "Bulk CSV Upload",
     "Multi Account Support",
     "Calendar Scheduling",
@@ -16,7 +17,7 @@ export default function HomePage() {
     {
       title: "Connect Accounts",
       description:
-        "Connect your Instagram, Facebook and LinkedIn accounts securely.",
+        "Connect your Instagram, Facebook, LinkedIn and Pinterest accounts securely.",
     },
     {
       title: "Create Content",
@@ -40,7 +41,7 @@ export default function HomePage() {
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
             Schedule Instagram,
             <br />
-            Facebook & LinkedIn
+            Facebook, LinkedIn & Pinterest
             <br />
             from one dashboard.
           </h1>
@@ -88,6 +89,7 @@ export default function HomePage() {
             <div className="bg-white px-6 py-4 rounded-lg border">Facebook</div>
 
             <div className="bg-white px-6 py-4 rounded-lg border">LinkedIn</div>
+            <div className="bg-white px-6 py-4 rounded-lg border">Pinterest</div>
           </div>
         </div>
       </section>

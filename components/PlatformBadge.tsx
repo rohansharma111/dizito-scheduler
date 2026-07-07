@@ -22,6 +22,12 @@ export default function PlatformBadge({
       classes: "bg-blue-100 text-blue-700 border-blue-200",
     },
 
+    pinterest: {
+      icon: "📌",
+      label: "Pinterest",
+      classes: "bg-red-100 text-red-700 border-red-200",
+    },
+
     linkedin: {
       icon: "💼",
       label: "LinkedIn",

@@ -26,6 +26,8 @@ export interface Plan {
   facebookPublishing: boolean;
 
   instagramPublishing: boolean;
+
+  pinterestPublishing: boolean;
 }
 
 export const plans: Record<PlanName, Plan> = {
@@ -55,6 +57,8 @@ export const plans: Record<PlanName, Plan> = {
     facebookPublishing: true,
 
     instagramPublishing: true,
+
+    pinterestPublishing: true,
   },
 
   creator: {
@@ -83,6 +87,8 @@ export const plans: Record<PlanName, Plan> = {
     facebookPublishing: true,
 
     instagramPublishing: true,
+
+    pinterestPublishing: true,
   },
 
   agency: {
@@ -111,6 +117,8 @@ export const plans: Record<PlanName, Plan> = {
     facebookPublishing: true,
 
     instagramPublishing: true,
+
+    pinterestPublishing: true,
   },
 };
 

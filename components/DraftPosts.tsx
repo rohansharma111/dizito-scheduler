@@ -1,7 +1,7 @@
 "use client";
 
 import { Post } from "../types";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import { Eye, Pencil, Trash2, Copy, CalendarPlus } from "lucide-react";
 
 export default function DraftPosts({
@@ -120,6 +120,10 @@ export default function DraftPosts({
 
                   {target.platform === "linkedin" && (
                     <FaLinkedin className="text-blue-700 text-xl" />
+                  )}
+
+                  {target.platform === "pinterest" && (
+                    <FaPinterest className="text-red-600 text-xl" />
                   )}
                 </div>
               ))}
@@ -280,6 +284,10 @@ export default function DraftPosts({
 
                         {target.platform === "linkedin" && (
                           <FaLinkedin className="text-blue-700 text-xl" />
+                        )}
+
+                        {target.platform === "pinterest" && (
+                          <FaPinterest className="text-red-600 text-xl" />
                         )}
                       </div>
                     ))}

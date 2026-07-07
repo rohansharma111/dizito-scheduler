@@ -1,0 +1,302 @@
+App
+¦   favicon.ico
+¦   globals.css
+¦   layout.tsx
+¦   page.tsx
+¦
++---(marketing)
+¦   ¦   layout.tsx
+¦   ¦   page.tsx
+¦   ¦
+¦   +---contact
+¦   ¦       page.tsx
+¦   ¦
+¦   +---data-deletion
+¦   ¦       page.tsx
+¦   ¦
+¦   +---how-it-works
+¦   ¦       page.tsx
+¦   ¦
+¦   +---pricing
+¦   ¦       page.tsx
+¦   ¦
+¦   +---privacy
+¦   ¦       page.tsx
+¦   ¦
+¦   +---terms
+¦           page.tsx
+¦
++---(protected)
+¦   ¦   layout.tsx
+¦   ¦
+¦   +---accounts
+¦   ¦   ¦   AccountsClient.tsx
+¦   ¦   ¦   page.tsx
+¦   ¦   ¦
+¦   ¦   +---select
+¦   ¦           page.tsx
+¦   ¦
+¦   +---activity
+¦   ¦       page.tsx
+¦   ¦
+¦   +---analytics
+¦   ¦       page.tsx
+¦   ¦
+¦   +---bulk-upload
+¦   ¦       page.tsx
+¦   ¦
+¦   +---calendar
+¦   ¦       page.tsx
+¦   ¦
+¦   +---dashboard
+¦   ¦       DashboardClient.tsx
+¦   ¦       page.tsx
+¦   ¦
+¦   +---dev
+¦   ¦   +---billing
+¦   ¦           page.tsx
+¦   ¦
+¦   +---drafts
+¦   ¦       page.tsx
+¦   ¦
+¦   +---notifications
+¦   ¦       page.tsx
+¦   ¦
+¦   +---onboarding
+¦   ¦       page.tsx
+¦   ¦
+¦   +---posts
+¦   ¦   ¦   page.tsx
+¦   ¦   ¦
+¦   ¦   +---[id]
+¦   ¦       +---edit
+¦   ¦               page.tsx
+¦   ¦
+¦   +---settings
+¦       ¦   page.tsx
+¦       ¦
+¦       +---billing
+¦               page.tsx
+¦
++---api
+¦   +---account-selection
+¦   ¦       route.ts
+¦   ¦
+¦   +---accounts
+¦   ¦   ¦   route.ts
+¦   ¦   ¦
+¦   ¦   +---health-check
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---[id]
+¦   ¦           route.ts
+¦   ¦
+¦   +---activity
+¦   ¦       route.ts
+¦   ¦
+¦   +---analytics
+¦   ¦       route.ts
+¦   ¦
+¦   +---auth
+¦   ¦   +---[...nextauth]
+¦   ¦           route.ts
+¦   ¦
+¦   +---billing
+¦   ¦   ¦   route.ts
+¦   ¦   ¦
+¦   ¦   +---cancel
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---create-subscription
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---webhook
+¦   ¦           route.ts
+¦   ¦
+¦   +---connect-pages
+¦   ¦       route.ts
+¦   ¦
+¦   +---dashboard
+¦   ¦   +---stats
+¦   ¦           route.ts
+¦   ¦
+¦   +---health
+¦   ¦       route.ts
+¦   ¦
+¦   +---linkedin
+¦   ¦   +---callback
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---login
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---me
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---token
+¦   ¦           route.ts
+¦   ¦
+¦   +---me
+¦   ¦       route.ts
+¦   ¦
+¦   +---meta
+¦   ¦   +---callback
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---connect
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---debug-pages
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---instagram
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---login
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---pages
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---token
+¦   ¦           route.ts
+¦   ¦
+¦   +---notifications
+¦   ¦   ¦   route.ts
+¦   ¦   ¦
+¦   ¦   +---count
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---read
+¦   ¦           route.ts
+¦   ¦
+¦   +---onboarding
+¦   ¦   ¦   route.ts
+¦   ¦   ¦
+¦   ¦   +---complete
+¦   ¦           route.ts
+¦   ¦
+¦   +---post-targets
+¦   ¦   +---recover-auth
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---[id]
+¦   ¦       +---retry
+¦   ¦               route.ts
+¦   ¦
+¦   +---posts
+¦   ¦   ¦   route.ts
+¦   ¦   ¦
+¦   ¦   +---bulk
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---retry
+¦   ¦   ¦       route.ts
+¦   ¦   ¦
+¦   ¦   +---[id]
+¦   ¦       ¦   route.ts
+¦   ¦       ¦
+¦   ¦       +---duplicate
+¦   ¦       ¦       route.ts
+¦   ¦       ¦
+¦   ¦       +---targets
+¦   ¦               route.ts
+¦   ¦
+¦   +---social-accounts
+¦   ¦       route.ts
+¦   ¦
+¦   +---upload
+¦   ¦       route.ts
+¦   ¦
+¦   +---usage
+¦           route.ts
+¦
++---login
+        page.tsx
+
+Components
+¦   AppHeader.tsx
+¦   AppShell.tsx
+¦   AuthProvider.tsx
+¦   CreatePostForm.tsx
+¦   CreatePostForm1.tsx
+¦   DraftPosts.tsx
+¦   EventDetailsModal.tsx
+¦   Footer.tsx
+¦   LogoutButton.tsx
+¦   Navbar.tsx
+¦   NotificationDropdown.tsx
+¦   OnboardingGuard.tsx
+¦   PlatformBadge.tsx
+¦   PostCalendar.tsx
+¦   PublishDetailsModal.tsx
+¦   ScheduledPosts.tsx
+¦   Sidebar.tsx
+¦   SidebarClient.tsx
+¦   StatsCards.tsx
+¦   structure.txt
+¦
++---dashboard
+        RecentActivityCard.tsx
+        UsageCard.tsx
+
+lib
+¦   attempts.ts
+¦   auth.ts
+¦   cloudinary.ts
+¦   db.ts
+¦   eventDescription.ts
+¦   eventFormatter.ts
+¦   eventIcons.ts
+¦   events.ts
+¦   groupEvents.ts
+¦   logger.ts
+¦   notificationIcons.ts
+¦   openCheckout.ts
+¦   planGuard.ts
+¦   plans.ts
+¦   post-status.ts
+¦   post-targets.ts
+¦   razorpay.ts
+¦   retry-classifier.ts
+¦   retry.ts
+¦   scheduler.ts
+¦   timeAgo.ts
+¦
++---accountHealth
+¦       checkAccounts.ts
+¦
++---billing
+¦       plans.ts
+¦       types.ts
+¦
++---publishers
+¦       facebook.ts
+¦       index.ts
+¦       instagram.ts
+¦       linkedin.ts
+¦       types.ts
+¦
++---scheduler
+¦       claimTargets.ts
+¦       constants.ts
+¦       handleTargetFailure.ts
+¦       handleTargetSuccess.ts
+¦       processOneTarget.ts
+¦       processTarget.ts
+¦       recoverTargets.ts
+¦       updateHeartbeat.ts
+¦
++---usage
+        getCurrentUsage.ts
+        incrementPostsCreated.ts
+        incrementPostsPublished.ts
+
+scheduler
+¦   accountHealthScheduler.ts
+
+types 
+¦    activity.ts
+
+
+

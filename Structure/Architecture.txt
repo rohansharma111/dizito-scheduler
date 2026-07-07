@@ -1,0 +1,65 @@
+Frontend
+---------
+Marketing
+Protected App
+Dashboard
+Settings
+Analytics
+Activity
+Notifications
+
+↓
+
+API Layer
+---------
+Posts
+Accounts
+Billing
+Analytics
+Usage
+Notifications
+Meta
+LinkedIn
+Upload
+
+↓
+
+Business Layer
+--------------
+Publishers
+Scheduler
+Billing
+Usage
+Plans
+Events
+Retry
+Logger
+
+↓
+
+Infrastructure
+--------------
+Railway
+PostgreSQL
+Cloudinary
+NextAuth
+Razorpay
+
+
+
+App Router (Next.js) with (marketing) and (protected) route groups.
+API routes under app/api.
+Business logic in lib/.
+Platform publishers in lib/publishers.
+Scheduler split into lib/scheduler.
+Separate runtime scheduler folder (scheduler/).
+Dashboard widgets under components/dashboard.
+Billing, plans, notifications, analytics, usage, retry, events, account health, etc., all already exist.
+
+
+Billing logic → lib/billing/
+Publisher logic → lib/publishers/
+Scheduler changes → lib/scheduler/
+Dashboard widgets → components/dashboard/
+Formatting helpers → lib/
+API endpoints → app/api/...
