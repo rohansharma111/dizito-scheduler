@@ -241,7 +241,7 @@ export default function SidebarClient({
           </div>
 
           {/* NAV */}
-          <nav className="space-y-6">
+          <nav className="space-y-8">
             {sections.map((section) => (
               <div key={section.title}>
                 {!collapsed && (
