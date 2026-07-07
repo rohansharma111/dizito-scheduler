@@ -150,7 +150,7 @@ export async function GET(request: Request) {
       Redirect to board selection
     */
     return Response.redirect(
-      new URL("/accounts/select/pinterest", request.url),
+      `${process.env.NEXTAUTH_URL}/accounts/select/pinterest`,
     );
   } catch (error) {
     console.error("Pinterest callback failed", error);

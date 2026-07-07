@@ -7,8 +7,6 @@ export async function processTarget(target: any) {
   /*
     Find publisher
   */
-  console.log("Platform:", target.platform);
-  console.log("Publishers:", Object.keys(publishers));
 
   const publisher =
     publishers[target.platform.toLowerCase() as keyof typeof publishers];
