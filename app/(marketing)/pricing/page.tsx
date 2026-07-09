@@ -405,8 +405,8 @@ export default async function PricingPage() {
               <h3 className="font-bold mb-2">Are my social accounts secure?</h3>
 
               <p className="text-gray-600">
-                Yes. Dizito uses official OAuth authentication from Meta and
-                LinkedIn. We never store your passwords.
+                Yes. Dizito uses official OAuth authentication from Meta, 
+                LinkedIn and Pinterest. We never store your passwords.
               </p>
             </div>
 
@@ -414,7 +414,7 @@ export default async function PricingPage() {
               <h3 className="font-bold mb-2">Does Dizito use official APIs?</h3>
 
               <p className="text-gray-600">
-                Yes. Dizito publishes through the official Meta and LinkedIn
+                Yes. Dizito publishes through the official Meta, LinkedIn and Pinterest
                 APIs.
               </p>
             </div>

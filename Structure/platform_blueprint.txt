@@ -1,0 +1,298 @@
+The Dizito Platform Integration Blueprint
+
+This is the exact process we followed for Pinterest and should be reused for every new platform.
+
+Phase 1 — Developer Setup
+Create developer application.
+Configure OAuth redirect URI.
+Enable required scopes.
+Obtain Client ID and Client Secret.
+Test OAuth manually.
+Phase 2 — OAuth Flow
+
+Create:
+
+app/api/<platform>/login/route.ts
+
+Responsibilities:
+
+Generate OAuth URL
+Generate state
+Redirect user
+
+Create:
+
+app/api/<platform>/callback/route.ts
+
+Responsibilities:
+
+Validate state
+Exchange code → access token
+Load profile
+Load selectable resources
+Pages
+Boards
+Channels
+Organizations
+etc.
+Store temporary OAuth session
+Redirect to selection page
+Phase 3 — Platform SDK
+
+Create:
+
+lib/platforms/<platform>/
+
+Typical files:
+
+exchangeToken.ts
+
+getProfile.ts
+
+getBoards.ts
+(or getPages.ts)
+
+publish.ts (optional)
+
+Each file performs one API responsibility.
+
+Phase 4 — Temporary OAuth Session
+
+Store in
+
+oauth_page_selections
+
+Example payload:
+
+user_id
+
+access_token
+
+pages (JSON)
+
+For Pinterest:
+
+{
+  "profile": {...},
+  "boards": [...]
+}
+
+This avoids repeatedly calling the platform during selection.
+
+Phase 5 — Selection UI
+
+Create
+
+accounts/select/<platform>
+
+Responsibilities:
+
+Fetch cached resources
+Allow multi-selection
+Checkbox UI
+Selected counter
+Connect button
+
+Exactly like Meta.
+
+Phase 6 — Connect API
+
+Create
+
+app/api/<platform>/connect
+
+Responsibilities:
+
+Read temporary OAuth session
+Parse cached payload
+Apply plan limits
+Duplicate detection
+Reconnect validation
+Insert social_accounts
+Create activity events
+Cleanup OAuth session
+Phase 7 — Database
+
+Store in
+
+social_accounts
+
+Platform-specific fields.
+
+Examples:
+
+Meta
+
+page_id
+
+page_access_token
+
+instagram_business_id
+
+LinkedIn
+
+linkedin_member_id
+
+Pinterest
+
+board_id
+
+General fields remain:
+
+platform
+
+account_name
+
+access_token
+
+user_id
+
+status
+Phase 8 — Publisher
+
+Create
+
+lib/publishers/<platform>.ts
+
+Responsibilities:
+
+Validate account
+Validate post
+Call platform API
+Throw clean errors
+Return success
+Phase 9 — Publisher Registry
+
+Register in
+
+lib/publishers/index.ts
+
+Example:
+
+pinterest: publishToPinterest
+Phase 10 — Scheduler
+
+Nothing platform-specific.
+
+Scheduler already supports any platform once it exists in:
+
+publishers/index.ts
+
+Flow:
+
+Scheduler
+
+↓
+
+processTarget()
+
+↓
+
+publisher()
+
+↓
+
+Platform API
+Phase 11 — Health Check
+
+Extend
+
+lib/accountHealth/checkAccounts.ts
+
+Add
+
+check<Platform>Account()
+
+Then
+
+switch(platform)
+
+Add
+
+case "<platform>"
+Phase 12 — Reconnect
+
+Support
+
+reconnect
+recover-auth
+
+Reuse existing architecture.
+
+Never create duplicate accounts.
+
+Phase 13 — Activity Feed
+
+Create events
+
+ACCOUNT_CONNECTED
+
+ACCOUNT_RECONNECTED
+
+ACCOUNT_CONNECTION_SKIPPED
+
+Exactly like Meta.
+
+Phase 14 — Billing
+
+No changes.
+
+Platform count is already handled through
+
+planGuard
+
+usage
+
+plans
+Phase 15 — Analytics
+
+Later extend
+
+Platform Distribution
+
+Top Platform
+
+Insights
+
+by adding the new platform.
+
+Final reusable architecture
+Developer App
+        │
+        ▼
+OAuth Login
+        │
+        ▼
+OAuth Callback
+        │
+        ▼
+Exchange Token
+        │
+        ▼
+Get Profile
+        │
+        ▼
+Get Pages / Boards / Channels
+        │
+        ▼
+Temporary OAuth Cache
+        │
+        ▼
+Selection UI
+        │
+        ▼
+Connect API
+        │
+        ▼
+social_accounts
+        │
+        ├──────────────┐
+        │              │
+        ▼              ▼
+Publisher        Health Check
+        │              │
+        └──────┬───────┘
+               ▼
+           Scheduler
+               ▼
+         Activity Feed

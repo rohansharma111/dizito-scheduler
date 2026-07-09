@@ -74,7 +74,7 @@ export default function AccountsPage() {
       case "facebook":
       case "instagram":
         return `/api/meta/connect?reconnect=${account.id}&type=account`;
-
+ 
       default:
         return "#";
     }

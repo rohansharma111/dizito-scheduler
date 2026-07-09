@@ -254,8 +254,8 @@ export default async function Home() {
               <h3 className="font-bold text-xl mb-4">Secure Authentication</h3>
 
               <p className="text-gray-600">
-                Dizito uses official OAuth authentication from Meta and
-                LinkedIn.
+                Dizito uses official OAuth authentication from Meta, 
+                LinkedIn and Pinterest.
               </p>
             </div>
 
@@ -263,7 +263,7 @@ export default async function Home() {
               <h3 className="font-bold text-xl mb-4">Reliable Publishing</h3>
 
               <p className="text-gray-600">
-                Posts are published through official Meta and LinkedIn APIs.
+                Posts are published through official Meta, LinkedIn and Pinterest APIs.
               </p>
             </div>
           </div>

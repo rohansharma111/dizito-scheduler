@@ -26,7 +26,7 @@ export default function PrivacyPage() {
 
             <li>Social account identifiers and profile names.</li>
 
-            <li>OAuth access tokens provided by Meta and LinkedIn.</li>
+            <li>OAuth access tokens provided by Meta, LinkedIn and Pinterest.</li>
 
             <li>Content and media uploaded for scheduling.</li>
 
@@ -58,8 +58,8 @@ export default function PrivacyPage() {
           </h2>
 
           <p>
-            Dizito uses official OAuth authentication provided by Meta and
-            LinkedIn. Dizito never collects, stores, or has access to your
+            Dizito uses official OAuth authentication provided by Meta, LinkedIn
+            and Pinterest. Dizito never collects, stores, or has access to your
             social media passwords.
           </p>
         </section>
