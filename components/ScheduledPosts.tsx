@@ -7,6 +7,8 @@ import {
   FaLinkedin,
   FaPinterest,
 } from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
+
 import { Pencil, Trash2, Copy, Eye, RotateCcw } from "lucide-react";
 
 type Props = {
@@ -142,6 +144,10 @@ export default function ScheduledPosts({
 
                             {target.platform === "pinterest" && (
                               <FaPinterest className="text-red-600 text-xl" />
+                            )}
+
+                            {target.platform === "google-business" && (
+                              <GoogleBusinessIcon className="text-green-600 text-xl" />
                             )}
 
                             <span
@@ -465,6 +471,10 @@ export default function ScheduledPosts({
 
                       {target.platform === "pinterest" && (
                         <FaPinterest className="text-red-600 text-xl" />
+                      )}
+
+                      {target.platform === "google-business" && (
+                        <GoogleBusinessIcon className="text-green-600 text-xl" />
                       )}
                     </div>
                   ))}

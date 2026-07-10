@@ -1,12 +1,27 @@
 export function isPermanentError(error: string) {
-  const permanent = [
-    "OAuthException",
-    "Malformed access token",
-    "Invalid OAuth",
-    "Permission denied",
-    "Page not found",
-    "INVALID_ACCESS_TOKEN"
+  const message = error.toLowerCase();
+
+  const permanentErrors = [
+    "invalid_access_token",
+    "malformed access token",
+    "invalid oauth",
+    "permission denied",
+    "page not found",
+    "board not found",
+    "location not found",
+    "member not found",
+    "unsupported platform",
+    "validation_error",
+    "invalid_reconnect",
+    "invalid_reconnect_board",
+    "invalid_reconnect_location",
+    "invalid_reconnect_platform",
+    "plan_limit",
+    "unsupported media",
+    "unsupported image",
+    "invalid image",
+    "invalid request",
   ];
 
-  return permanent.some((e) => error.includes(e));
+  return permanentErrors.some((e) => message.includes(e.toLowerCase()));
 }

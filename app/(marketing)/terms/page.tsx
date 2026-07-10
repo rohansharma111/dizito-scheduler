@@ -67,7 +67,7 @@ export default function TermsPage() {
 
           <p>
             Dizito integrates with third-party services including Meta (Facebook
-            and Instagram), LinkedIn and Pinterest. Use of these integrations is subject to
+            and Instagram), LinkedIn, Pinterest and Google Business. Use of these integrations is subject to
             the respective platform terms and policies.
           </p>
         </section>

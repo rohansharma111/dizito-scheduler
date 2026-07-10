@@ -49,6 +49,12 @@ export default function AccountsPage() {
     window.location.href = "/api/pinterest/login";
   };
 
+  const connectGoogleBusiness = () => {
+    if (accountLimitReached) return;
+
+    window.location.href = "/api/google-business/login";
+  };
+
   async function refreshHealth() {
     setRefreshing(true);
 
@@ -70,6 +76,9 @@ export default function AccountsPage() {
       
       case "pinterest":
         return `/api/pinterest/login?reconnect=${account.id}`;
+
+      case "google-business":
+        return `/api/google-business/login?reconnect=${account.id}`;
 
       case "facebook":
       case "instagram":
@@ -136,6 +145,18 @@ export default function AccountsPage() {
             }`}
           >
             Connect Pinterest
+          </button>
+
+          <button
+            disabled={accountLimitReached}
+            onClick={connectGoogleBusiness}
+            className={`px-4 py-2 rounded text-white ${
+              accountLimitReached
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600"
+            }`}
+          >
+            Connect Google Business
           </button>
         </div>
       </div>

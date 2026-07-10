@@ -1,99 +1,149 @@
-The Dizito Platform Integration Blueprint
+The Dizito Platform Integration Blueprint V2
 
-This is the exact process we followed for Pinterest and should be reused for every new platform.
+This is the exact architecture every new platform (X, TikTok, YouTube, Threads, etc.) should follow.
 
 Phase 1 — Developer Setup
+
 Create developer application.
-Configure OAuth redirect URI.
+
+Configure OAuth Redirect URI.
+
 Enable required scopes.
-Obtain Client ID and Client Secret.
+
+Obtain:
+
+Client ID
+Client Secret
+
+Configure environment variables.
+
 Test OAuth manually.
+
 Phase 2 — OAuth Flow
 
-Create:
+Create
 
 app/api/<platform>/login/route.ts
 
-Responsibilities:
+Responsibilities
 
 Generate OAuth URL
 Generate state
+Store state cookie
 Redirect user
 
-Create:
+Create
 
 app/api/<platform>/callback/route.ts
 
-Responsibilities:
+Responsibilities
 
 Validate state
-Exchange code → access token
-Load profile
+Exchange authorization code
+Get access token
+Get refresh token (if supported)
+Calculate expires_in
+Load user profile
 Load selectable resources
 Pages
 Boards
+Locations
 Channels
 Organizations
-etc.
 Store temporary OAuth session
 Redirect to selection page
 Phase 3 — Platform SDK
 
-Create:
+Create
 
 lib/platforms/<platform>/
 
-Typical files:
+One responsibility per file.
+
+Example
 
 exchangeToken.ts
 
 getProfile.ts
 
+getPages.ts
 getBoards.ts
-(or getPages.ts)
+getLocations.ts
 
-publish.ts (optional)
+resourceNames.ts (optional)
 
-Each file performs one API responsibility.
+types.ts
 
-Phase 4 — Temporary OAuth Session
+Never mix multiple API responsibilities.
 
-Store in
+Phase 4 — Temporary OAuth Cache
+
+Store inside
 
 oauth_page_selections
 
-Example payload:
+Now stores
 
 user_id
 
 access_token
 
+refresh_token
+
 pages (JSON)
 
-For Pinterest:
+reconnect_account_id
+
+reconnect_type
+
+created_at
+
+Example
 
 {
-  "profile": {...},
-  "boards": [...]
+  "profile": {},
+  "pages": []
 }
 
-This avoids repeatedly calling the platform during selection.
+or
+
+{
+  "profile": {},
+  "boards": []
+}
+
+or
+
+{
+  "profile": {},
+  "locations": []
+}
+
+Purpose
+
+Avoid calling platform APIs repeatedly during account selection.
 
 Phase 5 — Selection UI
 
 Create
 
-accounts/select/<platform>
+app/(protected)/accounts/select/<platform>
 
-Responsibilities:
+Responsibilities
 
-Fetch cached resources
-Allow multi-selection
+Load cached OAuth resources
+
+Multi-select
+
 Checkbox UI
-Selected counter
+
+Selected count
+
 Connect button
 
-Exactly like Meta.
+Reconnect awareness
+
+Reuse existing Accounts UI design.
 
 Phase 6 — Connect API
 
@@ -101,25 +151,57 @@ Create
 
 app/api/<platform>/connect
 
-Responsibilities:
+Responsibilities
 
-Read temporary OAuth session
-Parse cached payload
-Apply plan limits
-Duplicate detection
+Read OAuth cache
+
+Parse cached resources
+
 Reconnect validation
+
+Duplicate detection
+
+Apply plan limits
+
 Insert social_accounts
+
+Update existing account during reconnect
+
+Store refresh token
+
 Create activity events
-Cleanup OAuth session
+
+Cleanup OAuth cache
+
+Recover failed targets (recover-auth)
+
+Never insert duplicates.
+
 Phase 7 — Database
 
-Store in
+Insert into
 
 social_accounts
 
-Platform-specific fields.
+Current common fields
 
-Examples:
+platform
+
+account_name
+
+access_token
+
+refresh_token
+
+user_id
+
+status
+
+health_status
+
+last_checked_at
+
+Platform-specific fields (temporary until metadata refactor)
 
 Meta
 
@@ -137,91 +219,196 @@ Pinterest
 
 board_id
 
-General fields remain:
+pinterest_profile_id
 
-platform
+Google Business
 
-account_name
+google_location_id
 
-access_token
+google_account_id
 
-user_id
+google_profile_id
 
-status
+Future
+
+After metadata refactor
+
+provider_metadata JSONB
+
+will replace platform-specific columns.
+
 Phase 8 — Publisher
 
 Create
 
 lib/publishers/<platform>.ts
 
-Responsibilities:
+Publisher receives
+
+PublisherContext
+
+Responsibilities
 
 Validate account
+
 Validate post
+
 Call platform API
-Throw clean errors
+
 Return success
+
+Throw standardized errors
+
+Examples
+
+AUTH_ERROR:
+
+RATE_LIMIT:
+
+VALIDATION_ERROR:
+
+NOT_FOUND:
+
+PERMISSION_ERROR:
+
+Never query the database.
+
+Publisher only orchestrates API calls.
+
 Phase 9 — Publisher Registry
 
-Register in
+Register
 
 lib/publishers/index.ts
 
-Example:
+Example
 
-pinterest: publishToPinterest
+google_business:
+publishToGoogleBusiness
+
+No scheduler changes required.
+
 Phase 10 — Scheduler
 
 Nothing platform-specific.
 
-Scheduler already supports any platform once it exists in:
-
-publishers/index.ts
-
-Flow:
+Scheduler flow
 
 Scheduler
 
 ↓
 
-processTarget()
+recoverTargets()
 
 ↓
 
-publisher()
+claimTargets()
 
 ↓
 
-Platform API
-Phase 11 — Health Check
+processOneTarget()
+
+↓
+
+publisher(context)
+
+↓
+
+handleSuccess()
+
+↓
+
+handleFailure()
+
+↓
+
+updatePostStatus()
+
+↓
+
+Events
+
+↓
+
+Heartbeat
+
+Every platform automatically works after publisher registration.
+
+Phase 11 — Retry System
+
+No platform-specific logic.
+
+Publishers throw standardized errors.
+
+Retry classifier decides
+
+Permanent
+
+Retry
+
+Recover Auth
+
+Exponential backoff
+
+Attempt history
+
+Permanent failure
+
+Everything reused.
+
+Phase 12 — Health Check
 
 Extend
 
 lib/accountHealth/checkAccounts.ts
 
-Add
+Create
 
 check<Platform>Account()
 
-Then
+Responsibilities
 
-switch(platform)
+Validate access token
 
-Add
+Validate resource
+
+Update
+
+status
+
+health_status
+
+last_checked_at
+
+Switch
 
 case "<platform>"
-Phase 12 — Reconnect
 
-Support
+Nothing else.
 
-reconnect
-recover-auth
+Phase 13 — Reconnect
 
 Reuse existing architecture.
 
-Never create duplicate accounts.
+Support
 
-Phase 13 — Activity Feed
+Reconnect
+
+Recover Auth
+
+Requirements
+
+Reconnect never inserts
+
+Reconnect updates tokens
+
+Reconnect validates same resource
+
+Reconnect triggers recover-auth
+
+Never duplicate accounts.
+
+Phase 14 — Activity Feed
 
 Create events
 
@@ -231,22 +418,41 @@ ACCOUNT_RECONNECTED
 
 ACCOUNT_CONNECTION_SKIPPED
 
-Exactly like Meta.
+TARGET_PUBLISHED
 
-Phase 14 — Billing
+TARGET_FAILED
 
-No changes.
+TARGET_RETRY_SCHEDULED
 
-Platform count is already handled through
+TARGET_PERMANENT_FAILED
 
-planGuard
+Payload should include
 
-usage
+Platform
 
-plans
-Phase 15 — Analytics
+Resource ID
 
-Later extend
+Account Name
+
+Reconnect Type
+
+Phase 15 — Notifications
+
+Nothing platform-specific.
+
+Events automatically appear in
+
+Notifications
+
+Activity Timeline
+
+Dashboard
+
+Only add platform icon.
+
+Phase 16 — Analytics
+
+Extend
 
 Platform Distribution
 
@@ -254,9 +460,105 @@ Top Platform
 
 Insights
 
-by adding the new platform.
+Dashboard cards
 
-Final reusable architecture
+Recent Activity
+
+Add platform icon.
+
+Phase 17 — Billing
+
+Nothing.
+
+Plan limits already handled through
+
+planGuard
+
+usage
+
+billing
+
+plans
+
+No platform-specific billing logic.
+
+Phase 18 — Dashboard
+
+Update
+
+Connected Accounts
+
+Platform Icons
+
+Account Health
+
+Recent Activity
+
+Platform Badge
+
+Only visual additions.
+
+Phase 19 — Create Post UI
+
+Support only capabilities available on the platform.
+
+Example
+
+Instagram
+
+Image
+
+Carousel
+
+Reels
+
+Pinterest
+
+Image
+
+Google Business
+
+Text
+
+Image
+
+Never expose unsupported options.
+
+Phase 20 — Testing Matrix
+
+Before considering integration complete
+
+✅ OAuth
+
+✅ Connect
+
+✅ Disconnect
+
+✅ Reconnect
+
+✅ Recover Auth
+
+✅ Health Check
+
+✅ Text Publish
+
+✅ Image Publish (if supported)
+
+✅ Scheduler
+
+✅ Retry
+
+✅ Permanent Failed
+
+✅ Analytics
+
+✅ Notifications
+
+✅ Activity Feed
+
+✅ Dashboard
+
+Final Reusable Architecture
 Developer App
         │
         ▼
@@ -272,7 +574,8 @@ Exchange Token
 Get Profile
         │
         ▼
-Get Pages / Boards / Channels
+Get Resources
+(Pages / Boards / Locations / Channels)
         │
         ▼
 Temporary OAuth Cache
@@ -289,10 +592,25 @@ social_accounts
         ├──────────────┐
         │              │
         ▼              ▼
-Publisher        Health Check
+Publisher      Health Check
         │              │
-        └──────┬───────┘
-               ▼
-           Scheduler
-               ▼
-         Activity Feed
+        │              ▼
+        │        Reconnect
+        │
+        └──────┬─────────────┐
+               ▼             ▼
+         Publisher Registry  Retry Classifier
+               │             │
+               └──────┬──────┘
+                      ▼
+                 Scheduler
+                      │
+         ┌────────────┼────────────┐
+         ▼            ▼            ▼
+    Activity Feed  Notifications  Analytics
+                      │
+                      ▼
+                  Dashboard
+Architecture after the planned refactor
+
+Once you replace the platform-specific columns with a provider_metadata JSONB field, this blueprint should remain unchanged. The only difference will be that platform-specific identifiers (page IDs, board IDs, location IDs, etc.) are stored in provider_metadata instead of individual columns, making future platform integrations (X, TikTok, YouTube, Threads, etc.) require little or no database schema changes.

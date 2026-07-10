@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 
 export default function PostCalendar({ posts }: { posts: Post[] }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -126,6 +127,15 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
                         <FaPinterest
                           className="
             text-red-600
+            text-xl
+          "
+                        />
+                      )}
+
+                      {target.platform === "google-business" && (
+                        <GoogleBusinessIcon
+                          className="
+            text-green-600
             text-xl
           "
                         />

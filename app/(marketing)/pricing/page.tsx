@@ -74,7 +74,7 @@ export default async function PricingPage() {
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
-            Schedule Instagram, Facebook, LinkedIn & Pinterest posts from one dashboard.
+            Schedule Instagram, Facebook, LinkedIn, Pinterest & Google Business posts from one dashboard.
           </h1>
 
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -87,6 +87,7 @@ export default async function PricingPage() {
             <span>✓ Facebook</span>
             <span>✓ LinkedIn</span>
             <span>✓ Pinterest</span>
+            <span>✓ Google Business</span>
           </div>
         </div>
       </section>
@@ -202,7 +203,7 @@ export default async function PricingPage() {
               <h3 className="font-bold mb-3">Multi Platform Publishing</h3>
 
               <p className="text-gray-600">
-                Create once and publish to Instagram, Facebook, LinkedIn and Pinterest.
+                Create once and publish to Instagram, Facebook, LinkedIn, Pinterest and Google Business.
               </p>
             </div>
 
@@ -281,6 +282,13 @@ export default async function PricingPage() {
 
                 <tr className="border-b">
                   <td className="p-5">Pinterest Publishing</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                  <td className="text-center">✅</td>
+                </tr>
+
+                <tr className="border-b">
+                  <td className="p-5">Google Business Publishing</td>
                   <td className="text-center">✅</td>
                   <td className="text-center">✅</td>
                   <td className="text-center">✅</td>
@@ -388,7 +396,7 @@ export default async function PricingPage() {
             <div className="bg-white p-6 rounded-xl border">
               <h3 className="font-bold mb-2">Which platforms are supported?</h3>
 
-              <p className="text-gray-600">Instagram, Facebook, LinkedIn and Pinterest.</p>
+              <p className="text-gray-600">Instagram, Facebook, LinkedIn, Pinterest and Google Business.</p>
             </div>
 
             <div className="bg-white p-6 rounded-xl border">
@@ -406,7 +414,7 @@ export default async function PricingPage() {
 
               <p className="text-gray-600">
                 Yes. Dizito uses official OAuth authentication from Meta, 
-                LinkedIn and Pinterest. We never store your passwords.
+                LinkedIn, Pinterest and Google Business. We never store your passwords.
               </p>
             </div>
 
@@ -414,7 +422,7 @@ export default async function PricingPage() {
               <h3 className="font-bold mb-2">Does Dizito use official APIs?</h3>
 
               <p className="text-gray-600">
-                Yes. Dizito publishes through the official Meta, LinkedIn and Pinterest
+                Yes. Dizito publishes through the official Meta, LinkedIn, Pinterest and Google Business
                 APIs.
               </p>
             </div>

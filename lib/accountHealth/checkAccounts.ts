@@ -170,6 +170,83 @@ async function checkPinterestAccount(account: any) {
   };
 }
 
+async function checkGoogleBusinessAccount(account: any) {
+  const response = await fetch(
+    `https://mybusinessbusinessinformation.googleapis.com/v1/${account.google_account_id}/${account.google_location_id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${account.access_token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+
+  let data: any = {};
+
+  try {
+    data = await response.json();
+  } catch {}
+
+  if (!response.ok || data.error) {
+    await pool.query(
+      `
+      UPDATE social_accounts
+      SET
+        status = 'expired',
+        health_status = 'expired',
+        last_checked_at = NOW()
+      WHERE id = $1
+      `,
+      [account.id],
+    );
+
+    return {
+      status: "expired",
+    };
+  }
+
+  const accounts = Array.isArray(data.accounts) ? data.accounts : [];
+
+  const exists = accounts.some(
+    (a: any) => a.name === account.google_account_id,
+  );
+
+  if (!exists) {
+    await pool.query(
+      `
+      UPDATE social_accounts
+      SET
+        status = 'expired',
+        health_status = 'expired',
+        last_checked_at = NOW()
+      WHERE id = $1
+      `,
+      [account.id],
+    );
+
+    return {
+      status: "expired",
+    };
+  }
+
+  await pool.query(
+    `
+    UPDATE social_accounts
+    SET
+      status = 'connected',
+      health_status = 'healthy',
+      last_checked_at = NOW()
+    WHERE id = $1
+    `,
+    [account.id],
+  );
+
+  return {
+    status: "healthy",
+  };
+}
+
 async function checkAccount(account: any) {
   try {
     switch (account.platform?.toLowerCase()) {
@@ -184,6 +261,9 @@ async function checkAccount(account: any) {
 
       case "pinterest":
         return await checkPinterestAccount(account);
+
+      case "google_business":
+        return await checkGoogleBusinessAccount(account);
 
       default:
         return {

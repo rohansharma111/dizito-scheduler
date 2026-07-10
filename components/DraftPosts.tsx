@@ -2,6 +2,7 @@
 
 import { Post } from "../types";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 import { Eye, Pencil, Trash2, Copy, CalendarPlus } from "lucide-react";
 
 export default function DraftPosts({
@@ -124,6 +125,10 @@ export default function DraftPosts({
 
                   {target.platform === "pinterest" && (
                     <FaPinterest className="text-red-600 text-xl" />
+                  )}
+
+                  {target.platform === "google-business" && (
+                    <GoogleBusinessIcon size={20} />
                   )}
                 </div>
               ))}
@@ -288,6 +293,10 @@ export default function DraftPosts({
 
                         {target.platform === "pinterest" && (
                           <FaPinterest className="text-red-600 text-xl" />
+                        )}
+
+                        {target.platform === "google-business" && (
+                          <GoogleBusinessIcon size={20} />
                         )}
                       </div>
                     ))}

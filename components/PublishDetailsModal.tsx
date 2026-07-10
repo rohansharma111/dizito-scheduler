@@ -1,6 +1,7 @@
 "use client";
 
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 
 type Target = {
   id: number;
@@ -156,6 +157,10 @@ export default function PublishDetailsModal({
 
                   {target.platform === "pinterest" && (
                     <FaPinterest className="text-red-600 text-2xl mt-1" />
+                  )}
+
+                  {target.platform === "google-business" && (
+                    <GoogleBusinessIcon className="text-green-600 text-2xl mt-1" />
                   )}
 
                   <div className="flex-1">
@@ -329,6 +334,10 @@ export default function PublishDetailsModal({
 
                             if (target.platform === "pinterest") {
                               window.location.href = `/api/pinterest/login?reconnect=${target.social_account_id}&type=recover`;
+                            }
+
+                            if (target.platform === "google-business") {
+                              window.location.href = `/api/google-business/login?reconnect=${target.social_account_id}&type=recover`;
                             }
                           }}
                         >

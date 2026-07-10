@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaLinkedin,
+  FaPinterest,
+} from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 import DraftPosts from "./DraftPosts";
 import ScheduledPosts from "./ScheduledPosts";
 import PublishDetailsModal from "./PublishDetailsModal";
@@ -17,6 +23,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
   const [accounts, setAccounts] = useState<any[]>([]);
 
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
+
+  const [minScheduleTime, setMinScheduleTime] = useState("");
 
   const [actionLoading, setActionLoading] = useState<
     "draft" | "scheduled" | null
@@ -64,13 +72,13 @@ export default function CreatePostForm({ posts, setPosts }: any) {
     return () => clearTimeout(timer);
   }, [successMessage]);
 
-  const minScheduleTime = (() => {
+  useEffect(() => {
     const now = new Date();
 
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    return local.toISOString().slice(0, 16);
-  })();
+    setMinScheduleTime(local.toISOString().slice(0, 16));
+  }, []);
 
   async function refreshPosts() {
     const response = await fetch("/api/posts");
@@ -247,8 +255,8 @@ export default function CreatePostForm({ posts, setPosts }: any) {
                 </div>
 
                 <p className="mb-4">
-                  Connect your Instagram, Facebook, LinkedIn or Pinterest account before
-                  creating a post.
+                  Connect your Instagram, Facebook, LinkedIn, Pinterest or
+                  Google Business Profile account before creating a post.
                 </p>
 
                 <button
@@ -307,6 +315,10 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
                       {account.platform === "linkedin" && (
                         <FaLinkedin className="text-blue-700" />
+                      )}
+
+                      {account.platform === "google-business" && (
+                        <GoogleBusinessIcon size={20} />
                       )}
 
                       <span className="font-medium">

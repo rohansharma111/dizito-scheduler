@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 import Link from "next/link";
 import { hasFeature } from "@/lib/plans";
 import { useDropzone } from "react-dropzone";
@@ -37,6 +38,9 @@ function getPlatformIcon(platform: string) {
 
     case "pinterest":
       return <FaPinterest />;
+
+    case "google-business":
+      return <GoogleBusinessIcon size={20} />;
 
     default:
       return platform;

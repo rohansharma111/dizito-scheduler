@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           <p>
             Dizito is a social media scheduling platform that allows users to
             connect and manage their social media accounts across supported
-            platforms such as Instagram, Facebook, LinkedIn and Pinterest.
+            platforms such as Instagram, Facebook, LinkedIn, Pinterest and Google Business.
           </p>
         </section>
 
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
 
             <li>Social account identifiers and profile names.</li>
 
-            <li>OAuth access tokens provided by Meta, LinkedIn and Pinterest.</li>
+            <li>OAuth access tokens provided by Meta, LinkedIn, Pinterest and Google Business.</li>
 
             <li>Content and media uploaded for scheduling.</li>
 
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
 
           <p>
             Dizito uses official OAuth authentication provided by Meta, LinkedIn
-            and Pinterest. Dizito never collects, stores, or has access to your
+           , Pinterest and Google Business. Dizito never collects, stores, or has access to your
             social media passwords.
           </p>
         </section>

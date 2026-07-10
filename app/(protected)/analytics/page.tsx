@@ -5,7 +5,13 @@ import { getEventTitle } from "@/lib/eventFormatter";
 import { timeAgo } from "@/lib/timeAgo";
 import Link from "next/link";
 import { getEventDescription } from "@/lib/eventDescription";
-import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaLinkedin,
+  FaPinterest,
+} from "react-icons/fa";
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 
 type PlatformStat = {
   platform: string;
@@ -260,6 +266,10 @@ export default function AnalyticsPage() {
                       <FaPinterest className="text-red-600" />
                     )}
 
+                    {platform.platform === "google-business" && (
+                      <GoogleBusinessIcon size={20} className="w-5 h-5" />
+                    )}
+
                     {platform.platform}
                   </span>
 
@@ -338,6 +348,13 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3 text-2xl font-bold">
             <FaPinterest className="text-red-600" />
             Pinterest
+          </div>
+        )}
+
+        {analytics.topPlatform === "google-business" && (
+          <div className="flex items-center gap-3 text-2xl font-bold">
+            <GoogleBusinessIcon size={24} className="w-6 h-6" />
+            Google Business
           </div>
         )}
       </div>

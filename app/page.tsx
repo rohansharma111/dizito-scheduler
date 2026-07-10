@@ -162,7 +162,8 @@ export default async function Home() {
               </h3>
 
               <p className="text-gray-600">
-                Create once and publish to Instagram, Facebook, LinkedIn and Pinterest.
+                Create once and publish to Instagram, Facebook, LinkedIn,
+                Pinterest and Google Business.
               </p>
             </div>
 
@@ -254,8 +255,8 @@ export default async function Home() {
               <h3 className="font-bold text-xl mb-4">Secure Authentication</h3>
 
               <p className="text-gray-600">
-                Dizito uses official OAuth authentication from Meta, 
-                LinkedIn and Pinterest.
+                Dizito uses official OAuth authentication from Meta, LinkedIn,
+                Pinterest and Google Business.
               </p>
             </div>
 
@@ -263,7 +264,8 @@ export default async function Home() {
               <h3 className="font-bold text-xl mb-4">Reliable Publishing</h3>
 
               <p className="text-gray-600">
-                Posts are published through official Meta, LinkedIn and Pinterest APIs.
+                Posts are published through official Meta, LinkedIn, Pinterest
+                and Google Business APIs.
               </p>
             </div>
           </div>

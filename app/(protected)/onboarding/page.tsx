@@ -108,7 +108,7 @@ export default function OnboardingPage() {
             </h2>
 
             <p className="text-gray-500 mt-2">
-              Connect Instagram, Facebook, LinkedIn or Pinterest.
+              Connect Instagram, Facebook, LinkedIn, Pinterest or Google Business Profile.
             </p>
           </div>
 
