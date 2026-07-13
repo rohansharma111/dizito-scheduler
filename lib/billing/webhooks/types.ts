@@ -1,5 +1,5 @@
 export type RazorpayWebhookEvent =
-  | "subscription.created"
+  | "subscription.authenticated"
   | "subscription.activated"
   | "subscription.charged"
   | "subscription.pending"

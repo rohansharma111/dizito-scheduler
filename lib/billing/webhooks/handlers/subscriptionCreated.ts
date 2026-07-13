@@ -20,6 +20,6 @@ export async function subscriptionCreated(payload: RazorpayWebhookPayload) {
 
     entity,
 
-    event: "subscription.created",
+    event: "subscription.authenticated",
   });
 }
