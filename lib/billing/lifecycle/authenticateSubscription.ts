@@ -3,7 +3,7 @@ import { createBillingEvent } from "../events";
 import { billingLogger } from "../logger";
 import { BillingContext } from "../context";
 
-export async function createSubscriptionLifecycle(context: BillingContext) {
+export async function authenticateSubscriptionLifecycle(context: BillingContext) {
   const entity = context.entity;
 
   const result = await syncSubscription({
@@ -21,7 +21,7 @@ export async function createSubscriptionLifecycle(context: BillingContext) {
   });
 
   await createBillingEvent(
-    "SUBSCRIPTION_CREATED",
+    "SUBSCRIPTION_AUTHENTICATED",
 
     result.id,
 

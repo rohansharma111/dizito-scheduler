@@ -1,5 +1,5 @@
 import { RazorpayWebhookEvent } from "../types";
-import { subscriptionCreated } from "./subscriptionCreated";
+import { subscriptionAuthenticated } from "./subscriptionAuthenticated";
 import { subscriptionActivated } from "./subscriptionActivated";
 import { paymentFailed } from "./paymentFailed";
 import { RazorpayWebhookPayload } from "../../providers/razorpay-types";
@@ -7,7 +7,7 @@ import { RazorpayWebhookPayload } from "../../providers/razorpay-types";
 export const billingWebhookHandlers: Partial<
   Record<RazorpayWebhookEvent, (payload: RazorpayWebhookPayload) => Promise<void>>
 > = {
-  "subscription.authenticated": subscriptionCreated,
+  "subscription.authenticated": subscriptionAuthenticated,
 
   "subscription.activated": subscriptionActivated,
 

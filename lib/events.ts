@@ -17,7 +17,7 @@ export async function createEvent(
     `
     INSERT INTO system_events
     (
-      event,
+      event_type,
       entity_type,
       entity_id,
       user_id,

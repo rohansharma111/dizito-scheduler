@@ -1,8 +1,8 @@
 import { BillingRepository } from "../../repository";
-import { createSubscriptionLifecycle } from "../../lifecycle/createSubscription";
+import { authenticateSubscriptionLifecycle } from "../../lifecycle/authenticateSubscription";
 import { RazorpayWebhookPayload } from "../../providers/razorpay-types";
 
-export async function subscriptionCreated(payload: RazorpayWebhookPayload) {
+export async function subscriptionAuthenticated(payload: RazorpayWebhookPayload) {
   const entity = payload.payload.subscription.entity;
 
   const subscription = await BillingRepository.getSubscriptionByProviderId(
@@ -13,7 +13,7 @@ export async function subscriptionCreated(payload: RazorpayWebhookPayload) {
     throw new Error("Subscription not found");
   }
 
-  await createSubscriptionLifecycle({
+  await authenticateSubscriptionLifecycle({
     subscription,
 
     webhook: payload,
