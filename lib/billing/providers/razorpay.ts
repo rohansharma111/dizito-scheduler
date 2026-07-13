@@ -19,8 +19,8 @@ export const razorpayProvider: BillingProvider = {
         plan: input.plan,
       },
 
-      start_at: Math.floor(Date.now() / 1000),
-      //Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
+      //start_at: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
+      
     });
   },
 
