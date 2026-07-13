@@ -7,7 +7,7 @@ import { RazorpayWebhookPayload } from "../../providers/razorpay-types";
 export const billingWebhookHandlers: Partial<
   Record<RazorpayWebhookEvent, (payload: RazorpayWebhookPayload) => Promise<void>>
 > = {
-  "subscription.created": subscriptionCreated,
+  "subscription.authenticated": subscriptionCreated,
 
   "subscription.activated": subscriptionActivated,
 
