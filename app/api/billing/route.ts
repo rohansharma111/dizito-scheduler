@@ -23,21 +23,18 @@ export async function GET() {
     /*
       User
     */
-
     const userResult = await pool.query(
       `
-        SELECT
-          id,
-          plan,
-          billing_provider,
-          subscription_id,
-          subscription_status,
-          subscription_plan,
-          current_period_end,
-          created_at
-        FROM users
-        WHERE id = $1
-        `,
+      SELECT
+        id,
+        plan,
+        subscription_id,
+        subscription_status,
+        current_period_end,
+        created_at
+      FROM users
+      WHERE id = $1
+      `,
       [userId],
     );
 
@@ -55,30 +52,53 @@ export async function GET() {
     }
 
     /*
+      Current Subscription
+    */
+    const subscriptionResult = await pool.query(
+      `
+      SELECT
+        provider,
+        provider_subscription_id,
+        provider_customer_id,
+        plan,
+        status,
+        trial_start_at,
+        trial_end_at,
+        current_period_start,
+        current_period_end,
+        cancel_at_period_end
+      FROM subscriptions
+      WHERE user_id = $1
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [userId],
+    );
+
+    const subscription = subscriptionResult.rows[0] ?? null;
+
+    /*
       Plan
     */
-
     const plan = getPlan(user.plan);
 
     /*
-      Accounts
+      Connected Accounts
     */
-
     const accountsResult = await pool.query(
       `
-        SELECT COUNT(*)
-        FROM social_accounts
-        WHERE user_id = $1
-        `,
+      SELECT COUNT(*)
+      FROM social_accounts
+      WHERE user_id = $1
+      `,
       [userId],
     );
 
     const accountsUsed = Number(accountsResult.rows[0].count);
 
     /*
-      Usage
+      Monthly Usage
     */
-
     const now = new Date();
 
     const year = now.getFullYear();
@@ -87,61 +107,56 @@ export async function GET() {
 
     const usageResult = await pool.query(
       `
-        SELECT
-          posts_created,
-          posts_published,
-          bulk_upload_rows
-        FROM user_usage
-        WHERE
-          user_id = $1
-          AND year = $2
-          AND month = $3
-        `,
+      SELECT
+        posts_created,
+        posts_published,
+        bulk_upload_rows
+      FROM user_usage
+      WHERE
+        user_id = $1
+        AND year = $2
+        AND month = $3
+      `,
       [userId, year, month],
     );
 
-    const usage = usageResult.rows[0] || {
+    const usage = usageResult.rows[0] ?? {
       posts_created: 0,
       posts_published: 0,
       bulk_upload_rows: 0,
     };
 
     /*
-      Trial calculation
+      Trial
     */
-
     let trialDaysLeft = 0;
 
-    if (user.subscription_status === "trial") {
-      const end = new Date(user.current_period_end);
-
+    if (subscription?.trial_end_at) {
       trialDaysLeft = Math.max(
         0,
-        Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+        Math.ceil(
+          (new Date(subscription.trial_end_at).getTime() - Date.now()) /
+            (1000 * 60 * 60 * 24),
+        ),
       );
     }
 
     /*
-      Billing history
+      Billing History
     */
-
     const historyResult = await pool.query(
       `
-        SELECT
-          event,
-          amount,
-          created_at
-        FROM billing_events
-        WHERE user_id = $1
-        ORDER BY created_at DESC
-        LIMIT 10
-        `,
+      SELECT
+        event,
+        amount,
+        created_at
+      FROM billing_events
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      LIMIT 10
+      `,
       [userId],
     );
-
-    /*
-      Response
-    */
 
     return Response.json({
       plan: user.plan,
@@ -168,17 +183,22 @@ export async function GET() {
       },
 
       subscription: {
-        provider: user.billing_provider,
+        provider: subscription?.provider ?? null,
 
-        id: user.subscription_id,
+        id: subscription?.provider_subscription_id ?? null,
 
-        status: user.subscription_status,
+        customerId: subscription?.provider_customer_id ?? null,
 
-        subscriptionPlan: user.subscription_plan,
+        status: subscription?.status ?? user.subscription_status,
 
-        renewalDate: user.current_period_end,
+        subscriptionPlan: subscription?.plan ?? user.plan,
+
+        renewalDate:
+          subscription?.current_period_end ?? user.current_period_end,
 
         trialDaysLeft,
+
+        cancelAtPeriodEnd: subscription?.cancel_at_period_end ?? false,
       },
 
       usage: {
