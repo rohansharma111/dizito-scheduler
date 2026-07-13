@@ -1,17 +1,23 @@
-import { pool } from "./db";
+import { pool } from "@/lib/db";
+import { PoolClient } from "pg";
+
+function db(client?: PoolClient) {
+  return client ?? pool;
+}
 
 export async function createEvent(
-  eventType: string,
+  event: string,
   entityType: string,
   entityId: number,
-  userId?: number,
-  payload?: any,
+  userId: number | undefined,
+  payload: any,
+  client?: PoolClient,
 ) {
-  await pool.query(
+  return db(client).query(
     `
     INSERT INTO system_events
     (
-      event_type,
+      event,
       entity_type,
       entity_id,
       user_id,
@@ -19,13 +25,9 @@ export async function createEvent(
     )
     VALUES
     (
-      $1,
-      $2,
-      $3,
-      $4,
-      $5
+      $1,$2,$3,$4,$5
     )
     `,
-    [eventType, entityType, entityId, userId || null, payload ?? {}],
+    [event, entityType, entityId, userId ?? null, payload ?? {}],
   );
 }

@@ -1,9 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { razorpay } from "@/lib/razorpay";
-import { billingPlans } from "@/lib/billing/plans";
 import { BillingPlan } from "@/lib/billing/types";
+import { createSubscription } from "@/lib/billing/service";
 
 export async function POST(request: Request) {
   try {
@@ -44,19 +43,6 @@ export async function POST(request: Request) {
 
     const planName = body.plan as BillingPlan;
 
-    const plan = billingPlans[planName];
-
-    if (!plan?.planId) {
-      return Response.json(
-        {
-          error: "Billing plan not configured",
-        },
-        {
-          status: 500,
-        },
-      );
-    }
-
     /*
       User
     */
@@ -64,10 +50,12 @@ export async function POST(request: Request) {
 
     const userResult = await pool.query(
       `
-        SELECT *
-        FROM users
-        WHERE id = $1
-        `,
+      SELECT
+        id,
+        email
+      FROM users
+      WHERE id = $1
+      `,
       [userId],
     );
 
@@ -85,81 +73,22 @@ export async function POST(request: Request) {
     }
 
     /*
-      Prevent duplicate
-      active subscriptions
+      Billing Service
     */
-    if (
-      user.subscription_id &&
-      ["active", "authenticated", "created"].includes(user.subscription_status)
-    ) {
-      return Response.json(
-        {
-          error: "Subscription already exists",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
+    const result = await createSubscription({
+      userId: user.id,
 
-    /*
-      Create Razorpay
-      subscription
-    */
-    console.log({
-      planName,
-      planId: plan.planId,
-      billingPlans,
-      keyId: process.env.RAZORPAY_KEY_ID,
+      email: user.email ?? "",
+
+      plan: planName,
     });
-    const subscription = await razorpay.subscriptions.create({
-      plan_id: plan.planId,
-
-      total_count: 120,
-
-      customer_notify: 1,
-
-      notes: {
-        userId: String(user.id),
-
-        plan: planName,
-
-        email: user.email ?? "",
-      },
-
-      /*
-            7 day free trial
-          */
-      start_at: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
-    });
-
-    /*
-      Save pending
-      subscription
-    */
-    await pool.query(
-      `
-      UPDATE users
-      SET
-        billing_provider = 'razorpay',
-
-        subscription_id = $1,
-
-        subscription_status = $2,
-
-        subscription_plan = $3
-
-      WHERE id = $4
-      `,
-      [subscription.id, subscription.status, planName, user.id],
-    );
 
     return Response.json({
       success: true,
 
-      subscriptionId: subscription.id,
+      subscriptionId: result.razorpaySubscription.id,
 
-      status: subscription.status,
+      status: result.razorpaySubscription.status,
 
       razorpayKey: process.env.RAZORPAY_KEY_ID,
     });

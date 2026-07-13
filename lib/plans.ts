@@ -38,9 +38,9 @@ export const plans: Record<PlanName, Plan> = {
 
     price: 0,
 
-    accounts: 1,
+    accounts: 3,
 
-    monthlyPosts: 20,
+    monthlyPosts: 50,
 
     bulkUpload: false,
 
@@ -70,7 +70,7 @@ export const plans: Record<PlanName, Plan> = {
 
     price: 299,
 
-    accounts: 5,
+    accounts: 10,
 
     monthlyPosts: 500,
 
