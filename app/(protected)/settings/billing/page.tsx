@@ -60,6 +60,22 @@ export default function BillingPage() {
 
   const [loading, setLoading] = useState(true);
 
+  const statusColors: Record<string, string> = {
+    active: "bg-green-100 text-green-700",
+
+    authenticated: "bg-yellow-100 text-yellow-700",
+
+    cancelled: "bg-red-100 text-red-700",
+
+    halted: "bg-orange-100 text-orange-700",
+
+    completed: "bg-gray-100 text-gray-700",
+
+    payment_failed: "bg-red-100 text-red-700",
+
+    free: "bg-gray-100 text-gray-700",
+  };
+
   useEffect(() => {
     loadBilling();
   }, []);
@@ -220,9 +236,13 @@ export default function BillingPage() {
           <div>
             <div className="text-gray-500">Status</div>
 
-            <div className="font-medium">
-              {billing.subscription.status || "Free"}
-            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                statusColors[billing.subscription.status ?? "free"]
+              }`}
+            >
+              {billing.subscription.status ?? "Free"}
+            </span>
           </div>
 
           <div>

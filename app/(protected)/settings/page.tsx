@@ -2,14 +2,41 @@
 
 import { useEffect, useState } from "react";
 
-type Settings = {
-  email: string;
-  name: string;
-  plan: string;
+type ConnectedAccount = {
+  id: number;
+  platform: string;
+  account_name: string;
+  status: string;
+};
+
+type SettingsResponse = {
+  account: {
+    id: number;
+    name: string;
+    email: string;
+  };
+
+  subscription: {
+    plan: string;
+    status: string;
+    subscriptionId: string | null;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+    trialEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+  };
+
+  connectedAccounts: ConnectedAccount[];
+
+  preferences: {
+    emailNotifications: boolean;
+    publishSuccess: boolean;
+    publishFailure: boolean;
+  };
 };
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<SettingsResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -37,36 +64,48 @@ export default function SettingsPage() {
     );
   }
 
+  if (!settings) {
+    return (
+      <div className="bg-white border rounded-xl p-6">
+        Failed to load settings.
+      </div>
+    );
+  }
+
+  const subscription = settings.subscription;
+
+  const plan = subscription.plan;
+
+  const upgradeLabel =
+    plan === "free"
+      ? "Upgrade"
+      : plan === "creator"
+        ? "Upgrade to Agency"
+        : "Current Plan";
+
   return (
     <div className="space-y-6">
       {/* Header */}
+
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
 
-        <p className="text-gray-500 mt-2">
-          Manage your Dizito account and preferences.
-        </p>
+        <p className="text-gray-500 mt-2">Manage your Dizito account.</p>
       </div>
 
       {/* Account */}
+
       <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-4">Account</h2>
+        <h2 className="text-xl font-semibold mb-5">Account</h2>
 
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Name</label>
 
             <input
-              value={settings?.name || ""}
               disabled
-              className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-2
-                bg-gray-50
-              "
+              value={settings.account.name}
+              className="w-full border rounded-lg px-4 py-2 bg-gray-50"
             />
           </div>
 
@@ -74,125 +113,150 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium mb-1">Email</label>
 
             <input
-              value={settings?.email || ""}
               disabled
-              className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-2
-                bg-gray-50
-              "
+              value={settings.account.email}
+              className="w-full border rounded-lg px-4 py-2 bg-gray-50"
             />
           </div>
         </div>
       </div>
 
       {/* Subscription */}
+
       <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-4">Subscription</h2>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium">Current Plan</p>
-
-            <p className="text-gray-500 capitalize">{settings?.plan}</p>
-          </div>
-
-          <button
-            className="
-              bg-blue-600
-              text-white
-              px-5
-              py-2
-              rounded-lg
-            "
-          >
-            Upgrade
-          </button>
-        </div>
-      </div>
-
-      {/* Preferences */}
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-4">Preferences</h2>
-
-        <div className="space-y-4">
-          <label className="flex items-center justify-between">
-            <span>Email notifications</span>
-
-            <input type="checkbox" defaultChecked />
-          </label>
-
-          <label className="flex items-center justify-between">
-            <span>Publish success notifications</span>
-
-            <input type="checkbox" defaultChecked />
-          </label>
-
-          <label className="flex items-center justify-between">
-            <span>Publish failure notifications</span>
-
-            <input type="checkbox" defaultChecked />
-          </label>
-        </div>
-      </div>
-
-      {/* API Status */}
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-4">Connected Platforms</h2>
+        <h2 className="text-xl font-semibold mb-5">Subscription</h2>
 
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span>Instagram</span>
+            <span>Plan</span>
 
-            <span className="text-green-600">Connected</span>
+            <span className="capitalize font-medium">{plan}</span>
           </div>
 
           <div className="flex justify-between">
-            <span>Facebook</span>
+            <span>Status</span>
 
-            <span className="text-green-600">Connected</span>
+            <span className="capitalize">{subscription.status}</span>
           </div>
 
-          <div className="flex justify-between">
-            <span>LinkedIn</span>
+          {subscription.currentPeriodEnd && (
+            <div className="flex justify-between">
+              <span>Next Billing</span>
 
-            <span className="text-green-600">Connected</span>
+              <span>
+                {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+
+          {subscription.trialEnd && (
+            <div className="flex justify-between">
+              <span>Trial Ends</span>
+
+              <span>
+                {new Date(subscription.trialEnd).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+
+          {subscription.subscriptionId && (
+            <div className="flex justify-between">
+              <span>Subscription ID</span>
+
+              <span className="font-mono text-xs">
+                {subscription.subscriptionId}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <button
+          disabled={plan === "agency"}
+          className="mt-6 bg-blue-600 text-white px-5 py-2 rounded-lg disabled:bg-gray-300"
+        >
+          {upgradeLabel}
+        </button>
+      </div>
+
+      {/* Connected Accounts */}
+
+      <div className="bg-white border rounded-xl p-6">
+        <h2 className="text-xl font-semibold mb-5">Connected Accounts</h2>
+
+        {settings.connectedAccounts.length === 0 ? (
+          <p className="text-gray-500">No accounts connected.</p>
+        ) : (
+          <div className="space-y-4">
+            {settings.connectedAccounts.map((account) => (
+              <div
+                key={account.id}
+                className="flex justify-between items-center"
+              >
+                <div>
+                  <p className="capitalize font-medium">{account.platform}</p>
+
+                  <p className="text-sm text-gray-500">
+                    {account.account_name}
+                  </p>
+                </div>
+
+                <span className="capitalize text-green-600">
+                  {account.status}
+                </span>
+              </div>
+            ))}
           </div>
+        )}
+      </div>
 
-          <div className="flex justify-between">
-            <span>Pinterest</span>
+      {/* Preferences */}
 
-            <span className="text-green-600">Connected</span>
-          </div>
+      <div className="bg-white border rounded-xl p-6">
+        <h2 className="text-xl font-semibold mb-5">Preferences</h2>
 
-          <div className="flex justify-between">
-            <span>Google Business Profile</span>
+        <div className="space-y-4">
+          <label className="flex justify-between">
+            <span>Email Notifications</span>
 
-            <span className="text-green-600">Connected</span>
-          </div>
+            <input
+              type="checkbox"
+              checked={settings.preferences.emailNotifications}
+              readOnly
+            />
+          </label>
+
+          <label className="flex justify-between">
+            <span>Publish Success</span>
+
+            <input
+              type="checkbox"
+              checked={settings.preferences.publishSuccess}
+              readOnly
+            />
+          </label>
+
+          <label className="flex justify-between">
+            <span>Publish Failure</span>
+
+            <input
+              type="checkbox"
+              checked={settings.preferences.publishFailure}
+              readOnly
+            />
+          </label>
         </div>
       </div>
 
-      {/* Danger Zone */}
+      {/* Danger */}
+
       <div className="bg-red-50 border border-red-200 rounded-xl p-6">
         <h2 className="text-xl font-semibold text-red-700 mb-4">Danger Zone</h2>
 
         <p className="text-gray-700 mb-4">
-          Permanently delete your Dizito account and all associated data.
+          Permanently delete your Dizito account.
         </p>
 
-        <button
-          className="
-            bg-red-600
-            text-white
-            px-5
-            py-2
-            rounded-lg
-          "
-        >
+        <button className="bg-red-600 text-white px-5 py-2 rounded-lg">
           Delete Account
         </button>
       </div>

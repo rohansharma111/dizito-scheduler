@@ -141,8 +141,8 @@ export default async function Home() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border">
-            <video controls className="w-full" poster="public/uploads/logo.png">
-              <source src="public/uploads/demo.mp4" type="video/mp4" />
+            <video controls className="w-full" poster="/uploads/logo.png">
+              <source src="/uploads/demo.mp4" type="video/mp4" />
             </video>
           </div>
         </div>
