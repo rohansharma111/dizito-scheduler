@@ -20,14 +20,14 @@ export const authOptions = {
 
       const existingUser = await pool.query(
         `
-          SELECT
-            id,
-            plan,
-            onboarding_completed,
-            onboarding_step
-          FROM users
-          WHERE email = $1
-          `,
+        SELECT
+          id,
+          plan,
+          onboarding_completed,
+          onboarding_step
+        FROM users
+        WHERE email = $1
+        `,
         [user.email],
       );
 
@@ -39,6 +39,7 @@ export const authOptions = {
           `
           INSERT INTO users
           (
+            name,
             email,
             plan,
             onboarding_completed,
@@ -46,13 +47,24 @@ export const authOptions = {
           )
           VALUES
           (
-            $1,
-            $2,
-            $3,
-            $4
+            $1,$2,$3,$4,$5
           )
           `,
-          [user.email, "free", false, 1],
+          [user.name ?? user.email.split("@")[0], user.email, "free", false, 1],
+        );
+      } else {
+        /*
+          Keep Google profile
+          name updated
+        */
+        await pool.query(
+          `
+          UPDATE users
+          SET
+            name = $1
+          WHERE email = $2
+          `,
+          [user.name ?? user.email.split("@")[0], user.email],
         );
       }
 
@@ -66,14 +78,15 @@ export const authOptions = {
       if (token.email) {
         const result = await pool.query(
           `
-            SELECT
-              id,
-              plan,
-              onboarding_completed,
-              onboarding_step
-            FROM users
-            WHERE email = $1
-            `,
+          SELECT
+            id,
+            name,
+            plan,
+            onboarding_completed,
+            onboarding_step
+          FROM users
+          WHERE email = $1
+          `,
           [token.email],
         );
 
@@ -81,6 +94,8 @@ export const authOptions = {
           const dbUser = result.rows[0];
 
           token.userId = dbUser.id;
+
+          token.name = dbUser.name;
 
           token.plan = dbUser.plan || "free";
 
@@ -99,6 +114,8 @@ export const authOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.userId;
+
+        session.user.name = token.name;
 
         session.user.plan = token.plan || "free";
 
