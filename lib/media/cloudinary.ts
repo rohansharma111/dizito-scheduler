@@ -11,6 +11,10 @@ export class MediaCloudinary {
     const folder = `users/${userId}`;
 
     return new Promise((resolve, reject) => {
+      console.log({
+  cloud: process.env.CLOUDINARY_CLOUD_NAME,
+  key: process.env.CLOUDINARY_API_KEY,
+});
       const stream = cloudinary.uploader.upload_stream(
         {
           folder,
