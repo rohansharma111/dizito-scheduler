@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import { UploadMediaInput, UploadMediaResult } from "./types";
 
+console.log(">>> lib/media/cloudinary.ts LOADED");
 export class MediaCloudinary {
   async upload({
     buffer,
@@ -11,10 +12,6 @@ export class MediaCloudinary {
     const folder = `users/${userId}`;
 
     return new Promise((resolve, reject) => {
-      console.log({
-  cloud: process.env.CLOUDINARY_CLOUD_NAME,
-  key: process.env.CLOUDINARY_API_KEY,
-});
       const stream = cloudinary.uploader.upload_stream(
         {
           folder,
