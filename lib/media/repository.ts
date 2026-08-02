@@ -3,6 +3,8 @@ import { CreateMediaInput } from "./types";
 
 export class MediaRepository {
   async create(data: CreateMediaInput) {
+    console.log("F. Repository create() called");
+
     const result = await pool.query(
       `
       INSERT INTO media_library (
@@ -41,6 +43,9 @@ export class MediaRepository {
         data.tags,
       ],
     );
+
+     console.log("G. Query finished");
+  console.log(result.rows[0]);
 
     return result.rows[0];
   }

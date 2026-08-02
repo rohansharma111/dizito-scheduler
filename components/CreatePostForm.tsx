@@ -12,13 +12,13 @@ import DraftPosts from "./DraftPosts";
 import ScheduledPosts from "./ScheduledPosts";
 import PublishDetailsModal from "./PublishDetailsModal";
 import { useRouter } from "next/navigation";
+import MediaPicker from "@/components/media/MediaPicker";
+import { MediaItem } from "@/types/media";
 
 export default function CreatePostForm({ posts, setPosts }: any) {
   const [post, setPost] = useState("");
 
   const [scheduleTime, setScheduleTime] = useState("");
-
-  const [image, setImage] = useState<File | null>(null);
 
   const [accounts, setAccounts] = useState<any[]>([]);
 
@@ -38,7 +38,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
   const [showTargetsModal, setShowTargetsModal] = useState(false);
 
-  const [imagePreview, setImagePreview] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   const router = useRouter();
 
@@ -53,14 +53,6 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
     loadAccounts();
   }, []);
-
-  useEffect(() => {
-    return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
 
   useEffect(() => {
     if (!successMessage) return;
@@ -112,23 +104,6 @@ export default function CreatePostForm({ posts, setPosts }: any) {
     setSuccessMessage("");
 
     try {
-      let imageUrl = "";
-
-      if (image) {
-        const formData = new FormData();
-
-        formData.append("file", image);
-
-        const upload = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await upload.json();
-
-        imageUrl = data.url;
-      }
-
       await fetch("/api/posts", {
         method: "POST",
 
@@ -138,7 +113,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
         body: JSON.stringify({
           post,
-          imageUrl,
+          mediaId: selectedMedia?.id ?? null,
           selectedAccounts,
           status,
           scheduleTime:
@@ -152,8 +127,7 @@ export default function CreatePostForm({ posts, setPosts }: any) {
 
       setPost("");
       setScheduleTime("");
-      setImage(null);
-      setImagePreview("");
+      setSelectedMedia(null);
 
       setSuccessMessage(status === "draft" ? "✅ Draft saved" : "✅ Scheduled");
     } catch (error) {
@@ -331,38 +305,11 @@ export default function CreatePostForm({ posts, setPosts }: any) {
             )}
           </div>
 
-          <input
-            className="
-    w-full
-  "
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
+          <div className="space-y-2">
+            <label className="block font-medium">Media</label>
 
-              if (!file) return;
-
-              setImage(file);
-
-              setImagePreview(URL.createObjectURL(file));
-            }}
-          />
-          {imagePreview && (
-            <div className="mt-4">
-              <div className="font-medium mb-2">Preview</div>
-
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="
-        max-h-80
-        rounded-lg
-        border
-        shadow
-      "
-              />
-            </div>
-          )}
+            <MediaPicker value={selectedMedia} onChange={setSelectedMedia} />
+          </div>
 
           <div
             className="

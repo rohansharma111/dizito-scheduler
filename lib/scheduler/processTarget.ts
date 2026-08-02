@@ -16,15 +16,41 @@ export async function processTarget(target: any) {
   }
 
   /*
-    Load post
+    Load post + media
   */
 
   const postResult = await pool.query(
     `
-      SELECT *
-      FROM posts
-      WHERE id = $1
-      `,
+      SELECT
+        p.*,
+
+        m.id AS media_id,
+
+        m.secure_url,
+
+        m.cloudinary_public_id,
+
+        m.file_name,
+
+        m.mime_type,
+
+        m.resource_type,
+
+        m.format,
+
+        m.width,
+
+        m.height,
+
+        m.bytes
+
+      FROM posts p
+
+      LEFT JOIN media_library m
+        ON p.media_id = m.id
+
+      WHERE p.id = $1
+    `,
     [target.post_id],
   );
 
@@ -43,7 +69,7 @@ export async function processTarget(target: any) {
       SELECT *
       FROM social_accounts
       WHERE id = $1
-      `,
+    `,
     [target.social_account_id],
   );
 

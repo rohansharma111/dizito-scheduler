@@ -1,12 +1,10 @@
-import { v2 as cloudinary } from "cloudinary";
+import cloudinary from "@/lib/cloudinary";
 import { UploadMediaInput, UploadMediaResult } from "./types";
 
-console.log(">>> lib/media/cloudinary.ts LOADED");
 export class MediaCloudinary {
   async upload({
     buffer,
     fileName,
-    mimeType,
     userId,
   }: UploadMediaInput): Promise<UploadMediaResult> {
     const folder = `users/${userId}`;
@@ -17,10 +15,17 @@ export class MediaCloudinary {
           folder,
           resource_type: "auto",
           filename_override: fileName,
+          overwrite: false,
+          unique_filename: true,
         },
         (error, result) => {
-          if (error || !result) {
+          if (error) {
+            console.error("Cloudinary upload failed:", error);
             return reject(error);
+          }
+
+          if (!result) {
+            return reject(new Error("Cloudinary returned no upload result"));
           }
 
           resolve({
@@ -40,10 +45,15 @@ export class MediaCloudinary {
     });
   }
 
-  async delete(publicId: string) {
-    await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image",
+  async delete(
+    publicId: string,
+    resourceType: "image" | "video" | "raw" = "image",
+  ) {
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
     });
+
+    return result;
   }
 }
 

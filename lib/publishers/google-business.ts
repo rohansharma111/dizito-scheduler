@@ -38,7 +38,7 @@ export async function publishToGoogleBusiness(context: PublisherContext) {
       Optional image
   */
 
-  const image = post.image_url ?? post.image ?? post.imageUrl ?? null;
+  const image = post.secure_url ?? post.image ?? post.imageUrl ?? null;
 
   if (image) {
     body.media = [

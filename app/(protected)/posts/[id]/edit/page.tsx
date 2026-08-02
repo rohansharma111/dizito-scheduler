@@ -3,6 +3,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 
+import {
+  FaInstagram,
+  FaFacebook,
+  FaLinkedin,
+  FaPinterest,
+} from "react-icons/fa";
+
+import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
+
+import MediaPicker from "@/components/media/MediaPicker";
+import { MediaItem } from "@/types/media";
+
 interface Account {
   id: number;
   account_name: string;
@@ -11,40 +23,36 @@ interface Account {
 
 export default function EditPostPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const id = params.id as string;
 
-  const searchParams = useSearchParams();
+  const isView = searchParams.get("view") === "true";
   const scheduleMode = searchParams.get("schedule") === "true";
 
-  const router = useRouter();
+  const [pageLoading, setPageLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [post, setPost] = useState("");
-
   const [status, setStatus] = useState("");
 
   const [scheduleTime, setScheduleTime] = useState("");
 
-  const [imageUrl, setImageUrl] = useState("");
-
-  const [image, setImage] = useState<File | null>(null);
-
   const [accounts, setAccounts] = useState<Account[]>([]);
-
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
 
-  const [loading, setLoading] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
-  const [pageLoading, setPageLoading] = useState(true);
+  const [minScheduleTime, setMinScheduleTime] = useState("");
 
-  const minScheduleTime = (() => {
+  useEffect(() => {
     const now = new Date();
 
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    return local.toISOString().slice(0, 16);
-  })();
-
-  const isView = searchParams.get("view") === "true";
+    setMinScheduleTime(local.toISOString().slice(0, 16));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -53,31 +61,67 @@ export default function EditPostPage() {
       try {
         const [postResponse, accountResponse] = await Promise.all([
           fetch(`/api/posts/${id}`),
-          fetch("/api/accounts"),
+          fetch("/api/social-accounts"),
         ]);
 
-        const postData = await postResponse.json();
+        if (!postResponse.ok) {
+          throw new Error("Failed to load post");
+        }
 
+        const postData = await postResponse.json();
         const accountData = await accountResponse.json();
 
-        setAccounts(accountData.accounts || []);
+        setAccounts(accountData.accounts ?? accountData);
 
-        setPost(postData.post || "");
+        setPost(postData.post ?? "");
 
-        setStatus(postData.status || "");
-
-        setImageUrl(postData.image_url || "");
+        setStatus(postData.status ?? "");
 
         setScheduleTime(
-          postData.schedule_time ? postData.schedule_time.slice(0, 16) : "",
+          postData.schedule_time
+            ? new Date(postData.schedule_time).toISOString().slice(0, 16)
+            : "",
         );
 
         setSelectedAccounts(
           postData.targets.map((t: any) => t.social_account_id),
         );
+
+        if (postData.media_id) {
+          setSelectedMedia(
+            postData.media_id
+              ? {
+                  id: postData.media_id,
+                  user_id: postData.media_user_id,
+
+                  cloudinary_public_id: postData.cloudinary_public_id,
+                  secure_url: postData.secure_url,
+
+                  file_name: postData.file_name,
+                  mime_type: postData.mime_type,
+
+                  format: postData.format,
+                  resource_type: postData.resource_type,
+
+                  width: postData.width,
+                  height: postData.height,
+
+                  bytes: postData.bytes,
+
+                  folder: postData.folder,
+                  tags: postData.tags,
+
+                  created_at: postData.media_created_at,
+                  updated_at: postData.media_updated_at,
+                  deleted_at: postData.deleted_at,
+                }
+              : null,
+          );
+        } else {
+          setSelectedMedia(null);
+        }
       } catch (error) {
         console.error(error);
-
         alert("Failed to load post");
       } finally {
         setPageLoading(false);
@@ -87,19 +131,71 @@ export default function EditPostPage() {
     load();
   }, [id]);
 
-  if (pageLoading) {
-    return <div className="p-8">Loading...</div>;
+  async function save() {
+    if (!post.trim()) {
+      alert("Please enter a post");
+      return;
+    }
+
+    if (selectedAccounts.length === 0) {
+      alert("Select at least one account");
+      return;
+    }
+
+    if ((status !== "draft" || scheduleMode) && !scheduleTime) {
+      alert("Please select a schedule time");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/posts/${id}`, {
+        method: "PUT",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          post,
+
+          mediaId: selectedMedia?.id ?? null,
+
+          selectedAccounts,
+
+          scheduleTime: scheduleTime
+            ? new Date(scheduleTime).toISOString()
+            : null,
+
+          scheduleMode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error);
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save");
+    } finally {
+      setLoading(false);
+    }
   }
 
+  if (pageLoading) {
+    return <div className="p-8">Loading post...</div>;
+  }
   return (
     <div className="max-w-3xl mx-auto p-8">
       <button
         onClick={() => router.back()}
-        className="
-    mb-6
-    text-blue-600
-    hover:underline
-  "
+        className="mb-6 text-blue-600 hover:underline"
       >
         ← Back
       </button>
@@ -107,215 +203,147 @@ export default function EditPostPage() {
       <h1 className="text-3xl font-bold mb-6">
         {isView ? "View Post" : "Edit Campaign"}
       </h1>
+
       {isView && (
-        <div
-          className="
-      mb-6
-      bg-blue-50
-      border
-      border-blue-200
-      text-blue-700
-      rounded-lg
-      p-4
-    "
-        >
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-700">
           Viewing post in read-only mode.
         </div>
       )}
 
-      {/* POST */}
+      {/* Caption */}
 
       <div className="mb-6">
-        <label className="font-bold">Caption</label>
+        <label className="block font-bold mb-2">Caption</label>
 
         <textarea
           disabled={isView}
           rows={6}
-          className="w-full border p-3 rounded mt-2"
           value={post}
           onChange={(e) => setPost(e.target.value)}
+          className="w-full rounded border p-3"
         />
       </div>
 
-      {/* IMAGE */}
-
-      <div className="mb-6">
-        <label className="font-bold">Image</label>
-
-        {imageUrl && (
-          <img src={imageUrl} className="w-48 rounded border mt-2 mb-3" />
-        )}
-
-        <input
-          disabled={isView}
-          type="file"
-          onChange={(e) => setImage(e.target.files?.[0] || null)}
-        />
-      </div>
-
-      {/* TARGETS */}
-
-      <div className="mb-6">
-        <label className="font-bold">Targets</label>
-
-        <div className="mt-3 space-y-2">
-          {Array.isArray(accounts) &&
-            accounts.map((account) => (
-              <label key={account.id} className="flex gap-3">
-                <input
-                  disabled={isView}
-                  type="checkbox"
-                  checked={selectedAccounts.includes(account.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedAccounts([...selectedAccounts, account.id]);
-                    } else {
-                      setSelectedAccounts(
-                        selectedAccounts.filter((x) => x !== account.id),
-                      );
-                    }
-                  }}
-                />
-
-                <span>
-                  {account.platform}
-                  {" - "}
-                  {account.account_name}
-                </span>
-              </label>
-            ))}
-        </div>
-      </div>
-      {selectedAccounts.length === 0 && (
-        <p className="text-red-500 text-sm mt-2">
-          Please select at least one target account
-        </p>
-      )}
-      {/* SCHEDULE */}
+      {/* Schedule */}
 
       {(status !== "draft" || scheduleMode) && (
         <div className="mb-6">
-          <label className="font-bold">Schedule</label>
+          <label className="block font-bold mb-2">Schedule</label>
 
           <input
             disabled={isView}
             type="datetime-local"
-            className="w-full border p-3 rounded mt-2"
-            min={minScheduleTime}
             value={scheduleTime}
+            min={minScheduleTime}
             onChange={(e) => setScheduleTime(e.target.value)}
+            className="w-full rounded border p-3"
           />
         </div>
       )}
 
-      {/* SAVE */}
+      {/* Accounts */}
 
-      {!isView && (
-        <button
-          disabled={loading || selectedAccounts.length === 0}
-          className={`
-      px-6
-      py-3
-      rounded
-      text-white
-      ${
-        loading || selectedAccounts.length === 0
-          ? "bg-gray-400 cursor-not-allowed"
-          : "bg-blue-600"
-      }
-    `}
-          onClick={async () => {
-            if (!post.trim()) {
-              alert("Please enter a post");
-              return;
-            }
+      <div className="mb-6">
+        <label className="block font-bold mb-3">Target Accounts</label>
 
-            if (selectedAccounts.length === 0) {
-              alert("Please select at least one target account");
-              return;
-            }
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {accounts.map((account) => (
+            <label
+              key={account.id}
+              className="border rounded-lg p-3 flex items-center gap-3"
+            >
+              <input
+                disabled={isView}
+                type="checkbox"
+                checked={selectedAccounts.includes(account.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedAccounts([...selectedAccounts, account.id]);
+                  } else {
+                    setSelectedAccounts(
+                      selectedAccounts.filter((id) => id !== account.id),
+                    );
+                  }
+                }}
+              />
 
-            if ((status !== "draft" || scheduleMode) && !scheduleTime) {
-              alert("Please select a schedule time");
-              return;
-            }
-            setLoading(true);
+              <div>
+                <div className="flex items-center gap-2">
+                  {account.platform === "instagram" && (
+                    <FaInstagram className="text-pink-500" />
+                  )}
 
-            try {
-              let uploadedImage = imageUrl;
+                  {account.platform === "facebook" && (
+                    <FaFacebook className="text-blue-600" />
+                  )}
 
-              if (image) {
-                const formData = new FormData();
+                  {account.platform === "linkedin" && (
+                    <FaLinkedin className="text-blue-700" />
+                  )}
 
-                formData.append("file", image);
+                  {account.platform === "pinterest" && (
+                    <FaPinterest className="text-red-600" />
+                  )}
 
-                const upload = await fetch("/api/upload", {
-                  method: "POST",
-                  body: formData,
-                });
+                  {account.platform === "google-business" && (
+                    <GoogleBusinessIcon size={20} />
+                  )}
 
-                const uploadData = await upload.json();
+                  <span className="font-medium">{account.account_name}</span>
+                </div>
+              </div>
+            </label>
+          ))}
+        </div>
 
-                uploadedImage = uploadData.url;
-              }
+        {selectedAccounts.length === 0 && (
+          <p className="mt-2 text-sm text-red-500">
+            Please select at least one target account.
+          </p>
+        )}
+      </div>
 
-              const response = await fetch(`/api/posts/${id}`, {
-                method: "PUT",
+      {/* Media */}
 
-                headers: {
-                  "Content-Type": "application/json",
-                },
+      <div className="mb-6">
+        <label className="block font-bold mb-2">Media</label>
 
-                body: JSON.stringify({
-                  post,
-                  image_url: uploadedImage,
+        <MediaPicker value={selectedMedia} onChange={setSelectedMedia} />
+      </div>
 
-                  social_account_ids: selectedAccounts,
+      {/* Buttons */}
 
-                  schedule_time: scheduleTime
-                    ? new Date(scheduleTime).toISOString()
-                    : null,
+      {!isView ? (
+        <div className="flex gap-3">
+          <button
+            disabled={loading}
+            onClick={save}
+            className={`px-6 py-3 rounded text-white ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
 
-                  scheduleMode,
-                }),
-              });
-
-              const data = await response.json();
-
-              if (!response.ok) {
-                alert(data.error);
-                return;
-              }
-
-              window.location.href = "/dashboard";
-            } catch (error) {
-              console.error(error);
-
-              alert("Failed to save");
-            } finally {
-              setLoading(false);
-            }
-          }}
-        >
-          {loading ? "Saving..." : "Save Changes"}
-        </button>
-      )}
-
-      {isView && status !== "published" && (
-        <button
-          className="
-      bg-yellow-500
-      text-white
-      px-6
-      py-3
-      rounded
-    "
-          onClick={() => {
-            window.location.href = `/posts/${id}/edit`;
-          }}
-        >
-          Edit Post
-        </button>
+          <button
+            disabled={loading}
+            onClick={() => router.back()}
+            className="px-6 py-3 rounded border"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        status !== "published" && (
+          <button
+            className="bg-yellow-500 text-white px-6 py-3 rounded hover:bg-yellow-600"
+            onClick={() => router.push(`/posts/${id}/edit`)}
+          >
+            Edit Post
+          </button>
+        )
       )}
     </div>
   );

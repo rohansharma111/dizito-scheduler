@@ -226,7 +226,7 @@ export async function POST(request: Request) {
           post,
           schedule_time,
           status,
-          image_url,
+          media_id,
           user_id
         )
         VALUES
@@ -239,7 +239,7 @@ export async function POST(request: Request) {
         )
         RETURNING *
         `,
-      [body.post, body.scheduleTime, status, body.imageUrl, userId],
+      [body.post, body.scheduleTime, status, body.mediaId, userId],
     );
 
     const post = postResult.rows[0];

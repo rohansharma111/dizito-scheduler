@@ -19,6 +19,10 @@ export async function publishToFacebook(context: PublisherContext) {
     throw new Error("Facebook page access token missing");
   }
 
+  if (!post.secure_url) {
+    throw new Error("Facebook requires an image.");
+  }
+
   console.log("FACEBOOK PUBLISH:", {
     pageId: account.page_id,
     postId: post.id,
@@ -34,7 +38,7 @@ export async function publishToFacebook(context: PublisherContext) {
       },
 
       body: JSON.stringify({
-        url: post.image_url,
+        url: post.secure_url,
 
         caption: post.post,
 

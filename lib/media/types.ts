@@ -17,7 +17,6 @@ export interface CreateMediaInput {
 export interface UploadMediaInput {
   buffer: Buffer;
   fileName: string;
-  mimeType: string;
   userId: number;
 }
 

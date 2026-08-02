@@ -33,33 +33,54 @@ export async function GET(
       SELECT
         p.*,
 
+        m.id AS media_id,
+m.user_id AS media_user_id,
+m.cloudinary_public_id,
+m.secure_url,
+m.file_name,
+m.mime_type,
+m.format,
+m.resource_type,
+m.width,
+m.height,
+m.bytes,
+m.folder,
+m.tags,
+m.created_at AS media_created_at,
+m.updated_at AS media_updated_at,
+m.deleted_at AS media_deleted_at,
+
         COALESCE(
           json_agg(
             json_build_object(
               'id', pt.id,
               'platform', pt.platform,
               'status', pt.status,
-              'social_account_id',
-              pt.social_account_id
+              'social_account_id', pt.social_account_id
             )
           )
           FILTER (
-            WHERE pt.id
-            IS NOT NULL
+            WHERE pt.id IS NOT NULL
           ),
           '[]'
         ) AS targets
 
       FROM posts p
 
+      LEFT JOIN media_library m
+        ON p.media_id = m.id
+
       LEFT JOIN post_targets pt
-      ON pt.post_id = p.id
+        ON pt.post_id = p.id
 
       WHERE
         p.id = $1
         AND p.user_id = $2
 
-      GROUP BY p.id
+      GROUP BY
+        p.id,
+        m.id
+
       `,
     [id, (session.user as any).id],
   );
@@ -102,11 +123,11 @@ export async function PUT(
   }
 
   const { id } = await params;
-
   const body = await request.json();
+
   if (
-    !Array.isArray(body.social_account_ids) ||
-    body.social_account_ids.length === 0
+    !Array.isArray(body.selectedAccounts) ||
+    body.selectedAccounts.length === 0
   ) {
     return Response.json(
       {
@@ -117,7 +138,8 @@ export async function PUT(
       },
     );
   }
-  if (body.scheduleMode && !body.schedule_time) {
+
+  if (body.scheduleMode && !body.scheduleTime) {
     return Response.json(
       {
         error: "Please select a schedule time",
@@ -128,66 +150,109 @@ export async function PUT(
     );
   }
 
-  const postResult = await pool.query(
-    `
+  const userId = (session.user as any).id;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    /*
+      Load post
+    */
+
+    const postResult = await client.query(
+      `
       SELECT *
       FROM posts
       WHERE
         id = $1
         AND user_id = $2
       `,
-    [id, (session.user as any).id],
-  );
-
-  if (postResult.rows.length === 0) {
-    return Response.json(
-      {
-        error: "Post not found",
-      },
-      {
-        status: 404,
-      },
+      [id, userId],
     );
-  }
 
-  const post = postResult.rows[0];
+    if (postResult.rows.length === 0) {
+      await client.query("ROLLBACK");
 
-  if (
-    ![
-      "draft",
-      "scheduled",
-      "retry_scheduled",
-      "permanent_failed",
-      "failure_handler_crashed",
-    ].includes(post.status)
-  ) {
-    return Response.json(
-      {
-        error: "Cannot edit this post",
-      },
-      {
-        status: 400,
-      },
-    );
-  }
+      return Response.json(
+        {
+          error: "Post not found",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
 
-  let newStatus = post.status;
+    const post = postResult.rows[0];
 
-  if (post.status === "draft" && body.scheduleMode && body.schedule_time) {
-    newStatus = "scheduled";
-  }
+    /*
+      Editable statuses only
+    */
 
-  try {
-    await pool.query("BEGIN");
+    if (
+      ![
+        "draft",
+        "scheduled",
+        "retry_scheduled",
+        "permanent_failed",
+        "failure_handler_crashed",
+      ].includes(post.status)
+    ) {
+      await client.query("ROLLBACK");
 
-    // update post
+      return Response.json(
+        {
+          error: "Cannot edit this post",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
 
-    await pool.query(
+    /*
+      Verify media ownership
+    */
+
+    if (body.mediaId) {
+      const media = await client.query(
+        `
+        SELECT id
+        FROM media_library
+        WHERE
+          id = $1
+          AND user_id = $2
+        `,
+        [body.mediaId, userId],
+      );
+
+      if (media.rows.length === 0) {
+        throw new Error("Invalid media selection");
+      }
+    }
+
+    /*
+      Determine new status
+    */
+
+    let newStatus = post.status;
+
+    if (post.status === "draft" && body.scheduleMode && body.scheduleTime) {
+      newStatus = "scheduled";
+    }
+
+    /*
+      Update post
+    */
+
+    await client.query(
       `
       UPDATE posts
       SET
         post = $1,
-        image_url = $2,
+        media_id = $2,
         schedule_time = $3,
         status = $4,
         updated_at = NOW()
@@ -195,107 +260,113 @@ export async function PUT(
       `,
       [
         body.post,
-        body.image_url ?? post.image_url,
-        body.schedule_time ?? post.schedule_time,
+        body.mediaId ?? post.media_id,
+        body.scheduleTime ?? post.schedule_time,
         newStatus,
         id,
       ],
     );
 
-    // update targets
+    /*
+      Update targets
+    */
 
-    if (Array.isArray(body.social_account_ids)) {
-      // remove old targets
+    await client.query(
+      `
+      DELETE
+      FROM post_targets
+      WHERE post_id = $1
+      `,
+      [id],
+    );
 
-      await pool.query(
+    const accounts = await client.query(
+      `
+      SELECT
+        id,
+        platform
+      FROM social_accounts
+      WHERE
+        id = ANY($1)
+        AND user_id = $2
+      `,
+      [body.selectedAccounts, userId],
+    );
+
+    /*
+      Verify ownership of every selected account
+    */
+
+    if (accounts.rows.length !== body.selectedAccounts.length) {
+      throw new Error("Invalid account selection");
+    }
+
+    /*
+      Recreate targets
+    */
+
+    for (const account of accounts.rows) {
+      await client.query(
         `
-        DELETE
-        FROM post_targets
+        INSERT INTO post_targets
+        (
+          post_id,
+          social_account_id,
+          platform,
+          status
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4
+        )
+        `,
+        [
+          id,
+          account.id,
+          account.platform,
+          newStatus === "draft" ? "draft" : "scheduled",
+        ],
+      );
+    }
+
+    /*
+      Draft -> Scheduled migration
+    */
+
+    if (post.status === "draft" && newStatus === "scheduled") {
+      await client.query(
+        `
+        UPDATE post_targets
+        SET status = 'scheduled'
         WHERE post_id = $1
         `,
         [id],
       );
-
-      // fetch selected accounts
-
-      const accounts = await pool.query(
-        `
-          SELECT
-            id,
-            platform
-          FROM social_accounts
-          WHERE
-            id = ANY($1)
-            AND user_id = $2
-          `,
-        [body.social_account_ids, (session.user as any).id],
-      );
-
-      // recreate targets
-
-      for (const account of accounts.rows) {
-        await pool.query(
-          `
-          INSERT INTO
-          post_targets
-          (
-            post_id,
-            social_account_id,
-            platform,
-            status
-          )
-          VALUES
-          (
-            $1,
-            $2,
-            $3,
-            $4
-          )
-          `,
-          [
-            id,
-            account.id,
-            account.platform,
-            newStatus === "draft" ? "draft" : "scheduled",
-          ],
-        );
-      }
     }
 
-    // draft -> scheduled migration
-
-    if (post.status === "draft" && newStatus === "scheduled") {
-      await pool.query(
-        `
-        UPDATE post_targets
-        SET
-          status =
-            'scheduled'
-        WHERE
-          post_id = $1
-        `,
-        [id],
-      );
-    }
-
-    await pool.query("COMMIT");
+    await client.query("COMMIT");
 
     return Response.json({
       success: true,
       status: newStatus,
     });
   } catch (error) {
-    await pool.query("ROLLBACK");
+    await client.query("ROLLBACK");
 
     console.error(error);
 
     return Response.json(
       {
-        error: "Failed to update post",
+        error: error instanceof Error ? error.message : "Failed to update post",
       },
       {
         status: 500,
       },
     );
+  } finally {
+    client.release();
   }
 }

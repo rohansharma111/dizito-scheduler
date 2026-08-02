@@ -1,7 +1,7 @@
 import { PublisherContext } from "./types";
 
 export async function publishToLinkedIn(context: PublisherContext) {
-  if (context.post.image_url) {
+  if (context.post.secure_url) {
     return publishLinkedInImage(context);
   }
 
@@ -94,7 +94,7 @@ async function publishLinkedInImage(context: PublisherContext) {
     throw new Error("LinkedIn member id missing");
   }
 
-  if (!post.image_url) {
+  if (!post.secure_url) {
     throw new Error("LinkedIn image missing");
   }
 
@@ -102,7 +102,7 @@ async function publishLinkedInImage(context: PublisherContext) {
     postId: post.id,
     targetId: target.id,
     memberId,
-    image: post.image_url,
+    image: post.secure_url,
   });
 
   /*
@@ -158,7 +158,7 @@ async function publishLinkedInImage(context: PublisherContext) {
     Download image
   */
 
-  const imageResponse = await fetch(post.image_url);
+  const imageResponse = await fetch(post.secure_url);
 
   if (!imageResponse.ok) {
     throw new Error("Failed to download image");
