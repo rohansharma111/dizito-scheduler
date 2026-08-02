@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       userId: Number(session.user.id),
       buffer,
       fileName: file.name,
+      mimeType: file.type,
     });
 
     return NextResponse.json(
