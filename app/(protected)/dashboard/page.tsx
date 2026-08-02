@@ -7,7 +7,7 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
 
 export default function Page() {
-  const [usageCollapsed, setUsageCollapsed] = useState(false);
+  const [usageCollapsed, setUsageCollapsed] = useState(true);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
