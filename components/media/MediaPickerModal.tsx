@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { MediaItem } from "@/types/media";
+import UploadButton from "@/components/media/UploadButton";
 
 interface MediaPickerModalProps {
   open: boolean;
@@ -18,30 +19,35 @@ export default function MediaPickerModal({
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const fetchMedia = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/media");
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load media");
+      }
+
+      setMedia(data.media);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
 
-    const fetchMedia = async () => {
-      try {
-        setLoading(true);
-
-        const response = await fetch("/api/media");
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to load media");
-        }
-
-        setMedia(data.media);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchMedia();
   }, [open]);
+
+  const handleUploadSuccess = async () => {
+    await fetchMedia();
+  };
 
   if (!open) return null;
 
@@ -53,6 +59,7 @@ export default function MediaPickerModal({
         <div className="flex items-center justify-between border-b p-5">
           <h2 className="text-xl font-semibold">Select Media</h2>
 
+          <UploadButton onUploadSuccess={handleUploadSuccess} />
           <button
             onClick={onClose}
             className="rounded-lg border px-3 py-2 hover:bg-gray-100"
@@ -77,7 +84,10 @@ export default function MediaPickerModal({
               {media.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => onSelect(item)}
+                  onClick={() => {
+                    onSelect(item);
+                    onClose();
+                  }}
                   className="overflow-hidden rounded-lg border transition hover:border-blue-500 hover:shadow"
                 >
                   <div className="relative aspect-square">
