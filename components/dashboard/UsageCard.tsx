@@ -22,6 +22,12 @@ type Usage = {
     remaining: number | null;
   };
 
+  ai: {
+    imagesGenerated: number;
+    imageLimit: number;
+    remaining: number | null;
+  };
+
   features: {
     bulkUpload: boolean;
     retrySystem: boolean;
@@ -76,6 +82,11 @@ export default function UsageCard() {
     usage.posts.limit === Number.MAX_SAFE_INTEGER
       ? 0
       : Math.min(100, (usage.posts.created / usage.posts.limit) * 100);
+
+  const aiPercent =
+    usage.ai.imageLimit === Number.MAX_SAFE_INTEGER
+      ? 0
+      : Math.min(100, (usage.ai.imagesGenerated / usage.ai.imageLimit) * 100);
 
   return (
     <div className="bg-white border rounded-xl p-6 shadow-sm">
@@ -132,6 +143,36 @@ export default function UsageCard() {
               width: `${postPercent}%`,
             }}
           />
+        </div>
+      </div>
+
+      {/* AI Images */}
+
+      <div className="mb-6">
+        <div className="flex justify-between mb-2">
+          <span className="font-medium">AI Images</span>
+
+          <span className="text-gray-500">
+            {usage.ai.imagesGenerated} /{" "}
+            {usage.ai.imageLimit === Number.MAX_SAFE_INTEGER
+              ? "∞"
+              : usage.ai.imageLimit}
+          </span>
+        </div>
+
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-purple-600 h-2 rounded-full transition-all"
+            style={{
+              width: `${aiPercent}%`,
+            }}
+          />
+        </div>
+
+        <div className="mt-2 text-xs text-gray-500">
+          {usage.ai.remaining === null
+            ? "Unlimited AI image generations"
+            : `${usage.ai.remaining} AI images remaining this month`}
         </div>
       </div>
 

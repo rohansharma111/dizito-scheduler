@@ -31,8 +31,13 @@ type BillingData = {
   usage: {
     accountsUsed: number;
     accountsLimit: number;
+
     postsUsed: number;
     postsLimit: number;
+
+    aiImagesGenerated: number;
+    aiImagesLimit: number;
+
     published: number;
     bulkUploads: number;
   };
@@ -111,6 +116,12 @@ export default function BillingPage() {
     billing.usage.postsLimit > 0 &&
     billing.usage.postsLimit !== Number.MAX_SAFE_INTEGER
       ? (billing.usage.postsUsed / billing.usage.postsLimit) * 100
+      : 0;
+
+  const aiPercent =
+    billing.usage.aiImagesLimit > 0 &&
+    billing.usage.aiImagesLimit !== Number.MAX_SAFE_INTEGER
+      ? (billing.usage.aiImagesGenerated / billing.usage.aiImagesLimit) * 100
       : 0;
 
   return (
@@ -208,6 +219,34 @@ export default function BillingPage() {
             </span>
           </div>
 
+          <div className="bg-white border rounded-xl p-6">
+            <h2 className="font-semibold mb-4">AI Images Usage</h2>
+
+            <div className="flex justify-between mb-2">
+              <span>
+                {billing.usage.aiImagesGenerated}/
+                {billing.usage.aiImagesLimit === Number.MAX_SAFE_INTEGER
+                  ? "∞"
+                  : billing.usage.aiImagesLimit}
+              </span>
+
+              <span>
+                {billing.usage.aiImagesLimit === Number.MAX_SAFE_INTEGER
+                  ? "∞"
+                  : `${Math.round(aiPercent)}%`}
+              </span>
+            </div>
+
+            <div className="w-full bg-gray-200 h-3 rounded">
+              <div
+                className="bg-purple-600 h-3 rounded"
+                style={{
+                  width: `${Math.min(aiPercent, 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+
           <div className="w-full bg-gray-200 h-3 rounded">
             <div
               className="bg-green-600 h-3 rounded"
@@ -274,6 +313,10 @@ export default function BillingPage() {
           <div>{billing.features.bulkUpload ? "✅" : "❌"} Bulk Upload</div>
 
           <div>{billing.features.analytics ? "✅" : "❌"} Analytics</div>
+
+          <div>
+            {billing.usage.aiImagesLimit > 0 ? "✅" : "❌"} AI Image Generation
+          </div>
 
           <div>{billing.features.retrySystem ? "✅" : "❌"} Retry System</div>
 

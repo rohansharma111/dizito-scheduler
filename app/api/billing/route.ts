@@ -97,8 +97,9 @@ export async function GET() {
     const accountsUsed = Number(accountsResult.rows[0].count);
 
     /*
-      Monthly Usage
-    */
+  Monthly Usage
+*/
+
     const now = new Date();
 
     const year = now.getFullYear();
@@ -107,16 +108,17 @@ export async function GET() {
 
     const usageResult = await pool.query(
       `
-      SELECT
-        posts_created,
-        posts_published,
-        bulk_upload_rows
-      FROM user_usage
-      WHERE
-        user_id = $1
-        AND year = $2
-        AND month = $3
-      `,
+  SELECT
+    posts_created,
+    posts_published,
+    bulk_upload_rows,
+    ai_images_generated
+  FROM user_usage
+  WHERE
+    user_id = $1
+    AND year = $2
+    AND month = $3
+  `,
       [userId, year, month],
     );
 
@@ -124,6 +126,7 @@ export async function GET() {
       posts_created: 0,
       posts_published: 0,
       bulk_upload_rows: 0,
+      ai_images_generated: 0,
     };
 
     /*
@@ -169,6 +172,8 @@ export async function GET() {
 
         monthlyPosts: plan.monthlyPosts,
 
+        aiImages: plan.aiImages,
+
         bulkUpload: plan.bulkUpload,
 
         retrySystem: plan.retrySystem,
@@ -209,6 +214,10 @@ export async function GET() {
         postsUsed: usage.posts_created,
 
         postsLimit: plan.monthlyPosts,
+
+        aiImagesGenerated: usage.ai_images_generated,
+
+        aiImagesLimit: plan.aiImages,
 
         published: usage.posts_published,
 

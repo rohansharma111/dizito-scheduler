@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+
 import { MediaItem } from "@/types/media";
+
 import UploadButton from "@/components/media/UploadButton";
+import AIGenerateModal from "@/components/media/AIGenerateModal";
 
 interface MediaPickerModalProps {
   open: boolean;
@@ -17,9 +20,12 @@ export default function MediaPickerModal({
   onSelect,
 }: MediaPickerModalProps) {
   const [media, setMedia] = useState<MediaItem[]>([]);
+
   const [loading, setLoading] = useState(false);
 
-  const fetchMedia = async () => {
+  const [showAIModal, setShowAIModal] = useState(false);
+
+  async function fetchMedia() {
     try {
       setLoading(true);
 
@@ -37,7 +43,7 @@ export default function MediaPickerModal({
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -45,75 +51,130 @@ export default function MediaPickerModal({
     fetchMedia();
   }, [open]);
 
-  const handleUploadSuccess = async () => {
+  async function handleUploadSuccess() {
     await fetchMedia();
-  };
+  }
 
-  if (!open) return null;
+  async function handleAIGenerated(media: MediaItem) {
+    await fetchMedia();
+
+    onSelect(media);
+
+    onClose();
+  }
+
+  if (!open) {
+    return null;
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-      <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-        {/* Header */}
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+        <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+          {/* Header */}
 
-        <div className="flex items-center justify-between border-b p-5">
-          <h2 className="text-xl font-semibold">Select Media</h2>
+          <div className="flex items-center justify-between border-b p-5">
+            <h2 className="text-xl font-semibold">Select Media</h2>
 
-          <UploadButton onUploadSuccess={handleUploadSuccess} />
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-3 py-2 hover:bg-gray-100"
-          >
-            Close
-          </button>
-        </div>
+            <div className="flex items-center gap-3">
+              <UploadButton onUploadSuccess={handleUploadSuccess} />
 
-        {/* Body */}
+              <button
+                onClick={() => setShowAIModal(true)}
+                className="
+                  rounded-lg
+                  bg-purple-600
+                  px-4
+                  py-2
+                  text-white
+                  hover:bg-purple-700
+                "
+              >
+                ✨ Generate AI
+              </button>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="flex h-full items-center justify-center">
-              Loading media...
+              <button
+                onClick={onClose}
+                className="
+                  rounded-lg
+                  border
+                  px-4
+                  py-2
+                  hover:bg-gray-100
+                "
+              >
+                Close
+              </button>
             </div>
-          ) : media.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-gray-500">
-              No media found.
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {media.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onSelect(item);
-                    onClose();
-                  }}
-                  className="overflow-hidden rounded-lg border transition hover:border-blue-500 hover:shadow"
-                >
-                  <div className="relative aspect-square">
-                    {item.resource_type === "image" ? (
-                      <Image
-                        src={item.secure_url}
-                        alt={item.file_name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-500">
-                        Video
-                      </div>
-                    )}
-                  </div>
+          </div>
 
-                  <div className="truncate border-t p-2 text-sm">
-                    {item.file_name}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Body */}
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="flex h-full items-center justify-center">
+                Loading media...
+              </div>
+            ) : media.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-4 text-gray-500">
+                <p>No media found.</p>
+
+                <p className="text-sm">
+                  Upload an image or generate one with AI.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {media.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onSelect(item);
+
+                      onClose();
+                    }}
+                    className="
+                      overflow-hidden
+                      rounded-lg
+                      border
+                      transition
+                      hover:border-blue-500
+                      hover:shadow
+                    "
+                  >
+                    <div className="relative aspect-square">
+                      {item.resource_type === "image" ? (
+                        <Image
+                          src={item.secure_url}
+                          alt={item.file_name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={item.secure_url}
+                          className="h-full w-full object-cover"
+                          muted
+                        />
+                      )}
+                    </div>
+
+                    <div className="truncate border-t p-2 text-sm">
+                      {item.file_name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <AIGenerateModal
+        open={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onGenerated={handleAIGenerated}
+      />
+    </>
   );
 }

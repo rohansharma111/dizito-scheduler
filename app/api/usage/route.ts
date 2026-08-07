@@ -23,15 +23,16 @@ export async function GET() {
     /*
       User + Plan
     */
+
     const userResult = await pool.query(
       `
-        SELECT
-          id,
-          email,
-          plan
-        FROM users
-        WHERE id = $1
-        `,
+      SELECT
+        id,
+        email,
+        plan
+      FROM users
+      WHERE id = $1
+      `,
       [userId],
     );
 
@@ -51,22 +52,24 @@ export async function GET() {
     const plan = getPlan(user.plan);
 
     /*
-      Connected accounts
+      Connected Accounts
     */
+
     const accountsResult = await pool.query(
       `
-        SELECT COUNT(*)
-        FROM social_accounts
-        WHERE user_id = $1
-        `,
+      SELECT COUNT(*)
+      FROM social_accounts
+      WHERE user_id = $1
+      `,
       [userId],
     );
 
     const accountsUsed = Number(accountsResult.rows[0].count);
 
     /*
-      Current month usage
+      Current Month Usage
     */
+
     const now = new Date();
 
     const month = now.getMonth() + 1;
@@ -75,26 +78,29 @@ export async function GET() {
 
     const usageResult = await pool.query(
       `
-        SELECT
-          posts_created,
-          posts_published
-        FROM user_usage
-        WHERE
-          user_id = $1
-          AND month = $2
-          AND year = $3
-        `,
+      SELECT
+        posts_created,
+        posts_published,
+        ai_images_generated
+      FROM user_usage
+      WHERE
+        user_id = $1
+        AND month = $2
+        AND year = $3
+      `,
       [userId, month, year],
     );
 
     const usage = usageResult.rows[0] || {
       posts_created: 0,
       posts_published: 0,
+      ai_images_generated: 0,
     };
 
     /*
-      Return dashboard data
+      Dashboard Response
     */
+
     return Response.json({
       plan: {
         id: user.plan,
@@ -111,11 +117,24 @@ export async function GET() {
       posts: {
         created: usage.posts_created,
         published: usage.posts_published,
+
         limit: plan.monthlyPosts,
+
         remaining:
           plan.monthlyPosts === Number.MAX_SAFE_INTEGER
             ? null
             : Math.max(0, plan.monthlyPosts - usage.posts_created),
+      },
+
+      ai: {
+        imagesGenerated: usage.ai_images_generated,
+
+        imageLimit: plan.aiImages,
+
+        remaining:
+          plan.aiImages === Number.MAX_SAFE_INTEGER
+            ? null
+            : Math.max(0, plan.aiImages - usage.ai_images_generated),
       },
 
       features: {

@@ -9,6 +9,8 @@ export interface Plan {
 
   monthlyPosts: number;
 
+  aiImages: number;
+
   bulkUpload: boolean;
 
   retrySystem: boolean;
@@ -42,6 +44,8 @@ export const plans: Record<PlanName, Plan> = {
 
     monthlyPosts: 50,
 
+    aiImages:5,
+
     bulkUpload: false,
 
     retrySystem: false,
@@ -74,6 +78,8 @@ export const plans: Record<PlanName, Plan> = {
 
     monthlyPosts: 500,
 
+    aiImages: 100,
+
     bulkUpload: true,
 
     retrySystem: true,
@@ -105,6 +111,8 @@ export const plans: Record<PlanName, Plan> = {
     accounts: 50,
 
     monthlyPosts: Number.MAX_SAFE_INTEGER,
+
+    aiImages: 1000,
 
     bulkUpload: true,
 
@@ -142,6 +150,12 @@ export function canCreatePost(plan: string, currentPosts: number) {
   const p = getPlan(plan);
 
   return currentPosts < p.monthlyPosts;
+}
+
+export function canGenerateAIImage(plan: string, currentImages: number) {
+  const p = getPlan(plan);
+
+  return currentImages < p.aiImages;
 }
 
 export function canConnectAccount(plan: string, currentAccounts: number) {
