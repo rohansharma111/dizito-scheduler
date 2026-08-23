@@ -1,6 +1,8 @@
 import { pool } from "@/lib/db";
 import GoogleProvider from "next-auth/providers/google";
 
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
 export const authOptions = {
   providers: [
     GoogleProvider({
