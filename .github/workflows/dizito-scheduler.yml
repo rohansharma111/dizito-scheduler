@@ -16,4 +16,4 @@ jobs:
           curl --fail-with-body \
             -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://dizito.in/api/cron/publish
+            https://www.dizito.in/api/cron/publish
