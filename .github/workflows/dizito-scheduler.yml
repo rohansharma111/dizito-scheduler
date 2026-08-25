@@ -1,0 +1,19 @@
+name: Dizito Scheduler
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  scheduler:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Dizito scheduler
+        run: |
+          curl --fail-with-body \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://dizito.in/api/cron/publish
