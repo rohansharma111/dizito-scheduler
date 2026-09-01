@@ -20,6 +20,9 @@ import {
   Activity,
   BarChart3,
   CreditCard,
+  Package,
+  Warehouse,
+  ShoppingBag,
 } from "lucide-react";
 
 type SidebarSection = {
@@ -113,6 +116,30 @@ export default function SidebarClient({
           href: "/accounts",
           label: "Accounts",
           icon: Link2,
+        },
+      ],
+    },
+
+    {
+      title: "COMMERCE",
+
+      items: [
+        {
+          href: "/products",
+          label: "Products",
+          icon: Package,
+        },
+
+        {
+          href: "/inventory",
+          label: "Inventory",
+          icon: Warehouse,
+        },
+
+        {
+          href: "/orders",
+          label: "Orders",
+          icon: ShoppingBag,
         },
       ],
     },
