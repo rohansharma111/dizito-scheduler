@@ -1,0 +1,273 @@
+"use client";
+
+import { useState } from "react";
+
+import VariantModal from "./VariantModal";
+import DeleteVariantDialog from "./DeleteVariantDialog";
+
+interface Variant {
+  id: number;
+  product_id: number;
+  name?: string | null;
+  sku: string;
+  barcode?: string | null;
+  price?: number | null;
+  mrp?: number | null;
+  cost_price?: number | null;
+  weight?: number | null;
+  status: string;
+}
+
+interface ProductVariantsProps {
+  productId: number;
+  initialVariants: Variant[];
+}
+
+function formatMoney(value?: number | null) {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+
+  return `₹${(Number(value) / 100).toFixed(2)}`;
+}
+
+export default function ProductVariants({
+  productId,
+  initialVariants,
+}: ProductVariantsProps) {
+  const [variants, setVariants] = useState<Variant[]>(initialVariants);
+
+  const [showModal, setShowModal] = useState(false);
+
+  const [editingVariant, setEditingVariant] = useState<Variant | null>(null);
+
+  const [deletingVariant, setDeletingVariant] = useState<Variant | null>(null);
+
+  const [loading, setLoading] = useState(false);
+
+  async function refreshVariants() {
+    try {
+      setLoading(true);
+
+      const response = await fetch(`/api/products/${productId}/variants`, {
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setVariants(data.variants ?? []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openAdd() {
+    setEditingVariant(null);
+    setShowModal(true);
+  }
+
+  function openEdit(variant: Variant) {
+    setEditingVariant(variant);
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setEditingVariant(null);
+  }
+
+  async function handleSaved() {
+    closeModal();
+    await refreshVariants();
+  }
+
+  async function handleDeleted() {
+    setDeletingVariant(null);
+    await refreshVariants();
+  }
+
+  return (
+    <>
+      <section className="bg-white border rounded-xl overflow-hidden">
+        <div className="p-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Variants</h2>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Manage the sellable versions of this product.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={openAdd}
+            className="
+              bg-blue-600
+              text-white
+              px-4
+              py-2.5
+              rounded-lg
+              text-sm
+              font-medium
+              hover:bg-blue-700
+            "
+          >
+            + Add Variant
+          </button>
+        </div>
+
+        {variants.length === 0 ? (
+          <div className="border-t py-12 text-center">
+            <p className="font-medium">No variants yet</p>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Add a variant such as size, color or pack.
+            </p>
+
+            <button
+              type="button"
+              onClick={openAdd}
+              className="
+                mt-5
+                text-blue-600
+                font-medium
+                hover:underline
+              "
+            >
+              Add your first variant
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-t border-b bg-gray-50">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
+                    Variant
+                  </th>
+
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
+                    SKU
+                  </th>
+
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
+                    Price
+                  </th>
+
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
+                    MRP
+                  </th>
+
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
+                    Status
+                  </th>
+
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {variants.map((variant) => (
+                  <tr key={variant.id} className="border-b last:border-b-0">
+                    <td className="px-6 py-4 font-medium">
+                      {variant.name || "Default"}
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-600">{variant.sku}</td>
+
+                    <td className="px-6 py-4">{formatMoney(variant.price)}</td>
+
+                    <td className="px-6 py-4 text-gray-600">
+                      {formatMoney(variant.mrp)}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`
+                          inline-flex
+                          px-2.5
+                          py-1
+                          rounded-full
+                          text-xs
+                          font-medium
+                          ${
+                            variant.status === "active"
+                              ? "bg-green-100 text-green-700"
+                              : variant.status === "archived"
+                                ? "bg-gray-100 text-gray-600"
+                                : "bg-yellow-100 text-yellow-700"
+                          }
+                        `}
+                      >
+                        {variant.status}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(variant)}
+                          className="
+                            text-sm
+                            font-medium
+                            text-blue-600
+                            hover:underline
+                          "
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setDeletingVariant(variant)}
+                          className="
+                            text-sm
+                            font-medium
+                            text-red-600
+                            hover:underline
+                          "
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {loading && (
+          <div className="px-6 py-3 border-t text-sm text-gray-500">
+            Updating variants...
+          </div>
+        )}
+      </section>
+
+      {showModal && (
+        <VariantModal
+          productId={productId}
+          variant={editingVariant}
+          onClose={closeModal}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {deletingVariant && (
+        <DeleteVariantDialog
+          productId={productId}
+          variantId={deletingVariant.id}
+          variantName={deletingVariant.name}
+          onClose={() => setDeletingVariant(null)}
+          onDeleted={handleDeleted}
+        />
+      )}
+    </>
+  );
+}

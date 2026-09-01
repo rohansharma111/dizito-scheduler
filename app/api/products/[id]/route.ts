@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import {
   deleteProduct,
   getProductById,
+  getProductDetails,
   updateProduct,
 } from "@/lib/commerce/products/service";
 
@@ -44,7 +45,7 @@ export async function GET(request: Request, { params }: Params) {
       );
     }
 
-    const product = await getProductById(id, userId);
+    const product = await getProductDetails(id, userId);
 
     if (!product) {
       return NextResponse.json(

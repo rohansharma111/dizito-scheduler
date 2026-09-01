@@ -37,6 +37,76 @@ export async function getProducts(userId: number) {
   return result.rows;
 }
 
+export async function getProductDetails(productId: string, userId: number) {
+  const product = await getProductById(productId, userId);
+
+  if (!product) {
+    return null;
+  }
+
+  const variantsResult = await pool.query(
+    `
+    SELECT
+      id,
+      product_id,
+      name,
+      sku,
+      barcode,
+      price,
+      mrp,
+      cost_price,
+      weight,
+      status,
+      created_at,
+      updated_at
+    FROM product_variants
+    WHERE product_id = $1
+    ORDER BY created_at ASC
+    `,
+    [productId],
+  );
+
+  const mediaResult = await pool.query(
+    `
+    SELECT
+      pm.id,
+      pm.media_id,
+      pm.sort_order,
+      pm.is_primary,
+
+      ml.original_name,
+      ml.file_name,
+      ml.secure_url,
+      ml.format,
+      ml.mime_type,
+      ml.width,
+      ml.height,
+      ml.resource_type
+
+    FROM product_media pm
+
+    INNER JOIN media_library ml
+      ON ml.id = pm.media_id
+
+    WHERE pm.product_id = $1
+      AND ml.deleted_at IS NULL
+
+    ORDER BY
+      pm.sort_order ASC,
+      pm.created_at ASC
+    `,
+    [productId],
+  );
+
+  return {
+    ...product,
+
+    variants: variantsResult.rows,
+
+    media: mediaResult.rows,
+  };
+}
+
 export async function getProductById(productId: string, userId: number) {
   const result = await pool.query(
     `
