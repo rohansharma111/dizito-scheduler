@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import AddStockModal from "./AddStockModal";
 import RemoveStockModal from "./RemoveStockModal";
 import AdjustStockModal from "./AdjustStockModal";
+import ReserveStockModal from "./ReserveStockModal";
+import ReleaseStockModal from "./ReleaseStockModal";
+import InventoryActionsMenu from "./InventoryActionsMenu";
 
 interface InventoryItem {
   id: number;
@@ -94,6 +97,12 @@ export default function InventoryClient({
   const [adjustStockItem, setAdjustStockItem] = useState<InventoryItem | null>(
     null,
   );
+
+  const [reserveStockItem, setReserveStockItem] =
+    useState<InventoryItem | null>(null);
+
+  const [releaseStockItem, setReleaseStockItem] =
+    useState<InventoryItem | null>(null);
 
   const [variants, setVariants] = useState<InventoryVariant[]>([]);
 
@@ -327,23 +336,13 @@ export default function InventoryClient({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setRemoveStockItem(item)}
-                          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Remove
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setAdjustStockItem(item)}
-                          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Adjust
-                        </button>
-                      </div>
+                      <InventoryActionsMenu
+                        item={item}
+                        onRemove={() => setRemoveStockItem(item)}
+                        onAdjust={() => setAdjustStockItem(item)}
+                        onReserve={() => setReserveStockItem(item)}
+                        onRelease={() => setReleaseStockItem(item)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -369,6 +368,26 @@ export default function InventoryClient({
           onClose={() => setAdjustStockItem(null)}
           onSuccess={() => {
             setAdjustStockItem(null);
+            window.location.reload();
+          }}
+        />
+      )}
+      {reserveStockItem && (
+        <ReserveStockModal
+          item={reserveStockItem}
+          onClose={() => setReserveStockItem(null)}
+          onSuccess={() => {
+            setReserveStockItem(null);
+            window.location.reload();
+          }}
+        />
+      )}
+      {releaseStockItem && (
+        <ReleaseStockModal
+          item={releaseStockItem}
+          onClose={() => setReleaseStockItem(null)}
+          onSuccess={() => {
+            setReleaseStockItem(null);
             window.location.reload();
           }}
         />
