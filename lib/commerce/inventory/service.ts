@@ -150,6 +150,35 @@ export async function getInventory(
   return result.rows;
 }
 
+export async function getInventoryVariants(userId: number) {
+  const result = await pool.query(
+    `
+    SELECT
+      pv.id AS variant_id,
+      pv.name AS variant_name,
+      pv.sku,
+      p.id AS product_id,
+      p.name AS product_name
+
+    FROM product_variants pv
+
+    INNER JOIN products p
+      ON p.id = pv.product_id
+
+    WHERE p.user_id = $1
+      AND pv.status != 'archived'
+      AND p.status != 'archived'
+
+    ORDER BY
+      p.name ASC,
+      pv.name ASC
+    `,
+    [userId],
+  );
+
+  return result.rows;
+}
+
 export async function addStock(
   userId: number,
   input: {
@@ -243,36 +272,56 @@ export async function addStock(
       [userId, input.locationId, input.variantId],
     );
 
+    const balanceResult = await client.query(
+      `
+    SELECT
+      id,
+      location_id,
+      variant_id,
+      quantity_on_hand,
+      quantity_reserved,
+      created_at,
+      updated_at
+    FROM inventory_balances
+    WHERE location_id = $1
+      AND variant_id = $2
+      AND user_id = $3
+    FOR UPDATE
+    `,
+      [input.locationId, input.variantId, userId],
+    );
+
+    if (balanceResult.rows.length === 0) {
+      throw new Error("Inventory balance not found.");
+    }
+
+    const currentBalance = balanceResult.rows[0];
+
     /*
       Update balance.
     */
 
-    const balanceResult = await client.query(
+    const updatedBalanceResult = await client.query(
       `
-        UPDATE inventory_balances
-
-        SET
-          quantity_on_hand =
-            quantity_on_hand + $1,
-
-          updated_at = NOW()
-
-        WHERE location_id = $2
-          AND variant_id = $3
-          AND user_id = $4
-
-        RETURNING
-          id,
-          location_id,
-          variant_id,
-          quantity_on_hand,
-          quantity_reserved,
-          updated_at
-        `,
-      [quantity, input.locationId, input.variantId, userId],
+    UPDATE inventory_balances
+    SET
+      quantity_on_hand =
+        quantity_on_hand + $1,
+      updated_at = NOW()
+    WHERE id = $2
+    RETURNING
+      id,
+      location_id,
+      variant_id,
+      quantity_on_hand,
+      quantity_reserved,
+      created_at,
+      updated_at
+    `,
+      [quantity, currentBalance.id],
     );
 
-    if (balanceResult.rows.length === 0) {
+    if (updatedBalanceResult.rows.length === 0) {
       throw new Error("Failed to update inventory.");
     }
 
@@ -323,6 +372,149 @@ export async function addStock(
     return {
       balance: balanceResult.rows[0],
       movement: movementResult.rows[0],
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function removeStock(
+  userId: number,
+  input: {
+    locationId: number;
+    variantId: number;
+    quantity: number;
+    reason?: string;
+    note?: string;
+  }
+) {
+  const { locationId, variantId, quantity, reason, note } = input;
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error("Quantity must be a positive integer");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Verify location belongs to this user and is active
+    const locationResult = await client.query(
+      `
+      SELECT id
+      FROM inventory_locations
+      WHERE id = $1
+        AND user_id = $2
+        AND status = 'active'
+      `,
+      [locationId, userId]
+    );
+
+    if (locationResult.rowCount === 0) {
+      throw new Error("Inventory location not found");
+    }
+
+    // Verify variant belongs to this user
+    const variantResult = await client.query(
+      `
+      SELECT pv.id
+      FROM product_variants pv
+      INNER JOIN products p
+        ON p.id = pv.product_id
+      WHERE pv.id = $1
+        AND p.user_id = $2
+        AND pv.status != 'archived'
+        AND p.status != 'archived'
+      `,
+      [variantId, userId]
+    );
+
+    if (variantResult.rowCount === 0) {
+      throw new Error("Product variant not found");
+    }
+
+    // Lock the balance row before checking/updating stock.
+    const balanceResult = await client.query(
+      `
+      SELECT
+        id,
+        quantity_on_hand,
+        quantity_reserved
+      FROM inventory_balances
+      WHERE location_id = $1
+        AND variant_id = $2
+        AND user_id = $3
+      FOR UPDATE
+      `,
+      [locationId, variantId, userId]
+    );
+
+    if (balanceResult.rowCount === 0) {
+      throw new Error("No inventory exists for this variant at this location");
+    }
+
+    const balance = balanceResult.rows[0];
+
+    const available =
+      Number(balance.quantity_on_hand) -
+      Number(balance.quantity_reserved);
+
+    if (quantity > available) {
+      throw new Error(
+        `Insufficient available stock. Available: ${available}`
+      );
+    }
+
+    // Remove physical stock.
+    await client.query(
+      `
+      UPDATE inventory_balances
+      SET
+        quantity_on_hand = quantity_on_hand - $1,
+        updated_at = NOW()
+      WHERE id = $2
+      `,
+      [quantity, balance.id]
+    );
+
+    // Record the stock movement.
+    await client.query(
+      `
+      INSERT INTO inventory_movements (
+        user_id,
+        location_id,
+        variant_id,
+        movement_type,
+        quantity,
+        reference_type,
+        reference_id,
+        note
+      )
+      VALUES ($1, $2, $3, 'out', $4, $5, $6, $7)
+      `,
+      [
+        userId,
+        locationId,
+        variantId,
+        -quantity,
+        "manual",
+        null,
+        reason ? `${reason}${note ? ` - ${note}` : ""}` : note || null,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      success: true,
+      quantityRemoved: quantity,
+      quantityOnHand: Number(balance.quantity_on_hand) - quantity,
+      quantityReserved: Number(balance.quantity_reserved),
+      quantityAvailable: available - quantity,
     };
   } catch (error) {
     await client.query("ROLLBACK");

@@ -1,0 +1,335 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import AddStockModal from "./AddStockModal";
+
+interface InventoryItem {
+  id: number;
+
+  location_id: number;
+  location_name: string;
+
+  variant_id: number;
+
+  variant_name: string | null;
+  sku: string;
+
+  product_id: number;
+  product_name: string;
+
+  quantity_on_hand: number;
+  quantity_reserved: number;
+  quantity_available: number;
+}
+
+interface Location {
+  id: number;
+  name: string;
+  type: string;
+  status: string;
+}
+
+interface InventoryClientProps {
+  initialInventory: InventoryItem[];
+  locations: Location[];
+}
+
+interface InventoryVariant {
+  variant_id: number;
+  variant_name: string | null;
+  sku: string;
+  product_name: string;
+}
+
+export default function InventoryClient({
+  initialInventory,
+  locations,
+}: InventoryClientProps) {
+  const [inventory] = useState<InventoryItem[]>(initialInventory);
+
+  const [search, setSearch] = useState("");
+
+  const [locationId, setLocationId] = useState("all");
+
+  const filteredInventory = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return inventory.filter((item) => {
+      const matchesSearch =
+        !query ||
+        item.product_name.toLowerCase().includes(query) ||
+        item.sku.toLowerCase().includes(query) ||
+        (item.variant_name?.toLowerCase().includes(query) ?? false);
+
+      const matchesLocation =
+        locationId === "all" || String(item.location_id) === locationId;
+
+      return matchesSearch && matchesLocation;
+    });
+  }, [inventory, search, locationId]);
+
+  const totalOnHand = filteredInventory.reduce(
+    (sum, item) => sum + Number(item.quantity_on_hand),
+    0,
+  );
+
+  const totalReserved = filteredInventory.reduce(
+    (sum, item) => sum + Number(item.quantity_reserved),
+    0,
+  );
+
+  const totalAvailable = filteredInventory.reduce(
+    (sum, item) => sum + Number(item.quantity_available),
+    0,
+  );
+
+  const [showAddStock, setShowAddStock] = useState(false);
+
+  const [variants, setVariants] = useState<InventoryVariant[]>([]);
+
+  async function loadVariants() {
+    const response = await fetch("/api/inventory/variants", {
+      cache: "no-store",
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      setVariants(data.variants ?? []);
+    }
+  }
+
+  async function handleOpenAddStock() {
+    await loadVariants();
+    setShowAddStock(true);
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* HEADER */}
+
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Inventory</h1>
+
+          <p className="text-gray-500 mt-1">
+            Manage your stock across locations.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleOpenAddStock}
+          className="
+    bg-blue-600
+    text-white
+    px-5
+    py-2.5
+    rounded-lg
+    font-medium
+    hover:bg-blue-700
+  "
+        >
+          + Add Stock
+        </button>
+      </div>
+
+      {/* SUMMARY */}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white border rounded-xl p-5">
+          <div className="text-sm text-gray-500">On Hand</div>
+
+          <div className="text-3xl font-bold mt-2">{totalOnHand}</div>
+
+          <div className="text-xs text-gray-500 mt-1">Physical units</div>
+        </div>
+
+        <div className="bg-white border rounded-xl p-5">
+          <div className="text-sm text-gray-500">Reserved</div>
+
+          <div className="text-3xl font-bold mt-2">{totalReserved}</div>
+
+          <div className="text-xs text-gray-500 mt-1">Allocated to orders</div>
+        </div>
+
+        <div className="bg-white border rounded-xl p-5">
+          <div className="text-sm text-gray-500">Available</div>
+
+          <div className="text-3xl font-bold mt-2">{totalAvailable}</div>
+
+          <div className="text-xs text-gray-500 mt-1">Available to sell</div>
+        </div>
+      </div>
+
+      {/* FILTERS */}
+
+      <div className="bg-white border rounded-xl p-4">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1">
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search product or SKU..."
+              className="
+                w-full
+                border
+                rounded-lg
+                px-4
+                py-3
+                outline-none
+                focus:ring-2
+                focus:ring-blue-500
+              "
+            />
+          </div>
+
+          <select
+            value={locationId}
+            onChange={(event) => setLocationId(event.target.value)}
+            className="
+              border
+              rounded-lg
+              px-4
+              py-3
+              bg-white
+              min-w-[220px]
+              outline-none
+              focus:ring-2
+              focus:ring-blue-500
+            "
+          >
+            <option value="all">All locations</option>
+
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* TABLE */}
+
+      <div className="bg-white border rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
+                  Product
+                </th>
+
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
+                  SKU
+                </th>
+
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
+                  Location
+                </th>
+
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
+                  On Hand
+                </th>
+
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
+                  Reserved
+                </th>
+
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
+                  Available
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredInventory.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <div className="text-4xl mb-3">📦</div>
+
+                    <div className="font-medium">No inventory found</div>
+
+                    <div className="text-sm text-gray-500 mt-1">
+                      Try changing your search or location filter.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredInventory.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="
+                        border-b
+                        last:border-b-0
+                        hover:bg-gray-50
+                        transition
+                      "
+                  >
+                    <td className="px-6 py-4">
+                      <div className="font-medium">{item.product_name}</div>
+
+                      {item.variant_name && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          {item.variant_name}
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-600">{item.sku}</td>
+
+                    <td className="px-6 py-4 text-gray-600">
+                      {item.location_name}
+                    </td>
+
+                    <td className="px-6 py-4 text-right font-medium">
+                      {item.quantity_on_hand}
+                    </td>
+
+                    <td className="px-6 py-4 text-right text-gray-600">
+                      {item.quantity_reserved}
+                    </td>
+
+                    <td className="px-6 py-4 text-right">
+                      <span
+                        className={`
+                            inline-flex
+                            px-2.5
+                            py-1
+                            rounded-full
+                            text-sm
+                            font-medium
+                            ${
+                              item.quantity_available === 0
+                                ? "bg-red-100 text-red-700"
+                                : item.quantity_available <= 5
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-green-100 text-green-700"
+                            }
+                          `}
+                      >
+                        {item.quantity_available}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showAddStock && (
+        <AddStockModal
+          variants={variants}
+          locations={locations}
+          onClose={() => setShowAddStock(false)}
+          onSaved={() => {
+            setShowAddStock(false);
+            window.location.reload();
+          }}
+        />
+      )}
+    </div>
+  );
+}
