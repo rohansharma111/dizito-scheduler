@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import AddStockModal from "./AddStockModal";
 import RemoveStockModal from "./RemoveStockModal";
+import AdjustStockModal from "./AdjustStockModal";
 
 interface InventoryItem {
   id: number;
@@ -87,6 +88,10 @@ export default function InventoryClient({
   const [showAddStock, setShowAddStock] = useState(false);
 
   const [removeStockItem, setRemoveStockItem] = useState<InventoryItem | null>(
+    null,
+  );
+
+  const [adjustStockItem, setAdjustStockItem] = useState<InventoryItem | null>(
     null,
   );
 
@@ -322,13 +327,23 @@ export default function InventoryClient({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => setRemoveStockItem(item)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        Actions
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setRemoveStockItem(item)}
+                          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Remove
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setAdjustStockItem(item)}
+                          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Adjust
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -344,6 +359,16 @@ export default function InventoryClient({
           onClose={() => setRemoveStockItem(null)}
           onSuccess={() => {
             setRemoveStockItem(null);
+            window.location.reload();
+          }}
+        />
+      )}
+      {adjustStockItem && (
+        <AdjustStockModal
+          item={adjustStockItem}
+          onClose={() => setAdjustStockItem(null)}
+          onSuccess={() => {
+            setAdjustStockItem(null);
             window.location.reload();
           }}
         />
