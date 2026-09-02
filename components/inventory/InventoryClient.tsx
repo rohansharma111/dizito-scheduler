@@ -7,6 +7,7 @@ import AdjustStockModal from "./AdjustStockModal";
 import ReserveStockModal from "./ReserveStockModal";
 import ReleaseStockModal from "./ReleaseStockModal";
 import InventoryActionsMenu from "./InventoryActionsMenu";
+import InventoryMovementHistory from "./InventoryMovementHistory";
 
 interface InventoryItem {
   id: number;
@@ -351,6 +352,9 @@ export default function InventoryClient({
           </table>
         </div>
       </div>
+
+      <InventoryMovementHistory locationId={locationId} />
+
       {removeStockItem && (
         <RemoveStockModal
           item={removeStockItem}
