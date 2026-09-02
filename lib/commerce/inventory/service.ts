@@ -389,7 +389,7 @@ export async function removeStock(
     quantity: number;
     reason?: string;
     note?: string;
-  }
+  },
 ) {
   const { locationId, variantId, quantity, reason, note } = input;
 
@@ -411,7 +411,7 @@ export async function removeStock(
         AND user_id = $2
         AND status = 'active'
       `,
-      [locationId, userId]
+      [locationId, userId],
     );
 
     if (locationResult.rowCount === 0) {
@@ -430,7 +430,7 @@ export async function removeStock(
         AND pv.status != 'archived'
         AND p.status != 'archived'
       `,
-      [variantId, userId]
+      [variantId, userId],
     );
 
     if (variantResult.rowCount === 0) {
@@ -450,7 +450,7 @@ export async function removeStock(
         AND user_id = $3
       FOR UPDATE
       `,
-      [locationId, variantId, userId]
+      [locationId, variantId, userId],
     );
 
     if (balanceResult.rowCount === 0) {
@@ -460,13 +460,10 @@ export async function removeStock(
     const balance = balanceResult.rows[0];
 
     const available =
-      Number(balance.quantity_on_hand) -
-      Number(balance.quantity_reserved);
+      Number(balance.quantity_on_hand) - Number(balance.quantity_reserved);
 
     if (quantity > available) {
-      throw new Error(
-        `Insufficient available stock. Available: ${available}`
-      );
+      throw new Error(`Insufficient available stock. Available: ${available}`);
     }
 
     // Remove physical stock.
@@ -478,7 +475,7 @@ export async function removeStock(
         updated_at = NOW()
       WHERE id = $2
       `,
-      [quantity, balance.id]
+      [quantity, balance.id],
     );
 
     // Record the stock movement.
@@ -504,7 +501,7 @@ export async function removeStock(
         "manual",
         null,
         reason ? `${reason}${note ? ` - ${note}` : ""}` : note || null,
-      ]
+      ],
     );
 
     await client.query("COMMIT");
@@ -515,6 +512,458 @@ export async function removeStock(
       quantityOnHand: Number(balance.quantity_on_hand) - quantity,
       quantityReserved: Number(balance.quantity_reserved),
       quantityAvailable: available - quantity,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function adjustStock(
+  userId: number,
+  input: {
+    locationId: number;
+    variantId: number;
+    quantityOnHand: number;
+    reason?: string;
+    note?: string;
+  },
+) {
+  const { locationId, variantId, quantityOnHand, reason, note } = input;
+
+  if (!Number.isInteger(quantityOnHand) || quantityOnHand < 0) {
+    throw new Error("Quantity on hand must be a non-negative integer");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Verify location belongs to this user and is active
+    const locationResult = await client.query(
+      `
+      SELECT id
+      FROM inventory_locations
+      WHERE id = $1
+        AND user_id = $2
+        AND status = 'active'
+      `,
+      [locationId, userId],
+    );
+
+    if (locationResult.rowCount === 0) {
+      throw new Error("Inventory location not found");
+    }
+
+    // Verify variant belongs to this user
+    const variantResult = await client.query(
+      `
+      SELECT pv.id
+      FROM product_variants pv
+      INNER JOIN products p
+        ON p.id = pv.product_id
+      WHERE pv.id = $1
+        AND p.user_id = $2
+        AND pv.status != 'archived'
+        AND p.status != 'archived'
+      `,
+      [variantId, userId],
+    );
+
+    if (variantResult.rowCount === 0) {
+      throw new Error("Product variant not found");
+    }
+
+    // Lock the inventory balance row
+    const balanceResult = await client.query(
+      `
+      SELECT
+        id,
+        quantity_on_hand,
+        quantity_reserved
+      FROM inventory_balances
+      WHERE location_id = $1
+        AND variant_id = $2
+        AND user_id = $3
+      FOR UPDATE
+      `,
+      [locationId, variantId, userId],
+    );
+
+    if (balanceResult.rowCount === 0) {
+      throw new Error("No inventory exists for this variant at this location");
+    }
+
+    const balance = balanceResult.rows[0];
+
+    const currentOnHand = Number(balance.quantity_on_hand);
+    const currentReserved = Number(balance.quantity_reserved);
+
+    // You cannot adjust physical stock below what is currently reserved.
+    if (quantityOnHand < currentReserved) {
+      throw new Error(
+        `Cannot set stock below reserved quantity. Reserved: ${currentReserved}`,
+      );
+    }
+
+    const difference = quantityOnHand - currentOnHand;
+
+    // Nothing changed
+    if (difference === 0) {
+      await client.query("COMMIT");
+
+      return {
+        success: true,
+        quantityAdjusted: 0,
+        quantityOnHand: currentOnHand,
+        quantityReserved: currentReserved,
+        quantityAvailable: currentOnHand - currentReserved,
+      };
+    }
+
+    // Update physical stock
+    await client.query(
+      `
+      UPDATE inventory_balances
+      SET
+        quantity_on_hand = $1,
+        updated_at = NOW()
+      WHERE id = $2
+      `,
+      [quantityOnHand, balance.id],
+    );
+
+    // Record adjustment in movement ledger
+    await client.query(
+      `
+      INSERT INTO inventory_movements (
+        user_id,
+        location_id,
+        variant_id,
+        movement_type,
+        quantity,
+        reference_type,
+        reference_id,
+        note
+      )
+      VALUES ($1, $2, $3, 'adjustment', $4, $5, $6, $7)
+      `,
+      [
+        userId,
+        locationId,
+        variantId,
+        difference,
+        "manual",
+        null,
+        reason ? `${reason}${note ? ` - ${note}` : ""}` : note || null,
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      success: true,
+      quantityAdjusted: difference,
+      quantityOnHand,
+      quantityReserved: currentReserved,
+      quantityAvailable: quantityOnHand - currentReserved,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function reserveStock(
+  userId: number,
+  input: {
+    locationId: number;
+    variantId: number;
+    quantity: number;
+    referenceType?: string;
+    referenceId?: number;
+    note?: string;
+  },
+) {
+  const { locationId, variantId, quantity, referenceType, referenceId, note } =
+    input;
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error("Quantity must be a positive integer");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Verify location belongs to this user and is active
+    const locationResult = await client.query(
+      `
+      SELECT id
+      FROM inventory_locations
+      WHERE id = $1
+        AND user_id = $2
+        AND status = 'active'
+      `,
+      [locationId, userId],
+    );
+
+    if (locationResult.rowCount === 0) {
+      throw new Error("Inventory location not found");
+    }
+
+    // Verify variant belongs to this user
+    const variantResult = await client.query(
+      `
+      SELECT pv.id
+      FROM product_variants pv
+      INNER JOIN products p
+        ON p.id = pv.product_id
+      WHERE pv.id = $1
+        AND p.user_id = $2
+        AND pv.status != 'archived'
+        AND p.status != 'archived'
+      `,
+      [variantId, userId],
+    );
+
+    if (variantResult.rowCount === 0) {
+      throw new Error("Product variant not found");
+    }
+
+    // Lock inventory balance before checking availability
+    const balanceResult = await client.query(
+      `
+      SELECT
+        id,
+        quantity_on_hand,
+        quantity_reserved
+      FROM inventory_balances
+      WHERE location_id = $1
+        AND variant_id = $2
+        AND user_id = $3
+      FOR UPDATE
+      `,
+      [locationId, variantId, userId],
+    );
+
+    if (balanceResult.rowCount === 0) {
+      throw new Error("No inventory exists for this variant at this location");
+    }
+
+    const balance = balanceResult.rows[0];
+
+    const quantityOnHand = Number(balance.quantity_on_hand);
+    const quantityReserved = Number(balance.quantity_reserved);
+
+    const quantityAvailable = quantityOnHand - quantityReserved;
+
+    if (quantity > quantityAvailable) {
+      throw new Error(
+        `Insufficient available stock. Available: ${quantityAvailable}`,
+      );
+    }
+
+    const newReserved = quantityReserved + quantity;
+
+    // Reserve stock
+    await client.query(
+      `
+      UPDATE inventory_balances
+      SET
+        quantity_reserved = $1,
+        updated_at = NOW()
+      WHERE id = $2
+      `,
+      [newReserved, balance.id],
+    );
+
+    // Record reservation in movement ledger
+    await client.query(
+      `
+      INSERT INTO inventory_movements (
+        user_id,
+        location_id,
+        variant_id,
+        movement_type,
+        quantity,
+        reference_type,
+        reference_id,
+        note
+      )
+      VALUES ($1, $2, $3, 'reserve', $4, $5, $6, $7)
+      `,
+      [
+        userId,
+        locationId,
+        variantId,
+        quantity,
+        referenceType || "manual",
+        referenceId || null,
+        note || null,
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      success: true,
+      quantityReserved: quantity,
+      quantityOnHand,
+      quantityReservedTotal: newReserved,
+      quantityAvailable: quantityOnHand - newReserved,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function releaseStock(
+  userId: number,
+  input: {
+    locationId: number;
+    variantId: number;
+    quantity: number;
+    referenceType?: string;
+    referenceId?: number;
+    note?: string;
+  },
+) {
+  const { locationId, variantId, quantity, referenceType, referenceId, note } =
+    input;
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error("Quantity must be a positive integer");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Verify location belongs to this user and is active
+    const locationResult = await client.query(
+      `
+      SELECT id
+      FROM inventory_locations
+      WHERE id = $1
+        AND user_id = $2
+        AND status = 'active'
+      `,
+      [locationId, userId],
+    );
+
+    if (locationResult.rowCount === 0) {
+      throw new Error("Inventory location not found");
+    }
+
+    // Verify variant belongs to this user
+    const variantResult = await client.query(
+      `
+      SELECT pv.id
+      FROM product_variants pv
+      INNER JOIN products p
+        ON p.id = pv.product_id
+      WHERE pv.id = $1
+        AND p.user_id = $2
+        AND pv.status != 'archived'
+        AND p.status != 'archived'
+      `,
+      [variantId, userId],
+    );
+
+    if (variantResult.rowCount === 0) {
+      throw new Error("Product variant not found");
+    }
+
+    // Lock inventory balance before checking reservation
+    const balanceResult = await client.query(
+      `
+      SELECT
+        id,
+        quantity_on_hand,
+        quantity_reserved
+      FROM inventory_balances
+      WHERE location_id = $1
+        AND variant_id = $2
+        AND user_id = $3
+      FOR UPDATE
+      `,
+      [locationId, variantId, userId],
+    );
+
+    if (balanceResult.rowCount === 0) {
+      throw new Error("No inventory exists for this variant at this location");
+    }
+
+    const balance = balanceResult.rows[0];
+
+    const quantityOnHand = Number(balance.quantity_on_hand);
+    const quantityReserved = Number(balance.quantity_reserved);
+
+    if (quantity > quantityReserved) {
+      throw new Error(
+        `Cannot release more than reserved stock. Reserved: ${quantityReserved}`,
+      );
+    }
+
+    const newReserved = quantityReserved - quantity;
+
+    // Release reservation
+    await client.query(
+      `
+      UPDATE inventory_balances
+      SET
+        quantity_reserved = $1,
+        updated_at = NOW()
+      WHERE id = $2
+      `,
+      [newReserved, balance.id],
+    );
+
+    // Record release in movement ledger
+    await client.query(
+      `
+      INSERT INTO inventory_movements (
+        user_id,
+        location_id,
+        variant_id,
+        movement_type,
+        quantity,
+        reference_type,
+        reference_id,
+        note
+      )
+      VALUES ($1, $2, $3, 'release', $4, $5, $6, $7)
+      `,
+      [
+        userId,
+        locationId,
+        variantId,
+        -quantity,
+        referenceType || "manual",
+        referenceId || null,
+        note || null,
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      success: true,
+      quantityReleased: quantity,
+      quantityOnHand,
+      quantityReserved: newReserved,
+      quantityAvailable: quantityOnHand - newReserved,
     };
   } catch (error) {
     await client.query("ROLLBACK");

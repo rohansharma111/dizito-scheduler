@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import AddStockModal from "./AddStockModal";
+import RemoveStockModal from "./RemoveStockModal";
 
 interface InventoryItem {
   id: number;
@@ -84,6 +85,10 @@ export default function InventoryClient({
   );
 
   const [showAddStock, setShowAddStock] = useState(false);
+
+  const [removeStockItem, setRemoveStockItem] = useState<InventoryItem | null>(
+    null,
+  );
 
   const [variants, setVariants] = useState<InventoryVariant[]>([]);
 
@@ -240,13 +245,17 @@ export default function InventoryClient({
                 <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
                   Available
                 </th>
+
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                  Actions
+                </th>
               </tr>
             </thead>
 
             <tbody>
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
+                  <td colSpan={7} className="px-6 py-16 text-center">
                     <div className="text-4xl mb-3">📦</div>
 
                     <div className="font-medium">No inventory found</div>
@@ -312,6 +321,15 @@ export default function InventoryClient({
                         {item.quantity_available}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => setRemoveStockItem(item)}
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Actions
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -319,6 +337,17 @@ export default function InventoryClient({
           </table>
         </div>
       </div>
+      {removeStockItem && (
+        <RemoveStockModal
+          item={removeStockItem}
+          locations={locations}
+          onClose={() => setRemoveStockItem(null)}
+          onSuccess={() => {
+            setRemoveStockItem(null);
+            window.location.reload();
+          }}
+        />
+      )}
       {showAddStock && (
         <AddStockModal
           variants={variants}
