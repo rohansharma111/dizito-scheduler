@@ -1,6 +1,6 @@
 import { pool } from "@/lib/db";
 import { transitionPaymentStatus } from "../state";
-import { syncPaymentRefundStatus } from "../refund-state";
+import { syncPaymentRefundStatus, markRefundFailed } from "../refund-state";
 import { updateWebhookEventStatus } from "./service";
 
 export async function processWebhookEvent(webhookEventId: number) {
@@ -107,13 +107,12 @@ export async function processWebhookEvent(webhookEventId: number) {
 
       await transitionPaymentStatus(Number(event.payment_id), "cancelled");
     } else if (event.event_type === "refund.succeeded") {
-
-    /*
-     * Process refund events.
-     *
-     * The refund record should already exist.
-     * The webhook confirms its provider-side result.
-     */
+      /*
+       * Process refund events.
+       *
+       * The refund record should already exist.
+       * The webhook confirms its provider-side result.
+       */
       if (!event.payment_id) {
         throw new Error("refund.succeeded webhook requires payment_id");
       }
@@ -128,6 +127,14 @@ export async function processWebhookEvent(webhookEventId: number) {
        * The refund record itself should be marked failed
        * by the provider-specific webhook integration.
        */
+      if (!event.refund_id) {
+        throw new Error("refund.failed webhook is missing refund_id");
+      }
+
+      await markRefundFailed(
+        event.refund_id,
+        "Refund failed according to provider webhook",
+      );
     } else {
       throw new Error(`Unsupported webhook event type: ${event.event_type}`);
     }

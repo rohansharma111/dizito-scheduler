@@ -165,3 +165,86 @@ export async function syncPaymentRefundStatus(paymentId: number) {
     client.release();
   }
 }
+
+export async function markRefundFailed(
+  refundId: number,
+  errorMessage?: string,
+) {
+  const normalizedRefundId = Number(refundId);
+
+  if (!Number.isSafeInteger(normalizedRefundId) || normalizedRefundId <= 0) {
+    throw new Error("Invalid refund ID");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const refundResult = await client.query(
+      `
+  SELECT
+    id,
+    payment_id,
+    status
+  FROM order_refunds
+  WHERE id = $1::bigint
+  FOR UPDATE
+  `,
+      [normalizedRefundId],
+    );
+
+    if ((refundResult.rowCount ?? 0) === 0) {
+      throw new Error("Refund not found");
+    }
+
+    const refund = refundResult.rows[0];
+
+    if (refund.status === "failed") {
+      await client.query("COMMIT");
+      return refund;
+    }
+
+    if (refund.status === "succeeded" || refund.status === "cancelled") {
+      throw new Error(
+        `Refund cannot be marked failed from ${refund.status} status`,
+      );
+    }
+
+    const result = await client.query(
+      `
+      UPDATE order_refunds
+      SET
+        status = 'failed',
+        reason = COALESCE($2, reason),
+        updated_at = NOW()
+      WHERE id = $1::bigint
+      RETURNING
+        id,
+        payment_id,
+        provider,
+        provider_refund_id,
+        amount,
+        currency,
+        status,
+        idempotency_key,
+        reason,
+        processed_at,
+        created_at,
+        updated_at
+      `,
+      [normalizedRefundId, errorMessage ?? null],
+    );
+
+    await client.query("COMMIT");
+
+    await syncPaymentRefundStatus(Number(refund.payment_id));
+
+    return result.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
