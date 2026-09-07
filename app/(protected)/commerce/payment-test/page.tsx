@@ -29,7 +29,7 @@ export default function PaymentTestPage() {
       /*
        * Fresh webhook-recovery test order.
        */
-      const orderId = 16;
+      const orderId = 18;
 
       const createResponse = await fetch("/api/commerce/payments/create", {
         method: "POST",
@@ -41,7 +41,7 @@ export default function PaymentTestPage() {
           amount: 1000,
           currency: "INR",
           paymentMethod: "card",
-          idempotencyKey: "razorpay-webhook-recovery-003",
+          idempotencyKey: "razorpay-webhook-duplicacy-001",
         }),
       });
 
@@ -100,7 +100,7 @@ export default function PaymentTestPage() {
       setMessage(
         error instanceof Error ? error.message : "Unable to start payment",
       );
-    } finally {
+    } finally { 
       setLoading(false);
     }
   }
@@ -115,7 +115,7 @@ export default function PaymentTestPage() {
     >
       <h1>Dizito Razorpay Webhook Test</h1>
 
-      <p>Test Commerce payment for Order #16.</p>
+      <p>Test Commerce payment for Order #18.</p>
 
       <p>Amount: ₹10.00</p>
 
