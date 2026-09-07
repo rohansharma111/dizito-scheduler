@@ -13,7 +13,7 @@ const allowedTransitions: Record<PaymentState, PaymentState[]> = {
   pending: ["authorized", "paid", "failed", "cancelled"],
   authorized: ["paid", "failed", "cancelled"],
   paid: ["partially_refunded", "refunded"],
-  failed: [],
+  failed: ["paid"],
   cancelled: [],
   refunded: [],
   partially_refunded: ["refunded"],
