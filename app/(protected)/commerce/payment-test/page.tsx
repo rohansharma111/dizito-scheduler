@@ -6,7 +6,6 @@ const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
 
 export default function PaymentTestPage() {
   const [loading, setLoading] = useState(false);
-
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -28,11 +27,9 @@ export default function PaymentTestPage() {
       setMessage("");
 
       /*
-       * We already created Order #12 and its
-       * Razorpay Order. For this first test,
-       * use the existing payment attempt.
+       * Fresh webhook-recovery test order.
        */
-      const orderId = 14;
+      const orderId = 15;
 
       const createResponse = await fetch("/api/commerce/payments/create", {
         method: "POST",
@@ -44,9 +41,9 @@ export default function PaymentTestPage() {
           amount: 1000,
           currency: "INR",
           paymentMethod: "card",
-          idempotencyKey: "razorpay-webhook-test-001",
+          idempotencyKey: "razorpay-webhook-recovery-002",
         }),
-      }); 
+      });
 
       const createData = await createResponse.json();
 
@@ -55,13 +52,8 @@ export default function PaymentTestPage() {
       }
 
       const payment = createData.payment;
-
       const razorpayOrder = createData.razorpayOrder;
 
-      /*
-       * Wait briefly if the Checkout script
-       * hasn't finished loading yet.
-       */
       if (!window.Razorpay) {
         throw new Error(
           "Razorpay Checkout is still loading. Please try again.",
@@ -76,53 +68,22 @@ export default function PaymentTestPage() {
         currency: razorpayOrder ? razorpayOrder.currency : payment.currency,
 
         name: "Dizito",
-        description: "Dizito Commerce Test Payment",
+
+        description: "Dizito Razorpay Webhook Recovery Test",
 
         order_id: payment.provider_order_id,
 
-        handler: async function (response: {
-          razorpay_payment_id: string;
-          razorpay_order_id: string;
-          razorpay_signature: string;
-        }) {
-          try {
-            setMessage("Payment received. Verifying...");
-
-            const verifyResponse = await fetch(
-              "/api/commerce/payments/razorpay/verify",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  razorpay_payment_id: response.razorpay_payment_id,
-
-                  razorpay_order_id: response.razorpay_order_id,
-
-                  razorpay_signature: response.razorpay_signature,
-                }),
-              },
-            );
-
-            const verifyData = await verifyResponse.json();
-
-            if (!verifyResponse.ok || !verifyData.success) {
-              throw new Error(
-                verifyData.error ?? "Payment verification failed",
-              );
-            }
-
-            setMessage(
-              `Payment verified successfully. Payment ID: ${verifyData.providerPaymentId}`,
-            );
-          } catch (error) {
-            setMessage(
-              error instanceof Error
-                ? error.message
-                : "Payment verification failed",
-            );
-          }
+        /*
+         * IMPORTANT:
+         *
+         * For this test we deliberately DO NOT
+         * call the Dizito verification endpoint.
+         *
+         * Razorpay's webhook must be responsible
+         * for moving the payment to paid.
+         */
+        handler: function () {
+          setMessage("Checkout completed. Waiting for Razorpay webhook...");
         },
 
         modal: {
@@ -152,11 +113,16 @@ export default function PaymentTestPage() {
         padding: 24,
       }}
     >
-      <h1>Dizito Razorpay Test</h1>
+      <h1>Dizito Razorpay Webhook Test</h1>
 
-      <p>Test Commerce payment for Order #12.</p>
+      <p>Test Commerce payment for Order #15.</p>
 
       <p>Amount: ₹10.00</p>
+
+      <p>
+        This test intentionally relies on the Razorpay webhook instead of
+        Checkout verification.
+      </p>
 
       <button
         type="button"
