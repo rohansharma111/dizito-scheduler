@@ -33,6 +33,7 @@ function getPaymentEntity(
 ): Record<string, unknown> | undefined {
   const root = getNestedObject(payload);
   const payment = getNestedObject(root?.payment);
+
   return getNestedObject(payment?.entity);
 }
 
@@ -41,12 +42,14 @@ function getRefundEntity(
 ): Record<string, unknown> | undefined {
   const root = getNestedObject(payload);
   const refund = getNestedObject(root?.refund);
+
   return getNestedObject(refund?.entity);
 }
 
 function getOrderEntity(payload: unknown): Record<string, unknown> | undefined {
   const root = getNestedObject(payload);
   const order = getNestedObject(root?.order);
+
   return getNestedObject(order?.entity);
 }
 
@@ -94,24 +97,62 @@ async function findInternalPaymentId(
 
 async function findInternalRefundId(
   providerRefundId?: string,
+  dizitoRefundId?: string,
 ): Promise<number | undefined> {
-  if (!providerRefundId) {
-    return undefined;
+  /*
+   * Primary lookup:
+   *
+   * Normally processRazorpayRefund() stores the Razorpay refund ID
+   * in order_refunds.provider_refund_id before the webhook is processed.
+   */
+  if (providerRefundId) {
+    const result = await pool.query(
+      `
+        SELECT id
+        FROM order_refunds
+        WHERE provider = 'razorpay'
+          AND provider_refund_id = $1
+        LIMIT 1
+      `,
+      [providerRefundId],
+    );
+
+    if (result.rows[0]) {
+      return Number(result.rows[0].id);
+    }
   }
 
-  const result = await pool.query(
-    `
-      SELECT id
-      FROM order_refunds
-      WHERE provider = 'razorpay'
-        AND provider_refund_id = $1
-      LIMIT 1
-    `,
-    [providerRefundId],
-  );
+  /*
+   * Race-condition fallback:
+   *
+   * The refund request includes our internal refund ID in Razorpay notes:
+   *
+   *   dizito_refund_id: "<local refund id>"
+   *
+   * If Razorpay sends refund.processed/refund.failed immediately,
+   * the webhook may arrive before provider_refund_id has been
+   * persisted locally. In that case we can still identify the
+   * correct local refund using our own ID.
+   */
+  if (dizitoRefundId) {
+    const parsedRefundId = Number(dizitoRefundId);
 
-  if (result.rows[0]) {
-    return Number(result.rows[0].id);
+    if (Number.isSafeInteger(parsedRefundId) && parsedRefundId > 0) {
+      const result = await pool.query(
+        `
+          SELECT id
+          FROM order_refunds
+          WHERE id = $1::bigint
+            AND provider = 'razorpay'
+          LIMIT 1
+        `,
+        [parsedRefundId],
+      );
+
+      if (result.rows[0]) {
+        return Number(result.rows[0].id);
+      }
+    }
   }
 
   return undefined;
@@ -156,7 +197,6 @@ export const razorpayCommerceWebhookAdapter: CommerceWebhookAdapter = {
       .digest("hex");
 
     const expectedBuffer = Buffer.from(expectedSignature, "utf8");
-
     const receivedBuffer = Buffer.from(signature, "utf8");
 
     if (expectedBuffer.length !== receivedBuffer.length) {
@@ -186,9 +226,7 @@ export const razorpayCommerceWebhookAdapter: CommerceWebhookAdapter = {
     }
 
     const paymentEntity = getPaymentEntity(root.payload);
-
     const refundEntity = getRefundEntity(root.payload);
-
     const orderEntity = getOrderEntity(root.payload);
 
     const razorpayPaymentId = getStringValue(paymentEntity?.id);
@@ -199,12 +237,23 @@ export const razorpayCommerceWebhookAdapter: CommerceWebhookAdapter = {
 
     const razorpayRefundId = getStringValue(refundEntity?.id);
 
+    /*
+     * Razorpay refund entities contain the notes we supplied when
+     * creating the refund.
+     */
+    const refundNotes = getNestedObject(refundEntity?.notes);
+
+    const dizitoRefundId = getStringValue(refundNotes?.dizito_refund_id);
+
     const paymentId = await findInternalPaymentId(
       razorpayPaymentId,
       razorpayOrderId,
     );
 
-    const refundId = await findInternalRefundId(razorpayRefundId);
+    const refundId = await findInternalRefundId(
+      razorpayRefundId,
+      dizitoRefundId,
+    );
 
     return {
       provider: "razorpay",

@@ -39,7 +39,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       "cancelled",
       "in_transit",
       "received",
-      "completed",
     ];
 
     if (
@@ -52,8 +51,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    // The service validates ownership using the return itself.
-    // We also ensure the URL order ID matches the return's order.
     const result = await returnService.updateReturnStatus(
       Number(session.user.id),
       parsedReturnId,
