@@ -15,7 +15,7 @@ interface CreatePaymentRecordInput {
   paidAt?: Date | null;
 }
 
-interface CreateRefundRecordInput {
+export interface CreateRefundRecordInput {
   userId: number;
   orderId: number;
   paymentId: number;
@@ -512,6 +512,271 @@ export async function createPaymentRecord(input: CreatePaymentRecordInput) {
     await client.query("COMMIT");
 
     return paymentResult.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export interface CreatePendingRefundInput {
+  userId: number;
+  orderId: number;
+  paymentId: number;
+  provider: string;
+  amount: number;
+  currency: string;
+  idempotencyKey: string;
+  reason?: string | null;
+}
+
+export async function createPendingRefund(input: CreatePendingRefundInput) {
+  const normalizedAmount = Number(input.amount);
+  const normalizedCurrency = input.currency.trim().toUpperCase();
+  const normalizedIdempotencyKey = input.idempotencyKey.trim();
+
+  if (!Number.isSafeInteger(input.userId) || input.userId <= 0) {
+    throw new Error("Invalid user ID");
+  }
+
+  if (!Number.isSafeInteger(input.orderId) || input.orderId <= 0) {
+    throw new Error("Invalid order ID");
+  }
+
+  if (!Number.isSafeInteger(input.paymentId) || input.paymentId <= 0) {
+    throw new Error("Invalid payment ID");
+  }
+
+  if (!Number.isSafeInteger(normalizedAmount) || normalizedAmount <= 0) {
+    throw new Error("Refund amount must be a positive integer");
+  }
+
+  if (!/^[A-Z]{3}$/.test(normalizedCurrency)) {
+    throw new Error("Invalid refund currency");
+  }
+
+  if (!normalizedIdempotencyKey) {
+    throw new Error("Refund idempotency key is required");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    /*
+     * Verify that the order belongs to the user.
+     */
+    const orderResult = await client.query(
+      `
+      SELECT
+        id,
+        user_id,
+        currency,
+        payment_status,
+        order_status
+      FROM orders
+      WHERE id = $1::bigint
+        AND user_id = $2::bigint
+      FOR UPDATE
+      `,
+      [input.orderId, input.userId],
+    );
+
+    if ((orderResult.rowCount ?? 0) === 0) {
+      throw new Error("Order not found");
+    }
+
+    const order = orderResult.rows[0];
+
+    if (order.order_status === "cancelled") {
+      throw new Error("Cancelled orders cannot be refunded");
+    }
+
+    /*
+     * Lock the payment.
+     */
+    const paymentResult = await client.query(
+      `
+      SELECT
+        id,
+        order_id,
+        provider,
+        amount,
+        currency,
+        status
+      FROM order_payments
+      WHERE id = $1::bigint
+        AND order_id = $2::bigint
+      FOR UPDATE
+      `,
+      [input.paymentId, input.orderId],
+    );
+
+    if ((paymentResult.rowCount ?? 0) === 0) {
+      throw new Error("Payment not found");
+    }
+
+    const payment = paymentResult.rows[0];
+
+    if (payment.status !== "paid" && payment.status !== "partially_refunded") {
+      throw new Error(
+        `Payment cannot be refunded from ${payment.status} status`,
+      );
+    }
+
+    const paymentCurrency = String(payment.currency).toUpperCase();
+
+    if (paymentCurrency !== normalizedCurrency) {
+      throw new Error("Refund currency does not match payment currency");
+    }
+
+    /*
+     * First check the local idempotency key.
+     */
+    const existingResult = await client.query(
+      `
+      SELECT
+        id,
+        order_id,
+        payment_id,
+        provider,
+        provider_refund_id,
+        amount,
+        currency,
+        status,
+        idempotency_key,
+        reason,
+        processed_at,
+        created_at,
+        updated_at
+      FROM order_refunds
+      WHERE idempotency_key = $1
+      LIMIT 1
+      `,
+      [normalizedIdempotencyKey],
+    );
+
+    if ((existingResult.rowCount ?? 0) > 0) {
+      const existing = existingResult.rows[0];
+
+      /*
+       * Never silently reuse an idempotency key for
+       * a different payment/order/amount.
+       */
+      if (
+        Number(existing.order_id) !== input.orderId ||
+        Number(existing.payment_id) !== input.paymentId ||
+        Number(existing.amount) !== normalizedAmount ||
+        String(existing.currency).toUpperCase() !== normalizedCurrency ||
+        String(existing.provider) !== input.provider
+      ) {
+        throw new Error(
+          "Refund idempotency key is already associated with a different refund",
+        );
+      }
+
+      await client.query("COMMIT");
+
+      return {
+        created: false,
+        refund: existing,
+      };
+    }
+
+    /*
+     * Calculate how much has already been refunded or is
+     * currently being processed.
+     */
+    const refundTotalResult = await client.query(
+      `
+      SELECT
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status IN ('pending', 'processing', 'succeeded')
+              THEN amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_refunded
+      FROM order_refunds
+      WHERE payment_id = $1::bigint
+      `,
+      [input.paymentId],
+    );
+
+    const totalRefunded = Number(refundTotalResult.rows[0].total_refunded);
+
+    const paymentAmount = Number(payment.amount);
+    const remainingRefundable = paymentAmount - totalRefunded;
+
+    if (normalizedAmount > remainingRefundable) {
+      throw new Error(
+        `Refund amount exceeds remaining refundable amount of ${remainingRefundable}`,
+      );
+    }
+
+    /*
+     * Create the durable local refund BEFORE calling the
+     * external payment provider.
+     */
+    const result = await client.query(
+      `
+      INSERT INTO order_refunds (
+        order_id,
+        payment_id,
+        provider,
+        amount,
+        currency,
+        status,
+        idempotency_key,
+        reason
+      )
+      VALUES (
+        $1::bigint,
+        $2::bigint,
+        $3::varchar,
+        $4::integer,
+        $5::varchar,
+        'pending',
+        $6,
+        $7
+      )
+      RETURNING
+        id,
+        order_id,
+        payment_id,
+        provider,
+        provider_refund_id,
+        amount,
+        currency,
+        status,
+        idempotency_key,
+        reason,
+        processed_at,
+        created_at,
+        updated_at
+      `,
+      [
+        input.orderId,
+        input.paymentId,
+        input.provider,
+        normalizedAmount,
+        normalizedCurrency,
+        normalizedIdempotencyKey,
+        input.reason ?? null,
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      created: true,
+      refund: result.rows[0],
+    };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

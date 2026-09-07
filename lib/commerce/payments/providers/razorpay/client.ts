@@ -146,6 +146,7 @@ export async function fetchRazorpayPayment(
 export interface CreateRazorpayRefundInput {
   paymentId: string;
   amount: number;
+  idempotencyKey: string;
   notes?: Record<string, string>;
 }
 
@@ -160,10 +161,27 @@ export async function createRazorpayRefund(
     throw new Error("Razorpay refund amount must be a positive integer");
   }
 
+  const idempotencyKey = input.idempotencyKey.trim();
+
+  if (idempotencyKey.length < 10) {
+    throw new Error(
+      "Razorpay refund idempotency key must be at least 10 characters",
+    );
+  }
+
+  if (!/^[A-Za-z0-9_-]+$/.test(idempotencyKey)) {
+    throw new Error(
+      "Razorpay refund idempotency key may contain only letters, numbers, hyphens, and underscores",
+    );
+  }
+
   return razorpayRequest<RazorpayRefund>(
     `/payments/${encodeURIComponent(input.paymentId)}/refund`,
     {
       method: "POST",
+      headers: {
+        "X-Refund-Idempotency": idempotencyKey,
+      },
       body: JSON.stringify({
         amount: input.amount,
         notes: input.notes,
