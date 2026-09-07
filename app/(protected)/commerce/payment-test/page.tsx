@@ -32,7 +32,7 @@ export default function PaymentTestPage() {
        * Razorpay Order. For this first test,
        * use the existing payment attempt.
        */
-      const orderId = 12;
+      const orderId = 14;
 
       const createResponse = await fetch("/api/commerce/payments/create", {
         method: "POST",
@@ -44,9 +44,9 @@ export default function PaymentTestPage() {
           amount: 1000,
           currency: "INR",
           paymentMethod: "card",
-          idempotencyKey: "razorpay-test-payment-001",
+          idempotencyKey: "razorpay-webhook-test-001",
         }),
-      });
+      }); 
 
       const createData = await createResponse.json();
 
