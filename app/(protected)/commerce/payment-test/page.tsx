@@ -29,7 +29,7 @@ export default function PaymentTestPage() {
       /*
        * Fresh webhook-recovery test order.
        */
-      const orderId = 20;
+      const orderId = 21;
 
       const createResponse = await fetch("/api/commerce/payments/create", {
         method: "POST",
@@ -41,7 +41,7 @@ export default function PaymentTestPage() {
           amount: 1000,
           currency: "INR",
           paymentMethod: "card",
-          idempotencyKey: "razorpay-webhook-retry-001",
+          idempotencyKey: "razorpay-webhook-retry-002",
         }),
       });
 
@@ -115,7 +115,7 @@ export default function PaymentTestPage() {
     >
       <h1>Dizito Razorpay Webhook Test</h1>
 
-      <p>Test Commerce payment for Order #19.</p>
+      <p>Test Commerce payment for Order #21.</p>
 
       <p>Amount: ₹10.00</p>
 

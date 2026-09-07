@@ -9,6 +9,19 @@ export type PaymentAttemptStatus =
   | "refunded"
   | "partially_refunded";
 
+const allowedAttemptTransitions: Record<
+  PaymentAttemptStatus,
+  PaymentAttemptStatus[]
+> = {
+  pending: ["authorized", "captured", "failed", "cancelled"],
+  authorized: ["captured", "failed", "cancelled"],
+  captured: ["refunded", "partially_refunded"],
+  failed: [],
+  cancelled: [],
+  refunded: [],
+  partially_refunded: ["refunded"],
+};
+
 export interface CreatePaymentAttemptRecordInput {
   paymentId: number;
   provider: string;
@@ -54,8 +67,7 @@ export async function createPaymentAttemptRecord(
     await client.query("BEGIN");
 
     /*
-     * Lock the parent payment so the attempt cannot be attached
-     * to a payment that is being concurrently modified/deleted.
+     * Lock the parent payment.
      */
     const paymentResult = await client.query(
       `
@@ -82,11 +94,10 @@ export async function createPaymentAttemptRecord(
     }
 
     /*
-     * Idempotency at the provider-attempt level.
+     * Same provider payment ID = same payment attempt.
      *
-     * Razorpay can deliver the same payment event multiple times.
-     * We must never create two attempt records for the same
-     * provider payment ID.
+     * This makes webhook delivery idempotent at the provider-payment
+     * level as well as at the webhook-event level.
      */
     const existing = await client.query(
       `
@@ -120,11 +131,66 @@ export async function createPaymentAttemptRecord(
         );
       }
 
+      const currentStatus = existingAttempt.status as PaymentAttemptStatus;
+
+      /*
+       * Same-state webhook/event is safe and idempotent.
+       */
+      if (currentStatus === input.status) {
+        await client.query("COMMIT");
+        return existingAttempt;
+      }
+
+      /*
+       * Validate attempt-level lifecycle.
+       */
+      if (!allowedAttemptTransitions[currentStatus].includes(input.status)) {
+        throw new Error(
+          `Invalid payment attempt status transition: ${currentStatus} -> ${input.status}`,
+        );
+      }
+
+      const updated = await client.query(
+        `
+        UPDATE order_payment_attempts
+        SET
+          status = $1::varchar,
+          error_code = $2,
+          error_description = $3,
+          metadata = COALESCE($4::jsonb, metadata),
+          updated_at = NOW()
+        WHERE id = $5::bigint
+        RETURNING
+          id,
+          payment_id,
+          provider,
+          provider_payment_id,
+          amount,
+          currency,
+          status,
+          error_code,
+          error_description,
+          metadata,
+          created_at,
+          updated_at
+        `,
+        [
+          input.status,
+          input.errorCode ?? null,
+          input.errorDescription ?? null,
+          input.metadata !== undefined ? JSON.stringify(input.metadata) : null,
+          existingAttempt.id,
+        ],
+      );
+
       await client.query("COMMIT");
 
-      return existingAttempt;
+      return updated.rows[0];
     }
 
+    /*
+     * New provider payment attempt.
+     */
     const inserted = await client.query(
       `
       INSERT INTO order_payment_attempts (
@@ -179,101 +245,6 @@ export async function createPaymentAttemptRecord(
     await client.query("COMMIT");
 
     return inserted.rows[0];
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-export async function updatePaymentAttemptStatus(
-  provider: string,
-  providerPaymentId: string,
-  status: PaymentAttemptStatus,
-  errorCode?: string,
-  errorDescription?: string,
-  metadata?: unknown,
-) {
-  const normalizedProvider = provider.trim();
-  const normalizedProviderPaymentId = providerPaymentId.trim();
-
-  if (!normalizedProvider) {
-    throw new Error("Provider is required");
-  }
-
-  if (!normalizedProviderPaymentId) {
-    throw new Error("Provider payment ID is required");
-  }
-
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    const existing = await client.query(
-      `
-      SELECT
-        id,
-        payment_id,
-        provider,
-        provider_payment_id,
-        amount,
-        currency,
-        status,
-        error_code,
-        error_description,
-        metadata,
-        created_at,
-        updated_at
-      FROM order_payment_attempts
-      WHERE provider = $1
-        AND provider_payment_id = $2
-      FOR UPDATE
-      `,
-      [normalizedProvider, normalizedProviderPaymentId],
-    );
-
-    if ((existing.rowCount ?? 0) === 0) {
-      throw new Error("Payment attempt not found");
-    }
-
-    const updated = await client.query(
-      `
-      UPDATE order_payment_attempts
-      SET
-        status = $1::varchar,
-        error_code = $2,
-        error_description = $3,
-        metadata = COALESCE($4::jsonb, metadata),
-        updated_at = NOW()
-      WHERE id = $5::bigint
-      RETURNING
-        id,
-        payment_id,
-        provider,
-        provider_payment_id,
-        amount,
-        currency,
-        status,
-        error_code,
-        error_description,
-        metadata,
-        created_at,
-        updated_at
-      `,
-      [
-        status,
-        errorCode ?? null,
-        errorDescription ?? null,
-        metadata !== undefined ? JSON.stringify(metadata) : null,
-        existing.rows[0].id,
-      ],
-    );
-
-    await client.query("COMMIT");
-
-    return updated.rows[0];
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
