@@ -1,5 +1,8 @@
 import { pool } from "@/lib/db";
-import { processRazorpayRefund } from "@/lib/commerce/payments/refund-service";
+import {
+  createPendingRazorpayRefundWithClient,
+  executeRazorpayRefund,
+} from "@/lib/commerce/payments/refund-service";
 
 interface CreateReturnItemInput {
   orderItemId: number;
@@ -52,7 +55,6 @@ export const returnService = {
     try {
       await client.query("BEGIN");
 
-      // 1. Lock and validate order ownership
       const orderResult = await client.query(
         `
         SELECT
@@ -79,7 +81,6 @@ export const returnService = {
         throw new Error("Cancelled orders cannot be returned");
       }
 
-      // 2. Merge duplicate order items
       const mergedItems = new Map<number, number>();
 
       for (const item of input.items) {
@@ -97,7 +98,6 @@ export const returnService = {
 
       let totalRefundAmount = 0;
 
-      // 3. Validate each return item
       for (const [orderItemId, requestedQuantity] of mergedItems) {
         const orderItemResult = await client.query(
           `
@@ -126,9 +126,6 @@ export const returnService = {
 
         const orderItem = orderItemResult.rows[0];
 
-        const orderedQuantity = Number(orderItem.quantity);
-
-        // 4. Calculate shipped quantity
         const shippedResult = await client.query(
           `
           SELECT
@@ -153,7 +150,6 @@ export const returnService = {
           throw new Error(`Order item ${orderItemId} has not been shipped`);
         }
 
-        // 5. Calculate quantity already returned
         const returnedResult = await client.query(
           `
           SELECT
@@ -179,11 +175,9 @@ export const returnService = {
           );
         }
 
-        // 6. Calculate refund using historical unit price
         const unitPrice = Number(orderItem.unit_price);
         const itemDiscount = Number(orderItem.discount);
         const itemTax = Number(orderItem.tax);
-
         const itemQuantity = Number(orderItem.quantity);
 
         const allocatedDiscount =
@@ -212,7 +206,6 @@ export const returnService = {
         }
       }
 
-      // 7. Create return
       const returnResult = await client.query(
         `
         INSERT INTO order_returns (
@@ -244,7 +237,6 @@ export const returnService = {
 
       const returnId = Number(returnResult.rows[0].id);
 
-      // 8. Create return items
       for (const [orderItemId, requestedQuantity] of mergedItems) {
         const orderItemResult = await client.query(
           `
@@ -491,11 +483,24 @@ export const returnService = {
 
     const client = await pool.connect();
 
-    let returnRecord;
+    let refundId: number;
+    let orderId: number;
+    let returnStatus: string;
+    let refundAmount: number;
+    let currency: string;
 
     try {
       await client.query("BEGIN");
 
+      /*
+       * Lock the return.
+       *
+       * This is the key concurrency protection.
+       *
+       * The first request creates and links the local refund
+       * while holding this lock. A concurrent request waits,
+       * then sees the linked refund.
+       */
       const returnResult = await client.query(
         `
         SELECT
@@ -509,18 +514,18 @@ export const returnService = {
         FROM order_returns r
         INNER JOIN orders o
           ON o.id = r.order_id
-        WHERE r.id = $1
-          AND o.user_id = $2
+        WHERE r.id = $1::bigint
+          AND o.user_id = $2::bigint
         FOR UPDATE OF r
         `,
         [returnId, userId],
       );
 
-      if (returnResult.rowCount === 0) {
+      if ((returnResult.rowCount ?? 0) === 0) {
         throw new Error("Return not found");
       }
 
-      returnRecord = returnResult.rows[0];
+      const returnRecord = returnResult.rows[0];
 
       if (returnRecord.status !== "received") {
         throw new Error(
@@ -528,32 +533,59 @@ export const returnService = {
         );
       }
 
+      orderId = Number(returnRecord.order_id);
+      returnStatus = returnRecord.status;
+      refundAmount = Number(returnRecord.refund_amount);
+      currency = String(returnRecord.currency).toUpperCase();
+
+      if (refundAmount <= 0) {
+        throw new Error("Return refund amount must be greater than zero");
+      }
+
+      /*
+       * If a refund is already linked:
+       *
+       * - succeeded  -> return it
+       * - pending     -> recover/execute it
+       * - processing  -> recover/execute it
+       * - failed      -> create a NEW refund attempt
+       * - cancelled   -> create a NEW refund attempt
+       */
       if (returnRecord.refund_id) {
         const existingRefundResult = await client.query(
           `
-          SELECT
-            id,
-            status,
-            amount,
-            currency
-          FROM order_refunds
-          WHERE id = $1
-            AND order_id = $2
-            AND payment_id IS NOT NULL
-          LIMIT 1
-          `,
-          [returnRecord.refund_id, returnRecord.order_id],
+            SELECT
+              id,
+              order_id,
+              payment_id,
+              provider,
+              amount,
+              currency,
+              status,
+              provider_refund_id,
+              idempotency_key,
+              reason
+            FROM order_refunds
+            WHERE id = $1::bigint
+              AND order_id = $2::bigint
+            FOR UPDATE
+            `,
+          [returnRecord.refund_id, orderId],
         );
 
-        if ((existingRefundResult.rowCount ?? 0) > 0) {
+        if ((existingRefundResult.rowCount ?? 0) === 0) {
+          throw new Error("Linked refund record not found");
+        }
+
+        const existingRefund = existingRefundResult.rows[0];
+
+        if (existingRefund.status === "succeeded") {
           await client.query("COMMIT");
 
-          const existingRefund = existingRefundResult.rows[0];
-
           return {
-            id: Number(returnRecord.id),
-            orderId: Number(returnRecord.order_id),
-            status: returnRecord.status,
+            id: returnId,
+            orderId,
+            status: returnStatus,
             refundId: Number(existingRefund.id),
             refundStatus: existingRefund.status,
             refundAmount: Number(existingRefund.amount),
@@ -561,13 +593,47 @@ export const returnService = {
           };
         }
 
-        throw new Error("Linked refund record not found");
+        /*
+         * Existing pending/processing refund:
+         *
+         * Do NOT create another refund.
+         */
+        if (
+          existingRefund.status === "pending" ||
+          existingRefund.status === "processing"
+        ) {
+          refundId = Number(existingRefund.id);
+
+          await client.query("COMMIT");
+
+          const execution = await executeRazorpayRefund(refundId);
+
+          const refund = execution.refund;
+
+          return {
+            id: returnId,
+            orderId,
+            status: returnStatus,
+            refundId,
+            refundStatus: refund.status,
+            refundAmount: Number(refund.amount),
+            currency: refund.currency,
+          };
+        }
+
+        /*
+         * Failed/cancelled refunds are retained for audit.
+         *
+         * A new attempt is therefore created below.
+         */
       }
 
       /*
-       * Find the logical Commerce payment that funded the order.
+       * Find the logical Razorpay payment that funded the order.
        *
-       * We only use payments that are financially successful.
+       * MVP policy remains one successful Razorpay payment per
+       * order. The payment service itself still prevents the
+       * refund from exceeding that payment's remaining capacity.
        */
       const paymentResult = await client.query(
         `
@@ -577,7 +643,7 @@ export const returnService = {
           currency,
           status
         FROM order_payments
-        WHERE order_id = $1
+        WHERE order_id = $1::bigint
           AND status IN (
             'paid',
             'partially_refunded',
@@ -588,152 +654,80 @@ export const returnService = {
         LIMIT 1
         FOR UPDATE
         `,
-        [returnRecord.order_id],
+        [orderId],
       );
 
-      if (paymentResult.rowCount === 0) {
+      if ((paymentResult.rowCount ?? 0) === 0) {
         throw new Error("No successful Razorpay payment found for this order");
       }
 
       const payment = paymentResult.rows[0];
 
-      if (
-        String(payment.currency).toUpperCase() !==
-        String(returnRecord.currency).toUpperCase()
-      ) {
+      if (String(payment.currency).toUpperCase() !== currency) {
         throw new Error("Return currency does not match payment currency");
       }
 
-      if (returnRecord.refund_amount <= 0) {
-        throw new Error("Return refund amount must be greater than zero");
-      }
-
       /*
-       * Reserve/link the return to the logical payment before
-       * making the external provider call.
+       * For a failed/cancelled previous attempt,
+       * this request's idempotency key creates a new
+       * auditable refund attempt.
        *
-       * We intentionally do not call Razorpay while this transaction
-       * is open.
+       * The return remains linked to this new attempt
+       * before we commit.
        */
-      await client.query(
-        `
-        UPDATE order_returns
-        SET
-          updated_at = NOW()
-        WHERE id = $1
-        `,
-        [returnId],
-      );
-
-      await client.query("COMMIT");
-
-      /*
-       * External Razorpay refund operation happens after the
-       * database transaction has committed.
-       */
-      const refundResult = await processRazorpayRefund({
+      const localResult = await createPendingRazorpayRefundWithClient(client, {
         userId,
-        orderId: Number(returnRecord.order_id),
+        orderId,
         paymentId: Number(payment.id),
-        amount: Number(returnRecord.refund_amount),
-        currency: String(returnRecord.currency).toUpperCase(),
+        amount: refundAmount,
+        currency,
         idempotencyKey: normalizedIdempotencyKey,
         reason: reason?.trim() || `Refund for return ${returnId}`,
       });
 
-      /*
-       * Link the local return to the local refund.
-       *
-       * The refund service has already created the order_refunds
-       * record before calling Razorpay.
-       */
-      const refundId = Number(refundResult.refund.id);
+      refundId = Number(localResult.refund.id);
 
-      const linkResult = await pool.query(
+      /*
+       * ATOMIC CLAIM:
+       *
+       * The local refund now becomes permanently associated
+       * with this return before any external provider call.
+       */
+      await client.query(
         `
         UPDATE order_returns
         SET
           refund_id = $1::bigint,
           updated_at = NOW()
         WHERE id = $2::bigint
-          AND order_id = $3::bigint
           AND refund_id IS NULL
-        RETURNING id, order_id, status, refund_id
-        `,
-        [refundId, returnId, Number(returnRecord.order_id)],
+  `,
+        [refundId, returnId],
       );
 
       /*
-       * If another request already linked a refund, return the
-       * existing relationship instead of overwriting it.
+       * The return is locked, so the UPDATE above should always
+       * affect this return.
+       *
+       * Verify the relationship explicitly.
        */
-      if ((linkResult.rowCount ?? 0) === 0) {
-        const existingLink = await pool.query(
-          `
-          SELECT
-            r.id,
-            r.order_id,
-            r.status,
-            r.refund_id,
-            rf.status AS refund_status,
-            rf.amount,
-            rf.currency
-          FROM order_returns r
-          INNER JOIN order_refunds rf
-            ON rf.id = r.refund_id
-          WHERE r.id = $1::bigint
-            AND r.order_id = $2::bigint
-          LIMIT 1
-          `,
-          [returnId, Number(returnRecord.order_id)],
-        );
-
-        if ((existingLink.rowCount ?? 0) === 0) {
-          throw new Error("Return refund could not be linked");
-        }
-
-        const existing = existingLink.rows[0];
-
-        return {
-          id: Number(existing.id),
-          orderId: Number(existing.order_id),
-          status: existing.status,
-          refundId: Number(existing.refund_id),
-          refundStatus: existing.refund_status,
-          refundAmount: Number(existing.amount),
-          currency: existing.currency,
-        };
-      }
-
-      const finalRefundResult = await pool.query(
+      const verifyLink = await client.query(
         `
-        SELECT
-          id,
-          status,
-          amount,
-          currency
-        FROM order_refunds
+        SELECT refund_id
+        FROM order_returns
         WHERE id = $1::bigint
-        LIMIT 1
         `,
-        [refundId],
+        [returnId],
       );
 
-      if ((finalRefundResult.rowCount ?? 0) === 0) {
-        throw new Error("Refund record not found after creation");
+      if (
+        (verifyLink.rowCount ?? 0) === 0 ||
+        Number(verifyLink.rows[0].refund_id) !== refundId
+      ) {
+        throw new Error("Failed to link refund to return");
       }
 
-      const finalRefund = finalRefundResult.rows[0];
-
-      return {
-        id: returnId,
-        orderId: Number(returnRecord.order_id),
-        status: returnRecord.status,
-        refundId,
-        refundStatus: finalRefund.status,
-        refundAmount: Number(finalRefund.amount),
-        currency: finalRefund.currency,
-      };
+      await client.query("COMMIT");
     } catch (error) {
       try {
         await client.query("ROLLBACK");
@@ -743,6 +737,24 @@ export const returnService = {
     } finally {
       client.release();
     }
+
+    /*
+     * Provider call happens only after the atomic local claim
+     * has committed.
+     */
+    const execution = await executeRazorpayRefund(refundId);
+
+    const refund = execution.refund;
+
+    return {
+      id: returnId,
+      orderId,
+      status: returnStatus,
+      refundId,
+      refundStatus: refund.status,
+      refundAmount: Number(refund.amount),
+      currency: refund.currency,
+    };
   },
 
   async completeReturn(userId: number, returnId: number, locationId: number) {
@@ -763,7 +775,6 @@ export const returnService = {
     try {
       await client.query("BEGIN");
 
-      // 1. Lock and validate return ownership
       const returnResult = await client.query(
         `
         SELECT
@@ -795,10 +806,6 @@ export const returnService = {
         throw new Error("Return can only be completed from received status");
       }
 
-      /*
-       * A return cannot be completed until its actual provider
-       * refund has succeeded.
-       */
       if (!returnRecord.refund_id) {
         throw new Error(
           "Return cannot be completed before a refund is initiated",
@@ -807,16 +814,16 @@ export const returnService = {
 
       const refundResult = await client.query(
         `
-        SELECT
-          id,
-          status,
-          amount,
-          currency
-        FROM order_refunds
-        WHERE id = $1
-          AND order_id = $2
-        FOR UPDATE
-        `,
+          SELECT
+            id,
+            status,
+            amount,
+            currency
+          FROM order_refunds
+          WHERE id = $1
+            AND order_id = $2
+          FOR UPDATE
+          `,
         [returnRecord.refund_id, returnRecord.order_id],
       );
 
@@ -845,18 +852,17 @@ export const returnService = {
         );
       }
 
-      // 2. Validate receiving location
       const locationResult = await client.query(
         `
-        SELECT
-          id,
-          name,
-          status
-        FROM inventory_locations
-        WHERE id = $1
-          AND user_id = $2
-        FOR UPDATE
-        `,
+          SELECT
+            id,
+            name,
+            status
+          FROM inventory_locations
+          WHERE id = $1
+            AND user_id = $2
+          FOR UPDATE
+          `,
         [locationId, userId],
       );
 
@@ -870,22 +876,21 @@ export const returnService = {
         throw new Error("Inventory location is not active");
       }
 
-      // 3. Lock return items
       const returnItemsResult = await client.query(
         `
-        SELECT
-          ori.id,
-          ori.order_item_id,
-          ori.quantity,
-          ori.refund_amount,
-          oi.variant_id,
-          oi.sku
-        FROM order_return_items ori
-        INNER JOIN order_items oi
-          ON oi.id = ori.order_item_id
-        WHERE ori.return_id = $1
-        FOR UPDATE OF ori
-        `,
+          SELECT
+            ori.id,
+            ori.order_item_id,
+            ori.quantity,
+            ori.refund_amount,
+            oi.variant_id,
+            oi.sku
+          FROM order_return_items ori
+          INNER JOIN order_items oi
+            ON oi.id = ori.order_item_id
+          WHERE ori.return_id = $1
+          FOR UPDATE OF ori
+          `,
         [returnId],
       );
 
@@ -893,7 +898,6 @@ export const returnService = {
         throw new Error("Return has no items");
       }
 
-      // 4. Restock each returned item
       for (const item of returnItemsResult.rows) {
         const variantId = Number(item.variant_id);
         const quantity = Number(item.quantity);
@@ -906,38 +910,38 @@ export const returnService = {
 
         const balanceResult = await client.query(
           `
-          SELECT
-            id,
-            quantity_on_hand,
-            quantity_reserved
-          FROM inventory_balances
-          WHERE location_id = $1
-            AND variant_id = $2
-            AND user_id = $3
-          FOR UPDATE
-          `,
+            SELECT
+              id,
+              quantity_on_hand,
+              quantity_reserved
+            FROM inventory_balances
+            WHERE location_id = $1
+              AND variant_id = $2
+              AND user_id = $3
+            FOR UPDATE
+            `,
           [locationId, variantId, userId],
         );
 
         if (balanceResult.rowCount === 0) {
           const newBalanceResult = await client.query(
             `
-            INSERT INTO inventory_balances (
-              user_id,
-              location_id,
-              variant_id,
-              quantity_on_hand,
-              quantity_reserved
-            )
-            VALUES (
-              $1,
-              $2,
-              $3,
-              $4,
-              0
-            )
-            RETURNING id
-            `,
+              INSERT INTO inventory_balances (
+                user_id,
+                location_id,
+                variant_id,
+                quantity_on_hand,
+                quantity_reserved
+              )
+              VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                0
+              )
+              RETURNING id
+              `,
             [userId, locationId, variantId, quantity],
           );
 
@@ -953,7 +957,8 @@ export const returnService = {
             `
             UPDATE inventory_balances
             SET
-              quantity_on_hand = quantity_on_hand + $1,
+              quantity_on_hand =
+                quantity_on_hand + $1,
               updated_at = NOW()
             WHERE id = $2
             `,
@@ -961,7 +966,6 @@ export const returnService = {
           );
         }
 
-        // 5. Record inventory movement
         await client.query(
           `
           INSERT INTO inventory_movements (
@@ -996,11 +1000,6 @@ export const returnService = {
         );
       }
 
-      // 6. Mark return as completed.
-      //
-      // The financial refund already exists in order_refunds and
-      // has already succeeded. No fake order_payments refund
-      // record is created here.
       await client.query(
         `
         UPDATE order_returns
