@@ -1,18 +1,17 @@
 export type CommerceWebhookEventType =
-  | "payment.succeeded"
+  | "payment.authorized"
+  | "payment.captured"
   | "payment.failed"
-  | "payment.cancelled"
-  | "refund.succeeded"
+  | "order.paid"
+  | "refund.processed"
   | "refund.failed";
 
 export interface NormalizedWebhookEvent {
   provider: string;
   providerEventId: string;
   eventType: CommerceWebhookEventType;
-
   paymentId?: number;
   refundId?: number;
-
   payload: unknown;
 }
 
@@ -21,5 +20,5 @@ export interface CommerceWebhookAdapter {
 
   verifySignature(payload: string, signature: string): boolean;
 
-  normalizeEvent(payload: unknown): NormalizedWebhookEvent;
+  normalizeEvent(payload: unknown): Promise<NormalizedWebhookEvent>;
 }

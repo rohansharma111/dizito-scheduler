@@ -1,19 +1,19 @@
-import { CommerceWebhookAdapter } from "./types";
+import type { CommerceWebhookAdapter } from "./types";
 import { testWebhookAdapter } from "./providers/test";
+import { razorpayCommerceWebhookAdapter } from "./providers/razorpay";
 
-const adapters = new Map<string, CommerceWebhookAdapter>([
-  [testWebhookAdapter.provider, testWebhookAdapter],
-]);
+const adapters: Record<string, CommerceWebhookAdapter> = {
+  test: testWebhookAdapter,
+  razorpay: razorpayCommerceWebhookAdapter,
+};
 
 export function getCommerceWebhookAdapter(
   provider: string,
 ): CommerceWebhookAdapter {
-  const adapter = adapters.get(provider);
+  const adapter = adapters[provider];
 
   if (!adapter) {
-    throw new Error(
-      `Commerce webhook provider "${provider}" is not configured`,
-    );
+    throw new Error(`Unsupported commerce payment provider: ${provider}`);
   }
 
   return adapter;

@@ -18,7 +18,7 @@ export const testWebhookAdapter: CommerceWebhookAdapter = {
     );
   },
 
-  normalizeEvent(payload: unknown): NormalizedWebhookEvent {
+  async normalizeEvent(payload: unknown): Promise<NormalizedWebhookEvent> {
     if (typeof payload !== "object" || payload === null) {
       throw new Error("Invalid webhook payload");
     }

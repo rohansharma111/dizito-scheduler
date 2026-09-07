@@ -34,6 +34,7 @@ export interface CreatePaymentInput {
 export interface PaymentResult {
   success: boolean;
   provider: string;
+  providerOrderId?: string;
   providerPaymentId?: string;
   status: CommercePaymentStatus;
   amount: number;

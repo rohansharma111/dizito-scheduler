@@ -31,6 +31,7 @@ export async function processCommercePayment(
     userId: input.userId,
     orderId: input.orderId,
     provider: providerResult.provider,
+    providerOrderId: providerResult.providerOrderId,
     paymentMethod: input.paymentMethod,
     transactionId: providerResult.providerPaymentId,
     amount: providerResult.amount,
@@ -43,6 +44,7 @@ export async function processCommercePayment(
   return {
     success: true,
     provider: payment.provider,
+    providerOrderId: payment.provider_order_id ?? undefined,
     providerPaymentId: payment.transaction_id ?? undefined,
     status: payment.status,
     amount: payment.amount,

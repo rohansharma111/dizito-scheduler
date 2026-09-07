@@ -3,6 +3,24 @@ import { transitionPaymentStatus } from "../state";
 import { syncPaymentRefundStatus, markRefundFailed } from "../refund-state";
 import { updateWebhookEventStatus } from "./service";
 
+async function getPaymentIdFromRefund(refundId: number): Promise<number> {
+  const result = await pool.query(
+    `
+    SELECT payment_id
+    FROM order_refunds
+    WHERE id = $1::bigint
+    LIMIT 1
+    `,
+    [refundId],
+  );
+
+  if ((result.rowCount ?? 0) === 0) {
+    throw new Error(`Refund ${refundId} not found`);
+  }
+
+  return Number(result.rows[0].payment_id);
+}
+
 export async function processWebhookEvent(webhookEventId: number) {
   /*
    * First lock the webhook event and verify that it exists.
@@ -86,54 +104,81 @@ export async function processWebhookEvent(webhookEventId: number) {
 
   try {
     /*
-     * Process payment events.
+     * Razorpay payment.authorized
+     *
+     * A payment has been authorized but is not yet captured.
      */
-    if (event.event_type === "payment.succeeded") {
+    if (event.event_type === "payment.authorized") {
       if (!event.payment_id) {
-        throw new Error("payment.succeeded webhook requires payment_id");
+        throw new Error("payment.authorized webhook requires payment_id");
+      }
+
+      await transitionPaymentStatus(Number(event.payment_id), "authorized");
+    } else if (event.event_type === "payment.captured") {
+
+    /*
+     * Razorpay payment.captured
+     *
+     * This is the main successful payment event.
+     */
+      if (!event.payment_id) {
+        throw new Error("payment.captured webhook requires payment_id");
+      }
+
+      await transitionPaymentStatus(Number(event.payment_id), "paid");
+    } else if (event.event_type === "order.paid") {
+
+    /*
+     * Razorpay order.paid
+     *
+     * The order has been fully paid.
+     *
+     * We use the internal payment associated with the
+     * Razorpay order and transition that payment to paid.
+     */
+      if (!event.payment_id) {
+        throw new Error("order.paid webhook requires payment_id");
       }
 
       await transitionPaymentStatus(Number(event.payment_id), "paid");
     } else if (event.event_type === "payment.failed") {
+
+    /*
+     * Razorpay payment.failed
+     */
       if (!event.payment_id) {
         throw new Error("payment.failed webhook requires payment_id");
       }
 
       await transitionPaymentStatus(Number(event.payment_id), "failed");
-    } else if (event.event_type === "payment.cancelled") {
-      if (!event.payment_id) {
-        throw new Error("payment.cancelled webhook requires payment_id");
+    } else if (event.event_type === "refund.processed") {
+
+    /*
+     * Razorpay refund.processed
+     *
+     * The provider has successfully processed the refund.
+     * Only successful refunds are included in payment
+     * refund accounting.
+     */
+      if (!event.refund_id) {
+        throw new Error("refund.processed webhook requires refund_id");
       }
 
-      await transitionPaymentStatus(Number(event.payment_id), "cancelled");
-    } else if (event.event_type === "refund.succeeded") {
-      /*
-       * Process refund events.
-       *
-       * The refund record should already exist.
-       * The webhook confirms its provider-side result.
-       */
-      if (!event.payment_id) {
-        throw new Error("refund.succeeded webhook requires payment_id");
-      }
+      const paymentId = await getPaymentIdFromRefund(Number(event.refund_id));
 
-      await syncPaymentRefundStatus(Number(event.payment_id));
+      await syncPaymentRefundStatus(paymentId);
     } else if (event.event_type === "refund.failed") {
-      /*
-       * A failed refund should not change the payment's
-       * refunded amount because only successful refunds
-       * are included in refund accounting.
-       *
-       * The refund record itself should be marked failed
-       * by the provider-specific webhook integration.
-       */
+
+    /*
+     * Razorpay refund.failed
+     */
       if (!event.refund_id) {
         throw new Error("refund.failed webhook is missing refund_id");
       }
 
       await markRefundFailed(
-        event.refund_id,
-        "Refund failed according to provider webhook",
+        Number(event.refund_id),
+        "Refund failed according to Razorpay webhook",
       );
     } else {
       throw new Error(`Unsupported webhook event type: ${event.event_type}`);
