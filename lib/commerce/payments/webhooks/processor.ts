@@ -2,7 +2,6 @@ import { pool } from "@/lib/db";
 import { transitionPaymentStatus } from "../state";
 import {
   createPaymentAttemptRecord,
-  updatePaymentAttemptStatus,
 } from "../attempt-service";
 import { syncPaymentRefundStatus, markRefundFailed } from "../refund-state";
 import { updateWebhookEventStatus } from "./service";
