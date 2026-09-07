@@ -1,8 +1,6 @@
 import { pool } from "@/lib/db";
 import { transitionPaymentStatus } from "../state";
-import {
-  createPaymentAttemptRecord,
-} from "../attempt-service";
+import { createPaymentAttemptRecord } from "../attempt-service";
 import { syncPaymentRefundStatus, markRefundFailed } from "../refund-state";
 import { updateWebhookEventStatus } from "./service";
 
@@ -341,20 +339,40 @@ export async function processWebhookEvent(webhookEventId: number) {
         await transitionPaymentStatus(Number(event.payment_id), "failed");
       }
     } else if (event.event_type === "refund.processed") {
-      /*
-       * Razorpay refund.processed
-       *
-       * The provider has successfully processed the refund.
-       * Only successful refunds are included in payment
-       * refund accounting.
-       */
+      /* Razorpay refund.processed * 
+      * Razorpay has successfully processed the refund. 
+      * The local refund must therefore become succeeded before 
+      * payment/order refund accounting is synchronized. 
+      */
       if (!event.refund_id) {
         throw new Error("refund.processed webhook requires refund_id");
       }
 
-      const paymentId = await getPaymentIdFromRefund(Number(event.refund_id));
-
-      await syncPaymentRefundStatus(paymentId);
+      const refundId = Number(event.refund_id);
+      const refundResult = await pool.query(
+        ` SELECT id, payment_id, status FROM order_refunds WHERE id = $1::bigint LIMIT 1 `,
+        [refundId],
+      );
+      if ((refundResult.rowCount ?? 0) === 0) {
+        throw new Error(`Refund ${refundId} not found`);
+      }
+      const refund = refundResult.rows[0];
+      /* * Idempotent handling: * * If reconciliation or another webhook has already marked * the refund succeeded, do not attempt to downgrade it. */ if (
+        refund.status !== "succeeded"
+      ) {
+        if (refund.status === "failed" || refund.status === "cancelled") {
+          throw new Error(
+            `Refund ${refundId} cannot be marked succeeded from ${refund.status} status`,
+          );
+        }
+        await pool.query(
+          ` UPDATE order_refunds SET status = 'succeeded', processed_at = COALESCE(processed_at, NOW()), updated_at = NOW() WHERE id = $1::bigint `,
+          [refundId],
+        );
+      }
+      /* * Recalculate payment and order-level refund state. */ await syncPaymentRefundStatus(
+        Number(refund.payment_id),
+      );
     } else if (event.event_type === "refund.failed") {
       /*
        * Razorpay refund.failed

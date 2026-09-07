@@ -219,29 +219,48 @@ export async function processRazorpayRefund(input: ProcessRazorpayRefundInput) {
   }
 }
 
-export async function reconcileRazorpayRefund(refundId: number) {
+export async function reconcileRazorpayRefund(
+  userId: number,
+  refundId: number,
+) {
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw new Error("Invalid user ID");
+  }
+
+  if (!Number.isSafeInteger(refundId) || refundId <= 0) {
+    throw new Error("Invalid refund ID");
+  }
+
   /*
-   * Load the local refund.
+   * Load the local refund and verify ownership through the
+   * associated order.
    */
   const localResult = await pool.query(
     `
     SELECT
-      id,
-      order_id,
-      payment_id,
-      provider,
-      provider_refund_id,
-      amount,
-      currency,
-      status,
-      idempotency_key
-    FROM order_refunds
-    WHERE id = $1::bigint
+      r.id,
+      r.order_id,
+      r.payment_id,
+      r.provider,
+      r.provider_refund_id,
+      r.amount,
+      r.currency,
+      r.status,
+      r.idempotency_key
+    FROM order_refunds r
+    JOIN orders o
+      ON o.id = r.order_id
+    WHERE r.id = $1::bigint
+      AND o.user_id = $2::bigint
     `,
-    [refundId],
+    [refundId, userId],
   );
 
   if ((localResult.rowCount ?? 0) === 0) {
+    /*
+     * Deliberately return "not found" rather than revealing
+     * whether a refund with this ID exists for another user.
+     */
     throw new Error("Refund not found");
   }
 
@@ -300,6 +319,12 @@ export async function reconcileRazorpayRefund(refundId: number) {
         END,
       updated_at = NOW()
     WHERE id = $2::bigint
+      AND order_id = (
+        SELECT id
+        FROM orders
+        WHERE id = order_refunds.order_id
+          AND user_id = $3::bigint
+      )
     RETURNING
       id,
       order_id,
@@ -315,15 +340,21 @@ export async function reconcileRazorpayRefund(refundId: number) {
       created_at,
       updated_at
     `,
-    [nextStatus, refundId],
+    [nextStatus, refundId, userId],
   );
+
+  if ((updateResult.rowCount ?? 0) === 0) {
+    throw new Error("Refund could not be updated");
+  }
 
   /*
    * Recalculate payment + order state after a confirmed
    * successful refund.
    */
   if (nextStatus === "succeeded") {
-    await syncPaymentRefundStatus(Number(localRefund.payment_id));
+    await syncPaymentRefundStatus(
+      Number(localRefund.payment_id),
+    );
   }
 
   return {
