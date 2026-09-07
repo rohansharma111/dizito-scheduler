@@ -1,5 +1,9 @@
 import { pool } from "@/lib/db";
 import { transitionPaymentStatus } from "../state";
+import {
+  createPaymentAttemptRecord,
+  updatePaymentAttemptStatus,
+} from "../attempt-service";
 import { syncPaymentRefundStatus, markRefundFailed } from "../refund-state";
 import { updateWebhookEventStatus } from "./service";
 
@@ -21,59 +25,78 @@ async function getPaymentIdFromRefund(refundId: number): Promise<number> {
   return Number(result.rows[0].payment_id);
 }
 
-async function attachProviderPaymentId(
+async function ensurePaymentAttempt(
   paymentId: number,
   provider: string,
   providerPaymentId: string,
+  status: "pending" | "authorized" | "captured" | "failed",
+  payload: unknown,
 ) {
-  const client = await pool.connect();
+  /*
+   * The webhook payload contains the authoritative provider payment
+   * information. Extract amount/currency/error information where
+   * available.
+   */
+  const paymentEntity =
+    typeof payload === "object" &&
+    payload !== null &&
+    "payload" in payload &&
+    typeof (payload as Record<string, unknown>).payload === "object" &&
+    (payload as Record<string, unknown>).payload !== null
+      ? (
+          (payload as Record<string, unknown>).payload as Record<
+            string,
+            unknown
+          >
+        ).payment
+      : undefined;
 
-  try {
-    await client.query("BEGIN");
+  const entity =
+    typeof paymentEntity === "object" &&
+    paymentEntity !== null &&
+    "entity" in paymentEntity &&
+    typeof (paymentEntity as Record<string, unknown>).entity === "object"
+      ? (paymentEntity as Record<string, unknown>).entity
+      : undefined;
 
-    const result = await client.query(
-      `
-      SELECT
-        id,
-        transaction_id
-      FROM order_payments
-      WHERE id = $1::bigint
-        AND provider = $2
-      FOR UPDATE
-      `,
-      [paymentId, provider],
-    );
+  const payment = (entity ?? {}) as Record<string, unknown>;
 
-    if ((result.rowCount ?? 0) === 0) {
-      throw new Error("Payment not found for webhook provider");
-    }
+  const amount = Number(payment.amount ?? 0);
 
-    const existingTransactionId = result.rows[0].transaction_id;
+  const currency = String(payment.currency ?? "").toUpperCase();
 
-    if (existingTransactionId && existingTransactionId !== providerPaymentId) {
-      throw new Error(
-        "Payment already has a different provider transaction ID",
-      );
-    }
+  const errorCode =
+    payment.error_code !== null && payment.error_code !== undefined
+      ? String(payment.error_code)
+      : undefined;
 
-    await client.query(
-      `
-      UPDATE order_payments
-      SET
-        transaction_id = $1,
-        updated_at = NOW()
-      WHERE id = $2::bigint
-      `,
-      [providerPaymentId, paymentId],
-    );
+  const errorDescription =
+    payment.error_description !== null &&
+    payment.error_description !== undefined
+      ? String(payment.error_description)
+      : undefined;
 
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+  if (!Number.isInteger(amount) || amount < 0) {
+    throw new Error(`Invalid provider payment amount for ${providerPaymentId}`);
   }
+
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    throw new Error(
+      `Invalid provider payment currency for ${providerPaymentId}`,
+    );
+  }
+
+  return createPaymentAttemptRecord({
+    paymentId,
+    provider,
+    providerPaymentId,
+    amount,
+    currency,
+    status,
+    errorCode,
+    errorDescription,
+    metadata: payment,
+  });
 }
 
 export async function processWebhookEvent(webhookEventId: number) {
@@ -158,60 +181,166 @@ export async function processWebhookEvent(webhookEventId: number) {
 
   client.release();
 
-  if (event.payment_id && event.provider_payment_id) {
-    await attachProviderPaymentId(
-      Number(event.payment_id),
-      event.provider,
-      event.provider_payment_id,
-    );
-  }
-
   try {
     /*
-     * Razorpay payment.authorized
+     * ------------------------------------------------------------
+     * PAYMENT EVENTS
+     * ------------------------------------------------------------
      *
-     * A payment has been authorized but is not yet captured.
+     * Every Razorpay payment ID represents a separate payment
+     * attempt, even when multiple attempts belong to the same
+     * Razorpay order.
+     *
+     * Example:
+     *
+     * order_123
+     *   ├── pay_ABC → failed
+     *   └── pay_XYZ → captured
+     *
+     * Both attempts belong to the same Dizito order_payments row.
      */
+
     if (event.event_type === "payment.authorized") {
       if (!event.payment_id) {
         throw new Error("payment.authorized webhook requires payment_id");
       }
 
-      await transitionPaymentStatus(Number(event.payment_id), "authorized");
-    } else if (event.event_type === "payment.captured") {
+      if (!event.provider_payment_id) {
+        throw new Error(
+          "payment.authorized webhook requires provider_payment_id",
+        );
+      }
+
+      await ensurePaymentAttempt(
+        Number(event.payment_id),
+        event.provider,
+        event.provider_payment_id,
+        "authorized",
+        event.payload,
+      );
+
       /*
-       * Razorpay payment.captured
+       * The logical payment can move from pending → authorized.
        *
-       * This is the main successful payment event.
+       * If a retry produces authorized after an earlier failed
+       * attempt, the logical payment may already be failed.
+       *
+       * In that case we don't transition the logical payment yet.
+       * The later captured event will move it directly to paid.
        */
+      const paymentState = await pool.query(
+        `
+        SELECT status
+        FROM order_payments
+        WHERE id = $1::bigint
+        LIMIT 1
+        `,
+        [Number(event.payment_id)],
+      );
+
+      if ((paymentState.rowCount ?? 0) === 0) {
+        throw new Error("Payment not found");
+      }
+
+      const currentStatus = paymentState.rows[0].status as string;
+
+      if (currentStatus === "pending") {
+        await transitionPaymentStatus(Number(event.payment_id), "authorized");
+      }
+    } else if (event.event_type === "payment.captured") {
       if (!event.payment_id) {
         throw new Error("payment.captured webhook requires payment_id");
       }
 
+      if (!event.provider_payment_id) {
+        throw new Error(
+          "payment.captured webhook requires provider_payment_id",
+        );
+      }
+
+      await ensurePaymentAttempt(
+        Number(event.payment_id),
+        event.provider,
+        event.provider_payment_id,
+        "captured",
+        event.payload,
+      );
+
+      /*
+       * A successful retry must be allowed to recover a logical
+       * payment that previously failed.
+       */
       await transitionPaymentStatus(Number(event.payment_id), "paid");
     } else if (event.event_type === "order.paid") {
-      /*
-       * Razorpay order.paid
-       *
-       * The order has been fully paid.
-       *
-       * We use the internal payment associated with the
-       * Razorpay order and transition that payment to paid.
-       */
       if (!event.payment_id) {
         throw new Error("order.paid webhook requires payment_id");
       }
 
+      /*
+       * order.paid may contain a payment entity. When available,
+       * record that payment attempt as captured as well.
+       */
+      if (event.provider_payment_id) {
+        await ensurePaymentAttempt(
+          Number(event.payment_id),
+          event.provider,
+          event.provider_payment_id,
+          "captured",
+          event.payload,
+        );
+      }
+
+      /*
+       * If payment.captured already processed this payment,
+       * this is a safe same-state transition.
+       *
+       * If order.paid is the first successful event, this also
+       * moves the logical payment to paid.
+       */
       await transitionPaymentStatus(Number(event.payment_id), "paid");
     } else if (event.event_type === "payment.failed") {
-      /*
-       * Razorpay payment.failed
-       */
       if (!event.payment_id) {
         throw new Error("payment.failed webhook requires payment_id");
       }
 
-      await transitionPaymentStatus(Number(event.payment_id), "failed");
+      if (!event.provider_payment_id) {
+        throw new Error("payment.failed webhook requires provider_payment_id");
+      }
+
+      await ensurePaymentAttempt(
+        Number(event.payment_id),
+        event.provider,
+        event.provider_payment_id,
+        "failed",
+        event.payload,
+      );
+
+      /*
+       * Only mark the logical payment failed when it is currently
+       * pending or authorized.
+       *
+       * If another attempt has already successfully captured the
+       * payment, a late failed webhook must not downgrade it.
+       */
+      const paymentState = await pool.query(
+        `
+        SELECT status
+        FROM order_payments
+        WHERE id = $1::bigint
+        LIMIT 1
+        `,
+        [Number(event.payment_id)],
+      );
+
+      if ((paymentState.rowCount ?? 0) === 0) {
+        throw new Error("Payment not found");
+      }
+
+      const currentStatus = paymentState.rows[0].status as string;
+
+      if (currentStatus === "pending" || currentStatus === "authorized") {
+        await transitionPaymentStatus(Number(event.payment_id), "failed");
+      }
     } else if (event.event_type === "refund.processed") {
       /*
        * Razorpay refund.processed
