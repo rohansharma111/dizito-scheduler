@@ -214,3 +214,15 @@ export function verifyRazorpayPaymentSignature(
 
   return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
 }
+
+export async function fetchRazorpayRefund(
+  refundId: string,
+): Promise<RazorpayRefund> {
+  if (!refundId.trim()) {
+    throw new Error("Razorpay refund ID is required");
+  }
+
+  return razorpayRequest<RazorpayRefund>(
+    `/refunds/${encodeURIComponent(refundId)}`,
+  );
+}

@@ -29,7 +29,7 @@ export default function PaymentTestPage() {
       /*
        * Fresh webhook-recovery test order.
        */
-      const orderId = 22;
+      const orderId = 23;
 
       const createResponse = await fetch("/api/commerce/payments/create", {
         method: "POST",
@@ -41,7 +41,7 @@ export default function PaymentTestPage() {
           amount: 1000,
           currency: "INR",
           paymentMethod: "card",
-          idempotencyKey: "razorpay-webhook-refund-001",
+          idempotencyKey: "razorpay-webhook-refund-002",
         }),
       });
 

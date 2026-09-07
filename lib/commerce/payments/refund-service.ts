@@ -1,6 +1,9 @@
 import { pool } from "@/lib/db";
 import { createPendingRefund } from "./service";
-import { createRazorpayRefund } from "./providers/razorpay/client";
+import {
+  createRazorpayRefund,
+  fetchRazorpayRefund,
+} from "./providers/razorpay/client";
 import { syncPaymentRefundStatus } from "./refund-state";
 
 export interface ProcessRazorpayRefundInput {
@@ -214,4 +217,118 @@ export async function processRazorpayRefund(input: ProcessRazorpayRefundInput) {
 
     throw error;
   }
+}
+
+export async function reconcileRazorpayRefund(refundId: number) {
+  /*
+   * Load the local refund.
+   */
+  const localResult = await pool.query(
+    `
+    SELECT
+      id,
+      order_id,
+      payment_id,
+      provider,
+      provider_refund_id,
+      amount,
+      currency,
+      status,
+      idempotency_key
+    FROM order_refunds
+    WHERE id = $1::bigint
+    `,
+    [refundId],
+  );
+
+  if ((localResult.rowCount ?? 0) === 0) {
+    throw new Error("Refund not found");
+  }
+
+  const localRefund = localResult.rows[0];
+
+  if (localRefund.provider !== "razorpay") {
+    throw new Error("Refund is not a Razorpay refund");
+  }
+
+  if (!localRefund.provider_refund_id) {
+    throw new Error("Refund does not have a Razorpay refund ID");
+  }
+
+  /*
+   * Ask Razorpay for the authoritative provider state.
+   */
+  const razorpayRefund = await fetchRazorpayRefund(
+    localRefund.provider_refund_id,
+  );
+
+  let nextStatus:
+    | "pending"
+    | "processing"
+    | "succeeded"
+    | "failed"
+    | "cancelled";
+
+  switch (razorpayRefund.status) {
+    case "processed":
+      nextStatus = "succeeded";
+      break;
+
+    case "failed":
+      nextStatus = "failed";
+      break;
+
+    case "pending":
+    default:
+      nextStatus = "processing";
+      break;
+  }
+
+  /*
+   * Persist provider state locally.
+   */
+  const updateResult = await pool.query(
+    `
+    UPDATE order_refunds
+    SET
+      status = $1::varchar,
+      processed_at =
+        CASE
+          WHEN $1::varchar = 'succeeded'
+          THEN COALESCE(processed_at, NOW())
+          ELSE processed_at
+        END,
+      updated_at = NOW()
+    WHERE id = $2::bigint
+    RETURNING
+      id,
+      order_id,
+      payment_id,
+      provider,
+      provider_refund_id,
+      amount,
+      currency,
+      status,
+      idempotency_key,
+      reason,
+      processed_at,
+      created_at,
+      updated_at
+    `,
+    [nextStatus, refundId],
+  );
+
+  /*
+   * Recalculate payment + order state after a confirmed
+   * successful refund.
+   */
+  if (nextStatus === "succeeded") {
+    await syncPaymentRefundStatus(Number(localRefund.payment_id));
+  }
+
+  return {
+    success: true,
+    refund: updateResult.rows[0],
+    providerStatus: razorpayRefund.status,
+  };
 }
