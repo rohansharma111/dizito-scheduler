@@ -10,8 +10,15 @@ export interface CreateWebhookEventInput {
   provider: string;
   providerEventId: string;
   eventType: string;
+
+  // Internal Dizito IDs
   paymentId?: number;
   refundId?: number;
+
+  // Provider-side IDs
+  providerPaymentId?: string;
+  providerRefundId?: string;
+
   payload?: unknown;
 }
 
@@ -35,6 +42,8 @@ export async function createWebhookEvent(input: CreateWebhookEventInput) {
         event_type,
         payment_id,
         refund_id,
+        provider_payment_id,
+        provider_refund_id,
         status,
         payload,
         processed_at,
@@ -51,6 +60,7 @@ export async function createWebhookEvent(input: CreateWebhookEventInput) {
 
     if ((existing.rowCount ?? 0) > 0) {
       await client.query("COMMIT");
+
       return existing.rows[0];
     }
 
@@ -62,6 +72,8 @@ export async function createWebhookEvent(input: CreateWebhookEventInput) {
         event_type,
         payment_id,
         refund_id,
+        provider_payment_id,
+        provider_refund_id,
         payload,
         status
       )
@@ -71,7 +83,9 @@ export async function createWebhookEvent(input: CreateWebhookEventInput) {
         $3,
         $4,
         $5,
-        $6::jsonb,
+        $6,
+        $7,
+        $8::jsonb,
         'received'
       )
       RETURNING
@@ -81,6 +95,8 @@ export async function createWebhookEvent(input: CreateWebhookEventInput) {
         event_type,
         payment_id,
         refund_id,
+        provider_payment_id,
+        provider_refund_id,
         status,
         payload,
         processed_at,
@@ -94,6 +110,8 @@ export async function createWebhookEvent(input: CreateWebhookEventInput) {
         input.eventType.trim(),
         input.paymentId ?? null,
         input.refundId ?? null,
+        input.providerPaymentId ?? null,
+        input.providerRefundId ?? null,
         JSON.stringify(input.payload ?? null),
       ],
     );
@@ -139,6 +157,8 @@ export async function updateWebhookEventStatus(
         event_type,
         payment_id,
         refund_id,
+        provider_payment_id,
+        provider_refund_id,
         status,
         processed_at,
         error_message,

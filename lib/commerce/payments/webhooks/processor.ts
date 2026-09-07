@@ -21,6 +21,61 @@ async function getPaymentIdFromRefund(refundId: number): Promise<number> {
   return Number(result.rows[0].payment_id);
 }
 
+async function attachProviderPaymentId(
+  paymentId: number,
+  provider: string,
+  providerPaymentId: string,
+) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `
+      SELECT
+        id,
+        transaction_id
+      FROM order_payments
+      WHERE id = $1::bigint
+        AND provider = $2
+      FOR UPDATE
+      `,
+      [paymentId, provider],
+    );
+
+    if ((result.rowCount ?? 0) === 0) {
+      throw new Error("Payment not found for webhook provider");
+    }
+
+    const existingTransactionId = result.rows[0].transaction_id;
+
+    if (existingTransactionId && existingTransactionId !== providerPaymentId) {
+      throw new Error(
+        "Payment already has a different provider transaction ID",
+      );
+    }
+
+    await client.query(
+      `
+      UPDATE order_payments
+      SET
+        transaction_id = $1,
+        updated_at = NOW()
+      WHERE id = $2::bigint
+      `,
+      [providerPaymentId, paymentId],
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function processWebhookEvent(webhookEventId: number) {
   /*
    * First lock the webhook event and verify that it exists.
@@ -41,6 +96,7 @@ export async function processWebhookEvent(webhookEventId: number) {
         event_type,
         payment_id,
         refund_id,
+        provider_payment_id,
         status,
         payload
       FROM payment_webhook_events
@@ -102,6 +158,14 @@ export async function processWebhookEvent(webhookEventId: number) {
 
   client.release();
 
+  if (event.payment_id && event.provider_payment_id) {
+    await attachProviderPaymentId(
+      Number(event.payment_id),
+      event.provider,
+      event.provider_payment_id,
+    );
+  }
+
   try {
     /*
      * Razorpay payment.authorized
@@ -115,51 +179,47 @@ export async function processWebhookEvent(webhookEventId: number) {
 
       await transitionPaymentStatus(Number(event.payment_id), "authorized");
     } else if (event.event_type === "payment.captured") {
-
-    /*
-     * Razorpay payment.captured
-     *
-     * This is the main successful payment event.
-     */
+      /*
+       * Razorpay payment.captured
+       *
+       * This is the main successful payment event.
+       */
       if (!event.payment_id) {
         throw new Error("payment.captured webhook requires payment_id");
       }
 
       await transitionPaymentStatus(Number(event.payment_id), "paid");
     } else if (event.event_type === "order.paid") {
-
-    /*
-     * Razorpay order.paid
-     *
-     * The order has been fully paid.
-     *
-     * We use the internal payment associated with the
-     * Razorpay order and transition that payment to paid.
-     */
+      /*
+       * Razorpay order.paid
+       *
+       * The order has been fully paid.
+       *
+       * We use the internal payment associated with the
+       * Razorpay order and transition that payment to paid.
+       */
       if (!event.payment_id) {
         throw new Error("order.paid webhook requires payment_id");
       }
 
       await transitionPaymentStatus(Number(event.payment_id), "paid");
     } else if (event.event_type === "payment.failed") {
-
-    /*
-     * Razorpay payment.failed
-     */
+      /*
+       * Razorpay payment.failed
+       */
       if (!event.payment_id) {
         throw new Error("payment.failed webhook requires payment_id");
       }
 
       await transitionPaymentStatus(Number(event.payment_id), "failed");
     } else if (event.event_type === "refund.processed") {
-
-    /*
-     * Razorpay refund.processed
-     *
-     * The provider has successfully processed the refund.
-     * Only successful refunds are included in payment
-     * refund accounting.
-     */
+      /*
+       * Razorpay refund.processed
+       *
+       * The provider has successfully processed the refund.
+       * Only successful refunds are included in payment
+       * refund accounting.
+       */
       if (!event.refund_id) {
         throw new Error("refund.processed webhook requires refund_id");
       }
@@ -168,10 +228,9 @@ export async function processWebhookEvent(webhookEventId: number) {
 
       await syncPaymentRefundStatus(paymentId);
     } else if (event.event_type === "refund.failed") {
-
-    /*
-     * Razorpay refund.failed
-     */
+      /*
+       * Razorpay refund.failed
+       */
       if (!event.refund_id) {
         throw new Error("refund.failed webhook is missing refund_id");
       }

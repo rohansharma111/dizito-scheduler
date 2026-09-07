@@ -114,6 +114,8 @@ export async function POST(request: Request) {
       eventType: normalized.eventType,
       paymentId: normalized.paymentId,
       refundId: normalized.refundId,
+      providerPaymentId: normalized.providerPaymentId,
+      providerRefundId: normalized.providerRefundId,
       payload: normalized.payload,
     });
 

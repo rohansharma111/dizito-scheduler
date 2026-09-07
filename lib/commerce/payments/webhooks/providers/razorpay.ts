@@ -212,6 +212,8 @@ export const razorpayCommerceWebhookAdapter: CommerceWebhookAdapter = {
       eventType,
       paymentId,
       refundId,
+      providerPaymentId: razorpayPaymentId,
+      providerRefundId: razorpayRefundId,
       payload,
     };
   },
