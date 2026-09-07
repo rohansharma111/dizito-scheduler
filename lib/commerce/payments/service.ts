@@ -566,7 +566,7 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
     await client.query("BEGIN");
 
     /*
-     * Verify that the order belongs to the user.
+     * Lock the order.
      */
     const orderResult = await client.query(
       `
@@ -633,7 +633,7 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
     }
 
     /*
-     * First check the local idempotency key.
+     * Idempotency lookup.
      */
     const existingResult = await client.query(
       `
@@ -652,7 +652,7 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
         created_at,
         updated_at
       FROM order_refunds
-      WHERE idempotency_key = $1
+      WHERE idempotency_key = $1::text
       LIMIT 1
       `,
       [normalizedIdempotencyKey],
@@ -661,10 +661,6 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
     if ((existingResult.rowCount ?? 0) > 0) {
       const existing = existingResult.rows[0];
 
-      /*
-       * Never silently reuse an idempotency key for
-       * a different payment/order/amount.
-       */
       if (
         Number(existing.order_id) !== input.orderId ||
         Number(existing.payment_id) !== input.paymentId ||
@@ -686,8 +682,7 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
     }
 
     /*
-     * Calculate how much has already been refunded or is
-     * currently being processed.
+     * Calculate existing refunded / pending amount.
      */
     const refundTotalResult = await client.query(
       `
@@ -695,13 +690,17 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
         COALESCE(
           SUM(
             CASE
-              WHEN status IN ('pending', 'processing', 'succeeded')
+              WHEN status IN (
+                'pending',
+                'processing',
+                'succeeded'
+              )
               THEN amount
               ELSE 0
             END
           ),
           0
-        ) AS total_refunded
+        )::bigint AS total_refunded
       FROM order_refunds
       WHERE payment_id = $1::bigint
       `,
@@ -720,8 +719,7 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
     }
 
     /*
-     * Create the durable local refund BEFORE calling the
-     * external payment provider.
+     * Create the durable local refund.
      */
     const result = await client.query(
       `
@@ -741,9 +739,9 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
         $3::varchar,
         $4::integer,
         $5::varchar,
-        'pending',
-        $6,
-        $7
+        'pending'::varchar,
+        $6::text,
+        $7::text
       )
       RETURNING
         id,
@@ -778,7 +776,12 @@ export async function createPendingRefund(input: CreatePendingRefundInput) {
       refund: result.rows[0],
     };
   } catch (error) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // Ignore rollback failure.
+    }
+
     throw error;
   } finally {
     client.release();

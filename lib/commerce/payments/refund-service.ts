@@ -131,17 +131,17 @@ export async function processRazorpayRefund(input: ProcessRazorpayRefundInput) {
     const updateResult = await pool.query(
       `
       UPDATE order_refunds
-      SET
-        provider_refund_id = $1,
-        status = $2,
+        SET
+        provider_refund_id = $1::text,
+        status = $2::varchar,
         processed_at =
-          CASE
-            WHEN $2 = 'succeeded'
+            CASE
+            WHEN $2::varchar = 'succeeded'
             THEN NOW()
             ELSE processed_at
-          END,
+            END,
         updated_at = NOW()
-      WHERE id = $3::bigint
+        WHERE id = $3::bigint
       RETURNING
         id,
         order_id,
@@ -181,12 +181,20 @@ export async function processRazorpayRefund(input: ProcessRazorpayRefundInput) {
     /*
      * IMPORTANT:
      *
-     * We do NOT blindly assume that Razorpay did not refund.
+     * We cannot always know whether Razorpay received the
+     * refund request.
      *
-     * The API request could have reached Razorpay while the
-     * response was lost.
+     * For example:
      *
-     * The same X-Refund-Idempotency key makes a future retry safe.
+     *   Dizito → Razorpay → refund accepted → network timeout
+     *
+     * In that situation, marking the refund "failed" could
+     * incorrectly tell the rest of the system that no money
+     * movement occurred.
+     *
+     * Therefore an uncertain provider failure remains
+     * "pending" and can be safely retried using the SAME
+     * Razorpay idempotency key.
      */
     const message =
       error instanceof Error ? error.message : "Razorpay refund request failed";
@@ -195,8 +203,8 @@ export async function processRazorpayRefund(input: ProcessRazorpayRefundInput) {
       `
       UPDATE order_refunds
       SET
-        status = 'failed',
-        reason = $1,
+        status = 'pending'::varchar,
+        reason = $1::text,
         updated_at = NOW()
       WHERE id = $2::bigint
         AND status IN ('pending', 'processing')
