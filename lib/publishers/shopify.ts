@@ -43,6 +43,9 @@ interface ProductVariantsBulkCreatePayload {
   };
 }
 
+type CatalogVariant = ShopifyCatalogProduct["variants"][number];
+type CatalogMedia = ShopifyCatalogProduct["media"][number];
+
 function formatUserErrors(errors: ShopifyUserError[]) {
   return errors
     .map((error) => {
@@ -97,7 +100,7 @@ function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDe
     brand: product.brand ? String(product.brand) : null,
     category: product.category ? String(product.category) : null,
     status: String(product.status),
-    variants: product.variants.map((variant) => ({
+    variants: product.variants.map((variant: CatalogVariant) => ({
       id: String(variant.id),
       name: variant.name ? String(variant.name) : null,
       sku: variant.sku ? String(variant.sku) : null,
@@ -106,7 +109,7 @@ function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDe
       mrp: variant.mrp === null ? null : Number(variant.mrp),
       cost_price: variant.cost_price === null ? null : Number(variant.cost_price),
     })),
-    media: product.media.map((media) => ({
+    media: product.media.map((media: CatalogMedia) => ({
       original_name: media.original_name ? String(media.original_name) : null,
       secure_url: String(media.secure_url),
       resource_type: media.resource_type ? String(media.resource_type) : null,
