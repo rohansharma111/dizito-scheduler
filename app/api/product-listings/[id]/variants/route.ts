@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   getProductListingVariants,
   upsertProductListingVariant,
@@ -10,7 +11,7 @@ interface RouteContext {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
 
   if (!Number.isInteger(userId)) {
@@ -23,7 +24,7 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
 
   if (!Number.isInteger(userId)) {
