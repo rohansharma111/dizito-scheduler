@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import ProductVariants from "@/components/products/ProductVariants";
 import ProductMediaManager from "@/components/products/ProductMediaManager";
+import ProductShopifyPublish from "@/components/products/ProductShopifyPublish";
 import { authOptions } from "@/lib/auth";
 import { getProductDetails } from "@/lib/commerce/products/service";
 
@@ -38,6 +39,8 @@ export default async function ProductPage({ params }: Params) {
         </div>
         {product.description && <div className="mt-6 pt-6 border-t"><div className="text-sm text-gray-500 mb-2">Description</div><p className="text-gray-700 whitespace-pre-wrap">{product.description}</p></div>}
       </section>
+
+      <ProductShopifyPublish productId={String(product.id)} hasVariants={product.variants.length > 0} />
 
       <section className="bg-white border rounded-xl p-6">
         <div className="mb-5">
