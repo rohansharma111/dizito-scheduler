@@ -200,6 +200,57 @@ export async function updateProductListing(
   return { listing: result.rows[0] ?? null };
 }
 
+export async function updateProductListingSyncState(
+  listingId: string,
+  userId: number,
+  input: {
+    syncStatus: ProductListingSyncStatus;
+    externalId?: string | null;
+    lastError?: string | null;
+    providerMetadata?: Record<string, unknown>;
+  },
+) {
+  const existing = await getProductListingById(listingId, userId);
+  if (!existing) return { error: "LISTING_NOT_FOUND" as const };
+
+  const result = await pool.query(
+    `
+    UPDATE product_listings
+    SET
+      sync_status = $1,
+      external_id = $2,
+      last_synced_at = CASE WHEN $1 = 'synced' THEN now() ELSE last_synced_at END,
+      last_error = $3,
+      provider_metadata = $4::jsonb,
+      updated_at = now()
+    WHERE id = $5
+      AND user_id = $6
+    RETURNING
+      id,
+      channel_id,
+      product_id,
+      status,
+      sync_status,
+      external_id,
+      last_synced_at,
+      last_error,
+      provider_metadata,
+      created_at,
+      updated_at
+    `,
+    [
+      input.syncStatus,
+      input.externalId !== undefined ? input.externalId : existing.external_id,
+      input.lastError ?? null,
+      JSON.stringify(input.providerMetadata ?? existing.provider_metadata ?? {}),
+      listingId,
+      userId,
+    ],
+  );
+
+  return { listing: result.rows[0] ?? null };
+}
+
 export async function getProductListingVariants(
   listingId: string,
   userId: number,
