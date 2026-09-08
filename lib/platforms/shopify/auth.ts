@@ -30,7 +30,11 @@ function getStateSecret() {
 }
 
 export function normalizeShopDomain(value: string) {
-  const normalized = value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
 
   if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(normalized)) {
     throw new Error("Shopify shop must be a valid *.myshopify.com domain");
@@ -40,7 +44,10 @@ export function normalizeShopDomain(value: string) {
 }
 
 function signState(payload: string) {
-  return crypto.createHmac("sha256", getStateSecret()).update(payload).digest("base64url");
+  return crypto
+    .createHmac("sha256", getStateSecret())
+    .update(payload)
+    .digest("base64url");
 }
 
 export function createOAuthState() {
@@ -59,12 +66,11 @@ export function verifyOAuthState(state: string) {
   if (!payload || !signature) return false;
 
   const expected = signState(payload);
-  const validSignature = crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected),
-  );
+  const provided = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
 
-  if (!validSignature) return false;
+  if (provided.length !== expectedBuffer.length) return false;
+  if (!crypto.timingSafeEqual(provided, expectedBuffer)) return false;
 
   try {
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
@@ -112,11 +118,17 @@ export async function exchangeShopifyAuthorizationCode(shop: string, code: strin
     cache: "no-store",
   });
 
-  const body = (await response.json()) as ShopifyTokenResponse | { error?: string; error_description?: string };
+  const body = (await response.json()) as
+    | ShopifyTokenResponse
+    | { error?: string; error_description?: string };
 
   if (!response.ok || !("access_token" in body) || !body.access_token) {
     const detail = "error_description" in body ? body.error_description : undefined;
-    throw new Error(detail || ("error" in body ? body.error : undefined) || "Shopify token exchange failed");
+    throw new Error(
+      detail ||
+        ("error" in body ? body.error : undefined) ||
+        "Shopify token exchange failed",
+    );
   }
 
   return body;
