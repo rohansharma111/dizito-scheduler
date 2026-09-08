@@ -23,6 +23,7 @@ export default function ProductShopifyPublish({
   const [channelId, setChannelId] = useState("");
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +60,7 @@ export default function ProductShopifyPublish({
   }, []);
 
   async function publish() {
-    if (!channelId || !hasVariants) return;
+    if (!channelId || !hasVariants || publishing || syncing) return;
 
     setPublishing(true);
     setMessage(null);
@@ -83,12 +84,37 @@ export default function ProductShopifyPublish({
     }
   }
 
+  async function sync() {
+    if (!channelId || !hasVariants || publishing || syncing) return;
+
+    setSyncing(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/commerce/shopify/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId, productId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Shopify sync failed");
+      }
+      setMessage("Product changes synced to Shopify successfully.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Shopify sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <section className="bg-white border rounded-xl p-6">
       <div className="mb-5">
         <h2 className="text-lg font-semibold">Shopify Publishing</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Publish this canonical product to an active Shopify channel.
+          Publish this canonical product to an active Shopify channel, or sync changes to an existing listing.
         </p>
       </div>
 
@@ -106,7 +132,7 @@ export default function ProductShopifyPublish({
             value={channelId}
             onChange={(event) => setChannelId(event.target.value)}
             className="border rounded-lg px-3 py-2 flex-1"
-            disabled={publishing}
+            disabled={publishing || syncing}
           >
             <option value="">Select Shopify channel</option>
             {channels.map((channel) => (
@@ -118,17 +144,25 @@ export default function ProductShopifyPublish({
           <button
             type="button"
             onClick={publish}
-            disabled={!channelId || !hasVariants || publishing}
+            disabled={!channelId || !hasVariants || publishing || syncing}
             className="bg-blue-600 text-white rounded-lg px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {publishing ? "Publishing..." : "Publish to Shopify"}
+          </button>
+          <button
+            type="button"
+            onClick={sync}
+            disabled={!channelId || !hasVariants || publishing || syncing}
+            className="border border-blue-600 text-blue-700 rounded-lg px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {syncing ? "Syncing..." : "Sync Changes"}
           </button>
         </div>
       )}
 
       {!hasVariants && (
         <p className="text-sm text-amber-700 mt-3">
-          Add at least one product variant before publishing to Shopify.
+          Add at least one product variant before publishing or syncing to Shopify.
         </p>
       )}
 
