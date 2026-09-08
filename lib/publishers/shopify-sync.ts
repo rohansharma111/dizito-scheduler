@@ -1,4 +1,4 @@
-import { getProductListingVariants, updateProductListingSyncState, upsertProductListingVariant } from "@/lib/commerce/listings/service";
+import { getProductListingById, getProductListingVariants, updateProductListingSyncState, upsertProductListingVariant } from "@/lib/commerce/listings/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
 import { shopifyGraphQL } from "@/lib/platforms/shopify/client";
 import { mapVariantToShopifyVariant, type ShopifyCatalogProduct } from "@/lib/platforms/shopify/mapper";
@@ -120,11 +120,12 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
 }
 
 async function getProductDetailsForSync(userId: number, listingId: string): Promise<ShopifySyncProduct | null> {
-  const mappings = await getProductListingVariants(listingId, userId);
-  const listing = mappings[0]?.listing_id ? await import("@/lib/commerce/listings/service").then((service) => service.getProductListingById(listingId, userId)) : null;
+  const listing = await getProductListingById(listingId, userId);
   if (!listing) return null;
+
   const product = await getProductDetails(String(listing.product_id), userId);
   if (!product) return null;
+
   return {
     name: String(product.name),
     description: product.description ? String(product.description) : null,
