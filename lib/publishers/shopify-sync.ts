@@ -9,6 +9,12 @@ interface VariantUpdatePayload { productVariantsBulkUpdate: { productVariants: A
 interface VariantCreatePayload { productVariantsBulkCreate: { productVariants: Array<{ id: string }>; userErrors: ShopifyUserError[]; }; }
 
 type CatalogVariant = ShopifyCatalogProduct["variants"][number];
+type ListingVariantMapping = Awaited<ReturnType<typeof getProductListingVariants>>[number];
+
+type ExistingVariantEntry = {
+  variant: CatalogVariant;
+  mapping: ListingVariantMapping | undefined;
+};
 
 function errorsMessage(errors: ShopifyUserError[]) {
   return errors.map((error) => `${error.message}${error.field?.length ? ` [${error.field.join(".")}]` : ""}`).join("; ");
@@ -42,10 +48,27 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
     if (!updated.productUpdate.product) throw new Error("Shopify did not return the updated product");
 
     const mappings = await getProductListingVariants(listingId, userId);
-    const mapped = new Map(mappings.map((row) => [String(row.variant_id), row]));
-    const existing = product.variants.map((variant: CatalogVariant) => ({ variant, mapping: mapped.get(String(variant.id)) })).filter(
-      (entry): entry is { variant: CatalogVariant; mapping: (typeof mappings)[number] } => Boolean(entry.mapping?.external_id),
+    const mapped = new Map<string, ListingVariantMapping>(
+      mappings.map((row: ListingVariantMapping) => [String(row.variant_id), row]),
     );
+    const existing: Array<{
+      variant: CatalogVariant;
+      mapping: ListingVariantMapping;
+    }> = product.variants
+      .map(
+        (variant: CatalogVariant): ExistingVariantEntry => ({
+          variant,
+          mapping: mapped.get(String(variant.id)),
+        }),
+      )
+      .filter(
+        (
+          entry: ExistingVariantEntry,
+        ): entry is {
+          variant: CatalogVariant;
+          mapping: ListingVariantMapping;
+        } => Boolean(entry.mapping?.external_id),
+      );
 
     if (existing.length) {
       const result = await shopifyGraphQL<VariantUpdatePayload>(channelId, `
