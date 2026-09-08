@@ -10,6 +10,7 @@ interface VariantCreatePayload { productVariantsBulkCreate: { productVariants: A
 
 type CatalogVariant = ShopifyCatalogProduct["variants"][number];
 type ListingVariantMapping = Awaited<ReturnType<typeof getProductListingVariants>>[number];
+type ShopifySyncProduct = Omit<ShopifyCatalogProduct, "id" | "media">;
 
 type ExistingVariantEntry = {
   variant: CatalogVariant;
@@ -118,7 +119,7 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
   }
 }
 
-async function getProductDetailsForSync(userId: number, listingId: string) {
+async function getProductDetailsForSync(userId: number, listingId: string): Promise<ShopifySyncProduct | null> {
   const mappings = await getProductListingVariants(listingId, userId);
   const listing = mappings[0]?.listing_id ? await import("@/lib/commerce/listings/service").then((service) => service.getProductListingById(listingId, userId)) : null;
   if (!listing) return null;
@@ -136,5 +137,5 @@ async function getProductDetailsForSync(userId: number, listingId: string) {
       price: variant.price === null ? null : Number(variant.price), mrp: variant.mrp === null ? null : Number(variant.mrp),
       cost_price: variant.cost_price === null ? null : Number(variant.cost_price),
     })),
-  } satisfies ShopifyCatalogProduct;
+  };
 }
