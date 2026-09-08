@@ -43,7 +43,7 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
 
     const mappings = await getProductListingVariants(listingId, userId);
     const mapped = new Map(mappings.map((row) => [String(row.variant_id), row]));
-    const existing = product.variants.map((variant) => ({ variant, mapping: mapped.get(String(variant.id)) })).filter(
+    const existing = product.variants.map((variant: CatalogVariant) => ({ variant, mapping: mapped.get(String(variant.id)) })).filter(
       (entry): entry is { variant: CatalogVariant; mapping: (typeof mappings)[number] } => Boolean(entry.mapping?.external_id),
     );
 
@@ -64,7 +64,7 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
       }
     }
 
-    const newVariants = product.variants.filter((variant) => !mapped.get(String(variant.id))?.external_id);
+    const newVariants = product.variants.filter((variant: CatalogVariant) => !mapped.get(String(variant.id))?.external_id);
     if (newVariants.length) {
       const result = await shopifyGraphQL<VariantCreatePayload>(channelId, `
         mutation CreateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
@@ -107,7 +107,7 @@ async function getProductDetailsForSync(userId: number, listingId: string) {
     brand: product.brand ? String(product.brand) : null,
     category: product.category ? String(product.category) : null,
     status: String(product.status),
-    variants: product.variants.map((variant) => ({
+    variants: product.variants.map((variant: CatalogVariant) => ({
       id: String(variant.id), name: variant.name ? String(variant.name) : null,
       sku: variant.sku ? String(variant.sku) : null, barcode: variant.barcode ? String(variant.barcode) : null,
       price: variant.price === null ? null : Number(variant.price), mrp: variant.mrp === null ? null : Number(variant.mrp),
