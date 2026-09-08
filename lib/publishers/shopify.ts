@@ -23,9 +23,7 @@ interface ProductCreatePayload {
   productCreate: {
     product: {
       id: string;
-      variants: {
-        nodes: Array<{ id: string }>;
-      };
+      variants: { nodes: Array<{ id: string }> };
     } | null;
     userErrors: ShopifyUserError[];
   };
@@ -134,6 +132,12 @@ export async function publishShopifyProduct(
 
   const listing = await ensureListing(userId, channelId, productId);
 
+  if (listing.external_id) {
+    throw new Error(
+      "Shopify product already exists for this listing; use the Shopify sync/update flow instead of publishing again",
+    );
+  }
+
   await updateProductListingSyncState(listing.id, userId, {
     syncStatus: "syncing",
     lastError: null,
@@ -150,18 +154,13 @@ export async function publishShopifyProduct(
           productCreate(product: $product, media: $media) {
             product {
               id
-              variants(first: 1) {
-                nodes { id }
-              }
+              variants(first: 1) { nodes { id } }
             }
             userErrors { field message }
           }
         }
       `,
-      {
-        product: productInput,
-        media,
-      },
+      { product: productInput, media },
     );
 
     throwIfUserErrors(created.productCreate.userErrors, "Shopify product creation failed");
@@ -181,7 +180,6 @@ export async function publishShopifyProduct(
       throw new Error("Shopify did not return the initial product variant");
     }
 
-    const firstVariantInput = mapVariantToShopifyVariant(firstVariant);
     const updatedInitial = await shopifyGraphQL<ProductVariantsBulkUpdatePayload>(
       channelId,
       `
@@ -194,12 +192,7 @@ export async function publishShopifyProduct(
       `,
       {
         productId: shopifyProduct.id,
-        variants: [
-          {
-            id: initialShopifyVariant.id,
-            ...firstVariantInput,
-          },
-        ],
+        variants: [{ id: initialShopifyVariant.id, ...mapVariantToShopifyVariant(firstVariant) }],
       },
     );
 
