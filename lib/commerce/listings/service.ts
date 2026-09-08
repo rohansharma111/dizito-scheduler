@@ -205,6 +205,46 @@ export async function updateProductListing(
   return { listing: result.rows[0] ?? null };
 }
 
+export async function claimProductListingSync(
+  listingId: string,
+  userId: number,
+) {
+  const result = await pool.query(
+    `
+    UPDATE product_listings
+    SET
+      sync_status = 'syncing',
+      last_error = NULL,
+      updated_at = now()
+    WHERE id = $1
+      AND user_id = $2
+      AND (
+        sync_status <> 'syncing'
+        OR updated_at < now() - interval '10 minutes'
+      )
+    RETURNING
+      id,
+      channel_id,
+      product_id,
+      status,
+      sync_status,
+      external_id,
+      last_synced_at,
+      last_error,
+      provider_metadata,
+      created_at,
+      updated_at
+    `,
+    [listingId, userId],
+  );
+
+  if (result.rows[0]) return { listing: result.rows[0] };
+
+  const existing = await getProductListingById(listingId, userId);
+  if (!existing) return { error: "LISTING_NOT_FOUND" as const };
+  return { error: "LISTING_SYNC_IN_PROGRESS" as const };
+}
+
 export async function updateProductListingSyncState(
   listingId: string,
   userId: number,
