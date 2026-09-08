@@ -156,8 +156,13 @@ export async function createProductListing(
     );
 
     return { listing: result.rows[0] };
-  } catch (error: any) {
-    if (error?.code === "23505") {
+  } catch (error: unknown) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "23505"
+    ) {
       return { error: "LISTING_ALREADY_EXISTS" as const };
     }
 
