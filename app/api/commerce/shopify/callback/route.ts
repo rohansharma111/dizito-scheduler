@@ -7,7 +7,6 @@ import {
   exchangeShopifyAuthorizationCode,
   getShopifyApiVersion,
   getShopifyStateCookieName,
-  getShopifyRedirectUri,
   normalizeShopDomain,
   verifyOAuthState,
 } from "@/lib/platforms/shopify/auth";
