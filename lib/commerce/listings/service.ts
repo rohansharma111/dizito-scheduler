@@ -262,9 +262,9 @@ export async function updateProductListingSyncState(
     `
     UPDATE product_listings
     SET
-      sync_status = $1,
+      sync_status = $1::varchar(20),
       external_id = $2,
-      last_synced_at = CASE WHEN $1 = 'synced' THEN now() ELSE last_synced_at END,
+      last_synced_at = CASE WHEN $1::varchar(20) = 'synced' THEN now() ELSE last_synced_at END,
       last_error = $3,
       provider_metadata = $4::jsonb,
       updated_at = now()
