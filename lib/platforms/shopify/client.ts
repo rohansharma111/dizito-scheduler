@@ -1,4 +1,4 @@
-import { getCommerceChannelById } from "@/lib/commerce/channels/service";
+import { getCommerceChannelByIdInternal } from "@/lib/commerce/channels/service";
 import {
   getShopifyCredentials,
   saveShopifyCredentials,
@@ -19,17 +19,12 @@ function getClientCredentials() {
   return { clientId, clientSecret };
 }
 
-async function refreshAccessToken(
-  shop: string,
-  refreshToken: string,
-) {
+async function refreshAccessToken(shop: string, refreshToken: string) {
   const { clientId, clientSecret } = getClientCredentials();
 
   const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "refresh_token",
       client_id: clientId,
@@ -55,8 +50,8 @@ async function refreshAccessToken(
 }
 
 async function getAccessToken(channelId: string) {
-  const channel = await getCommerceChannelById(channelId, 0);
-  if (!channel) {
+  const channel = await getCommerceChannelByIdInternal(channelId);
+  if (!channel || channel.provider !== "shopify") {
     throw new Error("Shopify channel not found");
   }
 
@@ -127,7 +122,11 @@ export async function shopifyGraphQL<T>(
   }
 
   if (body.errors?.length) {
-    throw new Error(body.errors.map((error) => error.message || "Unknown Shopify GraphQL error").join("; "));
+    throw new Error(
+      body.errors
+        .map((error) => error.message || "Unknown Shopify GraphQL error")
+        .join("; "),
+    );
   }
 
   if (!body.data) {
@@ -144,8 +143,5 @@ export async function getShop(channelId: string) {
       name: string;
       myshopifyDomain: string;
     };
-  }>(
-    channelId,
-    `query GetShop { shop { id name myshopifyDomain } }`,
-  );
+  }>(channelId, `query GetShop { shop { id name myshopifyDomain } }`);
 }
