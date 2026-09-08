@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   getProductListingById,
   updateProductListing,
@@ -10,7 +11,7 @@ interface RouteContext {
 }
 
 async function getUserId() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
   return Number.isInteger(userId) ? userId : null;
 }
