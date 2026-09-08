@@ -43,6 +43,20 @@ export async function getCommerceChannelById(channelId: string, userId: number) 
   return result.rows[0] ?? null;
 }
 
+/** Internal provider lookup. Callers must already have authenticated/authorized the channel. */
+export async function getCommerceChannelByIdInternal(channelId: string) {
+  const result = await pool.query(
+    `
+    SELECT id, user_id, provider, name, external_account_id, status, metadata, created_at, updated_at
+    FROM commerce_channels
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [channelId],
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function createCommerceChannel(
   userId: number,
   input: CreateCommerceChannelInput,
