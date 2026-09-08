@@ -8,6 +8,8 @@ interface ShopifyUserError { field?: string[] | null; message: string; }
 interface ProductUpdatePayload { productUpdate: { product: { id: string } | null; userErrors: ShopifyUserError[]; }; }
 interface VariantUpdatePayload { productVariantsBulkUpdate: { productVariants: Array<{ id: string }>; userErrors: ShopifyUserError[]; }; }
 interface VariantCreatePayload { productVariantsBulkCreate: { productVariants: Array<{ id: string }>; userErrors: ShopifyUserError[]; }; }
+interface ShopifyVariantNode { id: string; sku: string | null; }
+interface ShopifyProductVariantsPayload { product: { variants: { nodes: ShopifyVariantNode[] } } | null; }
 
 type CatalogVariant = ShopifyCatalogProduct["variants"][number];
 type ListingVariantMapping = Awaited<ReturnType<typeof getProductListingVariants>>[number];
@@ -24,6 +26,77 @@ function errorsMessage(errors: ShopifyUserError[]) {
 
 function throwIfErrors(errors: ShopifyUserError[], fallback: string) {
   if (errors.length) throw new Error(errorsMessage(errors) || fallback);
+}
+
+async function reconcileVariantMappings(
+  channelId: string,
+  listingId: string,
+  userId: number,
+  productId: string,
+  variants: CatalogVariant[],
+  mappings: ListingVariantMapping[],
+) {
+  const result = await shopifyGraphQL<ShopifyProductVariantsPayload>(channelId, `
+    query GetProductVariants($id: ID!) {
+      product(id: $id) {
+        variants(first: 250) { nodes { id sku } }
+      }
+    }
+  `, { id: productId });
+
+  if (!result.product) throw new Error("Shopify product was not found while reconciling variants");
+
+  const shopifyVariants = result.product.variants.nodes;
+  const byId = new Set(shopifyVariants.map((variant) => String(variant.id)));
+  const bySku = new Map<string, ShopifyVariantNode[]>();
+  for (const variant of shopifyVariants) {
+    const sku = variant.sku?.trim();
+    if (!sku) continue;
+    const matches = bySku.get(sku) ?? [];
+    matches.push(variant);
+    bySku.set(sku, matches);
+  }
+
+  const mapped = new Map<string, ListingVariantMapping>(
+    mappings.map((row) => [String(row.variant_id), row]),
+  );
+  const usedExternalIds = new Set<string>();
+
+  for (const mapping of mappings) {
+    if (mapping.external_id && byId.has(String(mapping.external_id))) {
+      usedExternalIds.add(String(mapping.external_id));
+    }
+  }
+
+  for (const variant of variants) {
+    const current = mapped.get(String(variant.id));
+    const currentExternalId = current?.external_id ? String(current.external_id) : null;
+    if (currentExternalId && byId.has(currentExternalId)) continue;
+
+    const sku = variant.sku?.trim();
+    if (!sku) continue;
+
+    const matches = bySku.get(sku) ?? [];
+    if (matches.length !== 1) continue;
+
+    const candidate = matches[0];
+    if (!candidate || usedExternalIds.has(String(candidate.id))) continue;
+
+    const saved = await upsertProductListingVariant(listingId, userId, {
+      variantId: variant.id,
+      externalId: candidate.id,
+      syncStatus: "synced",
+      providerMetadata: { recoveredBy: "sku", sku },
+    });
+    if (saved.error) throw new Error(saved.error);
+
+    if (saved.listingVariant) {
+      mapped.set(String(variant.id), saved.listingVariant);
+      usedExternalIds.add(String(candidate.id));
+    }
+  }
+
+  return mapped;
 }
 
 export async function syncShopifyProduct(userId: number, channelId: string, listingId: string, shopifyProductId: string) {
@@ -70,9 +143,15 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
     if (!updated.productUpdate.product) throw new Error("Shopify did not return the updated product");
 
     const mappings = await getProductListingVariants(listingId, userId);
-    const mapped = new Map<string, ListingVariantMapping>(
-      mappings.map((row: ListingVariantMapping) => [String(row.variant_id), row]),
+    const mapped = await reconcileVariantMappings(
+      channelId,
+      listingId,
+      userId,
+      shopifyProductId,
+      product.variants,
+      mappings,
     );
+
     const existing: Array<{
       variant: CatalogVariant;
       mapping: ListingVariantMapping;
