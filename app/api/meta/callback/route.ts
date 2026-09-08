@@ -107,6 +107,17 @@ export async function GET(request: Request) {
     });
   }
 
+  const permissionsResponse = await fetch(
+    `https://graph.facebook.com/v19.0/me/permissions?access_token=${accessToken}`,
+  );
+
+  const permissionsData = await permissionsResponse.json();
+
+  console.log(
+    "META TOKEN PERMISSIONS:",
+    JSON.stringify(permissionsData, null, 2),
+  );
+
   /*
     GET PAGES
   */
@@ -115,6 +126,24 @@ export async function GET(request: Request) {
   );
 
   const pagesData = await pagesResponse.json();
+
+  console.log("META /me/accounts STATUS:", pagesResponse.status);
+  console.log(
+    "META /me/accounts RESPONSE:",
+    JSON.stringify(pagesData, null, 2),
+  );
+
+  if (!pagesResponse.ok) {
+    return Response.json(
+      {
+        error: "Meta API error while loading Facebook Pages",
+        meta: pagesData,
+      },
+      {
+        status: 400,
+      },
+    );
+  }
 
   if (!pagesData.data || pagesData.data.length === 0) {
     return Response.json(
