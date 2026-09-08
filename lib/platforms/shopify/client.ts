@@ -10,6 +10,13 @@ interface ShopifyGraphQLResponse<T> {
   errors?: Array<{ message?: string }>;
 }
 
+interface ShopifyRefreshTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number;
+  refresh_token_expires_in?: number;
+}
+
 function getClientCredentials() {
   const clientId = process.env.SHOPIFY_CLIENT_ID;
   const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
@@ -19,7 +26,10 @@ function getClientCredentials() {
   return { clientId, clientSecret };
 }
 
-async function refreshAccessToken(shop: string, refreshToken: string) {
+async function refreshAccessToken(
+  shop: string,
+  refreshToken: string,
+): Promise<ShopifyRefreshTokenResponse> {
   const { clientId, clientSecret } = getClientCredentials();
 
   const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
@@ -46,7 +56,12 @@ async function refreshAccessToken(shop: string, refreshToken: string) {
     throw new Error(body.error || "Shopify access token refresh failed");
   }
 
-  return body;
+  return {
+    access_token: body.access_token,
+    refresh_token: body.refresh_token,
+    expires_in: body.expires_in,
+    refresh_token_expires_in: body.refresh_token_expires_in,
+  };
 }
 
 async function getAccessToken(channelId: string) {
