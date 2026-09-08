@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   createProductListing,
   getProductListings,
 } from "@/lib/commerce/listings/service";
 
 export async function GET() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
 
   if (!Number.isInteger(userId)) {
@@ -18,7 +19,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
 
   if (!Number.isInteger(userId)) {
@@ -43,7 +44,6 @@ export async function POST(request: Request) {
     channelId: String(body.channelId),
     productId: String(body.productId),
     status: body.status,
-    providerMetadata: body.providerMetadata,
   });
 
   if (result.error === "CHANNEL_NOT_FOUND" || result.error === "PRODUCT_NOT_FOUND") {
