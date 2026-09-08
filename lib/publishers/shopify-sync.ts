@@ -1,4 +1,5 @@
-import { getProductListingById, getProductListingVariants, updateProductListingSyncState, upsertProductListingVariant } from "@/lib/commerce/listings/service";
+import { getCommerceChannelById } from "@/lib/commerce/channels/service";
+import { claimProductListingSync, getProductListingById, getProductListingVariants, updateProductListingSyncState, upsertProductListingVariant } from "@/lib/commerce/listings/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
 import { shopifyGraphQL } from "@/lib/platforms/shopify/client";
 import { mapVariantToShopifyVariant, type ShopifyCatalogProduct } from "@/lib/platforms/shopify/mapper";
@@ -26,11 +27,31 @@ function throwIfErrors(errors: ShopifyUserError[], fallback: string) {
 }
 
 export async function syncShopifyProduct(userId: number, channelId: string, listingId: string, shopifyProductId: string) {
-  const product = await getProductDetailsForSync(userId, listingId);
-  if (!product) throw new Error("Product not found");
-  if (product.variants.length === 0) throw new Error("Shopify sync requires at least one product variant");
+  const listing = await getProductListingById(listingId, userId);
+  if (!listing) throw new Error("Product listing not found");
+  if (String(listing.channel_id) !== String(channelId)) throw new Error("Product listing does not belong to the selected Shopify channel");
+  if (!listing.external_id || String(listing.external_id) !== String(shopifyProductId)) throw new Error("Shopify product does not match the listing");
 
-  await updateProductListingSyncState(listingId, userId, { syncStatus: "syncing", lastError: null });
+  const channel = await getCommerceChannelById(channelId, userId);
+  if (!channel) throw new Error("Commerce channel not found");
+  if (String(channel.provider).toLowerCase() !== "shopify") throw new Error("Selected commerce channel is not Shopify");
+  if (String(channel.status).toLowerCase() !== "active") throw new Error("Selected Shopify channel is not active");
+
+  const claim = await claimProductListingSync(listingId, userId);
+  if (claim.error) {
+    if (claim.error === "LISTING_NOT_FOUND") throw new Error("Product listing not found");
+    throw new Error("Product listing sync is already in progress");
+  }
+
+  const product = await getProductDetailsForSync(userId, listingId);
+  if (!product) {
+    await updateProductListingSyncState(listingId, userId, { syncStatus: "error", lastError: "Product not found" });
+    throw new Error("Product not found");
+  }
+  if (product.variants.length === 0) {
+    await updateProductListingSyncState(listingId, userId, { syncStatus: "error", lastError: "Shopify sync requires at least one product variant" });
+    throw new Error("Shopify sync requires at least one product variant");
+  }
 
   try {
     const updated = await shopifyGraphQL<ProductUpdatePayload>(channelId, `
@@ -84,7 +105,8 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
       for (let i = 0; i < existing.length; i += 1) {
         const returned = result.productVariantsBulkUpdate.productVariants[i];
         if (!returned) throw new Error("Shopify variant update response was incomplete");
-        await upsertProductListingVariant(listingId, userId, { variantId: existing[i].variant.id, externalId: returned.id, syncStatus: "synced" });
+        const saved = await upsertProductListingVariant(listingId, userId, { variantId: existing[i].variant.id, externalId: returned.id, syncStatus: "synced" });
+        if (saved.error) throw new Error(saved.error);
       }
     }
 
@@ -102,7 +124,8 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
       for (let i = 0; i < newVariants.length; i += 1) {
         const returned = result.productVariantsBulkCreate.productVariants[i];
         if (!returned) throw new Error("Shopify new variant response was incomplete");
-        await upsertProductListingVariant(listingId, userId, { variantId: newVariants[i].id, externalId: returned.id, syncStatus: "synced" });
+        const saved = await upsertProductListingVariant(listingId, userId, { variantId: newVariants[i].id, externalId: returned.id, syncStatus: "synced" });
+        if (saved.error) throw new Error(saved.error);
       }
     }
 
