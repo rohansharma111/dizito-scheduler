@@ -1,7 +1,7 @@
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import {
   createProductListing,
-  getProductListingById,
+  getProductListings,
   updateProductListingSyncState,
   upsertProductListingVariant,
 } from "@/lib/commerce/listings/service";
@@ -61,7 +61,12 @@ function throwIfUserErrors(errors: ShopifyUserError[], fallback: string) {
 }
 
 async function ensureListing(userId: number, channelId: string, productId: string) {
-  const existing = await getProductListingByIdForProduct(channelId, productId, userId);
+  const listings = await getProductListings(userId);
+  const existing = listings.find(
+    (listing) =>
+      String(listing.channel_id) === channelId && String(listing.product_id) === productId,
+  );
+
   if (existing) return existing;
 
   const created = await createProductListing(userId, {
@@ -73,28 +78,15 @@ async function ensureListing(userId: number, channelId: string, productId: strin
   if (created.listing) return created.listing;
 
   if (created.error === "LISTING_ALREADY_EXISTS") {
-    const retry = await getProductListingByIdForProduct(channelId, productId, userId);
+    const retryListings = await getProductListings(userId);
+    const retry = retryListings.find(
+      (listing) =>
+        String(listing.channel_id) === channelId && String(listing.product_id) === productId,
+    );
     if (retry) return retry;
   }
 
   throw new Error(created.error || "Unable to create product listing");
-}
-
-async function getProductListingByIdForProduct(
-  channelId: string,
-  productId: string,
-  userId: number,
-) {
-  const listings = await import("@/lib/commerce/listings/service").then(({ getProductListings }) =>
-    getProductListings(userId),
-  );
-
-  return (
-    listings.find(
-      (listing) =>
-        String(listing.channel_id) === channelId && String(listing.product_id) === productId,
-    ) ?? null
-  );
 }
 
 function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDetails>>) {
