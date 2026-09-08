@@ -23,6 +23,7 @@ import {
   Package,
   Warehouse,
   ShoppingBag,
+  Store,
 } from "lucide-react";
 
 type SidebarSection = {
@@ -140,6 +141,12 @@ export default function SidebarClient({
           href: "/orders",
           label: "Orders",
           icon: ShoppingBag,
+        },
+
+        {
+          href: "/commerce/channels",
+          label: "Channels",
+          icon: Store,
         },
       ],
     },
