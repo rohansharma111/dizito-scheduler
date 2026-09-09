@@ -28,22 +28,10 @@ function throwIfErrors(errors: ShopifyUserError[], fallback: string) {
   if (errors.length) throw new Error(errorsMessage(errors) || fallback);
 }
 
-async function reconcileVariantMappings(
-  channelId: string,
-  listingId: string,
-  userId: number,
-  productId: string,
-  variants: CatalogVariant[],
-  mappings: ListingVariantMapping[],
-) {
+async function reconcileVariantMappings(channelId: string, listingId: string, userId: number, productId: string, variants: CatalogVariant[], mappings: ListingVariantMapping[]) {
   const result = await shopifyGraphQL<ShopifyProductVariantsPayload>(channelId, `
-    query GetProductVariants($id: ID!) {
-      product(id: $id) {
-        variants(first: 250) { nodes { id sku } }
-      }
-    }
+    query GetProductVariants($id: ID!) { product(id: $id) { variants(first: 250) { nodes { id sku } } } }
   `, { id: productId });
-
   if (!result.product) throw new Error("Shopify product was not found while reconciling variants");
 
   const shopifyVariants = result.product.variants.nodes;
@@ -57,15 +45,10 @@ async function reconcileVariantMappings(
     bySku.set(sku, matches);
   }
 
-  const mapped = new Map<string, ListingVariantMapping>(
-    mappings.map((row) => [String(row.variant_id), row]),
-  );
+  const mapped = new Map<string, ListingVariantMapping>(mappings.map((row) => [String(row.variant_id), row]));
   const usedExternalIds = new Set<string>();
-
   for (const mapping of mappings) {
-    if (mapping.external_id && byId.has(String(mapping.external_id))) {
-      usedExternalIds.add(String(mapping.external_id));
-    }
+    if (mapping.external_id && byId.has(String(mapping.external_id))) usedExternalIds.add(String(mapping.external_id));
   }
 
   for (const variant of variants) {
@@ -75,13 +58,11 @@ async function reconcileVariantMappings(
 
     const sku = variant.sku?.trim();
     if (!sku) continue;
-
     const matches = bySku.get(sku) ?? [];
     if (matches.length !== 1) continue;
 
     const candidate = matches[0];
     if (!candidate || usedExternalIds.has(String(candidate.id))) continue;
-
     const saved = await upsertProductListingVariant(listingId, userId, {
       variantId: variant.id,
       externalId: candidate.id,
@@ -89,13 +70,11 @@ async function reconcileVariantMappings(
       providerMetadata: { recoveredBy: "sku", sku },
     });
     if (saved.error) throw new Error(saved.error);
-
     if (saved.listingVariant) {
       mapped.set(String(variant.id), saved.listingVariant);
       usedExternalIds.add(String(candidate.id));
     }
   }
-
   return mapped;
 }
 
@@ -104,6 +83,9 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
   if (!listing) throw new Error("Product listing not found");
   if (String(listing.channel_id) !== String(channelId)) throw new Error("Product listing does not belong to the selected Shopify channel");
   if (!listing.external_id || String(listing.external_id) !== String(shopifyProductId)) throw new Error("Shopify product does not match the listing");
+  if (["paused", "archived"].includes(String(listing.status).toLowerCase())) {
+    throw new Error(`Cannot sync a ${listing.status} listing. Set the listing to draft or active first.`);
+  }
 
   const channel = await getCommerceChannelById(channelId, userId);
   if (!channel) throw new Error("Commerce channel not found");
@@ -132,44 +114,18 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
         productUpdate(product: $product) { product { id } userErrors { field message } }
       }
     `, { product: {
-      id: shopifyProductId,
-      title: product.name,
-      descriptionHtml: product.description,
-      vendor: product.brand,
-      productType: product.category,
+      id: shopifyProductId, title: product.name, descriptionHtml: product.description,
+      vendor: product.brand, productType: product.category,
       status: product.status === "active" ? "ACTIVE" : product.status === "archived" ? "ARCHIVED" : "DRAFT",
     } });
     throwIfErrors(updated.productUpdate.userErrors, "Shopify product update failed");
     if (!updated.productUpdate.product) throw new Error("Shopify did not return the updated product");
 
     const mappings = await getProductListingVariants(listingId, userId);
-    const mapped = await reconcileVariantMappings(
-      channelId,
-      listingId,
-      userId,
-      shopifyProductId,
-      product.variants,
-      mappings,
-    );
-
-    const existing: Array<{
-      variant: CatalogVariant;
-      mapping: ListingVariantMapping;
-    }> = product.variants
-      .map(
-        (variant: CatalogVariant): ExistingVariantEntry => ({
-          variant,
-          mapping: mapped.get(String(variant.id)),
-        }),
-      )
-      .filter(
-        (
-          entry: ExistingVariantEntry,
-        ): entry is {
-          variant: CatalogVariant;
-          mapping: ListingVariantMapping;
-        } => Boolean(entry.mapping?.external_id),
-      );
+    const mapped = await reconcileVariantMappings(channelId, listingId, userId, shopifyProductId, product.variants, mappings);
+    const existing: Array<{ variant: CatalogVariant; mapping: ListingVariantMapping }> = product.variants
+      .map((variant: CatalogVariant): ExistingVariantEntry => ({ variant, mapping: mapped.get(String(variant.id)) }))
+      .filter((entry: ExistingVariantEntry): entry is { variant: CatalogVariant; mapping: ListingVariantMapping } => Boolean(entry.mapping?.external_id));
 
     if (existing.length) {
       const result = await shopifyGraphQL<VariantUpdatePayload>(channelId, `
@@ -224,15 +180,11 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
 async function getProductDetailsForSync(userId: number, listingId: string): Promise<ShopifySyncProduct | null> {
   const listing = await getProductListingById(listingId, userId);
   if (!listing) return null;
-
   const product = await getProductDetails(String(listing.product_id), userId);
   if (!product) return null;
-
   return {
-    name: String(product.name),
-    description: product.description ? String(product.description) : null,
-    brand: product.brand ? String(product.brand) : null,
-    category: product.category ? String(product.category) : null,
+    name: String(product.name), description: product.description ? String(product.description) : null,
+    brand: product.brand ? String(product.brand) : null, category: product.category ? String(product.category) : null,
     status: String(product.status),
     variants: product.variants.map((variant: CatalogVariant) => ({
       id: String(variant.id), name: variant.name ? String(variant.name) : null,
