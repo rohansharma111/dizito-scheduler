@@ -43,6 +43,24 @@ export async function getCommerceChannelById(channelId: string, userId: number) 
   return result.rows[0] ?? null;
 }
 
+export async function getCommerceChannelByExternalAccount(
+  userId: number,
+  provider: string,
+  externalAccountId: string,
+) {
+  const result = await pool.query(
+    `
+    SELECT id, user_id, provider, name, external_account_id, status, metadata, created_at, updated_at
+    FROM commerce_channels
+    WHERE user_id = $1 AND provider = $2 AND external_account_id = $3
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [userId, provider, externalAccountId],
+  );
+  return result.rows[0] ?? null;
+}
+
 /** Internal provider lookup. Callers must already have authenticated/authorized the channel. */
 export async function getCommerceChannelByIdInternal(channelId: string) {
   const result = await pool.query(
