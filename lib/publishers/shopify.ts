@@ -102,7 +102,7 @@ function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDe
       cost_price: variant.cost_price === null ? null : Number(variant.cost_price),
     })),
     media: product.media.map((media: CatalogMedia) => ({
-      product_media_id: String(media.id),
+      product_media_id: String(media.product_media_id),
       original_name: media.original_name ? String(media.original_name) : null,
       secure_url: String(media.secure_url),
       resource_type: media.resource_type ? String(media.resource_type) : null,
@@ -125,122 +125,77 @@ export async function publishShopifyProduct(userId: number, channelId: string, p
     throw new Error("Shopify product already exists for this listing; use the Shopify sync/update flow instead of publishing again");
   }
 
-  await updateProductListingSyncState(listing.id, userId, { syncStatus: "syncing", lastError: null });
-
   try {
-    const productInput = mapProductToShopifyProduct(product);
-    const media = mapProductToShopifyMedia(product);
+    const createResult = await shopifyGraphQL<ProductCreatePayload>(channelId, `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id variants(first: 1) { nodes { id } } media(first: 250) { nodes { id } } } userErrors { field message } } }`, {
+      product: mapProductToShopifyProduct(product),
+      media: mapProductToShopifyMedia(product),
+    });
 
-    const created = await shopifyGraphQL<ProductCreatePayload>(
-      channelId,
-      `
-        mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) {
-          productCreate(product: $product, media: $media) {
-            product {
-              id
-              variants(first: 1) { nodes { id } }
-              media(first: 250) { nodes { id } }
-            }
-            userErrors { field message }
-          }
-        }
-      `,
-      { product: productInput, media },
-    );
+    throwIfUserErrors(createResult.productCreate.userErrors, "Shopify product creation failed");
+    if (!createResult.productCreate.product) throw new Error("Shopify did not return the created product");
 
-    throwIfUserErrors(created.productCreate.userErrors, "Shopify product creation failed");
-    const shopifyProduct = created.productCreate.product;
-    if (!shopifyProduct) throw new Error("Shopify did not return the created product");
-
-    await updateProductListingSyncState(listing.id, userId, {
+    const shopifyProduct = createResult.productCreate.product;
+    const updatedListing = await updateProductListingSyncState(listing.id, userId, {
       syncStatus: "syncing",
       externalId: shopifyProduct.id,
       lastError: null,
     });
+    if (updatedListing.error) throw new Error(updatedListing.error);
 
-    if (media.length !== shopifyProduct.media.nodes.length) {
-      throw new Error("Shopify returned an unexpected number of created media items");
+    const initialVariant = shopifyProduct.variants.nodes[0];
+    if (!initialVariant) throw new Error("Shopify did not return the initial product variant");
+    const firstVariant = product.variants[0];
+    if (!firstVariant) throw new Error("Product variant was unexpectedly missing");
+    const updatedFirstVariant = await shopifyGraphQL<ProductVariantsBulkUpdatePayload>(channelId, `mutation UpdateInitialVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, {
+      productId: shopifyProduct.id,
+      variants: [{ id: initialVariant.id, ...mapVariantToShopifyVariant(firstVariant) }],
+    });
+    throwIfUserErrors(updatedFirstVariant.productVariantsBulkUpdate.userErrors, "Shopify initial variant update failed");
+    if (updatedFirstVariant.productVariantsBulkUpdate.productVariants.length !== 1) throw new Error("Shopify returned an unexpected initial variant response");
+    const savedFirstVariant = await upsertProductListingVariant(listing.id, userId, { variantId: firstVariant.id, externalId: updatedFirstVariant.productVariantsBulkUpdate.productVariants[0]?.id, syncStatus: "synced" });
+    if (savedFirstVariant.error) throw new Error(savedFirstVariant.error);
+
+    const remainingVariants = product.variants.slice(1);
+    if (remainingVariants.length) {
+      const createdVariants = await shopifyGraphQL<ProductVariantsBulkCreatePayload>(channelId, `mutation CreateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkCreate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, {
+        productId: shopifyProduct.id,
+        variants: remainingVariants.map(mapVariantToShopifyVariant),
+      });
+      throwIfUserErrors(createdVariants.productVariantsBulkCreate.userErrors, "Shopify variant creation failed");
+      if (createdVariants.productVariantsBulkCreate.productVariants.length !== remainingVariants.length) throw new Error("Shopify returned an unexpected number of created variants");
+      for (let i = 0; i < remainingVariants.length; i += 1) {
+        const variant = remainingVariants[i];
+        const createdVariant = createdVariants.productVariantsBulkCreate.productVariants[i];
+        if (!variant || !createdVariant) throw new Error("Shopify variant creation response was incomplete");
+        const saved = await upsertProductListingVariant(listing.id, userId, { variantId: variant.id, externalId: createdVariant.id, syncStatus: "synced" });
+        if (saved.error) throw new Error(saved.error);
+      }
     }
 
     for (let index = 0; index < product.media.length; index += 1) {
       const canonicalMedia = product.media[index];
       const shopifyMedia = shopifyProduct.media.nodes[index];
-      if (!canonicalMedia || !shopifyMedia) throw new Error("Shopify media mapping response was incomplete");
-
-      const saved = await upsertProductListingMedia(listing.id, userId, {
+      if (!canonicalMedia || !shopifyMedia) throw new Error("Shopify returned an unexpected number of created media items");
+      const savedMedia = await upsertProductListingMedia(listing.id, userId, {
         productMediaId: canonicalMedia.product_media_id,
         externalId: shopifyMedia.id,
         syncStatus: "synced",
         providerMetadata: { provider: "shopify", source: "initial_publish" },
       });
-      if (saved.error) throw new Error(saved.error);
-    }
-
-    const initialShopifyVariant = shopifyProduct.variants.nodes[0];
-    const firstVariant = product.variants[0];
-    if (!initialShopifyVariant || !firstVariant) throw new Error("Shopify did not return the initial product variant");
-
-    const updatedInitial = await shopifyGraphQL<ProductVariantsBulkUpdatePayload>(
-      channelId,
-      `
-        mutation UpdateInitialVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-          productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-            productVariants { id }
-            userErrors { field message }
-          }
-        }
-      `,
-      { productId: shopifyProduct.id, variants: [{ id: initialShopifyVariant.id, ...mapVariantToShopifyVariant(firstVariant) }] },
-    );
-
-    throwIfUserErrors(updatedInitial.productVariantsBulkUpdate.userErrors, "Shopify initial variant update failed");
-    const updatedInitialVariant = updatedInitial.productVariantsBulkUpdate.productVariants[0];
-    if (!updatedInitialVariant) throw new Error("Shopify did not return the updated initial variant");
-
-    await upsertProductListingVariant(listing.id, userId, {
-      variantId: firstVariant.id,
-      externalId: updatedInitialVariant.id,
-      syncStatus: "synced",
-    });
-
-    const remainingVariants = product.variants.slice(1);
-    if (remainingVariants.length > 0) {
-      const createdVariants = await shopifyGraphQL<ProductVariantsBulkCreatePayload>(
-        channelId,
-        `
-          mutation CreateRemainingVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-            productVariantsBulkCreate(productId: $productId, variants: $variants) {
-              productVariants { id }
-              userErrors { field message }
-            }
-          }
-        `,
-        { productId: shopifyProduct.id, variants: remainingVariants.map(mapVariantToShopifyVariant) },
-      );
-
-      throwIfUserErrors(createdVariants.productVariantsBulkCreate.userErrors, "Shopify variant creation failed");
-      const returnedVariants = createdVariants.productVariantsBulkCreate.productVariants;
-      if (returnedVariants.length !== remainingVariants.length) throw new Error("Shopify returned an unexpected number of created variants");
-
-      for (let index = 0; index < remainingVariants.length; index += 1) {
-        const variant = remainingVariants[index];
-        const createdVariant = returnedVariants[index];
-        if (!createdVariant) throw new Error("Shopify variant mapping response was incomplete");
-        await upsertProductListingVariant(listing.id, userId, {
-          variantId: variant.id,
-          externalId: createdVariant.id,
-          syncStatus: "synced",
-        });
-      }
+      if (savedMedia.error) throw new Error(savedMedia.error);
     }
 
     const completed = await updateProductListingSyncState(listing.id, userId, {
       syncStatus: "synced",
       externalId: shopifyProduct.id,
       lastError: null,
-      providerMetadata: { provider: "shopify", publishedVariantCount: product.variants.length, publishedMediaCount: product.media.length },
+      providerMetadata: {
+        provider: "shopify",
+        publishMode: "create",
+        publishedVariantCount: product.variants.length,
+        publishedMediaCount: product.media.length,
+      },
     });
-
     if (completed.error) throw new Error(completed.error);
     return completed.listing;
   } catch (error) {
