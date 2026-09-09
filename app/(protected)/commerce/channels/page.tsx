@@ -44,6 +44,10 @@ export default function CommerceChannelsPage() {
     window.location.href = `/api/commerce/shopify/connect?shop=${encodeURIComponent(normalized)}`;
   }
 
+  function connectAmazon() {
+    window.location.href = "/api/commerce/amazon/connect";
+  }
+
   async function setChannelStatus(channel: CommerceChannel, status: "active" | "inactive") {
     if (status === "inactive" && !window.confirm(`Disconnect ${channel.name}?`)) return;
 
@@ -96,6 +100,20 @@ export default function CommerceChannelsPage() {
             Connect Shopify
           </button>
         </form>
+      </div>
+
+      <div className="border rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold">Connect Amazon India</h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Authorize Dizito to access your Amazon Seller Central account through SP-API.
+        </p>
+        <button
+          type="button"
+          onClick={connectAmazon}
+          className="mt-4 bg-orange-600 text-white rounded px-5 py-2"
+        >
+          Connect Amazon India
+        </button>
       </div>
 
       {error && <div className="border border-red-300 rounded p-4 mb-6 text-red-700">{error}</div>}
