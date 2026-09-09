@@ -160,6 +160,6 @@ async function getProductDetailsForSync(userId: number, listingId: string): Prom
     category: product.category ? String(product.category) : null,
     status: String(product.status),
     variants: product.variants.map((variant: CatalogVariant) => ({ id: String(variant.id), name: variant.name ? String(variant.name) : null, sku: variant.sku ? String(variant.sku) : null, barcode: variant.barcode ? String(variant.barcode) : null, price: variant.price === null ? null : Number(variant.price), mrp: variant.mrp === null ? null : Number(variant.mrp), cost_price: variant.cost_price === null ? null : Number(variant.cost_price) })),
-    media: product.media.map((media: { id: string | number; original_name: string | null; secure_url: string; resource_type: string | null }) => ({ product_media_id: String(media.id), original_name: media.original_name ? String(media.original_name) : null, secure_url: String(media.secure_url), resource_type: media.resource_type ? String(media.resource_type) : null })),
+    media: product.media.map((media: CatalogMedia) => ({ product_media_id: String(media.product_media_id), original_name: media.original_name ? String(media.original_name) : null, secure_url: String(media.secure_url), resource_type: media.resource_type ? String(media.resource_type) : null })),
   };
 }
