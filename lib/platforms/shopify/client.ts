@@ -1,4 +1,4 @@
-import { getCommerceChannelByIdInternal } from "@/lib/commerce/channels/service";
+import { getCommerceChannelByIdInternal, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import {
   getShopifyCredentials,
   saveShopifyCredentials,
@@ -64,14 +64,38 @@ async function refreshAccessToken(
   };
 }
 
+async function markShopifyChannelError(channelId: string, userId: number, message: string) {
+  await updateCommerceChannel(channelId, userId, {
+    status: "error",
+    metadata: {
+      shopifyHealth: {
+        status: "error",
+        message,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  }).catch((statusError) => {
+    console.error("Unable to mark Shopify channel as error:", statusError);
+  });
+}
+
 async function getAccessToken(channelId: string) {
   const channel = await getCommerceChannelByIdInternal(channelId);
   if (!channel || channel.provider !== "shopify") {
     throw new Error("Shopify channel not found");
   }
 
+  if (channel.status !== "active") {
+    throw new Error(`Shopify channel is not active (status: ${channel.status})`);
+  }
+
   const credentials = await getShopifyCredentials(channelId);
   if (!credentials) {
+    await markShopifyChannelError(
+      channelId,
+      Number(channel.user_id),
+      "Shopify credentials not found",
+    );
     throw new Error("Shopify credentials not found");
   }
 
@@ -84,13 +108,22 @@ async function getAccessToken(channelId: string) {
   }
 
   if (!credentials.refreshToken) {
-    throw new Error("Shopify access token expired and no refresh token is available");
+    const message = "Shopify access token expired and no refresh token is available";
+    await markShopifyChannelError(channelId, Number(channel.user_id), message);
+    throw new Error(message);
   }
 
-  const refreshed = await refreshAccessToken(
-    String(channel.external_account_id),
-    credentials.refreshToken,
-  );
+  let refreshed: ShopifyRefreshTokenResponse;
+  try {
+    refreshed = await refreshAccessToken(
+      String(channel.external_account_id),
+      credentials.refreshToken,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Shopify access token refresh failed";
+    await markShopifyChannelError(channelId, Number(channel.user_id), message);
+    throw error instanceof Error ? error : new Error(message);
+  }
 
   await saveShopifyCredentials({
     channelId,
@@ -133,6 +166,11 @@ export async function shopifyGraphQL<T>(
   const body = (await response.json()) as ShopifyGraphQLResponse<T>;
 
   if (!response.ok) {
+    if (response.status === 401) {
+      const message = "Shopify rejected the access token; reconnect the Shopify channel";
+      await markShopifyChannelError(channelId, Number(channel.user_id), message);
+      throw new Error(message);
+    }
     throw new Error(`Shopify GraphQL request failed with status ${response.status}`);
   }
 
