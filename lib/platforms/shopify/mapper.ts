@@ -43,6 +43,7 @@ export interface ShopifyCatalogProduct {
     cost_price: number | null;
   }>;
   media: Array<{
+    product_media_id: string;
     original_name: string | null;
     secure_url: string;
     resource_type: string | null;
