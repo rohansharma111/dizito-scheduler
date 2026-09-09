@@ -68,12 +68,17 @@ export default function ProductShopifyPublish({
 
         if (cancelled) return;
 
-        const shopifyChannels = (channelsData.channels ?? []).filter(
+        const shopifyChannels: CommerceChannel[] = (
+          channelsData.channels ?? []
+        ).filter(
           (channel: CommerceChannel) =>
             channel.provider === "shopify" && channel.status === "active",
         );
-        const productListings = (listingsData.listings ?? []).filter(
-          (listing: CommerceListing) => String(listing.product_id) === String(productId),
+        const productListings: CommerceListing[] = (
+          listingsData.listings ?? []
+        ).filter(
+          (listing: CommerceListing) =>
+            String(listing.product_id) === String(productId),
         );
 
         setChannels(shopifyChannels);
@@ -147,7 +152,11 @@ export default function ProductShopifyPublish({
             ],
       );
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Shopify publishing failed");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Shopify publishing failed",
+      );
     } finally {
       setPublishing(false);
     }
@@ -184,7 +193,11 @@ export default function ProductShopifyPublish({
         ),
       );
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Shopify sync failed");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Shopify sync failed",
+      );
     } finally {
       setSyncing(false);
     }
