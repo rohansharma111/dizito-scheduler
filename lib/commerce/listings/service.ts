@@ -262,6 +262,10 @@ export async function updateProductListingSyncState(
     `
     UPDATE product_listings
     SET
+      status = CASE
+        WHEN $1::varchar(20) = 'synced' AND $2 IS NOT NULL THEN 'active'
+        ELSE status
+      END,
       sync_status = $1::varchar(20),
       external_id = $2,
       last_synced_at = CASE WHEN $1::varchar(20) = 'synced' THEN now() ELSE last_synced_at END,
