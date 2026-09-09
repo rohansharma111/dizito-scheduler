@@ -70,6 +70,7 @@ export async function getProductDetails(productId: string, userId: number) {
     `
     SELECT
       pm.id,
+      pm.id AS product_media_id,
       pm.media_id,
       pm.sort_order,
       pm.is_primary,
