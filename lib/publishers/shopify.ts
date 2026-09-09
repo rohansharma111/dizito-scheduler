@@ -3,6 +3,7 @@ import {
   createProductListing,
   getProductListings,
   updateProductListingSyncState,
+  upsertProductListingMedia,
   upsertProductListingVariant,
 } from "@/lib/commerce/listings/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
@@ -24,6 +25,7 @@ interface ProductCreatePayload {
     product: {
       id: string;
       variants: { nodes: Array<{ id: string }> };
+      media: { nodes: Array<{ id: string }> };
     } | null;
     userErrors: ShopifyUserError[];
   };
@@ -56,9 +58,7 @@ function formatUserErrors(errors: ShopifyUserError[]) {
 }
 
 function throwIfUserErrors(errors: ShopifyUserError[], fallback: string) {
-  if (errors.length > 0) {
-    throw new Error(formatUserErrors(errors) || fallback);
-  }
+  if (errors.length > 0) throw new Error(formatUserErrors(errors) || fallback);
 }
 
 async function ensureListing(userId: number, channelId: string, productId: string) {
@@ -67,15 +67,9 @@ async function ensureListing(userId: number, channelId: string, productId: strin
     (listing) =>
       String(listing.channel_id) === channelId && String(listing.product_id) === productId,
   );
-
   if (existing) return existing;
 
-  const created = await createProductListing(userId, {
-    channelId,
-    productId,
-    status: "draft",
-  });
-
+  const created = await createProductListing(userId, { channelId, productId, status: "draft" });
   if (created.listing) return created.listing;
 
   if (created.error === "LISTING_ALREADY_EXISTS") {
@@ -110,6 +104,7 @@ function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDe
       cost_price: variant.cost_price === null ? null : Number(variant.cost_price),
     })),
     media: product.media.map((media: CatalogMedia) => ({
+      product_media_id: String(media.id),
       original_name: media.original_name ? String(media.original_name) : null,
       secure_url: String(media.secure_url),
       resource_type: media.resource_type ? String(media.resource_type) : null,
@@ -117,11 +112,7 @@ function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDe
   } satisfies ShopifyCatalogProduct;
 }
 
-export async function publishShopifyProduct(
-  userId: number,
-  channelId: string,
-  productId: string,
-) {
+export async function publishShopifyProduct(userId: number, channelId: string, productId: string) {
   const channel = await getCommerceChannelById(channelId, userId);
   if (!channel) throw new Error("Commerce channel not found");
   if (channel.provider !== "shopify") throw new Error("Commerce channel is not Shopify");
@@ -134,17 +125,13 @@ export async function publishShopifyProduct(
   }
 
   const listing = await ensureListing(userId, channelId, productId);
-
   if (listing.external_id) {
     throw new Error(
       "Shopify product already exists for this listing; use the Shopify sync/update flow instead of publishing again",
     );
   }
 
-  await updateProductListingSyncState(listing.id, userId, {
-    syncStatus: "syncing",
-    lastError: null,
-  });
+  await updateProductListingSyncState(listing.id, userId, { syncStatus: "syncing", lastError: null });
 
   try {
     const productInput = mapProductToShopifyProduct(product);
@@ -158,6 +145,7 @@ export async function publishShopifyProduct(
             product {
               id
               variants(first: 1) { nodes { id } }
+              media(first: 250) { nodes { id } }
             }
             userErrors { field message }
           }
@@ -167,7 +155,6 @@ export async function publishShopifyProduct(
     );
 
     throwIfUserErrors(created.productCreate.userErrors, "Shopify product creation failed");
-
     const shopifyProduct = created.productCreate.product;
     if (!shopifyProduct) throw new Error("Shopify did not return the created product");
 
@@ -176,6 +163,26 @@ export async function publishShopifyProduct(
       externalId: shopifyProduct.id,
       lastError: null,
     });
+
+    if (media.length !== shopifyProduct.media.nodes.length) {
+      throw new Error("Shopify returned an unexpected number of created media items");
+    }
+
+    for (let index = 0; index < product.media.length; index += 1) {
+      const canonicalMedia = product.media[index];
+      const shopifyMedia = shopifyProduct.media.nodes[index];
+      if (!canonicalMedia || !shopifyMedia) {
+        throw new Error("Shopify media mapping response was incomplete");
+      }
+
+      const saved = await upsertProductListingMedia(listing.id, userId, {
+        productMediaId: canonicalMedia.product_media_id,
+        externalId: shopifyMedia.id,
+        syncStatus: "synced",
+        providerMetadata: { provider: "shopify", source: "initial_publish" },
+      });
+      if (saved.error) throw new Error(saved.error);
+    }
 
     const initialShopifyVariant = shopifyProduct.variants.nodes[0];
     const firstVariant = product.variants[0];
@@ -225,10 +232,7 @@ export async function publishShopifyProduct(
             }
           }
         `,
-        {
-          productId: shopifyProduct.id,
-          variants: remainingVariants.map(mapVariantToShopifyVariant),
-        },
+        { productId: shopifyProduct.id, variants: remainingVariants.map(mapVariantToShopifyVariant) },
       );
 
       throwIfUserErrors(
@@ -261,6 +265,7 @@ export async function publishShopifyProduct(
       providerMetadata: {
         provider: "shopify",
         publishedVariantCount: product.variants.length,
+        publishedMediaCount: product.media.length,
       },
     });
 
@@ -268,10 +273,7 @@ export async function publishShopifyProduct(
     return completed.listing;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Shopify publishing failed";
-    await updateProductListingSyncState(listing.id, userId, {
-      syncStatus: "error",
-      lastError: message,
-    });
+    await updateProductListingSyncState(listing.id, userId, { syncStatus: "error", lastError: message });
     throw error;
   }
 }
