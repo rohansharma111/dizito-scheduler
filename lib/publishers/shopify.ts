@@ -20,12 +20,18 @@ interface ShopifyUserError {
   message: string;
 }
 
+interface ShopifyCreatedMediaNode {
+  id: string;
+  alt: string | null;
+  mediaContentType: string;
+}
+
 interface ProductCreatePayload {
   productCreate: {
     product: {
       id: string;
       variants: { nodes: Array<{ id: string }> };
-      media: { nodes: Array<{ id: string }> };
+      media: { nodes: ShopifyCreatedMediaNode[] };
     } | null;
     userErrors: ShopifyUserError[];
   };
@@ -59,6 +65,14 @@ function formatUserErrors(errors: ShopifyUserError[]) {
 
 function throwIfUserErrors(errors: ShopifyUserError[], fallback: string) {
   if (errors.length > 0) throw new Error(formatUserErrors(errors) || fallback);
+}
+
+function mediaType(media: CatalogMedia) {
+  return media.resource_type === "video" ? "VIDEO" : "IMAGE";
+}
+
+function mediaKey(alt: string | null | undefined, type: string) {
+  return `${alt?.trim() || ""}\u0000${type}`;
 }
 
 async function ensureListing(userId: number, channelId: string, productId: string) {
@@ -110,6 +124,41 @@ function asShopifyCatalogProduct(product: Awaited<ReturnType<typeof getProductDe
   } satisfies ShopifyCatalogProduct;
 }
 
+async function persistInitialMediaMappings(
+  listingId: string,
+  userId: number,
+  canonicalMedia: CatalogMedia[],
+  returnedMedia: ShopifyCreatedMediaNode[],
+) {
+  const candidates = new Map<string, ShopifyCreatedMediaNode[]>();
+  for (const item of returnedMedia) {
+    const key = mediaKey(item.alt, item.mediaContentType);
+    const matches = candidates.get(key) ?? [];
+    matches.push(item);
+    candidates.set(key, matches);
+  }
+
+  const usedExternalIds = new Set<string>();
+  for (const canonical of canonicalMedia) {
+    const key = mediaKey(canonical.original_name || null, mediaType(canonical));
+    const matches = candidates.get(key) ?? [];
+    const available = matches.filter((item) => !usedExternalIds.has(String(item.id)));
+    if (available.length !== 1) {
+      throw new Error("Shopify media response could not be deterministically mapped to canonical media");
+    }
+    const matched = available[0];
+    if (!matched) throw new Error("Shopify media response was incomplete");
+    const savedMedia = await upsertProductListingMedia(listingId, userId, {
+      productMediaId: canonical.product_media_id,
+      externalId: matched.id,
+      syncStatus: "synced",
+      providerMetadata: { provider: "shopify", source: "initial_publish" },
+    });
+    if (savedMedia.error) throw new Error(savedMedia.error);
+    usedExternalIds.add(String(matched.id));
+  }
+}
+
 export async function publishShopifyProduct(userId: number, channelId: string, productId: string) {
   const channel = await getCommerceChannelById(channelId, userId);
   if (!channel) throw new Error("Commerce channel not found");
@@ -126,7 +175,7 @@ export async function publishShopifyProduct(userId: number, channelId: string, p
   }
 
   try {
-    const createResult = await shopifyGraphQL<ProductCreatePayload>(channelId, `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id variants(first: 1) { nodes { id } } media(first: 250) { nodes { id } } } userErrors { field message } } }`, {
+    const createResult = await shopifyGraphQL<ProductCreatePayload>(channelId, `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id variants(first: 1) { nodes { id } } media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, {
       product: mapProductToShopifyProduct(product),
       media: mapProductToShopifyMedia(product),
     });
@@ -172,18 +221,7 @@ export async function publishShopifyProduct(userId: number, channelId: string, p
       }
     }
 
-    for (let index = 0; index < product.media.length; index += 1) {
-      const canonicalMedia = product.media[index];
-      const shopifyMedia = shopifyProduct.media.nodes[index];
-      if (!canonicalMedia || !shopifyMedia) throw new Error("Shopify returned an unexpected number of created media items");
-      const savedMedia = await upsertProductListingMedia(listing.id, userId, {
-        productMediaId: canonicalMedia.product_media_id,
-        externalId: shopifyMedia.id,
-        syncStatus: "synced",
-        providerMetadata: { provider: "shopify", source: "initial_publish" },
-      });
-      if (savedMedia.error) throw new Error(savedMedia.error);
-    }
+    await persistInitialMediaMappings(listing.id, userId, product.media, shopifyProduct.media.nodes);
 
     const completed = await updateProductListingSyncState(listing.id, userId, {
       syncStatus: "synced",
