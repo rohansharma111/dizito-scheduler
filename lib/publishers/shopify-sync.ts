@@ -113,10 +113,10 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
   if (String(channel.status).toLowerCase() !== "active") throw new Error("Selected Shopify channel is not active");
   const claim = await claimProductListingSync(listingId, userId);
   if (claim.error) { if (claim.error === "LISTING_NOT_FOUND") throw new Error("Product listing not found"); throw new Error("Product listing sync is already in progress"); }
-  const product = await getProductDetailsForSync(userId, listingId);
-  if (!product) { await updateProductListingSyncState(listingId, userId, { syncStatus: "error", lastError: "Product not found" }); throw new Error("Product not found"); }
-  if (product.variants.length === 0) { await updateProductListingSyncState(listingId, userId, { syncStatus: "error", lastError: "Shopify sync requires at least one product variant" }); throw new Error("Shopify sync requires at least one product variant"); }
   try {
+    const product = await getProductDetailsForSync(userId, listingId);
+    if (!product) throw new Error("Product not found");
+    if (product.variants.length === 0) throw new Error("Shopify sync requires at least one product variant");
     const updated = await shopifyGraphQL<ProductUpdatePayload>(channelId, `mutation UpdateProduct($product: ProductUpdateInput!) { productUpdate(product: $product) { product { id media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, { product: { id: shopifyProductId, title: product.name, descriptionHtml: product.description, vendor: product.brand, productType: product.category, status: product.status === "active" ? "ACTIVE" : product.status === "archived" ? "ARCHIVED" : "DRAFT" } });
     throwIfErrors(updated.productUpdate.userErrors, "Shopify product update failed");
     if (!updated.productUpdate.product) throw new Error("Shopify did not return the updated product");
