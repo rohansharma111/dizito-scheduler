@@ -104,6 +104,7 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
   if (!listing) throw new Error("Product listing not found");
   if (String(listing.channel_id) !== String(channelId)) throw new Error("Product listing does not belong to the selected Shopify channel");
   if (!listing.external_id || String(listing.external_id) !== String(shopifyProductId)) throw new Error("Shopify product does not match the listing");
+  if (!["draft", "active"].includes(String(listing.status).toLowerCase())) throw new Error("Product listing is not syncable in its current lifecycle state");
 
   const channel = await getCommerceChannelById(channelId, userId);
   if (!channel) throw new Error("Commerce channel not found");
