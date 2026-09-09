@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createCommerceChannel } from "@/lib/commerce/channels/service";
+import {
+  createCommerceChannel,
+  getCommerceChannelByExternalAccount,
+  updateCommerceChannel,
+} from "@/lib/commerce/channels/service";
 import { saveShopifyCredentials } from "@/lib/commerce/channels/credentials";
 import {
   exchangeShopifyAuthorizationCode,
@@ -56,16 +60,37 @@ export async function GET(request: Request) {
     const token = await exchangeShopifyAuthorizationCode(shop, code);
     const userId = Number(session.user.id);
 
-    const channel = await createCommerceChannel(userId, {
-      provider: "shopify",
-      name: shop,
-      externalAccountId: shop,
-      status: "active",
-      metadata: {
-        shopDomain: shop,
-        apiVersion: getShopifyApiVersion(),
-      },
-    });
+    const existingChannel = await getCommerceChannelByExternalAccount(
+      userId,
+      "shopify",
+      shop,
+    );
+
+    const channel = existingChannel
+      ? await updateCommerceChannel(String(existingChannel.id), userId, {
+          name: shop,
+          externalAccountId: shop,
+          status: "inactive",
+          metadata: {
+            ...(existingChannel.metadata ?? {}),
+            shopDomain: shop,
+            apiVersion: getShopifyApiVersion(),
+          },
+        })
+      : await createCommerceChannel(userId, {
+          provider: "shopify",
+          name: shop,
+          externalAccountId: shop,
+          status: "inactive",
+          metadata: {
+            shopDomain: shop,
+            apiVersion: getShopifyApiVersion(),
+          },
+        });
+
+    if (!channel) {
+      throw new Error("Unable to prepare Shopify channel");
+    }
 
     const accessTokenExpiresAt = token.expires_in
       ? new Date(Date.now() + token.expires_in * 1000)
@@ -74,13 +99,26 @@ export async function GET(request: Request) {
       ? new Date(Date.now() + token.refresh_token_expires_in * 1000)
       : null;
 
-    await saveShopifyCredentials({
-      channelId: String(channel.id),
-      accessToken: token.access_token,
-      refreshToken: token.refresh_token ?? null,
-      accessTokenExpiresAt,
-      refreshTokenExpiresAt,
-      scopes: token.scope,
+    try {
+      await saveShopifyCredentials({
+        channelId: String(channel.id),
+        accessToken: token.access_token,
+        refreshToken: token.refresh_token ?? null,
+        accessTokenExpiresAt,
+        refreshTokenExpiresAt,
+        scopes: token.scope,
+      });
+    } catch (credentialError) {
+      await updateCommerceChannel(String(channel.id), userId, {
+        status: "error",
+      }).catch((statusError) => {
+        console.error("Unable to mark Shopify channel as error:", statusError);
+      });
+      throw credentialError;
+    }
+
+    await updateCommerceChannel(String(channel.id), userId, {
+      status: "active",
     });
 
     const successUrl = new URL("/accounts", request.url);
