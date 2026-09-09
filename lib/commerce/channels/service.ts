@@ -107,6 +107,14 @@ export async function updateCommerceChannel(
   const existing = await getCommerceChannelById(channelId, userId);
   if (!existing) return null;
 
+  const metadata =
+    input.metadata === undefined
+      ? existing.metadata ?? {}
+      : {
+          ...(existing.metadata ?? {}),
+          ...input.metadata,
+        };
+
   const result = await pool.query(
     `
     UPDATE commerce_channels
@@ -123,7 +131,7 @@ export async function updateCommerceChannel(
       input.name ?? existing.name,
       input.externalAccountId !== undefined ? input.externalAccountId : existing.external_account_id,
       input.status ?? existing.status,
-      JSON.stringify(input.metadata ?? existing.metadata ?? {}),
+      JSON.stringify(metadata),
       channelId,
       userId,
     ],
