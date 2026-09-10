@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getAmazonProductTypeDefinition } from "@/lib/platforms/amazon/client";
+import { summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -46,20 +47,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const parentageLevel = body.parentageLevel ?? "NONE";
     const result = await getAmazonProductTypeDefinition(
       String(channel.id),
       body.productType.trim(),
-      {
-        sellerId,
-        parentageLevel: body.parentageLevel ?? "NONE",
-      },
+      { sellerId, parentageLevel },
     );
+    const schemaSummary = summarizeAmazonListingSchema(result.data);
 
     return NextResponse.json({
       success: true,
       productType: body.productType.trim(),
-      parentageLevel: body.parentageLevel ?? "NONE",
+      parentageLevel,
       definition: result.data,
+      schemaSummary,
       requestId: result.requestId,
       rateLimit: result.rateLimit,
     });
