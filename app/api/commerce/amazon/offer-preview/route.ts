@@ -70,9 +70,10 @@ export async function POST(request: Request) {
       fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment,
     });
 
+    // Amazon rejects parentageLevel when requirements=LISTING_OFFER_ONLY.
+    // Let the product-type schema retain its conditional variation logic.
     const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType, {
       sellerId,
-      parentageLevel: "NONE",
       requirements: "LISTING_OFFER_ONLY",
     });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
