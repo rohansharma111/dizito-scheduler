@@ -1,4 +1,5 @@
 import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
+import { amazonSpApiRequest } from "@/lib/platforms/amazon/client";
 
 export interface AmazonListingProductInput {
   name: string;
@@ -82,4 +83,32 @@ export function buildAmazonListingDraft(
     requirements: "LISTING",
     attributes,
   };
+}
+
+interface AmazonListingsItemResponse {
+  sku?: string;
+  status?: string;
+  submissionId?: string;
+  issues?: unknown[];
+}
+
+export async function previewAmazonListing(
+  channelId: string,
+  sellerId: string,
+  draft: AmazonListingDraft,
+) {
+  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
+    method: "PUT",
+    path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
+    query: {
+      marketplaceIds: getAmazonMarketplaceId(),
+      issueLocale: "en_IN",
+      mode: "VALIDATION_PREVIEW",
+    },
+    body: {
+      productType: draft.productType,
+      requirements: draft.requirements,
+      attributes: draft.attributes,
+    },
+  });
 }
