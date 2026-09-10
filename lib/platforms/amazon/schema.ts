@@ -19,6 +19,7 @@ export interface AmazonSchemaProperty {
 
 export interface AmazonListingSchemaSummary {
   required: string[];
+  conditionalRequired: string[];
   properties: Record<string, AmazonSchemaProperty>;
 }
 
@@ -41,6 +42,43 @@ function findSchema(value: unknown): AmazonSchemaProperty | null {
   return null;
 }
 
+function collectConditionalRequired(schema: AmazonSchemaProperty): string[] {
+  const names = new Set<string>();
+
+  function visit(value: unknown, conditional = false) {
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+
+    if (conditional && Array.isArray(record.required)) {
+      for (const name of record.required) {
+        if (typeof name === "string") names.add(name);
+      }
+    }
+
+    for (const key of ["then", "else", "dependentSchemas"]) {
+      const child = record[key];
+      if (key === "dependentSchemas" && child && typeof child === "object") {
+        for (const schemaValue of Object.values(child as Record<string, unknown>)) {
+          visit(schemaValue, true);
+        }
+      } else {
+        visit(child, true);
+      }
+    }
+
+    for (const key of ["allOf", "anyOf", "oneOf"]) {
+      const children = record[key];
+      if (Array.isArray(children)) {
+        for (const child of children) visit(child, conditional || key !== "allOf");
+      }
+    }
+  }
+
+  visit(schema, false);
+  for (const name of schema.required ?? []) names.delete(name);
+  return [...names].sort();
+}
+
 export function summarizeAmazonListingSchema(definition: unknown): AmazonListingSchemaSummary | null {
   const schema = findSchema(definition);
   if (!schema) return null;
@@ -48,6 +86,7 @@ export function summarizeAmazonListingSchema(definition: unknown): AmazonListing
   const properties = schema.properties ?? {};
   return {
     required: Array.isArray(schema.required) ? schema.required : [],
+    conditionalRequired: collectConditionalRequired(schema),
     properties,
   };
 }
