@@ -42,10 +42,17 @@ interface SchemaSummary {
   properties: Record<string, SchemaProperty>;
 }
 
+interface ValidationIssue {
+  code?: string;
+  message?: string;
+  severity?: string;
+  attributeName?: string;
+}
+
 interface ValidationResult {
   status?: string;
   submissionId?: string;
-  issues?: Array<{ code?: string; message?: string; severity?: string; attributeName?: string } | string>;
+  issues?: Array<ValidationIssue | string>;
 }
 
 interface Props {
@@ -71,13 +78,10 @@ const automaticSources: Record<string, FieldSource> = {
 };
 
 function defaultMapping(attribute: string): FieldMapping {
-  return {
-    source: automaticSources[attribute] ?? "manual",
-    value: "",
-  };
+  return { source: automaticSources[attribute] ?? "manual", value: "" };
 }
 
-function displayIssue(issue: ValidationResult["issues"][number]) {
+function displayIssue(issue: ValidationIssue | string) {
   if (typeof issue === "string") return issue;
   return [issue.code, issue.attributeName, issue.message].filter(Boolean).join(" · ");
 }
@@ -182,18 +186,9 @@ export default function ProductAmazonListing({ productId }: Props) {
       const response = await fetch("/api/commerce/amazon/listing-preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channelId: channel.id,
-          productId,
-          productType: selectedType,
-          fieldMappings: mappings,
-        }),
+        body: JSON.stringify({ channelId: channel.id, productId, productType: selectedType, fieldMappings: mappings }),
       });
-      const data = (await response.json()) as {
-        success?: boolean;
-        amazon?: ValidationResult;
-        error?: string;
-      };
+      const data = (await response.json()) as { success?: boolean; amazon?: ValidationResult; error?: string };
       if (!response.ok || !data.success) throw new Error(data.error || "Amazon validation preview failed");
       setValidation(data.amazon ?? null);
       const issueCount = data.amazon?.issues?.length ?? 0;
@@ -283,10 +278,7 @@ export default function ProductAmazonListing({ productId }: Props) {
       {validation && (
         <div className="mt-5 border-t pt-5">
           <h3 className="font-medium">Amazon validation result</h3>
-          <div className="text-sm text-gray-600 mt-2">
-            Status: <span className="font-medium">{validation.status || "returned"}</span>
-            {validation.submissionId ? ` · Submission ${validation.submissionId}` : ""}
-          </div>
+          <div className="text-sm text-gray-600 mt-2">Status: <span className="font-medium">{validation.status || "returned"}</span>{validation.submissionId ? ` · Submission ${validation.submissionId}` : ""}</div>
           {validation.issues && validation.issues.length > 0 ? (
             <div className="mt-3 space-y-2">
               {validation.issues.map((issue, index) => <div key={index} className="border rounded-lg p-3 text-sm">{displayIssue(issue)}</div>)}
