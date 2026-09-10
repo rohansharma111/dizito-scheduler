@@ -91,6 +91,39 @@ function normalizeAmazonMetadata(value: unknown, marketplaceId: string): unknown
   return normalized;
 }
 
+function pruneEmptyAmazonValues(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => pruneEmptyAmazonValues(item))
+      .filter((item) => item !== undefined && item !== null && item !== "");
+    return items;
+  }
+
+  if (!value || typeof value !== "object") {
+    if (value === "") return undefined;
+    return value;
+  }
+
+  const object = value as Record<string, unknown>;
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(object)) {
+    const next = pruneEmptyAmazonValues(child);
+    if (next === undefined || next === null || next === "") continue;
+    if (Array.isArray(next) && next.length === 0) continue;
+    if (typeof next === "object" && !Array.isArray(next) && Object.keys(next as Record<string, unknown>).length === 0) continue;
+    cleaned[key] = next;
+  }
+  return cleaned;
+}
+
+// These are offer/inventory concerns, not product-content fields. They must
+// be supplied by a future Amazon offer/fulfillment layer from Dizito inventory
+// rather than guessed or edited in the product attribute form.
+const OPERATIONAL_FIELDS = new Set([
+  "fulfillment_availability",
+  "fulfillment_channel",
+]);
+
 function buildMappedAttribute(
   attributeName: string,
   mapping: AmazonListingFieldMapping,
@@ -141,16 +174,18 @@ export function buildAmazonListingDraft(
   }
 
   for (const [attributeName, mapping] of Object.entries(fieldMappings)) {
+    if (OPERATIONAL_FIELDS.has(attributeName)) continue;
     const mappedValue = buildMappedAttribute(attributeName, mapping, product, variant);
     if (mappedValue !== null) attributes[attributeName] = mappedValue;
     else delete attributes[attributeName];
   }
 
+  const normalized = normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown>;
   return {
     sku: variant.sku,
     productType: productType.trim(),
     requirements: "LISTING",
-    attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown>,
+    attributes: pruneEmptyAmazonValues(normalized) as Record<string, unknown>,
   };
 }
 
