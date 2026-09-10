@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getAmazonProductTypeDefinition } from "@/lib/platforms/amazon/client";
 import { summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
+import { fetchAmazonProductTypeSchema } from "@/lib/platforms/amazon/schema-fetch";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -53,7 +54,9 @@ export async function POST(request: Request) {
       body.productType.trim(),
       { sellerId, parentageLevel },
     );
-    const schemaSummary = summarizeAmazonListingSchema(result.data);
+
+    const schemaDocument = await fetchAmazonProductTypeSchema(result.data);
+    const schemaSummary = summarizeAmazonListingSchema(schemaDocument);
 
     return NextResponse.json({
       success: true,
