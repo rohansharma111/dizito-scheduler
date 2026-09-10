@@ -74,8 +74,8 @@ export default function AmazonOfferLayer({ productId }: Props) {
     setDraftSaved(false);
   }
 
-  async function saveDraft() {
-    if (!channel || !variantId || !productType || !validation || (validation.issues?.length ?? 0) > 0) return;
+  async function saveDraft(): Promise<boolean> {
+    if (!channel || !variantId || !productType || !validation || (validation.issues?.length ?? 0) > 0) return false;
     const listingsResponse = await fetch("/api/commerce/listings");
     const listingsData = (await listingsResponse.json()) as { success?: boolean; listings?: Array<{ channel_id?: string; product_id?: string | number; provider_metadata?: Record<string, unknown> }>; error?: string };
     if (!listingsResponse.ok || !listingsData.success) throw new Error(listingsData.error || "Unable to load existing Commerce listing draft");
@@ -93,7 +93,7 @@ export default function AmazonOfferLayer({ productId }: Props) {
         providerMetadata: {
           amazon: {
             product: { productType },
-            offer: { variantId, price, quantity: Number(quantity), condition, fulfillmentChannelCode: fulfillment, validation: { status: validation.status ?? null, submissionId: validation.submissionId ?? null } },
+            offer: { variantId, price: Number(price), quantity: Number(quantity), condition, fulfillmentChannelCode: fulfillment, validation: { status: validation.status ?? null, submissionId: validation.submissionId ?? null } },
           },
         },
         variants: [{ variantId }],
@@ -102,7 +102,7 @@ export default function AmazonOfferLayer({ productId }: Props) {
     const data = (await response.json()) as { success?: boolean; error?: string };
     if (!response.ok || !data.success) throw new Error(data.error || "Unable to save Amazon listing draft");
     setDraftSaved(true);
-    setStatus("Amazon offer validated and Commerce listing draft saved");
+    return true;
   }
 
   async function validateOffer() {
@@ -128,12 +128,8 @@ export default function AmazonOfferLayer({ productId }: Props) {
       setValidation(data.amazon ?? null);
       const count = data.amazon?.issues?.length ?? 0;
       if (count === 0) {
-        try {
-          await saveDraft();
-        } catch (error) {
-          setStatus(error instanceof Error ? error.message : "Amazon offer validated but draft save failed");
-        }
-        if (!draftSaved) setStatus("Amazon offer validation returned no issues. Save requires an existing Amazon catalog draft identity.");
+        const saved = await saveDraft();
+        setStatus(saved ? "Amazon offer validated and Commerce listing draft saved" : "Amazon offer validation returned no issues");
       } else {
         setStatus(`Amazon offer validation returned ${count} issue${count === 1 ? "" : "s"}`);
       }
