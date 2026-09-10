@@ -1,5 +1,6 @@
 import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
 import { amazonSpApiRequest } from "@/lib/platforms/amazon/client";
+import { buildAmazonExternalProductIdentifier } from "@/lib/platforms/amazon/identity";
 
 export interface AmazonListingProductInput {
   name: string;
@@ -47,18 +48,10 @@ function marketplaceValue(value: string, marketplaceId: string) {
 function parseManualValue(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  try {
-    return JSON.parse(trimmed) as unknown;
-  } catch {
-    return trimmed;
-  }
+  try { return JSON.parse(trimmed) as unknown; } catch { return trimmed; }
 }
 
-function getSourceValue(
-  source: AmazonListingFieldSource,
-  product: AmazonListingProductInput,
-  variant: AmazonListingVariantInput,
-) {
+function getSourceValue(source: AmazonListingFieldSource, product: AmazonListingProductInput, variant: AmazonListingVariantInput) {
   switch (source) {
     case "product.name": return product.name;
     case "product.description": return product.description ?? null;
@@ -74,135 +67,74 @@ function getSourceValue(
 function normalizeAmazonMetadata(value: unknown, marketplaceId: string): unknown {
   if (Array.isArray(value)) return value.map((item) => normalizeAmazonMetadata(item, marketplaceId));
   if (!value || typeof value !== "object") return value;
-
   const object = value as Record<string, unknown>;
   const normalized: Record<string, unknown> = {};
-
   for (const [key, child] of Object.entries(object)) {
-    if (key === "marketplace_id") {
-      normalized[key] = marketplaceId;
-    } else if (key === "language_tag") {
-      normalized[key] = "en_IN";
-    } else {
-      normalized[key] = normalizeAmazonMetadata(child, marketplaceId);
-    }
+    if (key === "marketplace_id") normalized[key] = marketplaceId;
+    else if (key === "language_tag") normalized[key] = "en_IN";
+    else normalized[key] = normalizeAmazonMetadata(child, marketplaceId);
   }
-
   return normalized;
 }
 
-function buildMappedAttribute(
-  attributeName: string,
-  mapping: AmazonListingFieldMapping,
-  product: AmazonListingProductInput,
-  variant: AmazonListingVariantInput,
-) {
-  if (mapping.source === "manual") return parseManualValue(mapping.value ?? "");
+function buildMappedAttribute(attributeName: string, mapping: AmazonListingFieldMapping, product: AmazonListingProductInput, variant: AmazonListingVariantInput) {
+  const marketplaceId = getAmazonMarketplaceId();
+  if (mapping.source === "manual") {
+    const manual = parseManualValue(mapping.value ?? "");
+    if (manual === null) return null;
+    if (attributeName === "externally_assigned_product_identifier") {
+      if (!manual || typeof manual !== "object" || Array.isArray(manual)) {
+        throw new Error("External product identifier must include a type and value.");
+      }
+      const identifier = manual as { type?: string; value?: string };
+      if (!identifier.type || typeof identifier.value !== "string") {
+        throw new Error("External product identifier must include a type and value.");
+      }
+      return buildAmazonExternalProductIdentifier({ type: identifier.type as "ean" | "upc" | "gtin" | "isbn", value: identifier.value }, marketplaceId);
+    }
+    return manual;
+  }
 
   const value = getSourceValue(mapping.source, product, variant);
   if (value === null || value === undefined || value === "") return null;
-
   const stringValue = String(value);
-  const marketplaceId = getAmazonMarketplaceId();
-
-  if (["item_name", "product_description", "brand"].includes(attributeName)) {
-    return localizedValue(stringValue, marketplaceId);
-  }
+  if (["item_name", "product_description", "brand"].includes(attributeName)) return localizedValue(stringValue, marketplaceId);
   if (attributeName === "item_type_keyword") return marketplaceValue(stringValue, marketplaceId);
-
+  if (attributeName === "externally_assigned_product_identifier") {
+    throw new Error("External product identifiers must be entered with an identifier type; SKU or barcode alone is not assumed to be a valid Amazon identifier.");
+  }
   return stringValue;
 }
 
-/**
- * Build an Amazon listing payload from canonical Dizito data plus explicit
- * field mappings supplied by the user. Unknown Amazon fields are never
- * guessed; they must be supplied as a manual value (plain text or JSON).
- */
-export function buildAmazonListingDraft(
-  product: AmazonListingProductInput,
-  variant: AmazonListingVariantInput,
-  productType: string,
-  fieldMappings: Record<string, AmazonListingFieldMapping> = {},
-): AmazonListingDraft {
+export function buildAmazonListingDraft(product: AmazonListingProductInput, variant: AmazonListingVariantInput, productType: string, fieldMappings: Record<string, AmazonListingFieldMapping> = {}): AmazonListingDraft {
   const marketplaceId = getAmazonMarketplaceId();
-  const attributes: Record<string, unknown> = {
-    item_name: localizedValue(product.name, marketplaceId),
-  };
-
-  // These canonical fields are only included when they have a direct,
-  // product-level Amazon representation. Category is deliberately not
-  // converted to item_type_keyword automatically because Amazon product
-  // types can reject that attribute as not applicable.
-  if (product.brand?.trim()) {
-    attributes.brand = localizedValue(product.brand.trim(), marketplaceId);
-  }
-  if (product.description?.trim()) {
-    attributes.product_description = localizedValue(product.description.trim(), marketplaceId);
-  }
-
+  const attributes: Record<string, unknown> = { item_name: localizedValue(product.name, marketplaceId) };
+  if (product.brand?.trim()) attributes.brand = localizedValue(product.brand.trim(), marketplaceId);
+  if (product.description?.trim()) attributes.product_description = localizedValue(product.description.trim(), marketplaceId);
   for (const [attributeName, mapping] of Object.entries(fieldMappings)) {
     const mappedValue = buildMappedAttribute(attributeName, mapping, product, variant);
     if (mappedValue !== null) attributes[attributeName] = mappedValue;
     else delete attributes[attributeName];
   }
-
-  return {
-    sku: variant.sku,
-    productType: productType.trim(),
-    requirements: "LISTING",
-    attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown>,
-  };
+  return { sku: variant.sku, productType: productType.trim(), requirements: "LISTING", attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown> };
 }
 
-interface AmazonListingsItemResponse {
-  sku?: string;
-  status?: string;
-  submissionId?: string;
-  issues?: unknown[];
-}
+interface AmazonListingsItemResponse { sku?: string; status?: string; submissionId?: string; issues?: unknown[]; }
 
-export async function previewAmazonListing(
-  channelId: string,
-  sellerId: string,
-  draft: AmazonListingDraft,
-) {
+export async function previewAmazonListing(channelId: string, sellerId: string, draft: AmazonListingDraft) {
   return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
     method: "PUT",
     path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
-    query: {
-      marketplaceIds: getAmazonMarketplaceId(),
-      issueLocale: "en_IN",
-      mode: "VALIDATION_PREVIEW",
-    },
-    body: {
-      productType: draft.productType,
-      requirements: draft.requirements,
-      attributes: draft.attributes,
-    },
+    query: { marketplaceIds: getAmazonMarketplaceId(), issueLocale: "en_IN", mode: "VALIDATION_PREVIEW" },
+    body: { productType: draft.productType, requirements: draft.requirements, attributes: draft.attributes },
   });
 }
 
-/**
- * Publish a validated Amazon listing. The caller must gate this operation
- * behind a successful validation preview; this function performs the live
- * Listings Items PUT and does not create or modify a Dizito listing record.
- */
-export async function publishAmazonListing(
-  channelId: string,
-  sellerId: string,
-  draft: AmazonListingDraft,
-) {
+export async function publishAmazonListing(channelId: string, sellerId: string, draft: AmazonListingDraft) {
   return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
     method: "PUT",
     path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
-    query: {
-      marketplaceIds: getAmazonMarketplaceId(),
-      issueLocale: "en_IN",
-    },
-    body: {
-      productType: draft.productType,
-      requirements: draft.requirements,
-      attributes: draft.attributes,
-    },
+    query: { marketplaceIds: getAmazonMarketplaceId(), issueLocale: "en_IN" },
+    body: { productType: draft.productType, requirements: draft.requirements, attributes: draft.attributes },
   });
 }
