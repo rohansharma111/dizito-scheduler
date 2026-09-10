@@ -3,7 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
-import { buildAmazonListingDraft, previewAmazonListing } from "@/lib/platforms/amazon/listings";
+import {
+  buildAmazonListingDraft,
+  previewAmazonListing,
+  type AmazonListingFieldMapping,
+} from "@/lib/platforms/amazon/listings";
 
 interface ProductVariantForListingPreview {
   id: string | number;
@@ -26,7 +30,13 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
   try {
-    const body = (await request.json()) as { channelId?: string; productId?: string; variantId?: string; productType?: string };
+    const body = (await request.json()) as {
+      channelId?: string;
+      productId?: string;
+      variantId?: string;
+      productType?: string;
+      fieldMappings?: Record<string, AmazonListingFieldMapping>;
+    };
     if (!body.channelId || !body.productId || !body.productType?.trim()) {
       return NextResponse.json({ success: false, error: "channelId, productId, and productType are required" }, { status: 400 });
     }
@@ -55,10 +65,21 @@ export async function POST(request: Request) {
       { name: product.name, description: product.description, brand: product.brand, category: product.category },
       { sku: variant.sku, barcode: variant.barcode, price: variant.price },
       body.productType.trim(),
+      body.fieldMappings ?? {},
     );
 
     const result = await previewAmazonListing(body.channelId, sellerId, draft);
-    return NextResponse.json({ success: true, product: { id: product.id, name: product.name }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, validationPreview: true, draft, amazon: result.data, requestId: result.requestId, rateLimit: result.rateLimit });
+    return NextResponse.json({
+      success: true,
+      product: { id: product.id, name: product.name },
+      variant: { id: variant.id, sku: variant.sku },
+      productType: draft.productType,
+      validationPreview: true,
+      draft,
+      amazon: result.data,
+      requestId: result.requestId,
+      rateLimit: result.rateLimit,
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Amazon listing validation preview failed" }, { status: 502 });
   }
