@@ -159,8 +159,9 @@ export async function getAmazonProductTypeDefinition(
       marketplaceIds: getAmazonMarketplaceId(),
       productTypeVersion: "LATEST",
       requirements: "LISTING",
-      requirementsEnforced: options.parentageLevel ?? "NONE",
+      requirementsEnforced: "ENFORCED",
       locale: "en_IN",
+      parentageLevel: options.parentageLevel,
     },
   });
 }
