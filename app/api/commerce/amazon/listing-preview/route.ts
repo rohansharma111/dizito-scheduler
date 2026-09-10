@@ -5,6 +5,22 @@ import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
 import { buildAmazonListingDraft, previewAmazonListing } from "@/lib/platforms/amazon/listings";
 
+interface ProductVariantForListingPreview {
+  id: string | number;
+  sku?: string | null;
+  barcode?: string | null;
+  price?: number | null;
+}
+
+interface ProductForListingPreview {
+  id: string | number;
+  name: string;
+  description?: string | null;
+  brand?: string | null;
+  category?: string | null;
+  variants: ProductVariantForListingPreview[];
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -23,11 +39,11 @@ export async function POST(request: Request) {
     const sellerId = String(channel.external_account_id ?? "").trim();
     if (!sellerId) return NextResponse.json({ success: false, error: "Amazon seller ID is missing from the channel" }, { status: 409 });
 
-    const product = await getProductDetails(body.productId, userId);
+    const product = (await getProductDetails(body.productId, userId)) as ProductForListingPreview | null;
     if (!product) return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
 
     const variant = body.variantId
-      ? product.variants.find((item) => String(item.id) === body.variantId)
+      ? product.variants.find((item: ProductVariantForListingPreview) => String(item.id) === body.variantId)
       : product.variants.length === 1 ? product.variants[0] : undefined;
 
     if (!variant) {
