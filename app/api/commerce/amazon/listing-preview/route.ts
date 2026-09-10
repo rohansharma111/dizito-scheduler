@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
 import { buildAmazonListingDraft, previewAmazonListing, type AmazonListingFieldMapping } from "@/lib/platforms/amazon/listings";
+import { getAmazonProductTypeDefinition } from "@/lib/platforms/amazon/client";
+import { fetchAmazonProductTypeSchema } from "@/lib/platforms/amazon/schema-fetch";
+import { summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
 
 interface ProductVariantForListingPreview { id: string | number; sku?: string | null; barcode?: string | null; price?: number | null; }
 interface ProductForListingPreview { id: string | number; name: string; description?: string | null; brand?: string | null; category?: string | null; variants: ProductVariantForListingPreview[]; }
@@ -43,8 +46,28 @@ export async function POST(request: Request) {
       "LISTING_PRODUCT_ONLY",
     );
 
+    const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType.trim(), {
+      sellerId,
+      parentageLevel: "NONE",
+      requirements: "LISTING_PRODUCT_ONLY",
+    });
+    const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
+    const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
+
     const result = await previewAmazonListing(body.channelId, sellerId, draft);
-    return NextResponse.json({ success: true, product: { id: product.id, name: product.name }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, amazon: result.data, requestId: result.requestId, rateLimit: result.rateLimit });
+    return NextResponse.json({
+      success: true,
+      product: { id: product.id, name: product.name },
+      variant: { id: variant.id, sku: variant.sku },
+      productType: draft.productType,
+      requirements: draft.requirements,
+      validationPreview: true,
+      draft,
+      schemaSummary,
+      amazon: result.data,
+      requestId: result.requestId,
+      rateLimit: result.rateLimit,
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Amazon listing validation preview failed" }, { status: 502 });
   }
