@@ -1,7 +1,6 @@
 import { getAmazonCredentials } from "@/lib/commerce/channels/amazon-credentials";
 import { getCommerceChannelByIdInternal, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getAmazonMarketplaceId, getAmazonSpApiEndpoint, refreshAmazonAccessToken } from "@/lib/platforms/amazon/auth";
-import { signAmazonSpApiRequest } from "@/lib/platforms/amazon/sigv4";
 
 export interface AmazonSpApiRequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -68,14 +67,18 @@ export async function amazonSpApiRequest<T>(channelId: string, options: AmazonSp
     }
   }
 
-  const signedHeaders = signAmazonSpApiRequest({
-    url,
-    method,
-    body,
-    headers: { accept: "application/json", ...(body ? { "content-type": "application/json" } : {}), "x-amz-access-token": accessToken },
-  });
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "x-amz-access-token": accessToken,
+  };
+  if (body) headers["content-type"] = "application/json";
 
-  const response = await fetch(url, { method, headers: signedHeaders, body: body || undefined, cache: "no-store" });
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body || undefined,
+    cache: "no-store",
+  });
   const requestId = response.headers.get("x-amzn-RequestId");
   const rateLimit = response.headers.get("x-amzn-RateLimit-Limit");
   const errorType = response.headers.get("x-amzn-ErrorType");
