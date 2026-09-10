@@ -13,8 +13,19 @@ interface CommerceChannel {
 
 interface AmazonVerificationResult {
   marketplaceId: string;
-  marketplace: string;
-  isParticipating: boolean;
+  marketplace: {
+    id: string;
+    countryCode: string;
+    name: string;
+    defaultLanguageCode: string;
+    defaultCurrencyCode: string;
+    domainName: string;
+  };
+  isParticipating?: boolean;
+  participation?: {
+    isParticipating: boolean;
+    hasSuspendedListings: boolean;
+  };
   requestId: string | null;
   rateLimit: string | null;
 }
@@ -79,8 +90,9 @@ export default function CommerceChannelsPage() {
         throw new Error(data.error ?? "Amazon connection verification failed");
       }
 
+      const marketplaceName = data.result.marketplace.name;
       setVerificationMessage(
-        `Amazon connection verified for ${data.result.marketplace}. SP-API request ${data.result.requestId ?? "completed"}.`,
+        `Amazon connection verified for ${marketplaceName}. SP-API request ${data.result.requestId ?? "completed"}.`,
       );
     } catch (verificationError) {
       setError(
