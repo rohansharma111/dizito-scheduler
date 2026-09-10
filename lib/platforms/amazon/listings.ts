@@ -71,6 +71,26 @@ function getSourceValue(
   }
 }
 
+function normalizeAmazonMetadata(value: unknown, marketplaceId: string): unknown {
+  if (Array.isArray(value)) return value.map((item) => normalizeAmazonMetadata(item, marketplaceId));
+  if (!value || typeof value !== "object") return value;
+
+  const object = value as Record<string, unknown>;
+  const normalized: Record<string, unknown> = {};
+
+  for (const [key, child] of Object.entries(object)) {
+    if (key === "marketplace_id") {
+      normalized[key] = marketplaceId;
+    } else if (key === "language_tag") {
+      normalized[key] = "en_IN";
+    } else {
+      normalized[key] = normalizeAmazonMetadata(child, marketplaceId);
+    }
+  }
+
+  return normalized;
+}
+
 function buildMappedAttribute(
   attributeName: string,
   mapping: AmazonListingFieldMapping,
@@ -130,7 +150,7 @@ export function buildAmazonListingDraft(
     sku: variant.sku,
     productType: productType.trim(),
     requirements: "LISTING",
-    attributes,
+    attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown>,
   };
 }
 
