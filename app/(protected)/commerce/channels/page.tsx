@@ -11,17 +11,27 @@ interface CommerceChannel {
   created_at: string;
 }
 
+interface AmazonVerificationResult {
+  marketplaceId: string;
+  marketplace: string;
+  isParticipating: boolean;
+  requestId: string | null;
+  rateLimit: string | null;
+}
+
 export default function CommerceChannelsPage() {
   const [shop, setShop] = useState("");
   const [channels, setChannels] = useState<CommerceChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadChannels() {
     try {
       const response = await fetch("/api/commerce/channels");
-      const data = await response.json();
+      const data = (await response.json()) as { channels?: CommerceChannel[]; error?: string };
       if (!response.ok) throw new Error(data.error ?? "Failed to load channels");
       setChannels(data.channels ?? []);
     } catch (loadError) {
@@ -48,6 +58,41 @@ export default function CommerceChannelsPage() {
     window.location.href = "/api/commerce/amazon/connect";
   }
 
+  async function verifyAmazon(channel: CommerceChannel) {
+    setVerifyingId(channel.id);
+    setVerificationMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/commerce/amazon/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId: channel.id }),
+      });
+      const data = (await response.json()) as {
+        success?: boolean;
+        result?: AmazonVerificationResult;
+        error?: string;
+      };
+
+      if (!response.ok || !data.success || !data.result) {
+        throw new Error(data.error ?? "Amazon connection verification failed");
+      }
+
+      setVerificationMessage(
+        `Amazon connection verified for ${data.result.marketplace}. SP-API request ${data.result.requestId ?? "completed"}.`,
+      );
+    } catch (verificationError) {
+      setError(
+        verificationError instanceof Error
+          ? verificationError.message
+          : "Amazon connection verification failed",
+      );
+    } finally {
+      setVerifyingId(null);
+    }
+  }
+
   async function setChannelStatus(channel: CommerceChannel, status: "active" | "inactive") {
     if (status === "inactive" && !window.confirm(`Disconnect ${channel.name}?`)) return;
 
@@ -60,7 +105,7 @@ export default function CommerceChannelsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Failed to update channel");
 
       setChannels((current) =>
@@ -116,6 +161,12 @@ export default function CommerceChannelsPage() {
         </button>
       </div>
 
+      {verificationMessage && (
+        <div className="border border-green-300 rounded p-4 mb-6 text-green-700">
+          {verificationMessage}
+        </div>
+      )}
+
       {error && <div className="border border-red-300 rounded p-4 mb-6 text-red-700">{error}</div>}
 
       <div>
@@ -130,6 +181,8 @@ export default function CommerceChannelsPage() {
         {!loading && channels.map((channel) => {
           const active = channel.status === "active";
           const updating = updatingId === channel.id;
+          const verifying = verifyingId === channel.id;
+          const amazon = channel.provider === "amazon";
 
           return (
             <div key={channel.id} className="border rounded p-4 mb-3">
@@ -140,10 +193,20 @@ export default function CommerceChannelsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-sm">{active ? "🟢 Active" : channel.status}</div>
+                  {amazon && active && (
+                    <button
+                      type="button"
+                      onClick={() => void verifyAmazon(channel)}
+                      disabled={verifying || updating}
+                      className="border rounded px-3 py-1.5 text-sm disabled:opacity-50"
+                    >
+                      {verifying ? "Verifying..." : "Verify"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => void setChannelStatus(channel, active ? "inactive" : "active")}
-                    disabled={updating || channel.status === "error"}
+                    disabled={updating || verifying || channel.status === "error"}
                     className="border rounded px-3 py-1.5 text-sm disabled:opacity-50"
                   >
                     {updating ? "Updating..." : active ? "Disconnect" : "Reconnect"}
