@@ -131,15 +131,32 @@ export async function searchAmazonProductTypes(channelId: string, itemName: stri
   const normalizedItemName = itemName.trim();
   if (!normalizedItemName) throw new Error("Product name is required to search Amazon product types");
 
+  const baseQuery = {
+    marketplaceIds: getAmazonMarketplaceId(),
+    locale: "en_IN",
+    searchLocale: "en_IN",
+  };
+
+  const exactResult = await amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
+    method: "GET",
+    path: "/definitions/2020-09-01/productTypes",
+    query: { ...baseQuery, itemName: normalizedItemName },
+  });
+
+  if ((exactResult.data.productTypes ?? []).length > 0) return exactResult;
+
+  const keywords = normalizedItemName
+    .split(/[^A-Za-z0-9]+/)
+    .filter((word) => word.length >= 2)
+    .slice(0, 5)
+    .join(" ");
+
+  if (!keywords) return exactResult;
+
   return amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
     method: "GET",
     path: "/definitions/2020-09-01/productTypes",
-    query: {
-      marketplaceIds: getAmazonMarketplaceId(),
-      itemName: normalizedItemName,
-      locale: "en_IN",
-      searchLocale: "en_IN",
-    },
+    query: { ...baseQuery, keywords },
   });
 }
 
