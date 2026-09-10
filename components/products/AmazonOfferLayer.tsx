@@ -28,6 +28,7 @@ export default function AmazonOfferLayer({ productId }: Props) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Loading Amazon offer context…");
   const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [draftSaved, setDraftSaved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +71,38 @@ export default function AmazonOfferLayer({ productId }: Props) {
     const variant = variants.find((item) => String(item.id) === value);
     if (variant?.price != null) setPrice(String(variant.price));
     setValidation(null);
+    setDraftSaved(false);
+  }
+
+  async function saveDraft() {
+    if (!channel || !variantId || !productType || !validation || (validation.issues?.length ?? 0) > 0) return;
+    const listingsResponse = await fetch("/api/commerce/listings");
+    const listingsData = (await listingsResponse.json()) as { success?: boolean; listings?: Array<{ channel_id?: string; product_id?: string | number; provider_metadata?: Record<string, unknown> }>; error?: string };
+    if (!listingsResponse.ok || !listingsData.success) throw new Error(listingsData.error || "Unable to load existing Commerce listing draft");
+    const existing = listingsData.listings?.find((listing) => String(listing.channel_id) === channel.id && String(listing.product_id) === String(productId));
+    const existingAmazon = existing?.provider_metadata?.amazon;
+    const existingProduct = existingAmazon && typeof existingAmazon === "object" && !Array.isArray(existingAmazon) ? (existingAmazon as Record<string, unknown>).product : undefined;
+    if (!existing || !existingProduct) throw new Error("Select an Amazon catalog ASIN first so the product identity is saved before the offer draft");
+
+    const response = await fetch("/api/commerce/listings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channelId: channel.id,
+        productId,
+        providerMetadata: {
+          amazon: {
+            product: { productType },
+            offer: { variantId, price, quantity: Number(quantity), condition, fulfillmentChannelCode: fulfillment, validation: { status: validation.status ?? null, submissionId: validation.submissionId ?? null } },
+          },
+        },
+        variants: [{ variantId }],
+      }),
+    });
+    const data = (await response.json()) as { success?: boolean; error?: string };
+    if (!response.ok || !data.success) throw new Error(data.error || "Unable to save Amazon listing draft");
+    setDraftSaved(true);
+    setStatus("Amazon offer validated and Commerce listing draft saved");
   }
 
   async function validateOffer() {
@@ -82,6 +115,7 @@ export default function AmazonOfferLayer({ productId }: Props) {
     if (!Number.isInteger(parsedQuantity) || parsedQuantity < 0) { setStatus("Enter a non-negative integer quantity."); return; }
     setLoading(true);
     setValidation(null);
+    setDraftSaved(false);
     setStatus("Sending Amazon offer validation preview…");
     try {
       const response = await fetch("/api/commerce/amazon/offer-preview", {
@@ -93,23 +127,33 @@ export default function AmazonOfferLayer({ productId }: Props) {
       if (!response.ok || !data.success) throw new Error(data.error || "Amazon offer validation failed");
       setValidation(data.amazon ?? null);
       const count = data.amazon?.issues?.length ?? 0;
-      setStatus(count === 0 ? "Amazon offer validation returned no issues" : `Amazon offer validation returned ${count} issue${count === 1 ? "" : "s"}`);
+      if (count === 0) {
+        try {
+          await saveDraft();
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Amazon offer validated but draft save failed");
+        }
+        if (!draftSaved) setStatus("Amazon offer validation returned no issues. Save requires an existing Amazon catalog draft identity.");
+      } else {
+        setStatus(`Amazon offer validation returned ${count} issue${count === 1 ? "" : "s"}`);
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Amazon offer validation failed");
     } finally { setLoading(false); }
   }
 
   return <section className="bg-white border rounded-xl p-6">
-    <div className="mb-5"><h2 className="text-lg font-semibold">Amazon Offer</h2><p className="text-sm text-gray-500 mt-1">Configure seller-specific price, inventory, condition, and fulfillment. This validates the offer only; it does not publish it.</p></div>
+    <div className="mb-5"><h2 className="text-lg font-semibold">Amazon Offer</h2><p className="text-sm text-gray-500 mt-1">Configure seller-specific price, inventory, condition, and fulfillment. This validates the offer and, when a catalog identity draft exists, saves the configuration to the durable Commerce listing draft. It does not publish.</p></div>
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="md:col-span-2"><label className="block text-sm font-medium mb-1">Amazon product type</label><select value={productType} onChange={(event) => { setProductType(event.target.value); setValidation(null); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="">Select Amazon product type</option>{productTypes.map((item) => <option key={item.name} value={item.name}>{item.displayName} ({item.name})</option>)}</select></div>
+      <div className="md:col-span-2"><label className="block text-sm font-medium mb-1">Amazon product type</label><select value={productType} onChange={(event) => { setProductType(event.target.value); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="">Select Amazon product type</option>{productTypes.map((item) => <option key={item.name} value={item.name}>{item.displayName} ({item.name})</option>)}</select></div>
       <div><label className="block text-sm font-medium mb-1">Variant</label><select value={variantId} onChange={(event) => selectVariant(event.target.value)} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="">Select variant</option>{variants.map((variant) => <option key={String(variant.id)} value={String(variant.id)}>{variant.name || variant.sku || `Variant ${variant.id}`}{variant.sku ? ` · ${variant.sku}` : ""}</option>)}</select></div>
-      <div><label className="block text-sm font-medium mb-1">Offer price (INR)</label><input type="number" min="0.01" step="0.01" value={price} onChange={(event) => { setPrice(event.target.value); setValidation(null); }} className="border rounded-lg px-3 py-2 w-full" placeholder="Enter selling price" /></div>
-      <div><label className="block text-sm font-medium mb-1">Available quantity</label><input type="number" min="0" step="1" value={quantity} onChange={(event) => { setQuantity(event.target.value); setValidation(null); }} className="border rounded-lg px-3 py-2 w-full" /></div>
-      <div><label className="block text-sm font-medium mb-1">Condition</label><select value={condition} onChange={(event) => { setCondition(event.target.value as Condition); setValidation(null); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="new_new">New</option><option value="used_like_new">Used — Like New</option><option value="used_very_good">Used — Very Good</option><option value="used_good">Used — Good</option><option value="used_acceptable">Used — Acceptable</option></select></div>
-      <div><label className="block text-sm font-medium mb-1">Fulfillment</label><select value={fulfillment} onChange={(event) => { setFulfillment(event.target.value as Fulfillment); setValidation(null); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="DEFAULT">Seller fulfilled</option><option value="AMAZON_IN">Amazon fulfillment</option></select></div>
+      <div><label className="block text-sm font-medium mb-1">Offer price (INR)</label><input type="number" min="0.01" step="0.01" value={price} onChange={(event) => { setPrice(event.target.value); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full" placeholder="Enter selling price" /></div>
+      <div><label className="block text-sm font-medium mb-1">Available quantity</label><input type="number" min="0" step="1" value={quantity} onChange={(event) => { setQuantity(event.target.value); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full" /></div>
+      <div><label className="block text-sm font-medium mb-1">Condition</label><select value={condition} onChange={(event) => { setCondition(event.target.value as Condition); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="new_new">New</option><option value="used_like_new">Used — Like New</option><option value="used_very_good">Used — Very Good</option><option value="used_good">Used — Good</option><option value="used_acceptable">Used — Acceptable</option></select></div>
+      <div><label className="block text-sm font-medium mb-1">Fulfillment</label><select value={fulfillment} onChange={(event) => { setFulfillment(event.target.value as Fulfillment); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="DEFAULT">Seller fulfilled</option><option value="AMAZON_IN">Amazon fulfillment</option></select></div>
     </div>
     <div className="mt-4 flex items-center justify-between gap-3 flex-wrap"><p className="text-sm text-gray-500">{status}</p><button type="button" onClick={validateOffer} disabled={loading || variants.length === 0} className="border px-4 py-2 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50">{loading ? "Validating…" : "Validate Offer with Amazon"}</button></div>
+    {draftSaved && <p className="mt-3 text-sm text-green-700">Commerce listing draft saved. No Amazon listing was published.</p>}
     {validation && <div className="mt-6 border-t pt-5"><h3 className="font-medium">Amazon offer validation result</h3><p className="text-sm text-gray-600 mt-2">Status: <span className="font-medium">{validation.status || "returned"}</span>{validation.submissionId ? ` · Submission ${validation.submissionId}` : ""}</p>{validation.issues && validation.issues.length > 0 ? <div className="mt-3 space-y-2">{validation.issues.map((issue, index) => <div key={index} className="border rounded-lg p-3 text-sm">{displayIssue(issue)}</div>)}</div> : <p className="text-sm text-gray-600 mt-3">Amazon returned no offer validation issues.</p>}</div>}
   </section>;
 }
