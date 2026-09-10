@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
-import { getAmazonMarketplaceId, searchAmazonProductTypes } from "@/lib/platforms/amazon/client";
+import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
+import { searchAmazonProductTypes } from "@/lib/platforms/amazon/client";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -28,7 +29,10 @@ export async function POST(request: Request) {
     const channel = await getCommerceChannelById(body.channelId, userId);
 
     if (!channel || channel.provider !== "amazon") {
-      return NextResponse.json({ success: false, error: "Amazon channel not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Amazon channel not found" },
+        { status: 404 },
+      );
     }
 
     if (channel.status !== "active") {
