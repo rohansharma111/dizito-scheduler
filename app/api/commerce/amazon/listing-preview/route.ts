@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       productType?: string;
     };
 
-    if (!body.channelId || !body.productId || !body.productType) {
+    if (!body.channelId || !body.productId || !body.productType?.trim()) {
       return NextResponse.json(
         {
           success: false,
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
         barcode: variant.barcode,
         price: variant.price,
       },
-      body.productType,
+      body.productType.trim(),
     );
 
     const result = await previewAmazonListing(body.channelId, sellerId, draft);
