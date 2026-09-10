@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import ProductVariants from "@/components/products/ProductVariants";
 import ProductMediaManager from "@/components/products/ProductMediaManager";
 import ProductShopifyPublish from "@/components/products/ProductShopifyPublish";
+import ProductAmazonListing from "@/components/products/ProductAmazonListing";
 import { authOptions } from "@/lib/auth";
 import { getProductDetails } from "@/lib/commerce/products/service";
 
@@ -41,6 +42,7 @@ export default async function ProductPage({ params }: Params) {
       </section>
 
       <ProductShopifyPublish productId={String(product.id)} hasVariants={product.variants.length > 0} />
+      <ProductAmazonListing productId={String(product.id)} />
 
       <section className="bg-white border rounded-xl p-6">
         <div className="mb-5">
