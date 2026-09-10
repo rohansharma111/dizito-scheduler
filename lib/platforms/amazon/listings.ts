@@ -109,14 +109,15 @@ export function buildAmazonListingDraft(
     item_name: localizedValue(product.name, marketplaceId),
   };
 
+  // These canonical fields are only included when they have a direct,
+  // product-level Amazon representation. Category is deliberately not
+  // converted to item_type_keyword automatically because Amazon product
+  // types can reject that attribute as not applicable.
   if (product.brand?.trim()) {
     attributes.brand = localizedValue(product.brand.trim(), marketplaceId);
   }
   if (product.description?.trim()) {
     attributes.product_description = localizedValue(product.description.trim(), marketplaceId);
-  }
-  if (product.category?.trim()) {
-    attributes.item_type_keyword = marketplaceValue(product.category.trim(), marketplaceId);
   }
 
   for (const [attributeName, mapping] of Object.entries(fieldMappings)) {
@@ -152,6 +153,31 @@ export async function previewAmazonListing(
       marketplaceIds: getAmazonMarketplaceId(),
       issueLocale: "en_IN",
       mode: "VALIDATION_PREVIEW",
+    },
+    body: {
+      productType: draft.productType,
+      requirements: draft.requirements,
+      attributes: draft.attributes,
+    },
+  });
+}
+
+/**
+ * Publish a validated Amazon listing. The caller must gate this operation
+ * behind a successful validation preview; this function performs the live
+ * Listings Items PUT and does not create or modify a Dizito listing record.
+ */
+export async function publishAmazonListing(
+  channelId: string,
+  sellerId: string,
+  draft: AmazonListingDraft,
+) {
+  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
+    method: "PUT",
+    path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
+    query: {
+      marketplaceIds: getAmazonMarketplaceId(),
+      issueLocale: "en_IN",
     },
     body: {
       productType: draft.productType,
