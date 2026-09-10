@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { AmazonSchemaProperty, AmazonListingSchemaSummary } from "@/lib/platforms/amazon/schema";
 
 interface CommerceChannel {
   id: string;
@@ -28,18 +29,6 @@ type FieldSource =
 interface FieldMapping {
   source: FieldSource;
   value: string;
-}
-
-interface SchemaProperty {
-  title?: string;
-  description?: string;
-  type?: string;
-  enum?: unknown[];
-}
-
-interface SchemaSummary {
-  required: string[];
-  properties: Record<string, SchemaProperty>;
 }
 
 interface ValidationIssue {
@@ -74,11 +63,35 @@ const automaticSources: Record<string, FieldSource> = {
   item_name: "product.name",
   product_description: "product.description",
   brand: "product.brand",
-  item_type_keyword: "product.category",
 };
 
 function defaultMapping(attribute: string): FieldMapping {
   return { source: automaticSources[attribute] ?? "manual", value: "" };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function propertyKind(property?: AmazonSchemaProperty) {
+  if (!property) return "string";
+  if (property.enum?.length) return "enum";
+  return property.type || (property.properties ? "object" : property.items ? "array" : "string");
+}
+
+function schemaShape(property?: AmazonSchemaProperty): string {
+  if (!property) return "No schema details returned.";
+  const kind = propertyKind(property);
+  if (kind === "array") {
+    return property.items ? `Array of ${propertyKind(property.items)} values` : "Array value";
+  }
+  if (kind === "object") {
+    const names = Object.entries(property.properties ?? {})
+      .slice(0, 6)
+      .map(([name, child]) => `${name}${property.required?.includes(name) ? "*" : ""}: ${propertyKind(child)}`);
+    return names.length ? `Object fields — ${names.join(", ")}` : "Object value";
+  }
+  return kind;
 }
 
 function displayIssue(issue: ValidationIssue | string) {
@@ -86,17 +99,74 @@ function displayIssue(issue: ValidationIssue | string) {
   return [issue.code, issue.attributeName, issue.message].filter(Boolean).join(" · ");
 }
 
+function issueAttribute(issue: ValidationIssue | string, schema: AmazonListingSchemaSummary): string | null {
+  if (typeof issue !== "string" && issue.attributeName) return issue.attributeName;
+  const text = typeof issue === "string" ? issue : issue.message ?? "";
+  const match = text.match(/attribute\s+([A-Za-z0-9_.-]+)/i) ?? text.match(/for\s+attribute\s+([A-Za-z0-9_.-]+)/i);
+  if (match?.[1] && schema.properties[match[1]]) return match[1];
+
+  const normalized = text.toLowerCase();
+  const byTitle = Object.entries(schema.properties).find(([, property]) => {
+    const title = property.title?.toLowerCase();
+    return Boolean(title && normalized.includes(title));
+  });
+  return byTitle?.[0] ?? null;
+}
+
+function ManualField({ property, value, onChange }: { property?: AmazonSchemaProperty; value: string; onChange: (value: string) => void }) {
+  const kind = propertyKind(property);
+
+  if (property?.enum?.length) {
+    return (
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full">
+        <option value="">Select an allowed value</option>
+        {property.enum.map((option, index) => <option key={`${String(option)}-${index}`} value={String(option)}>{property.enumNames?.[index] || String(option)}</option>)}
+      </select>
+    );
+  }
+
+  if (kind === "boolean") {
+    return (
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full">
+        <option value="">Select true or false</option>
+        <option value="true">true</option>
+        <option value="false">false</option>
+      </select>
+    );
+  }
+
+  if (kind === "number" || kind === "integer") {
+    return <input type="number" value={value} onChange={(event) => onChange(event.target.value)} min={property?.minimum} max={property?.maximum} className="border rounded-lg px-3 py-2 text-sm w-full" />;
+  }
+
+  if (kind === "array" || kind === "object") {
+    return (
+      <div>
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={5} placeholder={kind === "array" ? "Enter JSON array, e.g. [\"Value 1\", \"Value 2\"]" : "Enter JSON object matching the fields below"} className="border rounded-lg px-3 py-2 text-sm w-full font-mono" />
+        <p className="text-xs text-gray-500 mt-1">Schema: {schemaShape(property)}</p>
+      </div>
+    );
+  }
+
+  return <input type="text" value={value} onChange={(event) => onChange(event.target.value)} maxLength={property?.maxLength} placeholder="Enter Amazon attribute value" className="border rounded-lg px-3 py-2 text-sm w-full" />;
+}
+
 export default function ProductAmazonListing({ productId }: Props) {
   const [channel, setChannel] = useState<CommerceChannel | null>(null);
   const [productTypes, setProductTypes] = useState<ProductTypeOption[]>([]);
   const [selectedType, setSelectedType] = useState("");
-  const [schema, setSchema] = useState<SchemaSummary | null>(null);
+  const [schema, setSchema] = useState<AmazonListingSchemaSummary | null>(null);
   const [mappings, setMappings] = useState<Record<string, FieldMapping>>({});
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [status, setStatus] = useState("Loading Amazon channel…");
   const [loading, setLoading] = useState(false);
   const [schemaLoading, setSchemaLoading] = useState(false);
   const [validationLoading, setValidationLoading] = useState(false);
+
+  const issueAttributes = useMemo(() => {
+    if (!validation?.issues || !schema) return new Set<string>();
+    return new Set(validation.issues.map((issue) => issueAttribute(issue, schema)).filter((name): name is string => Boolean(name)));
+  }, [validation, schema]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +222,7 @@ export default function ProductAmazonListing({ productId }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channelId: channel.id, productType: selectedType, parentageLevel: "NONE" }),
       });
-      const data = (await response.json()) as { success?: boolean; schemaSummary?: SchemaSummary | null; error?: string };
+      const data = (await response.json()) as { success?: boolean; schemaSummary?: AmazonListingSchemaSummary | null; error?: string };
       if (!response.ok || !data.success) throw new Error(data.error || "Product type definition failed");
       const nextSchema = data.schemaSummary ?? null;
       setSchema(nextSchema);
@@ -231,7 +301,7 @@ export default function ProductAmazonListing({ productId }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-medium">Required field mapping</h3>
-              <p className="text-xs text-gray-500 mt-1">Dizito data is mapped automatically where the attribute is unambiguous. Use Manual value for Amazon-specific fields.</p>
+              <p className="text-xs text-gray-500 mt-1">Fields use Amazon’s returned schema. Simple canonical fields can be auto-mapped; Amazon-specific arrays, objects, enums, and numbers get schema-aware controls.</p>
             </div>
             <button type="button" onClick={validateListing} disabled={validationLoading} className="border px-4 py-2 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50">
               {validationLoading ? "Validating…" : "Validate with Amazon"}
@@ -244,13 +314,15 @@ export default function ProductAmazonListing({ productId }: Props) {
                 const property = schema.properties[name];
                 const mapping = mappings[name] ?? defaultMapping(name);
                 const automatic = automaticSources[name];
+                const hasIssue = issueAttributes.has(name);
                 return (
-                  <div key={name} className="border rounded-lg p-4">
+                  <div key={name} className={`border rounded-lg p-4 ${hasIssue ? "border-red-400 bg-red-50/30" : ""}`}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="font-medium">{property?.title || name}</div>
                         <div className="text-xs text-gray-500 mt-1">{name}{property?.type ? ` · ${property.type}` : ""}</div>
                         {property?.description && <p className="text-sm text-gray-600 mt-2">{property.description}</p>}
+                        <p className="text-xs text-gray-500 mt-2">Schema: {schemaShape(property)}</p>
                       </div>
                       {automatic && <span className="text-xs rounded-full border px-2 py-1">Auto-mapped</span>}
                     </div>
@@ -260,13 +332,15 @@ export default function ProductAmazonListing({ productId }: Props) {
                         {sourceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                       {mapping.source === "manual" ? (
-                        <textarea value={mapping.value} onChange={(event) => updateMapping(name, { value: event.target.value })} rows={3} placeholder={property?.type === "array" || property?.type === "object" ? "Enter a value or JSON for this Amazon attribute" : "Enter Amazon attribute value"} className="border rounded-lg px-3 py-2 text-sm" />
+                        <ManualField property={property} value={mapping.value} onChange={(value) => updateMapping(name, { value })} />
                       ) : (
-                        <div className="border rounded-lg px-3 py-2 text-sm text-gray-600 bg-gray-50">Uses the selected Dizito field during validation.</div>
+                        <div className="border rounded-lg px-3 py-2 text-sm text-gray-600 bg-gray-50">Uses the selected Dizito field during validation. If Amazon expects a different structure, switch to Manual value.</div>
                       )}
                     </div>
 
-                    {property?.enum && <div className="text-xs text-gray-500 mt-2">Allowed values: {property.enum.map(String).join(", ")}</div>}
+                    {hasIssue && validation?.issues?.map((issue, index) => issueAttribute(issue, schema) === name ? (
+                      <div key={index} className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{displayIssue(issue)}</div>
+                    ) : null)}
                   </div>
                 );
               })}
