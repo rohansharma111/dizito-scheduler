@@ -161,3 +161,28 @@ export async function previewAmazonListing(
     },
   });
 }
+
+/**
+ * Publish a validated Amazon listing. The caller must gate this operation
+ * behind a successful validation preview; this function performs the live
+ * Listings Items PUT and does not create or modify a Dizito listing record.
+ */
+export async function publishAmazonListing(
+  channelId: string,
+  sellerId: string,
+  draft: AmazonListingDraft,
+) {
+  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
+    method: "PUT",
+    path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
+    query: {
+      marketplaceIds: getAmazonMarketplaceId(),
+      issueLocale: "en_IN",
+    },
+    body: {
+      productType: draft.productType,
+      requirements: draft.requirements,
+      attributes: draft.attributes,
+    },
+  });
+}
