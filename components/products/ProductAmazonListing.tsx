@@ -69,11 +69,7 @@ function defaultMapping(attribute: string): FieldMapping {
   return { source: automaticSources[attribute] ?? "manual", value: "" };
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function propertyKind(property?: AmazonSchemaProperty) {
+function propertyKind(property?: AmazonSchemaProperty): string {
   if (!property) return "string";
   if (property.enum?.length) return "enum";
   return property.type || (property.properties ? "object" : property.items ? "array" : "string");
@@ -113,21 +109,62 @@ function issueAttribute(issue: ValidationIssue | string, schema: AmazonListingSc
   return byTitle?.[0] ?? null;
 }
 
-function ManualField({ property, value, onChange }: { property?: AmazonSchemaProperty; value: string; onChange: (value: string) => void }) {
+function createSchemaValue(property?: AmazonSchemaProperty): unknown {
   const kind = propertyKind(property);
+  if (kind === "array") return [];
+  if (kind === "object") {
+    return Object.fromEntries(
+      Object.entries(property?.properties ?? {}).map(([name, child]) => [name, createSchemaValue(child)]),
+    );
+  }
+  return "";
+}
+
+function parseStructuredValue(value: string, property?: AmazonSchemaProperty): unknown {
+  if (!value.trim()) return createSchemaValue(property);
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return createSchemaValue(property);
+  }
+}
+
+function serializeStructuredValue(value: unknown): string {
+  return JSON.stringify(value, null, 2);
+}
+
+function updateObjectValue(value: unknown, key: string, next: unknown): Record<string, unknown> {
+  return { ...(value && typeof value === "object" && !Array.isArray(value) ? value : {}), [key]: next };
+}
+
+function PrimitiveField({
+  property,
+  value,
+  onChange,
+}: {
+  property?: AmazonSchemaProperty;
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
+  const kind = propertyKind(property);
+  const stringValue = value === null || value === undefined ? "" : String(value);
 
   if (property?.enum?.length) {
     return (
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full">
+      <select value={stringValue} onChange={(event) => onChange(event.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full">
         <option value="">Select an allowed value</option>
-        {property.enum.map((option, index) => <option key={`${String(option)}-${index}`} value={String(option)}>{property.enumNames?.[index] || String(option)}</option>)}
+        {property.enum.map((option, index) => (
+          <option key={`${String(option)}-${index}`} value={String(option)}>
+            {property.enumNames?.[index] || String(option)}
+          </option>
+        ))}
       </select>
     );
   }
 
   if (kind === "boolean") {
     return (
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full">
+      <select value={stringValue} onChange={(event) => onChange(event.target.value === "" ? "" : event.target.value === "true")} className="border rounded-lg px-3 py-2 text-sm w-full">
         <option value="">Select true or false</option>
         <option value="true">true</option>
         <option value="false">false</option>
@@ -136,19 +173,166 @@ function ManualField({ property, value, onChange }: { property?: AmazonSchemaPro
   }
 
   if (kind === "number" || kind === "integer") {
-    return <input type="number" value={value} onChange={(event) => onChange(event.target.value)} min={property?.minimum} max={property?.maximum} className="border rounded-lg px-3 py-2 text-sm w-full" />;
+    return (
+      <input
+        type="number"
+        value={stringValue}
+        onChange={(event) => onChange(event.target.value === "" ? "" : Number(event.target.value))}
+        min={property?.minimum}
+        max={property?.maximum}
+        className="border rounded-lg px-3 py-2 text-sm w-full"
+      />
+    );
   }
 
-  if (kind === "array" || kind === "object") {
+  return (
+    <input
+      type="text"
+      value={stringValue}
+      onChange={(event) => onChange(event.target.value)}
+      maxLength={property?.maxLength}
+      placeholder="Enter value"
+      className="border rounded-lg px-3 py-2 text-sm w-full"
+    />
+  );
+}
+
+function StructuredField({
+  property,
+  value,
+  onChange,
+  depth = 0,
+}: {
+  property?: AmazonSchemaProperty;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  depth?: number;
+}) {
+  const kind = propertyKind(property);
+
+  if (kind !== "array" && kind !== "object") {
+    return <PrimitiveField property={property} value={value} onChange={onChange} />;
+  }
+
+  if (kind === "object") {
+    const objectValue = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    const properties = Object.entries(property?.properties ?? {});
+
+    if (properties.length === 0) {
+      return (
+        <textarea
+          value={serializeStructuredValue(objectValue)}
+          onChange={(event) => {
+            try {
+              onChange(JSON.parse(event.target.value) as unknown);
+            } catch {
+              // Keep the last valid structured value until JSON is valid.
+            }
+          }}
+          rows={5}
+          className="border rounded-lg px-3 py-2 text-sm w-full font-mono"
+          placeholder="Enter JSON object"
+        />
+      );
+    }
+
     return (
-      <div>
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={5} placeholder={kind === "array" ? "Enter JSON array, e.g. [\"Value 1\", \"Value 2\"]" : "Enter JSON object matching the fields below"} className="border rounded-lg px-3 py-2 text-sm w-full font-mono" />
-        <p className="text-xs text-gray-500 mt-1">Schema: {schemaShape(property)}</p>
+      <div className={`space-y-3 ${depth > 0 ? "rounded-lg border p-3 bg-gray-50" : ""}`}>
+        {properties.map(([name, child]) => {
+          const childValue = objectValue[name] ?? createSchemaValue(child);
+          const required = property?.required?.includes(name);
+          return (
+            <div key={name}>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {child.title || name}{required ? " *" : ""}
+              </label>
+              {child.description && <p className="text-xs text-gray-500 mb-1">{child.description}</p>}
+              <StructuredField
+                property={child}
+                value={childValue}
+                depth={depth + 1}
+                onChange={(next) => onChange(updateObjectValue(objectValue, name, next))}
+              />
+            </div>
+          );
+        })}
       </div>
     );
   }
 
-  return <input type="text" value={value} onChange={(event) => onChange(event.target.value)} maxLength={property?.maxLength} placeholder="Enter Amazon attribute value" className="border rounded-lg px-3 py-2 text-sm w-full" />;
+  const items = Array.isArray(value) ? value : [];
+  const itemProperty = property?.items;
+
+  return (
+    <div className="space-y-3">
+      {items.length === 0 && <p className="text-xs text-gray-500">No values added yet.</p>}
+      {items.map((item, index) => (
+        <div key={index} className="rounded-lg border p-3 bg-gray-50">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <span className="text-xs font-medium text-gray-700">Item {index + 1}</span>
+            <button
+              type="button"
+              onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
+              className="text-xs text-red-600 hover:underline"
+            >
+              Remove
+            </button>
+          </div>
+          <StructuredField
+            property={itemProperty}
+            value={item}
+            depth={depth + 1}
+            onChange={(next) => onChange(items.map((current, itemIndex) => itemIndex === index ? next : current))}
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...items, createSchemaValue(itemProperty)])}
+        className="border rounded-lg px-3 py-2 text-sm font-medium hover:bg-white"
+      >
+        + Add {property?.items?.title || "value"}
+      </button>
+    </div>
+  );
+}
+
+function ManualField({
+  property,
+  value,
+  onChange,
+}: {
+  property?: AmazonSchemaProperty;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const kind = propertyKind(property);
+
+  if (kind === "array" || kind === "object") {
+    const structuredValue = parseStructuredValue(value, property);
+    return (
+      <div>
+        <StructuredField
+          property={property}
+          value={structuredValue}
+          onChange={(next) => onChange(serializeStructuredValue(next))}
+        />
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs text-gray-500">Advanced JSON</summary>
+          <textarea
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            rows={5}
+            className="mt-2 border rounded-lg px-3 py-2 text-sm w-full font-mono"
+            placeholder="Enter the exact Amazon JSON value"
+          />
+        </details>
+        <p className="text-xs text-gray-500 mt-2">Schema: {schemaShape(property)}</p>
+      </div>
+    );
+  }
+
+  return <PrimitiveField property={property} value={value} onChange={(next) => onChange(next === null || next === undefined ? "" : String(next))} />;
 }
 
 export default function ProductAmazonListing({ productId }: Props) {
@@ -301,7 +485,7 @@ export default function ProductAmazonListing({ productId }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-medium">Required field mapping</h3>
-              <p className="text-xs text-gray-500 mt-1">Fields use Amazon’s returned schema. Simple canonical fields can be auto-mapped; Amazon-specific arrays, objects, enums, and numbers get schema-aware controls.</p>
+              <p className="text-xs text-gray-500 mt-1">Fields use Amazon’s returned schema. Structured arrays and objects are edited using their nested schema instead of raw JSON.</p>
             </div>
             <button type="button" onClick={validateListing} disabled={validationLoading} className="border px-4 py-2 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50">
               {validationLoading ? "Validating…" : "Validate with Amazon"}
