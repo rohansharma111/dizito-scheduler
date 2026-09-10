@@ -161,9 +161,6 @@ export async function searchAmazonProductTypes(channelId: string, itemName: stri
     if ((keywordResult.data.productTypes ?? []).length > 0) return keywordResult;
   }
 
-  // Amazon documents that omitting both itemName and keywords returns the full
-  // list of product types. This is the final discovery fallback when neither
-  // recommendation nor keyword search produces a result.
   return amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
     method: "GET",
     path: "/definitions/2020-09-01/productTypes",
@@ -171,10 +168,16 @@ export async function searchAmazonProductTypes(channelId: string, itemName: stri
   });
 }
 
+export type AmazonListingRequirements = "LISTING" | "LISTING_PRODUCT_ONLY" | "LISTING_OFFER_ONLY";
+
 export async function getAmazonProductTypeDefinition(
   channelId: string,
   productType: string,
-  options: { sellerId?: string; parentageLevel?: "CHILD" | "PARENT" | "NONE" } = {},
+  options: {
+    sellerId?: string;
+    parentageLevel?: "CHILD" | "PARENT" | "NONE";
+    requirements?: AmazonListingRequirements;
+  } = {},
 ) {
   const normalizedProductType = productType.trim();
   if (!normalizedProductType) throw new Error("Amazon product type is required");
@@ -186,7 +189,7 @@ export async function getAmazonProductTypeDefinition(
       sellerId: options.sellerId,
       marketplaceIds: getAmazonMarketplaceId(),
       productTypeVersion: "LATEST",
-      requirements: "LISTING",
+      requirements: options.requirements ?? "LISTING",
       requirementsEnforced: "ENFORCED",
       locale: "en_IN",
       parentageLevel: options.parentageLevel,
