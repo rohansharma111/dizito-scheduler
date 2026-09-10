@@ -1,6 +1,6 @@
 import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
 import { amazonSpApiRequest, type AmazonListingRequirements } from "@/lib/platforms/amazon/client";
-import { buildAmazonExternalProductIdentifier } from "@/lib/platforms/amazon/identity";
+import { buildAmazonExternalProductIdentifier, buildAmazonMerchantSuggestedAsin } from "@/lib/platforms/amazon/identity";
 
 export interface AmazonListingProductInput {
   name: string;
@@ -92,6 +92,13 @@ function buildMappedAttribute(attributeName: string, mapping: AmazonListingField
       }
       return buildAmazonExternalProductIdentifier({ type: identifier.type as "ean" | "upc" | "gtin" | "isbn", value: identifier.value }, marketplaceId);
     }
+    if (attributeName === "merchant_suggested_asin") {
+      if (typeof manual === "string") return buildAmazonMerchantSuggestedAsin(manual, marketplaceId);
+      if (manual && typeof manual === "object" && !Array.isArray(manual)) {
+        const asin = manual as { value?: string };
+        if (typeof asin.value === "string") return buildAmazonMerchantSuggestedAsin(asin.value, marketplaceId);
+      }
+    }
     return manual;
   }
 
@@ -103,7 +110,15 @@ function buildMappedAttribute(attributeName: string, mapping: AmazonListingField
   if (attributeName === "externally_assigned_product_identifier") {
     throw new Error("External product identifiers must be entered with an identifier type; SKU or barcode alone is not assumed to be a valid Amazon identifier.");
   }
+  if (attributeName === "merchant_suggested_asin") {
+    throw new Error("Merchant Suggested ASIN must be entered explicitly; Dizito does not infer an ASIN from SKU or barcode.");
+  }
   return stringValue;
+}
+
+function isProductIdentifierExemptionEnabled(value: unknown) {
+  if (Array.isArray(value)) return value.some((item) => item && typeof item === "object" && (item as Record<string, unknown>).value === true);
+  return value === true;
 }
 
 export function buildAmazonListingDraft(
@@ -111,7 +126,7 @@ export function buildAmazonListingDraft(
   variant: AmazonListingVariantInput,
   productType: string,
   fieldMappings: Record<string, AmazonListingFieldMapping> = {},
-  requirements: AmazonListingRequirements = "LISTING",
+  requirements: AmazonListingRequirements = "LISTING_PRODUCT_ONLY",
 ): AmazonListingDraft {
   const marketplaceId = getAmazonMarketplaceId();
   const attributes: Record<string, unknown> = { item_name: localizedValue(product.name, marketplaceId) };
@@ -122,7 +137,17 @@ export function buildAmazonListingDraft(
     if (mappedValue !== null) attributes[attributeName] = mappedValue;
     else delete attributes[attributeName];
   }
-  return { sku: variant.sku, productType: productType.trim(), requirements, attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown> };
+
+  if (isProductIdentifierExemptionEnabled(attributes.supplier_declared_has_product_identifier_exemption)) {
+    delete attributes.externally_assigned_product_identifier;
+  }
+
+  return {
+    sku: variant.sku,
+    productType: productType.trim(),
+    requirements,
+    attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown>,
+  };
 }
 
 interface AmazonListingsItemResponse { sku?: string; status?: string; submissionId?: string; issues?: unknown[]; }

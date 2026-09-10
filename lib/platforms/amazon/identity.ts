@@ -41,3 +41,16 @@ export function buildAmazonExternalProductIdentifier(identifier: AmazonProductId
   const normalized = normalizeAmazonProductIdentifier(identifier);
   return [{ value: normalized.value, type: normalized.type, marketplace_id: marketplaceId }];
 }
+
+export function normalizeAmazonMerchantSuggestedAsin(value: string) {
+  const normalized = value.trim().toUpperCase();
+  if (!/^B[0-9A-Z]{9}$/.test(normalized)) {
+    throw new Error("Enter a valid Amazon ASIN (10 characters, starting with B).");
+  }
+  return normalized;
+}
+
+export function buildAmazonMerchantSuggestedAsin(value: string, marketplaceId: string) {
+  const normalized = normalizeAmazonMerchantSuggestedAsin(value);
+  return [{ value: normalized, marketplace_id: marketplaceId }];
+}
