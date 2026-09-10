@@ -151,12 +151,23 @@ export async function searchAmazonProductTypes(channelId: string, itemName: stri
     .slice(0, 5)
     .join(" ");
 
-  if (!keywords) return exactResult;
+  if (keywords) {
+    const keywordResult = await amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
+      method: "GET",
+      path: "/definitions/2020-09-01/productTypes",
+      query: { ...baseQuery, keywords },
+    });
 
+    if ((keywordResult.data.productTypes ?? []).length > 0) return keywordResult;
+  }
+
+  // Amazon documents that omitting both itemName and keywords returns the full
+  // list of product types. This is the final discovery fallback when neither
+  // recommendation nor keyword search produces a result.
   return amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
     method: "GET",
     path: "/definitions/2020-09-01/productTypes",
-    query: { ...baseQuery, keywords },
+    query: baseQuery,
   });
 }
 
