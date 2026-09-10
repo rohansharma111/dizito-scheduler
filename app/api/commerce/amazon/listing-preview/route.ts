@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       { sku: variant.sku, barcode: variant.barcode, price: variant.price },
       body.productType.trim(),
       body.fieldMappings ?? {},
+      "LISTING_PRODUCT_ONLY",
     );
 
     const result = await previewAmazonListing(body.channelId, sellerId, draft);

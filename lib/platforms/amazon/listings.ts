@@ -1,5 +1,5 @@
 import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
-import { amazonSpApiRequest } from "@/lib/platforms/amazon/client";
+import { amazonSpApiRequest, type AmazonListingRequirements } from "@/lib/platforms/amazon/client";
 import { buildAmazonExternalProductIdentifier } from "@/lib/platforms/amazon/identity";
 
 export interface AmazonListingProductInput {
@@ -33,7 +33,7 @@ export interface AmazonListingFieldMapping {
 export interface AmazonListingDraft {
   sku: string;
   productType: string;
-  requirements: "LISTING";
+  requirements: AmazonListingRequirements;
   attributes: Record<string, unknown>;
 }
 
@@ -106,7 +106,13 @@ function buildMappedAttribute(attributeName: string, mapping: AmazonListingField
   return stringValue;
 }
 
-export function buildAmazonListingDraft(product: AmazonListingProductInput, variant: AmazonListingVariantInput, productType: string, fieldMappings: Record<string, AmazonListingFieldMapping> = {}): AmazonListingDraft {
+export function buildAmazonListingDraft(
+  product: AmazonListingProductInput,
+  variant: AmazonListingVariantInput,
+  productType: string,
+  fieldMappings: Record<string, AmazonListingFieldMapping> = {},
+  requirements: AmazonListingRequirements = "LISTING",
+): AmazonListingDraft {
   const marketplaceId = getAmazonMarketplaceId();
   const attributes: Record<string, unknown> = { item_name: localizedValue(product.name, marketplaceId) };
   if (product.brand?.trim()) attributes.brand = localizedValue(product.brand.trim(), marketplaceId);
@@ -116,7 +122,7 @@ export function buildAmazonListingDraft(product: AmazonListingProductInput, vari
     if (mappedValue !== null) attributes[attributeName] = mappedValue;
     else delete attributes[attributeName];
   }
-  return { sku: variant.sku, productType: productType.trim(), requirements: "LISTING", attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown> };
+  return { sku: variant.sku, productType: productType.trim(), requirements, attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown> };
 }
 
 interface AmazonListingsItemResponse { sku?: string; status?: string; submissionId?: string; issues?: unknown[]; }
