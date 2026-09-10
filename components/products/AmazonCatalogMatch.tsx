@@ -24,11 +24,44 @@ export default function AmazonCatalogMatch({ channelId, productId, onSelectASIN 
     finally { setLoading(false); }
   }
 
-  function selectASIN(asin: string) {
-    const normalized = asin.trim().toUpperCase();
+  async function persistCatalogIdentity(asin: string, productType?: string | null) {
+    try {
+      const productResponse = await fetch(`/api/products/${encodeURIComponent(productId)}`);
+      const productData = (await productResponse.json()) as { success?: boolean; product?: { variants?: Array<{ id: string | number }> }; error?: string };
+      if (!productResponse.ok || !productData.success) throw new Error(productData.error || "Unable to load product variants");
+      const variant = productData.product?.variants?.[0];
+      if (!variant) throw new Error("Add at least one product variant before saving an Amazon draft");
+      const response = await fetch("/api/commerce/listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelId,
+          productId,
+          providerMetadata: {
+            amazon: {
+              product: {
+                productType: productType?.trim() || null,
+                identity: { mode: "asin", asin },
+                source: "catalog_match",
+              },
+            },
+          },
+          variants: [{ variantId: String(variant.id) }],
+        }),
+      });
+      const data = (await response.json()) as { success?: boolean; error?: string };
+      if (!response.ok || !data.success) throw new Error(data.error || "Unable to save Amazon listing draft");
+      setStatus(`Selected existing ASIN ${asin}. Amazon draft identity saved.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save Amazon draft identity");
+    }
+  }
+
+  function selectASIN(item: CatalogItem) {
+    const normalized = item.asin.trim().toUpperCase();
     setSelectedASIN(normalized);
     onSelectASIN?.(normalized);
-    setStatus(`Selected existing ASIN ${normalized}. The existing-ASIN listing flow will use this match.`);
+    void persistCatalogIdentity(normalized, item.productType);
   }
 
   return <div className="mt-5 border rounded-xl p-5 bg-gray-50">
@@ -44,7 +77,7 @@ export default function AmazonCatalogMatch({ channelId, productId, onSelectASIN 
     </div>
     {selectedASIN && <p className="text-sm text-gray-700 mt-3">Selected ASIN: <span className="font-mono font-medium">{selectedASIN}</span></p>}
     {status && <p className="text-sm text-gray-600 mt-3">{status}</p>}
-    {items.length > 0 && <div className="mt-4 space-y-3">{items.map((item) => <div key={item.asin} className={`border rounded-lg p-4 bg-white ${selectedASIN === item.asin ? "ring-1" : ""}`}><div className="flex flex-wrap justify-between gap-3"><div><div className="font-medium">{item.itemName || "Amazon catalog item"}</div><div className="text-sm text-gray-600 mt-1">ASIN: <span className="font-mono">{item.asin}</span>{item.brand ? ` · ${item.brand}` : ""}</div>{item.productType && <div className="text-xs text-gray-500 mt-1">Product type: {item.productType}</div>}</div><button type="button" onClick={() => selectASIN(item.asin)} className="border rounded-lg px-3 py-2 text-sm font-medium">{selectedASIN === item.asin ? "Selected" : "Use this ASIN"}</button></div></div>)}</div>}
-    <p className="text-xs text-gray-500 mt-4">Matching does not create or modify an Amazon listing. The ASIN must come from Amazon's catalog response.</p>
+    {items.length > 0 && <div className="mt-4 space-y-3">{items.map((item) => <div key={item.asin} className={`border rounded-lg p-4 bg-white ${selectedASIN === item.asin ? "ring-1" : ""}`}><div className="flex flex-wrap justify-between gap-3"><div><div className="font-medium">{item.itemName || "Amazon catalog item"}</div><div className="text-sm text-gray-600 mt-1">ASIN: <span className="font-mono">{item.asin}</span>{item.brand ? ` · ${item.brand}` : ""}</div>{item.productType && <div className="text-xs text-gray-500 mt-1">Product type: {item.productType}</div>}</div><button type="button" onClick={() => selectASIN(item)} className="border rounded-lg px-3 py-2 text-sm font-medium">{selectedASIN === item.asin ? "Selected" : "Use this ASIN"}</button></div></div>)}</div>}
+    <p className="text-xs text-gray-500 mt-4">Matching does not publish to Amazon. The selected ASIN must come from Amazon's catalog response; Dizito stores it only as a Commerce listing draft identity at this stage.</p>
   </div>;
 }
