@@ -14,6 +14,21 @@ export interface AmazonListingVariantInput {
   price?: number | null;
 }
 
+export type AmazonListingFieldSource =
+  | "product.name"
+  | "product.description"
+  | "product.brand"
+  | "product.category"
+  | "variant.sku"
+  | "variant.barcode"
+  | "variant.price"
+  | "manual";
+
+export interface AmazonListingFieldMapping {
+  source: AmazonListingFieldSource;
+  value?: string | null;
+}
+
 export interface AmazonListingDraft {
   sku: string;
   productType: string;
@@ -22,37 +37,72 @@ export interface AmazonListingDraft {
 }
 
 function localizedValue(value: string, marketplaceId: string) {
-  return [
-    {
-      value,
-      marketplace_id: marketplaceId,
-      language_tag: "en_IN",
-    },
-  ];
+  return [{ value, marketplace_id: marketplaceId, language_tag: "en_IN" }];
 }
 
 function marketplaceValue(value: string, marketplaceId: string) {
-  return [
-    {
-      value,
-      marketplace_id: marketplaceId,
-    },
-  ];
+  return [{ value, marketplace_id: marketplaceId }];
+}
+
+function parseManualValue(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return trimmed;
+  }
+}
+
+function getSourceValue(
+  source: AmazonListingFieldSource,
+  product: AmazonListingProductInput,
+  variant: AmazonListingVariantInput,
+) {
+  switch (source) {
+    case "product.name": return product.name;
+    case "product.description": return product.description ?? null;
+    case "product.brand": return product.brand ?? null;
+    case "product.category": return product.category ?? null;
+    case "variant.sku": return variant.sku;
+    case "variant.barcode": return variant.barcode ?? null;
+    case "variant.price": return variant.price ?? null;
+    default: return null;
+  }
+}
+
+function buildMappedAttribute(
+  attributeName: string,
+  mapping: AmazonListingFieldMapping,
+  product: AmazonListingProductInput,
+  variant: AmazonListingVariantInput,
+) {
+  if (mapping.source === "manual") return parseManualValue(mapping.value ?? "");
+
+  const value = getSourceValue(mapping.source, product, variant);
+  if (value === null || value === undefined || value === "") return null;
+
+  const stringValue = String(value);
+  const marketplaceId = getAmazonMarketplaceId();
+
+  if (["item_name", "product_description", "brand"].includes(attributeName)) {
+    return localizedValue(stringValue, marketplaceId);
+  }
+  if (attributeName === "item_type_keyword") return marketplaceValue(stringValue, marketplaceId);
+
+  return stringValue;
 }
 
 /**
- * Build the conservative portion of an Amazon listing payload that can be
- * derived directly from the canonical Dizito product model.
- *
- * Amazon product-type schemas are dynamic, so category-specific attributes,
- * variation relationships, identifiers, pricing, and fulfillment are not
- * guessed here. Those mappings are added only when the selected product type
- * definition explicitly supports them.
+ * Build an Amazon listing payload from canonical Dizito data plus explicit
+ * field mappings supplied by the user. Unknown Amazon fields are never
+ * guessed; they must be supplied as a manual value (plain text or JSON).
  */
 export function buildAmazonListingDraft(
   product: AmazonListingProductInput,
   variant: AmazonListingVariantInput,
   productType: string,
+  fieldMappings: Record<string, AmazonListingFieldMapping> = {},
 ): AmazonListingDraft {
   const marketplaceId = getAmazonMarketplaceId();
   const attributes: Record<string, unknown> = {
@@ -62,19 +112,17 @@ export function buildAmazonListingDraft(
   if (product.brand?.trim()) {
     attributes.brand = localizedValue(product.brand.trim(), marketplaceId);
   }
-
   if (product.description?.trim()) {
-    attributes.product_description = localizedValue(
-      product.description.trim(),
-      marketplaceId,
-    );
+    attributes.product_description = localizedValue(product.description.trim(), marketplaceId);
+  }
+  if (product.category?.trim()) {
+    attributes.item_type_keyword = marketplaceValue(product.category.trim(), marketplaceId);
   }
 
-  if (product.category?.trim()) {
-    attributes.item_type_keyword = marketplaceValue(
-      product.category.trim(),
-      marketplaceId,
-    );
+  for (const [attributeName, mapping] of Object.entries(fieldMappings)) {
+    const mappedValue = buildMappedAttribute(attributeName, mapping, product, variant);
+    if (mappedValue !== null) attributes[attributeName] = mappedValue;
+    else delete attributes[attributeName];
   }
 
   return {
