@@ -109,10 +109,59 @@ export interface AmazonMarketplaceParticipation {
   participation: { isParticipating: boolean; hasSuspendedListings: boolean };
 }
 
+export interface AmazonProductType {
+  name: string;
+  displayName: string;
+  marketplaceIds: string[];
+}
+
+interface AmazonProductTypeSearchResponse {
+  productTypes?: AmazonProductType[];
+  productTypeVersion?: string;
+}
+
 export async function getAmazonMarketplaceParticipations(channelId: string) {
   return amazonSpApiRequest<{ payload: AmazonMarketplaceParticipation[] }>(channelId, {
     method: "GET",
     path: "/sellers/v1/marketplaceParticipations",
+  });
+}
+
+export async function searchAmazonProductTypes(channelId: string, itemName: string) {
+  const normalizedItemName = itemName.trim();
+  if (!normalizedItemName) throw new Error("Product name is required to search Amazon product types");
+
+  return amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
+    method: "GET",
+    path: "/definitions/2020-09-01/productTypes",
+    query: {
+      marketplaceIds: getAmazonMarketplaceId(),
+      itemName: normalizedItemName,
+      locale: "en_IN",
+      searchLocale: "en_IN",
+    },
+  });
+}
+
+export async function getAmazonProductTypeDefinition(
+  channelId: string,
+  productType: string,
+  options: { sellerId?: string; parentageLevel?: "CHILD" | "PARENT" | "NONE" } = {},
+) {
+  const normalizedProductType = productType.trim();
+  if (!normalizedProductType) throw new Error("Amazon product type is required");
+
+  return amazonSpApiRequest<Record<string, unknown>>(channelId, {
+    method: "GET",
+    path: `/definitions/2020-09-01/productTypes/${encodeURIComponent(normalizedProductType)}`,
+    query: {
+      sellerId: options.sellerId,
+      marketplaceIds: getAmazonMarketplaceId(),
+      productTypeVersion: "LATEST",
+      requirements: "LISTING",
+      requirementsEnforced: options.parentageLevel ?? "NONE",
+      locale: "en_IN",
+    },
   });
 }
 
