@@ -4,13 +4,14 @@ import { useState } from "react";
 
 interface CatalogItem { asin: string; itemName?: string | null; brand?: string | null; productType?: string | null; identifiers?: Array<{ identifier?: string; identifierType?: string }>; }
 
-export default function AmazonCatalogMatch({ channelId, productId }: { channelId: string; productId: string }) {
+export default function AmazonCatalogMatch({ channelId, productId, onSelectASIN }: { channelId: string; productId: string; onSelectASIN?: (asin: string) => void }) {
   const [identifierType, setIdentifierType] = useState("EAN");
   const [identifier, setIdentifier] = useState("");
   const [keywords, setKeywords] = useState("");
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedASIN, setSelectedASIN] = useState("");
 
   async function search(body: Record<string, string>) {
     setLoading(true); setStatus("");
@@ -21,6 +22,13 @@ export default function AmazonCatalogMatch({ channelId, productId }: { channelId
       setItems(data.items ?? []); setStatus(data.items?.length ? `${data.items.length} catalog match${data.items.length === 1 ? "" : "es"} found` : "No Amazon catalog matches found");
     } catch (error) { setItems([]); setStatus(error instanceof Error ? error.message : "Amazon catalog search failed"); }
     finally { setLoading(false); }
+  }
+
+  function selectASIN(asin: string) {
+    const normalized = asin.trim().toUpperCase();
+    setSelectedASIN(normalized);
+    onSelectASIN?.(normalized);
+    setStatus(`Selected existing ASIN ${normalized}. The existing-ASIN listing flow will use this match.`);
   }
 
   return <div className="mt-5 border rounded-xl p-5 bg-gray-50">
@@ -34,8 +42,9 @@ export default function AmazonCatalogMatch({ channelId, productId }: { channelId
       <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Or search Amazon catalog by product keywords" className="border rounded-lg px-3 py-2 bg-white" />
       <button type="button" disabled={loading || !keywords.trim()} onClick={() => void search({ keywords })} className="border rounded-lg px-4 py-2 font-medium disabled:opacity-50">Search catalog</button>
     </div>
+    {selectedASIN && <p className="text-sm text-gray-700 mt-3">Selected ASIN: <span className="font-mono font-medium">{selectedASIN}</span></p>}
     {status && <p className="text-sm text-gray-600 mt-3">{status}</p>}
-    {items.length > 0 && <div className="mt-4 space-y-3">{items.map((item) => <div key={item.asin} className="border rounded-lg p-4 bg-white"><div className="flex flex-wrap justify-between gap-3"><div><div className="font-medium">{item.itemName || "Amazon catalog item"}</div><div className="text-sm text-gray-600 mt-1">ASIN: <span className="font-mono">{item.asin}</span>{item.brand ? ` · ${item.brand}` : ""}</div>{item.productType && <div className="text-xs text-gray-500 mt-1">Product type: {item.productType}</div>}</div><button type="button" onClick={() => setStatus(`Selected existing ASIN ${item.asin}. Existing-ASIN listing flow will use this match.`)} className="border rounded-lg px-3 py-2 text-sm font-medium">Use this ASIN</button></div></div>)}</div>}
+    {items.length > 0 && <div className="mt-4 space-y-3">{items.map((item) => <div key={item.asin} className={`border rounded-lg p-4 bg-white ${selectedASIN === item.asin ? "ring-1" : ""}`}><div className="flex flex-wrap justify-between gap-3"><div><div className="font-medium">{item.itemName || "Amazon catalog item"}</div><div className="text-sm text-gray-600 mt-1">ASIN: <span className="font-mono">{item.asin}</span>{item.brand ? ` · ${item.brand}` : ""}</div>{item.productType && <div className="text-xs text-gray-500 mt-1">Product type: {item.productType}</div>}</div><button type="button" onClick={() => selectASIN(item.asin)} className="border rounded-lg px-3 py-2 text-sm font-medium">{selectedASIN === item.asin ? "Selected" : "Use this ASIN"}</button></div></div>)}</div>}
     <p className="text-xs text-gray-500 mt-4">Matching does not create or modify an Amazon listing. The ASIN must come from Amazon's catalog response.</p>
   </div>;
 }
