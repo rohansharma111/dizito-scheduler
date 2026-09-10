@@ -26,7 +26,6 @@ export interface AmazonListingSchemaSummary {
 function findSchema(value: unknown): AmazonSchemaProperty | null {
   if (!value || typeof value !== "object") return null;
   const record = value as Record<string, unknown>;
-
   if (record.schema && typeof record.schema === "object") return findSchema(record.schema);
   if (record.properties && typeof record.properties === "object") return value as AmazonSchemaProperty;
   if (record.link && typeof record.link === "object") return findSchema(record.link);
@@ -35,7 +34,6 @@ function findSchema(value: unknown): AmazonSchemaProperty | null {
 
 function matchesSchema(value: unknown, schema: AmazonSchemaProperty): boolean {
   if (!schema || typeof schema !== "object") return true;
-
   if (schema.const !== undefined && value !== schema.const) return false;
   if (Array.isArray(schema.enum) && !schema.enum.some((item) => JSON.stringify(item) === JSON.stringify(value))) return false;
 
@@ -62,13 +60,15 @@ function matchesSchema(value: unknown, schema: AmazonSchemaProperty): boolean {
   if (schema.allOf?.some((child) => !matchesSchema(value, child))) return false;
   if (schema.anyOf?.length && !schema.anyOf.some((child) => matchesSchema(value, child))) return false;
   if (schema.oneOf?.length && schema.oneOf.filter((child) => matchesSchema(value, child)).length !== 1) return false;
-
   return true;
 }
 
 function collectConditionalRequired(schema: AmazonSchemaProperty, attributes?: Record<string, unknown>): string[] {
-  const names = new Set<string>();
+  // Conditional requirements are meaningful only after we have the current
+  // draft. Without attributes, do not advertise every possible branch.
+  if (!attributes) return [];
 
+  const names = new Set<string>();
   function collectRequired(value: unknown) {
     if (!value || typeof value !== "object") return;
     const record = value as Record<string, unknown>;
@@ -82,8 +82,7 @@ function collectConditionalRequired(schema: AmazonSchemaProperty, attributes?: R
     const record = value as Record<string, unknown>;
 
     if (record.if && typeof record.if === "object") {
-      const conditionMatches = matchesSchema(attributes ?? {}, record.if as AmazonSchemaProperty);
-      if (conditionMatches) {
+      if (matchesSchema(attributes, record.if as AmazonSchemaProperty)) {
         collectRequired(record.then);
         visit(record.then);
       } else if (record.else) {
@@ -94,28 +93,28 @@ function collectConditionalRequired(schema: AmazonSchemaProperty, attributes?: R
 
     const dependentSchemas = record.dependentSchemas;
     if (dependentSchemas && typeof dependentSchemas === "object") {
-      const object = attributes ?? {};
       for (const [dependency, dependencySchema] of Object.entries(dependentSchemas as Record<string, unknown>)) {
-        if (Object.prototype.hasOwnProperty.call(object, dependency)) {
+        if (Object.prototype.hasOwnProperty.call(attributes, dependency)) {
           collectRequired(dependencySchema);
           visit(dependencySchema);
         }
       }
     }
 
-    for (const key of ["allOf", "anyOf", "oneOf"]) {
+    const allOf = record.allOf;
+    if (Array.isArray(allOf)) for (const child of allOf) visit(child);
+
+    for (const key of ["anyOf", "oneOf"]) {
       const children = record[key];
       if (Array.isArray(children)) {
         for (const child of children) {
-          if (key === "allOf") visit(child);
-          else if (child && typeof child === "object" && (child as Record<string, unknown>).if) visit(child);
+          if (child && typeof child === "object" && (child as Record<string, unknown>).if) visit(child);
         }
       }
     }
   }
 
   visit(schema);
-
   for (const name of schema.required ?? []) names.delete(name);
   return [...names].sort();
 }
@@ -123,7 +122,6 @@ function collectConditionalRequired(schema: AmazonSchemaProperty, attributes?: R
 export function summarizeAmazonListingSchema(definition: unknown, attributes?: Record<string, unknown>): AmazonListingSchemaSummary | null {
   const schema = findSchema(definition);
   if (!schema) return null;
-
   const properties = schema.properties ?? {};
   return {
     required: Array.isArray(schema.required) ? schema.required : [],
