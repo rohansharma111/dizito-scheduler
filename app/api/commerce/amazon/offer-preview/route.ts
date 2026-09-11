@@ -9,7 +9,7 @@ import { fetchAmazonProductTypeSchema } from "@/lib/platforms/amazon/schema-fetc
 import { getMissingAmazonRequiredAttributes, summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
 import { buildAmazonOfferDraft, previewAmazonOffer, type AmazonOfferCondition, type AmazonOfferFulfillment } from "@/lib/platforms/amazon/offers";
 
-interface ProductVariant { id: string | number; sku?: string | null; barcode?: string | null; price?: number | null; }
+interface ProductVariant { id: string | number; sku?: string | null; barcode?: string | null; price?: number | null; mrp?: number | null; }
 interface Product { id: string | number; variants: ProductVariant[]; }
 
 const conditions = new Set<AmazonOfferCondition>(["new_new", "used_like_new", "used_very_good", "used_good", "used_acceptable"]);
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
       sku: variant.sku,
       productType: body.productType,
       price: Number(body.price),
+      mrp: variant.mrp,
       quantity: Number(body.quantity),
       condition: body.condition as AmazonOfferCondition,
       fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment,
