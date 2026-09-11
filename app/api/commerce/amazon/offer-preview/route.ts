@@ -38,18 +38,18 @@ function isValidAsin(value: string) {
   return /^[A-Z0-9]{10}$/i.test(value);
 }
 
+function normalizedIdentifierKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 function savedAmazonIdentity(listings: Array<{ channel_id?: string; product_id?: string | number; provider_metadata?: Record<string, unknown> }>, channelId: string, productId: string) {
   const listing = listings.find((item) => String(item.channel_id) === channelId && String(item.product_id) === productId);
   const amazon = listing?.provider_metadata?.amazon;
   const product = amazon && typeof amazon === "object" && !Array.isArray(amazon) ? (amazon as Record<string, unknown>).product : undefined;
   if (!product || typeof product !== "object" || Array.isArray(product)) return { asin: "", productType: "" };
   const record = product as Record<string, unknown>;
-  const identity = record.identity && typeof record.identity === "object" && !Array.isArray(record.identity) ? identityRecord(record.identity) : null;
+  const identity = record.identity && typeof record.identity === "object" && !Array.isArray(record.identity) ? record.identity as Record<string, unknown> : null;
   return { asin: extractAttributeValue(identity?.asin).toUpperCase(), productType: typeof record.productType === "string" ? record.productType.trim() : "" };
-}
-
-function identityRecord(value: object) {
-  return value as Record<string, unknown>;
 }
 
 function isValidIsbn10(value: string) {
@@ -63,18 +63,19 @@ function catalogIdentifierForSchema(item: CatalogMatch | undefined, schemaSummar
   const identifiers = item?.identifiers ?? [];
   const allowed = schemaSummary?.properties.externally_assigned_product_identifier?.items?.properties?.type?.enum
     ?.filter((value): value is string => typeof value === "string")
-    .map((value) => value.toLowerCase().replace(/[^a-z0-9]/g, "")) ?? [];
+    .map(normalizedIdentifierKey) ?? [];
   const match = identifiers.find((entry) => {
     if (!entry.identifier?.trim()) return false;
     if (!allowed.length) return true;
-    const key = String(entry.identifierType ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    return allowed.includes(key);
+    const key = normalizedIdentifierKey(String(entry.identifierType ?? ""));
+    if (allowed.includes(key)) return true;
+    return key === "isbn" && (allowed.includes("isbn10") || allowed.includes("isbn13") || allowed.includes("isbn_10") || allowed.includes("isbn_13"));
   });
   if (match?.identifier?.trim()) return match.identifier.trim();
 
   // For book ASINs that are valid ISBN-10 values, the ASIN itself is the
-  // catalog identifier and can safely satisfy an ISBN external-ID field.
-  if (asin && isValidIsbn10(asin) && (!allowed.length || allowed.includes("isbn"))) return asin;
+  // catalog identifier and can safely satisfy an ISBN-style external-ID field.
+  if (asin && isValidIsbn10(asin) && (!allowed.length || allowed.some((key) => ["isbn", "isbn10", "isbn13", "isbn_10", "isbn_13"].includes(key)))) return asin;
   return null;
 }
 
@@ -116,12 +117,12 @@ export async function POST(request: Request) {
     let catalogMatch: CatalogMatch | undefined;
     if (asinCandidate) {
       if (!isValidAsin(asinCandidate)) {
-        return NextResponse.json({ success: false, error: "Enter a valid Amazon ASIN (10 letters/numbers).", validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
+        return NextResponse.json({ success: false, error: "Enter a valid Amazon ASIN (10 letters/numbers).", validationPreview: true, product: { id: product.id }, variant: { id: variant.id }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
       }
       const asinResult = await searchAmazonCatalogByIdentifier(body.channelId, asinCandidate, "ASIN");
       const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === asinCandidate && item.productType?.trim().toUpperCase() === productType.toUpperCase()) as CatalogMatch | undefined;
       if (!match) {
-        return NextResponse.json({ success: false, error: `Amazon ASIN ${asinCandidate} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
+        return NextResponse.json({ success: false, error: `Amazon ASIN ${asinCandidate} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
       }
       resolvedAsin = match.asin;
       catalogMatch = match;
