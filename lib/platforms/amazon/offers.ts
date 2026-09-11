@@ -2,7 +2,6 @@ import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
 import { amazonSpApiRequest } from "@/lib/platforms/amazon/client";
 
 export type AmazonOfferCondition = "new_new" | "used_like_new" | "used_very_good" | "used_good" | "used_acceptable";
-
 export type AmazonOfferFulfillment = "DEFAULT" | "AMAZON_IN";
 
 export interface AmazonOfferDraft {
@@ -33,6 +32,7 @@ export function buildAmazonOfferDraft(input: {
   asin?: string | null;
   externalProductId?: string | null;
   externalProductIdType?: string | null;
+  attributes?: Record<string, unknown>;
 }): AmazonOfferDraft {
   const marketplaceId = getAmazonMarketplaceId();
   if (!input.sku.trim()) throw new Error("SKU is required for the Amazon offer");
@@ -41,13 +41,12 @@ export function buildAmazonOfferDraft(input: {
   if (!Number.isInteger(input.quantity) || input.quantity < 0) throw new Error("Offer quantity must be a non-negative integer");
 
   const attributes: Record<string, unknown> = {
+    ...(input.attributes ?? {}),
     condition_type: marketplaceValue(input.condition, marketplaceId),
     purchasable_offer: [{
       audience: "ALL",
       currency: "INR",
-      our_price: [{
-        schedule: [{ value_with_tax: input.price }],
-      }],
+      our_price: [{ schedule: [{ value_with_tax: input.price }] }],
       marketplace_id: marketplaceId,
     }],
     fulfillment_availability: [{
