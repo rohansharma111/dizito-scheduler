@@ -6,7 +6,7 @@ import { getProductDetails } from "@/lib/commerce/products/service";
 import { getAmazonProductTypeDefinition } from "@/lib/platforms/amazon/client";
 import { fetchAmazonProductTypeSchema } from "@/lib/platforms/amazon/schema-fetch";
 import { getMissingAmazonRequiredAttributes, summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
-import { resolveAmazonCatalogIdentity } from "@/lib/platforms/amazon/catalog";
+import { resolveAmazonCatalogIdentity, searchAmazonCatalogByIdentifier, identifierTypeForAmazonCatalog } from "@/lib/platforms/amazon/catalog";
 import { buildAmazonOfferDraft, previewAmazonOffer, type AmazonOfferCondition, type AmazonOfferFulfillment } from "@/lib/platforms/amazon/offers";
 
 interface ProductVariant { id: string | number; sku?: string | null; barcode?: string | null; price?: number | null; mrp?: number | null; }
@@ -39,23 +39,33 @@ export async function POST(request: Request) {
     const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
     const initialSummary = summarizeAmazonListingSchema(schemaDocument, body.amazonAttributes);
+    const schemaSummary = summarizeAmazonListingSchema(schemaDocument, body.amazonAttributes);
+    const suppliedAsin = typeof body.amazonAttributes?.merchant_suggested_asin === "string" ? body.amazonAttributes.merchant_suggested_asin.trim() : "";
 
     let resolvedAsin: string | null = null;
     let identityResolution: { identifierType: string; productType: string | null; requestId: string | null; rateLimit: string | null } | null = null;
-    if (variant.barcode?.trim()) {
+    if (suppliedAsin) {
+      const asinResult = await searchAmazonCatalogByIdentifier(body.channelId, suppliedAsin, "ASIN");
+      const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === suppliedAsin.toUpperCase() && item.productType?.trim().toUpperCase() === body.productType.trim().toUpperCase());
+      if (match) {
+        resolvedAsin = match.asin;
+        identityResolution = { identifierType: "ASIN", productType: match.productType ?? null, requestId: asinResult.requestId, rateLimit: asinResult.rateLimit };
+      } else {
+        return NextResponse.json({ success: false, error: `Amazon ASIN ${suppliedAsin} was not found for product type ${body.productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: body.productType, schemaSummary, missingAttributes: getMissingAmazonRequiredAttributes(schemaSummary, body.amazonAttributes), identityResolution: null }, { status: 422 });
+      }
+    } else if (variant.barcode?.trim()) {
       const identity = await resolveAmazonCatalogIdentity(body.channelId, variant.barcode, body.productType);
-      if (identity) {
+      if (identity?.asin) {
         resolvedAsin = identity.asin;
         identityResolution = { identifierType: identity.identifierType, productType: identity.productType, requestId: identity.requestId, rateLimit: identity.rateLimit };
       }
     }
 
     const draft = buildAmazonOfferDraft({ sku: variant.sku, productType: body.productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: typeof variant.barcode === "string" ? variant.barcode : null, attributes: body.amazonAttributes, schemaSummary: initialSummary });
-    const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
 
     if (schemaSummary?.properties.merchant_suggested_asin && !resolvedAsin) {
-      return NextResponse.json({ success: false, error: "Amazon catalog identity could not be resolved from the variant barcode/ISBN. Verify the barcode/ISBN belongs to the selected Amazon product type before validating the offer.", product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution }, { status: 422 });
+      return NextResponse.json({ success: false, requiresAmazonAttributes: true, error: "Amazon catalog identity is required. Enter the ASIN that belongs to the selected Amazon product type.", product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution }, { status: 200 });
     }
 
     const result = await previewAmazonOffer(body.channelId, sellerId, draft);
