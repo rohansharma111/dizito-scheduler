@@ -44,11 +44,21 @@ function savedAmazonIdentity(listings: Array<{ channel_id?: string; product_id?:
   const product = amazon && typeof amazon === "object" && !Array.isArray(amazon) ? (amazon as Record<string, unknown>).product : undefined;
   if (!product || typeof product !== "object" || Array.isArray(product)) return { asin: "", productType: "" };
   const record = product as Record<string, unknown>;
-  const identity = record.identity && typeof record.identity === "object" && !Array.isArray(record.identity) ? record.identity as Record<string, unknown> : null;
+  const identity = record.identity && typeof record.identity === "object" && !Array.isArray(record.identity) ? identityRecord(record.identity) : null;
   return { asin: extractAttributeValue(identity?.asin).toUpperCase(), productType: typeof record.productType === "string" ? record.productType.trim() : "" };
 }
 
-function catalogIdentifierForSchema(item: CatalogMatch | undefined, schemaSummary: ReturnType<typeof summarizeAmazonListingSchema>, existingBarcode?: string | null): string | null {
+function identityRecord(value: object) {
+  return value as Record<string, unknown>;
+}
+
+function isValidIsbn10(value: string) {
+  const normalized = value.replace(/[\s-]/g, "").toUpperCase();
+  if (!/^(?:\d{9}[\dX])$/.test(normalized)) return false;
+  return normalized.split("").reduce((sum, digit, index) => sum + (digit === "X" ? 10 : Number(digit)) * (10 - index), 0) % 11 === 0;
+}
+
+function catalogIdentifierForSchema(item: CatalogMatch | undefined, schemaSummary: ReturnType<typeof summarizeAmazonListingSchema>, existingBarcode?: string | null, asin?: string | null): string | null {
   if (existingBarcode?.trim()) return existingBarcode.trim();
   const identifiers = item?.identifiers ?? [];
   const allowed = schemaSummary?.properties.externally_assigned_product_identifier?.items?.properties?.type?.enum
@@ -60,7 +70,12 @@ function catalogIdentifierForSchema(item: CatalogMatch | undefined, schemaSummar
     const key = String(entry.identifierType ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
     return allowed.includes(key);
   });
-  return match?.identifier?.trim() ?? null;
+  if (match?.identifier?.trim()) return match.identifier.trim();
+
+  // For book ASINs that are valid ISBN-10 values, the ASIN itself is the
+  // catalog identifier and can safely satisfy an ISBN external-ID field.
+  if (asin && isValidIsbn10(asin) && (!allowed.length || allowed.includes("isbn"))) return asin;
+  return null;
 }
 
 export async function POST(request: Request) {
@@ -121,7 +136,7 @@ export async function POST(request: Request) {
 
     const attributes = { ...amazonAttributes };
     if (resolvedAsin && !attributes.merchant_suggested_asin) attributes.merchant_suggested_asin = resolvedAsin;
-    const catalogBarcode = catalogIdentifierForSchema(catalogMatch, initialSummary, variant.barcode);
+    const catalogBarcode = catalogIdentifierForSchema(catalogMatch, initialSummary, variant.barcode, resolvedAsin);
     const draft = buildAmazonOfferDraft({ sku: variant.sku, productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: catalogBarcode, attributes, schemaSummary: initialSummary });
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
