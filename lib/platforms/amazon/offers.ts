@@ -52,7 +52,10 @@ function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: 
   const properties = schemaProperties(itemSchema);
   const offer: Record<string, unknown> = {};
 
-  if (properties.audience || itemSchema?.required?.includes("audience")) {
+  // Audience is a selector in some Amazon schemas, but it is not required by
+  // the India schema shown by the Product Type Definitions API. Sending a
+  // selector that the account/listing does not expect can itself produce 90183.
+  if (itemSchema?.required?.includes("audience")) {
     offer.audience = selectorValue(properties.audience, "ALL");
   }
   if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) {
@@ -67,13 +70,13 @@ function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: 
     offer.our_price = schedule;
   }
 
-  // Some Amazon product types require list_price inside purchasable_offer.
-  // Dizito already stores MRP on the variant, so resolve it automatically rather
-  // than asking the seller to enter an Amazon-specific JSON structure.
-  if (properties.list_price || itemSchema?.required?.includes("list_price")) {
+  // India product schemas may expose MRP as maximum_retail_price rather than
+  // list_price. Use the exact schema property when it exists; never emit both.
+  const retailPriceProperty = properties.maximum_retail_price ? "maximum_retail_price" : properties.list_price ? "list_price" : null;
+  if (retailPriceProperty && (itemSchema?.required?.includes(retailPriceProperty) || Number.isFinite(mrp))) {
     if (Number.isFinite(mrp) && Number(mrp) > 0) {
-      const schedule = buildPriceSchedule(properties.list_price, Number(mrp));
-      if (schedule) offer.list_price = schedule;
+      const schedule = buildPriceSchedule(properties[retailPriceProperty], Number(mrp));
+      if (schedule) offer[retailPriceProperty] = schedule;
     }
   }
 
