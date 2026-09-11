@@ -44,8 +44,6 @@ export async function POST(request: Request) {
     const identity = amazonProduct && typeof amazonProduct === "object" && !Array.isArray(amazonProduct) ? (amazonProduct as Record<string, unknown>).identity : undefined;
     const asin = identity && typeof identity === "object" && !Array.isArray(identity) ? (identity as Record<string, unknown>).asin : undefined;
 
-    // Amazon's definition/schema is the source of truth. Fetch it before constructing
-    // the offer so selectors and nested shapes are emitted only when supported.
     const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
     const initialSummary = summarizeAmazonListingSchema(schemaDocument, body.amazonAttributes);
@@ -64,12 +62,17 @@ export async function POST(request: Request) {
       schemaSummary: initialSummary,
     });
 
+    // The product-type schema describes possible requirements, but some required
+    // values are account/catalog dependent (for example HSN or shipping group).
+    // Do not fabricate them or stop before Amazon's authoritative validation.
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
-    if (missing.length > 0) return NextResponse.json({ success: false, requiresAmazonAttributes: true, error: "Amazon requires additional attributes for this product type before offer validation can run.", productType: draft.productType, requirements: draft.requirements, draft, schemaSummary, missingAttributes: missing }, { status: 422 });
-
     const result = await previewAmazonOffer(body.channelId, sellerId, draft);
-    return NextResponse.json({ success: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, amazon: result.data, requestId: result.requestId, rateLimit: result.rateLimit });
+    const amazon = result.data;
+    const issues = Array.isArray(amazon?.issues) ? amazon.issues : [];
+    const invalid = String(amazon?.status ?? "").toUpperCase() === "INVALID";
+
+    return NextResponse.json({ success: !invalid && issues.length === 0, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, amazon, requestId: result.requestId, rateLimit: result.rateLimit }, { status: invalid || issues.length > 0 ? 422 : 200 });
   } catch (error) {
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Amazon offer validation preview failed" }, { status: 502 });
   }
