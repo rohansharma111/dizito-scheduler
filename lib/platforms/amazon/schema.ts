@@ -39,7 +39,7 @@ function matchesSchema(value: unknown, schema: AmazonSchemaProperty): boolean {
   if (schema.required?.length) {
     if (!value || typeof value !== "object" || Array.isArray(value)) return false;
     const object = value as Record<string, unknown>;
-    if (schema.required.some((name) => object[name] === undefined || object[name] === null)) return false;
+    if (schema.required.some((name) => object[name] === undefined || object[name] === null || object[name] === "")) return false;
   }
   if (schema.properties && value && typeof value === "object" && !Array.isArray(value)) {
     const object = value as Record<string, unknown>;
@@ -103,7 +103,47 @@ export function summarizeAmazonListingSchema(definition: unknown, attributes?: R
 
 export function getMissingAmazonRequiredAttributes(summary: AmazonListingSchemaSummary | null, attributes: Record<string, unknown>) {
   if (!summary) return [];
-  return [...new Set([...summary.required, ...summary.conditionalRequired])]
-    .filter((name) => attributes[name] === undefined || attributes[name] === null || attributes[name] === "")
-    .map((name) => ({ name, schema: summary.properties[name] ?? null }));
+
+  const missing: Array<{ name: string; schema: AmazonSchemaProperty | null }> = [];
+  const seen = new Set<string>();
+  const isPresent = (value: unknown) => value !== undefined && value !== null && value !== "";
+
+  const walk = (name: string, schema: AmazonSchemaProperty | null, value: unknown, path: string) => {
+    const displayName = path || name;
+    if (!isPresent(value)) {
+      if (!seen.has(displayName)) {
+        seen.add(displayName);
+        missing.push({ name: displayName, schema });
+      }
+      return;
+    }
+
+    if (schema?.type === "array" && Array.isArray(value)) {
+      if (value.length === 0 && schema.minItems && schema.minItems > 0) {
+        if (!seen.has(displayName)) {
+          seen.add(displayName);
+          missing.push({ name: displayName, schema });
+        }
+        return;
+      }
+      value.forEach((item, index) => walkNested(schema.items ?? null, item, `${displayName}[${index}]`));
+      return;
+    }
+
+    if (schema?.type === "object" && value && typeof value === "object" && !Array.isArray(value)) {
+      for (const requiredName of schema.required ?? []) {
+        walkNested(schema.properties?.[requiredName] ?? null, (value as Record<string, unknown>)[requiredName], `${displayName}.${requiredName}`);
+      }
+    }
+  };
+
+  const walkNested = (schema: AmazonSchemaProperty | null, value: unknown, path: string) => {
+    walk(path, schema, value, path);
+  };
+
+  for (const name of [...new Set([...summary.required, ...summary.conditionalRequired])]) {
+    walk(name, summary.properties[name] ?? null, attributes[name], name);
+  }
+
+  return missing;
 }
