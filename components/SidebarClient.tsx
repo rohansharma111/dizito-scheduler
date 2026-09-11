@@ -24,6 +24,7 @@ import {
   Warehouse,
   ShoppingBag,
   Store,
+  Sparkles,
 } from "lucide-react";
 
 type SidebarSection = {
@@ -68,6 +69,10 @@ export default function SidebarClient({
     {
       title: "MAIN",
       items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    },
+    {
+      title: "MARKETING",
+      items: [{ href: "/generate-week", label: "Generate My Week", icon: Sparkles }],
     },
     {
       title: "PUBLISHING",
