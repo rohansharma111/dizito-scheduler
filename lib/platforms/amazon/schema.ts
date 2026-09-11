@@ -119,7 +119,8 @@ export function getMissingAmazonRequiredAttributes(summary: AmazonListingSchemaS
     }
 
     if (schema?.type === "array" && Array.isArray(value)) {
-      if (value.length === 0 && schema.minItems && schema.minItems > 0) {
+      const minItems = typeof schema.minItems === "number" ? schema.minItems : undefined;
+      if (value.length === 0 && minItems !== undefined && minItems > 0) {
         if (!seen.has(displayName)) {
           seen.add(displayName);
           missing.push({ name: displayName, schema });
