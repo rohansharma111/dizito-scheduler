@@ -43,6 +43,7 @@ export function buildAmazonOfferDraft(input: {
   const attributes: Record<string, unknown> = {
     condition_type: marketplaceValue(input.condition, marketplaceId),
     purchasable_offer: [{
+      audience: "ALL",
       currency: "INR",
       our_price: [{
         schedule: [{ value_with_tax: input.price }],
