@@ -44,7 +44,6 @@ export function buildAmazonOfferDraft(input: {
     condition_type: marketplaceValue(input.condition, marketplaceId),
     purchasable_offer: [{
       currency: "INR",
-      audience: "ALL",
       our_price: [{
         schedule: [{ value_with_tax: input.price }],
       }],
