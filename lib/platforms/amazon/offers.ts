@@ -45,16 +45,17 @@ function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: 
   const properties = schemaProperties(itemSchema);
   const offer: Record<string, unknown> = {};
 
+  // audience is the standard Amazon purchasable-offer selector. Keep ALL for
+  // the normal retail offer unless the product-type schema explicitly constrains it.
+  offer.audience = selectorValue(properties.audience, "ALL");
+
   if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) {
     offer.marketplace_id = marketplaceId;
   }
   if (properties.currency || itemSchema?.required?.includes("currency")) {
     offer.currency = selectorValue(properties.currency, "INR");
   }
-  if (properties.audience || itemSchema?.required?.includes("audience")) {
-    offer.audience = selectorValue(properties.audience, "ALL");
-  }
-  if (properties.our_price || itemSchema?.required?.includes("our_price")) {
+  if (properties.our_price || itemSchema?.required?.includes("our_price") || !schema) {
     const priceSchema = properties.our_price;
     const scheduleSchema = priceSchema?.items?.properties?.schedule;
     const valueSchema = scheduleSchema?.items?.properties?.value_with_tax;
@@ -72,8 +73,8 @@ function buildFulfillmentAvailability(schema: AmazonSchemaProperty | undefined, 
   const itemSchema = schema?.items;
   const properties = schemaProperties(itemSchema);
   const availability: Record<string, unknown> = {};
-  if (properties.fulfillment_channel_code || itemSchema?.required?.includes("fulfillment_channel_code")) availability.fulfillment_channel_code = selectorValue(properties.fulfillment_channel_code, channel);
-  if (properties.quantity || itemSchema?.required?.includes("quantity")) availability.quantity = quantity;
+  if (properties.fulfillment_channel_code || itemSchema?.required?.includes("fulfillment_channel_code") || !schema) availability.fulfillment_channel_code = selectorValue(properties.fulfillment_channel_code, channel);
+  if (properties.quantity || itemSchema?.required?.includes("quantity") || !schema) availability.quantity = quantity;
   if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) availability.marketplace_id = marketplaceId;
   return [availability];
 }
