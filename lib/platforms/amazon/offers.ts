@@ -45,10 +45,11 @@ function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: 
   const properties = schemaProperties(itemSchema);
   const offer: Record<string, unknown> = {};
 
-  // audience is the standard Amazon purchasable-offer selector. Keep ALL for
-  // the normal retail offer unless the product-type schema explicitly constrains it.
-  offer.audience = selectorValue(properties.audience, "ALL");
-
+  // Do not force optional selectors into every product type. Amazon's
+  // product-type schema is the source of truth for which selectors are valid.
+  if (properties.audience || itemSchema?.required?.includes("audience")) {
+    offer.audience = selectorValue(properties.audience, "ALL");
+  }
   if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) {
     offer.marketplace_id = marketplaceId;
   }
