@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Campaigns are the first persistent strategy layer above Dizito's existing post execution system.
+Campaigns are the persistent strategy layer above Dizito's existing post execution system.
 
 A campaign represents the business reason and marketing plan behind a set of content and distribution actions.
 
 ## Model
 
-`Campaign → Content → Post → Post Target → Scheduler → Publisher`
+`Campaign → Content Item → Post → Post Target → Scheduler → Publisher`
 
 The Campaign layer does not replace or modify the existing publishing engine.
 
@@ -34,20 +34,32 @@ Products remain owned by Commerce. Campaigns reference products; they do not cre
 - completed
 - archived
 
+## Content planning
+
+`marketing_content_items` is the planning bridge between campaign strategy and execution.
+
+A Content Item can define the topic, angle, hook, copy, CTA, intended channels, planned time, reusable media, and canonical Commerce Products before an execution-level Post exists.
+
+The intended lineage is:
+
+`Campaign → Content Item → Post`
+
+A Content Item may be linked to an existing Post through `marketing_content_item_posts`. Linking does not bypass or alter the existing `post_targets`, scheduler, or publisher execution system.
+
 ## Post lineage
 
-`marketing_campaign_posts` provides the structural relationship between a campaign and execution-level posts. A post remains the existing publishing object and continues to use `post_targets`, the scheduler, and platform publishers.
+`marketing_campaign_posts` remains available as direct campaign-to-post lineage for compatibility with the Campaign foundation. New planning flows should prefer the Content Item relationship so the strategic plan is preserved even before a Post exists.
 
 ## Boundary
 
-Campaigns do not yet implement:
+Campaigns and Content Items do not yet implement:
 
-- content item planning
-- AI generation
-- weekly planning
+- AI content generation
+- weekly planning / Generate My Week
 - customer actions
 - attribution
 - revenue measurement
 - AI strategy or optimization
+- automatic publishing
 
-Those layers are deliberately sequenced after the Campaign foundation.
+Those capabilities are deliberately sequenced after the planning foundation.
