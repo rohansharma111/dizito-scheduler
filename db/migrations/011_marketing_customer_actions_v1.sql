@@ -18,19 +18,15 @@ CREATE TABLE marketing_customer_actions (
   CONSTRAINT marketing_customer_actions_type_check CHECK (action_type IN ('lead','booking','message','call','website_visit','checkout','order','purchase')),
   CONSTRAINT marketing_customer_actions_status_check CHECK (status IN ('pending','completed','cancelled')),
   CONSTRAINT marketing_customer_actions_value_check CHECK (value IS NULL OR value >= 0),
-  CONSTRAINT marketing_customer_actions_currency_check CHECK (currency IS NULL OR currency ~ '^[A-Z]{3}$'),
-  CONSTRAINT marketing_customer_actions_external_key UNIQUE (user_id, source, external_id)
+  CONSTRAINT marketing_customer_actions_currency_check CHECK (currency IS NULL OR currency ~ '^[A-Z]{3}$')
 );
 
-CREATE INDEX idx_marketing_customer_actions_user_occurred
-  ON marketing_customer_actions(user_id, occurred_at DESC);
-CREATE INDEX idx_marketing_customer_actions_campaign
-  ON marketing_customer_actions(campaign_id, occurred_at DESC);
-CREATE INDEX idx_marketing_customer_actions_content
-  ON marketing_customer_actions(content_item_id, occurred_at DESC);
-CREATE INDEX idx_marketing_customer_actions_variant
-  ON marketing_customer_actions(variant_id, occurred_at DESC);
-CREATE INDEX idx_marketing_customer_actions_customer
-  ON marketing_customer_actions(customer_id);
-CREATE INDEX idx_marketing_customer_actions_order
-  ON marketing_customer_actions(order_id);
+CREATE UNIQUE INDEX uq_marketing_customer_actions_external
+  ON marketing_customer_actions(user_id, source, external_id)
+  WHERE source IS NOT NULL AND external_id IS NOT NULL;
+CREATE INDEX idx_marketing_customer_actions_user_occurred ON marketing_customer_actions(user_id, occurred_at DESC);
+CREATE INDEX idx_marketing_customer_actions_campaign ON marketing_customer_actions(campaign_id, occurred_at DESC);
+CREATE INDEX idx_marketing_customer_actions_content ON marketing_customer_actions(content_item_id, occurred_at DESC);
+CREATE INDEX idx_marketing_customer_actions_variant ON marketing_customer_actions(variant_id, occurred_at DESC);
+CREATE INDEX idx_marketing_customer_actions_customer ON marketing_customer_actions(customer_id);
+CREATE INDEX idx_marketing_customer_actions_order ON marketing_customer_actions(order_id);
