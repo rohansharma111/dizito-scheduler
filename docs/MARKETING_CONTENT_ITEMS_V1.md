@@ -111,4 +111,4 @@ Channel variants do not implement:
 - automatic publishing
 - AI optimization
 
-Those capabilities will consume this planning and execution lineage later.
+Those capabilities consume this planning and execution lineage through separate measurement and attribution layers.
