@@ -14,6 +14,27 @@ interface Product { id: string | number; variants: ProductVariant[]; }
 const conditions = new Set<AmazonOfferCondition>(["new_new", "used_like_new", "used_very_good", "used_good", "used_acceptable"]);
 const fulfillmentChannels = new Set<AmazonOfferFulfillment>(["DEFAULT", "AMAZON_IN"]);
 
+function extractAttributeValue(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const extracted = extractAttributeValue(item);
+      if (extracted) return extracted;
+    }
+    return "";
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (typeof record.value === "string") return record.value.trim();
+    if (Array.isArray(record.value)) return extractAttributeValue(record.value);
+  }
+  return "";
+}
+
+function isValidAsin(value: string) {
+  return /^[A-Z0-9]{10}$/i.test(value);
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -41,13 +62,16 @@ export async function POST(request: Request) {
     const definition = await getAmazonProductTypeDefinition(body.channelId, productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
     const initialSummary = summarizeAmazonListingSchema(schemaDocument, amazonAttributes);
-    const suppliedAsin = typeof amazonAttributes.merchant_suggested_asin === "string" ? amazonAttributes.merchant_suggested_asin.trim() : "";
+    const suppliedAsin = extractAttributeValue(amazonAttributes.merchant_suggested_asin).toUpperCase();
 
     let resolvedAsin: string | null = null;
     let identityResolution: { identifierType: string; productType: string | null; requestId: string | null; rateLimit: string | null } | null = null;
     if (suppliedAsin) {
+      if (!isValidAsin(suppliedAsin)) {
+        return NextResponse.json({ success: false, error: "Enter a valid Amazon ASIN (10 letters/numbers).", validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
+      }
       const asinResult = await searchAmazonCatalogByIdentifier(body.channelId, suppliedAsin, "ASIN");
-      const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === suppliedAsin.toUpperCase() && item.productType?.trim().toUpperCase() === productType.toUpperCase());
+      const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === suppliedAsin && item.productType?.trim().toUpperCase() === productType.toUpperCase());
       if (!match) {
         return NextResponse.json({ success: false, error: `Amazon ASIN ${suppliedAsin} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
       }
@@ -65,8 +89,8 @@ export async function POST(request: Request) {
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
 
-    if (schemaSummary?.properties.merchant_suggested_asin && !resolvedAsin) {
-      return NextResponse.json({ success: false, requiresAmazonAttributes: true, error: "Amazon catalog identity is required. Enter the ASIN that belongs to the selected Amazon product type.", product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution }, { status: 200 });
+    if (missing.length > 0) {
+      return NextResponse.json({ success: false, requiresAmazonAttributes: true, error: resolvedAsin ? "Amazon needs additional product information before validation." : "Amazon catalog identity could not be resolved automatically. Enter the ASIN that belongs to the selected Amazon product type, or provide the remaining required information.", product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution }, { status: 200 });
     }
 
     const result = await previewAmazonOffer(body.channelId, sellerId, draft);
