@@ -17,6 +17,7 @@ export type ApprovedWeeklyStrategy = {
       topic: string;
       angle?: string;
       hook?: string;
+      body?: string;
       cta: string;
       plannedFor?: string | null;
     }>;
@@ -89,10 +90,10 @@ export async function persistApprovedWeek(
         const contentResult = await client.query(
           `INSERT INTO marketing_content_items
            (user_id, campaign_id, content_type, format, topic, angle, hook, body, cta, channel_strategy, status, planned_for)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,'planned',$10)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'planned',$11)
            RETURNING id`,
           [userId, campaignId, item.contentType, item.format, item.topic, item.angle ?? null,
-           item.hook ?? null, item.cta, campaign.channelStrategy ?? {}, item.plannedFor ?? null],
+           item.hook ?? null, item.body ?? null, item.cta, campaign.channelStrategy ?? {}, item.plannedFor ?? null],
         );
         const contentItemId = contentResult.rows[0].id;
         for (const productId of productIds) {
