@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
+import { getProductListings } from "@/lib/commerce/listings/service";
 import { getAmazonProductTypeDefinition } from "@/lib/platforms/amazon/client";
 import { fetchAmazonProductTypeSchema } from "@/lib/platforms/amazon/schema-fetch";
 import { getMissingAmazonRequiredAttributes, summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
@@ -11,6 +12,8 @@ import { buildAmazonOfferDraft, previewAmazonOffer, type AmazonOfferCondition, t
 
 interface ProductVariant { id: string | number; sku?: string | null; barcode?: string | null; price?: number | null; mrp?: number | null; }
 interface Product { id: string | number; variants: ProductVariant[]; }
+interface CatalogIdentifier { identifier?: string; identifierType?: string; marketplaceId?: string; }
+interface CatalogMatch { asin: string; productType?: string | null; identifiers?: CatalogIdentifier[]; }
 const conditions = new Set<AmazonOfferCondition>(["new_new", "used_like_new", "used_very_good", "used_good", "used_acceptable"]);
 const fulfillmentChannels = new Set<AmazonOfferFulfillment>(["DEFAULT", "AMAZON_IN"]);
 
@@ -33,6 +36,31 @@ function extractAttributeValue(value: unknown): string {
 
 function isValidAsin(value: string) {
   return /^[A-Z0-9]{10}$/i.test(value);
+}
+
+function savedAmazonIdentity(listings: Array<{ channel_id?: string; product_id?: string | number; provider_metadata?: Record<string, unknown> }>, channelId: string, productId: string) {
+  const listing = listings.find((item) => String(item.channel_id) === channelId && String(item.product_id) === productId);
+  const amazon = listing?.provider_metadata?.amazon;
+  const product = amazon && typeof amazon === "object" && !Array.isArray(amazon) ? (amazon as Record<string, unknown>).product : undefined;
+  if (!product || typeof product !== "object" || Array.isArray(product)) return { asin: "", productType: "" };
+  const record = product as Record<string, unknown>;
+  const identity = record.identity && typeof record.identity === "object" && !Array.isArray(record.identity) ? record.identity as Record<string, unknown> : null;
+  return { asin: extractAttributeValue(identity?.asin).toUpperCase(), productType: typeof record.productType === "string" ? record.productType.trim() : "" };
+}
+
+function catalogIdentifierForSchema(item: CatalogMatch | undefined, schemaSummary: ReturnType<typeof summarizeAmazonListingSchema>, existingBarcode?: string | null): string | null {
+  if (existingBarcode?.trim()) return existingBarcode.trim();
+  const identifiers = item?.identifiers ?? [];
+  const allowed = schemaSummary?.properties.externally_assigned_product_identifier?.items?.properties?.type?.enum
+    ?.filter((value): value is string => typeof value === "string")
+    .map((value) => value.toLowerCase().replace(/[^a-z0-9]/g, "")) ?? [];
+  const match = identifiers.find((entry) => {
+    if (!entry.identifier?.trim()) return false;
+    if (!allowed.length) return true;
+    const key = String(entry.identifierType ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    return allowed.includes(key);
+  });
+  return match?.identifier?.trim() ?? null;
 }
 
 export async function POST(request: Request) {
@@ -62,20 +90,26 @@ export async function POST(request: Request) {
     const definition = await getAmazonProductTypeDefinition(body.channelId, productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
     const initialSummary = summarizeAmazonListingSchema(schemaDocument, amazonAttributes);
+
+    const listings = await getProductListings(userId);
+    const savedIdentity = savedAmazonIdentity(listings, body.channelId, body.productId);
     const suppliedAsin = extractAttributeValue(amazonAttributes.merchant_suggested_asin).toUpperCase();
+    const asinCandidate = suppliedAsin || savedIdentity.asin;
 
     let resolvedAsin: string | null = null;
     let identityResolution: { identifierType: string; productType: string | null; requestId: string | null; rateLimit: string | null } | null = null;
-    if (suppliedAsin) {
-      if (!isValidAsin(suppliedAsin)) {
+    let catalogMatch: CatalogMatch | undefined;
+    if (asinCandidate) {
+      if (!isValidAsin(asinCandidate)) {
         return NextResponse.json({ success: false, error: "Enter a valid Amazon ASIN (10 letters/numbers).", validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
       }
-      const asinResult = await searchAmazonCatalogByIdentifier(body.channelId, suppliedAsin, "ASIN");
-      const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === suppliedAsin && item.productType?.trim().toUpperCase() === productType.toUpperCase());
+      const asinResult = await searchAmazonCatalogByIdentifier(body.channelId, asinCandidate, "ASIN");
+      const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === asinCandidate && item.productType?.trim().toUpperCase() === productType.toUpperCase()) as CatalogMatch | undefined;
       if (!match) {
-        return NextResponse.json({ success: false, error: `Amazon ASIN ${suppliedAsin} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
+        return NextResponse.json({ success: false, error: `Amazon ASIN ${asinCandidate} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
       }
       resolvedAsin = match.asin;
+      catalogMatch = match;
       identityResolution = { identifierType: "ASIN", productType: match.productType ?? null, requestId: asinResult.requestId, rateLimit: asinResult.rateLimit };
     } else if (variant.barcode?.trim()) {
       const identity = await resolveAmazonCatalogIdentity(body.channelId, variant.barcode, productType);
@@ -85,7 +119,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const draft = buildAmazonOfferDraft({ sku: variant.sku, productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: typeof variant.barcode === "string" ? variant.barcode : null, attributes: amazonAttributes, schemaSummary: initialSummary });
+    const attributes = { ...amazonAttributes };
+    if (resolvedAsin && !attributes.merchant_suggested_asin) attributes.merchant_suggested_asin = resolvedAsin;
+    const catalogBarcode = catalogIdentifierForSchema(catalogMatch, initialSummary, variant.barcode);
+    const draft = buildAmazonOfferDraft({ sku: variant.sku, productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: catalogBarcode, attributes, schemaSummary: initialSummary });
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
 
