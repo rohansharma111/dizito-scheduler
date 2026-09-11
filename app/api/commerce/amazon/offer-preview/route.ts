@@ -3,15 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { getProductDetails } from "@/lib/commerce/products/service";
-import { getProductListings } from "@/lib/commerce/listings/service";
 import { getAmazonProductTypeDefinition } from "@/lib/platforms/amazon/client";
 import { fetchAmazonProductTypeSchema } from "@/lib/platforms/amazon/schema-fetch";
 import { getMissingAmazonRequiredAttributes, summarizeAmazonListingSchema } from "@/lib/platforms/amazon/schema";
+import { resolveAmazonCatalogIdentity } from "@/lib/platforms/amazon/catalog";
 import { buildAmazonOfferDraft, previewAmazonOffer, type AmazonOfferCondition, type AmazonOfferFulfillment } from "@/lib/platforms/amazon/offers";
 
 interface ProductVariant { id: string | number; sku?: string | null; barcode?: string | null; price?: number | null; mrp?: number | null; }
 interface Product { id: string | number; variants: ProductVariant[]; }
-
 const conditions = new Set<AmazonOfferCondition>(["new_new", "used_like_new", "used_very_good", "used_good", "used_acceptable"]);
 const fulfillmentChannels = new Set<AmazonOfferFulfillment>(["DEFAULT", "AMAZON_IN"]);
 
@@ -37,41 +36,33 @@ export async function POST(request: Request) {
     if (!variant) return NextResponse.json({ success: false, error: product.variants.length > 1 ? "variantId is required when a product has multiple variants" : "Product must have at least one variant" }, { status: 409 });
     if (!variant.sku?.trim()) return NextResponse.json({ success: false, error: "The selected variant must have a SKU" }, { status: 409 });
 
-    const listings = await getProductListings(userId);
-    const listing = listings.find((item) => String(item.channel_id) === String(body.channelId) && String(item.product_id) === String(body.productId));
-
     const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
     const initialSummary = summarizeAmazonListingSchema(schemaDocument, body.amazonAttributes);
 
-    const draft = buildAmazonOfferDraft({
-      sku: variant.sku,
-      productType: body.productType,
-      price: Number(body.price),
-      mrp: variant.mrp,
-      quantity: Number(body.quantity),
-      condition: body.condition as AmazonOfferCondition,
-      fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment,
-      // Do not infer an ASIN from prior listing identity. An ASIN is catalog
-      // identity and may belong to a different Amazon product type; only an
-      // explicit user-provided value may become merchant_suggested_asin.
-      asin: null,
-      barcode: typeof variant.barcode === "string" ? variant.barcode : null,
-      attributes: body.amazonAttributes,
-      schemaSummary: initialSummary,
-    });
+    let resolvedAsin: string | null = null;
+    let identityResolution: { identifierType: string; productType: string | null; requestId: string | null; rateLimit: string | null } | null = null;
+    if (variant.barcode?.trim()) {
+      const identity = await resolveAmazonCatalogIdentity(body.channelId, variant.barcode, body.productType);
+      if (identity) {
+        resolvedAsin = identity.asin;
+        identityResolution = { identifierType: identity.identifierType, productType: identity.productType, requestId: identity.requestId, rateLimit: identity.rateLimit };
+      }
+    }
 
-    // The product-type schema describes possible requirements, but some required
-    // values are account/catalog dependent (for example HSN or shipping group).
-    // Do not fabricate them or stop before Amazon's authoritative validation.
+    const draft = buildAmazonOfferDraft({ sku: variant.sku, productType: body.productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: typeof variant.barcode === "string" ? variant.barcode : null, attributes: body.amazonAttributes, schemaSummary: initialSummary });
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
+
+    if (schemaSummary.properties.merchant_suggested_asin && !resolvedAsin) {
+      return NextResponse.json({ success: false, error: "Amazon catalog identity could not be resolved from the variant barcode/ISBN. Verify the barcode/ISBN belongs to the selected Amazon product type before validating the offer.", product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution }, { status: 422 });
+    }
+
     const result = await previewAmazonOffer(body.channelId, sellerId, draft);
     const amazon = result.data;
     const issues = Array.isArray(amazon?.issues) ? amazon.issues : [];
     const invalid = String(amazon?.status ?? "").toUpperCase() === "INVALID";
-
-    return NextResponse.json({ success: !invalid && issues.length === 0, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, amazon, requestId: result.requestId, rateLimit: result.rateLimit }, { status: invalid || issues.length > 0 ? 422 : 200 });
+    return NextResponse.json({ success: !invalid && issues.length === 0, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution, amazon, requestId: result.requestId, rateLimit: result.rateLimit }, { status: invalid || issues.length > 0 ? 422 : 200 });
   } catch (error) {
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Amazon offer validation preview failed" }, { status: 502 });
   }
