@@ -45,8 +45,6 @@ function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: 
   const properties = schemaProperties(itemSchema);
   const offer: Record<string, unknown> = {};
 
-  // Do not force optional selectors into every product type. Amazon's
-  // product-type schema is the source of truth for which selectors are valid.
   if (properties.audience || itemSchema?.required?.includes("audience")) {
     offer.audience = selectorValue(properties.audience, "ALL");
   }
@@ -80,6 +78,38 @@ function buildFulfillmentAvailability(schema: AmazonSchemaProperty | undefined, 
   return [availability];
 }
 
+function identifierTypeForBarcode(schema: AmazonSchemaProperty | undefined, barcode: string) {
+  const typeSchema = schema?.items?.properties?.type;
+  const values = typeSchema?.enum?.filter((value): value is string => typeof value === "string") ?? [];
+  if (!values.length) return null;
+  const digits = barcode.replace(/[^0-9]/g, "");
+  const normalized = values.map((value) => ({ value, key: value.toLowerCase().replace(/[^a-z0-9]/g, "") }));
+  const preferredKeys = digits.length === 13
+    ? ["ean", "gtin13", "gtin"]
+    : digits.length === 12
+      ? ["upc", "gtin12", "gtin"]
+      : digits.length === 14
+        ? ["gtin14", "gtin"]
+        : digits.length === 8
+          ? ["ean8", "gtin8", "ean", "gtin"]
+          : [];
+  return normalized.find((item) => preferredKeys.includes(item.key))?.value ?? null;
+}
+
+function buildExternalProductIdentifier(schema: AmazonSchemaProperty | undefined, barcode: string, marketplaceId: string) {
+  const itemSchema = schema?.items;
+  const properties = schemaProperties(itemSchema);
+  const type = identifierTypeForBarcode(schema, barcode);
+  if (!type && properties.type?.enum?.length) return null;
+
+  const identifier: Record<string, unknown> = {
+    value: barcode,
+  };
+  if (type) identifier.type = type;
+  if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) identifier.marketplace_id = marketplaceId;
+  return [identifier];
+}
+
 export function buildAmazonOfferDraft(input: {
   sku: string;
   productType: string;
@@ -88,6 +118,7 @@ export function buildAmazonOfferDraft(input: {
   condition: AmazonOfferCondition;
   fulfillmentChannelCode: AmazonOfferFulfillment;
   asin?: string | null;
+  barcode?: string | null;
   attributes?: Record<string, unknown>;
   schemaSummary?: AmazonListingSchemaSummary | null;
 }): AmazonOfferDraft {
@@ -106,6 +137,12 @@ export function buildAmazonOfferDraft(input: {
 
   if (input.asin?.trim() && (schema.merchant_suggested_asin || !input.schemaSummary)) {
     attributes.merchant_suggested_asin = marketplaceValue(input.asin.trim().toUpperCase(), marketplaceId);
+  }
+
+  const barcode = input.barcode?.trim();
+  if (barcode && (schema.externally_assigned_product_identifier || !input.schemaSummary)) {
+    const identifier = buildExternalProductIdentifier(schema.externally_assigned_product_identifier, barcode, marketplaceId);
+    if (identifier) attributes.externally_assigned_product_identifier = identifier;
   }
 
   return {
