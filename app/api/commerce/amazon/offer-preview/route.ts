@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
 
-    if (schemaSummary.properties.merchant_suggested_asin && !resolvedAsin) {
+    if (schemaSummary?.properties.merchant_suggested_asin && !resolvedAsin) {
       return NextResponse.json({ success: false, error: "Amazon catalog identity could not be resolved from the variant barcode/ISBN. Verify the barcode/ISBN belongs to the selected Amazon product type before validating the offer.", product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType: draft.productType, requirements: draft.requirements, validationPreview: true, draft, schemaSummary, missingAttributes: missing, identityResolution }, { status: 422 });
     }
 
