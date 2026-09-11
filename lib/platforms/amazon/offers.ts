@@ -30,6 +30,9 @@ export function buildAmazonOfferDraft(input: {
   quantity: number;
   condition: AmazonOfferCondition;
   fulfillmentChannelCode: AmazonOfferFulfillment;
+  asin?: string | null;
+  externalProductId?: string | null;
+  externalProductIdType?: string | null;
 }): AmazonOfferDraft {
   const marketplaceId = getAmazonMarketplaceId();
   if (!input.sku.trim()) throw new Error("SKU is required for the Amazon offer");
@@ -37,24 +40,39 @@ export function buildAmazonOfferDraft(input: {
   if (!Number.isFinite(input.price) || input.price <= 0) throw new Error("Offer price must be greater than zero");
   if (!Number.isInteger(input.quantity) || input.quantity < 0) throw new Error("Offer quantity must be a non-negative integer");
 
+  const attributes: Record<string, unknown> = {
+    condition_type: marketplaceValue(input.condition, marketplaceId),
+    purchasable_offer: [{
+      currency: "INR",
+      audience: "ALL",
+      our_price: [{
+        schedule: [{ value_with_tax: input.price }],
+      }],
+      marketplace_id: marketplaceId,
+    }],
+    fulfillment_availability: [{
+      fulfillment_channel_code: input.fulfillmentChannelCode,
+      quantity: input.quantity,
+    }],
+  };
+
+  if (input.asin?.trim()) {
+    attributes.merchant_suggested_asin = marketplaceValue(input.asin.trim().toUpperCase(), marketplaceId);
+  }
+
+  if (input.externalProductId?.trim()) {
+    attributes.externally_assigned_product_identifier = [{
+      value: input.externalProductId.trim(),
+      type: input.externalProductIdType?.trim() || "EAN",
+      marketplace_id: marketplaceId,
+    }];
+  }
+
   return {
     sku: input.sku.trim(),
     productType: input.productType.trim(),
     requirements: "LISTING_OFFER_ONLY",
-    attributes: {
-      condition_type: marketplaceValue(input.condition, marketplaceId),
-      purchasable_offer: [{
-        currency: "INR",
-        our_price: [{
-          schedule: [{ value_with_tax: input.price }],
-        }],
-        marketplace_id: marketplaceId,
-      }],
-      fulfillment_availability: [{
-        fulfillment_channel_code: input.fulfillmentChannelCode,
-        quantity: input.quantity,
-      }],
-    },
+    attributes,
   };
 }
 
