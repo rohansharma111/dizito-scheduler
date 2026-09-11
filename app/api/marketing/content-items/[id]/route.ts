@@ -45,6 +45,17 @@ export async function PATCH(
   const existing = await getContentItem(userId, contentItemId);
   if (!existing) return jsonError("Content item not found", 404);
 
+  if (body.mediaId !== undefined && body.mediaId !== null) {
+    const mediaId = Number(body.mediaId);
+    if (!Number.isInteger(mediaId) || mediaId <= 0) return jsonError("Invalid mediaId");
+
+    const media = await pool.query(
+      `SELECT id FROM media_library WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+      [mediaId, userId],
+    );
+    if (media.rowCount === 0) return jsonError("Invalid media selection");
+  }
+
   const fields: Record<string, unknown> = {
     content_type: body.contentType,
     format: body.format,
