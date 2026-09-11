@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { channelId?: string; productId?: string; variantId?: string; productType?: string; price?: number; quantity?: number; condition?: string; fulfillmentChannelCode?: string; amazonAttributes?: Record<string, unknown> };
     if (!body.channelId || !body.productId || !body.productType?.trim()) return NextResponse.json({ success: false, error: "channelId, productId, and productType are required" }, { status: 400 });
     const productType = body.productType.trim();
+    const amazonAttributes = body.amazonAttributes ?? {};
     if (!Number.isFinite(body.price) || (body.price ?? 0) <= 0) return NextResponse.json({ success: false, error: "A positive offer price is required" }, { status: 400 });
     if (!Number.isInteger(body.quantity) || (body.quantity ?? -1) < 0) return NextResponse.json({ success: false, error: "Quantity must be a non-negative integer" }, { status: 400 });
     if (!conditions.has(body.condition as AmazonOfferCondition)) return NextResponse.json({ success: false, error: "Unsupported offer condition" }, { status: 400 });
@@ -39,8 +40,8 @@ export async function POST(request: Request) {
 
     const definition = await getAmazonProductTypeDefinition(body.channelId, productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
-    const initialSummary = summarizeAmazonListingSchema(schemaDocument, body.amazonAttributes);
-    const suppliedAsin = typeof body.amazonAttributes?.merchant_suggested_asin === "string" ? body.amazonAttributes.merchant_suggested_asin.trim() : "";
+    const initialSummary = summarizeAmazonListingSchema(schemaDocument, amazonAttributes);
+    const suppliedAsin = typeof amazonAttributes.merchant_suggested_asin === "string" ? amazonAttributes.merchant_suggested_asin.trim() : "";
 
     let resolvedAsin: string | null = null;
     let identityResolution: { identifierType: string; productType: string | null; requestId: string | null; rateLimit: string | null } | null = null;
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       const asinResult = await searchAmazonCatalogByIdentifier(body.channelId, suppliedAsin, "ASIN");
       const match = asinResult.items.find((item) => item.asin.trim().toUpperCase() === suppliedAsin.toUpperCase() && item.productType?.trim().toUpperCase() === productType.toUpperCase());
       if (!match) {
-        return NextResponse.json({ success: false, error: `Amazon ASIN ${suppliedAsin} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, body.amazonAttributes), identityResolution: null }, { status: 422 });
+        return NextResponse.json({ success: false, error: `Amazon ASIN ${suppliedAsin} was not found for product type ${productType}. Verify the ASIN belongs to the selected Amazon product type.`, validationPreview: true, product: { id: product.id }, variant: { id: variant.id, sku: variant.sku }, productType, schemaSummary: initialSummary, missingAttributes: getMissingAmazonRequiredAttributes(initialSummary, amazonAttributes), identityResolution: null }, { status: 422 });
       }
       resolvedAsin = match.asin;
       identityResolution = { identifierType: "ASIN", productType: match.productType ?? null, requestId: asinResult.requestId, rateLimit: asinResult.rateLimit };
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const draft = buildAmazonOfferDraft({ sku: variant.sku, productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: typeof variant.barcode === "string" ? variant.barcode : null, attributes: body.amazonAttributes, schemaSummary: initialSummary });
+    const draft = buildAmazonOfferDraft({ sku: variant.sku, productType, price: Number(body.price), mrp: variant.mrp, quantity: Number(body.quantity), condition: body.condition as AmazonOfferCondition, fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment, asin: resolvedAsin, barcode: typeof variant.barcode === "string" ? variant.barcode : null, attributes: amazonAttributes, schemaSummary: initialSummary });
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
     const missing = getMissingAmazonRequiredAttributes(schemaSummary, draft.attributes);
 
