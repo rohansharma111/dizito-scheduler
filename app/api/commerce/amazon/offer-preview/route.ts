@@ -39,10 +39,6 @@ export async function POST(request: Request) {
 
     const listings = await getProductListings(userId);
     const listing = listings.find((item) => String(item.channel_id) === String(body.channelId) && String(item.product_id) === String(body.productId));
-    const amazonMetadata = listing?.provider_metadata?.amazon;
-    const amazonProduct = amazonMetadata && typeof amazonMetadata === "object" && !Array.isArray(amazonMetadata) ? (amazonMetadata as Record<string, unknown>).product : undefined;
-    const identity = amazonProduct && typeof amazonProduct === "object" && !Array.isArray(amazonProduct) ? (amazonProduct as Record<string, unknown>).identity : undefined;
-    const asin = identity && typeof identity === "object" && !Array.isArray(identity) ? (identity as Record<string, unknown>).asin : undefined;
 
     const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType, { sellerId, requirements: "LISTING_OFFER_ONLY" });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
@@ -56,7 +52,10 @@ export async function POST(request: Request) {
       quantity: Number(body.quantity),
       condition: body.condition as AmazonOfferCondition,
       fulfillmentChannelCode: body.fulfillmentChannelCode as AmazonOfferFulfillment,
-      asin: typeof asin === "string" ? asin : null,
+      // Do not infer an ASIN from prior listing identity. An ASIN is catalog
+      // identity and may belong to a different Amazon product type; only an
+      // explicit user-provided value may become merchant_suggested_asin.
+      asin: null,
       barcode: typeof variant.barcode === "string" ? variant.barcode : null,
       attributes: body.amazonAttributes,
       schemaSummary: initialSummary,
