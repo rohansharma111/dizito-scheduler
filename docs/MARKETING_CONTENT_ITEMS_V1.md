@@ -8,7 +8,7 @@ They allow Marketing 2.0 to plan what should be created before turning that plan
 
 ## Model
 
-`Campaign → Content Item → Post → Post Target → Scheduler → Publisher`
+`Campaign → Content Item → Channel Variant → Post → Post Target → Scheduler → Publisher`
 
 A Content Item is not a replacement for `posts`. A Post remains the execution artifact used by the existing publishing system.
 
@@ -19,7 +19,7 @@ A Content Item can capture:
 - content type and format
 - topic and angle
 - hook
-- body/copy
+- generic body/copy
 - CTA
 - intended channel strategy
 - planned publication time
@@ -27,19 +27,35 @@ A Content Item can capture:
 - canonical Commerce Products associated with the content
 - lineage to one or more execution-level Posts
 
+## Channel variants
+
+A Content Item may have one normalized variant per supported platform:
+
+- Facebook
+- Instagram
+- LinkedIn
+- Pinterest
+- Google Business
+
+Variants hold platform-specific hook, body, CTA and optional media. They are persisted in `marketing_content_item_variants` and remain linked to the parent Content Item.
+
+The generic Content Item remains the strategic/content concept. A variant is the channel-specific execution brief. A selected variant can be converted into a normal Post only for social accounts on the same platform.
+
+This prevents the scheduler from becoming channel-aware: the existing `posts`, `post_targets`, scheduler and publisher layers remain unchanged.
+
 ## AI Creator
 
-AI Creator v1 provides controlled copy generation for a Content Item brief.
+AI Creator v1 provides controlled copy generation for a Content Item brief and can adapt that brief to a selected platform.
 
-`Business Brain + Campaign + Content Brief → AI Creator → Editable Body`
+`Business Brain + Campaign + Content Brief + Platform → AI Creator → Editable Variant Body`
 
-The creator is recommendation-only. It does not publish, schedule, or mutate Commerce data. The generated body remains editable by the user before approval or post conversion.
+The creator is recommendation-only. It does not publish, schedule, or mutate Commerce data. Generated copy remains editable by the user before it is saved or converted.
 
 Endpoint:
 
 - `POST /api/marketing/generate-content`
 
-The creator uses the existing Business Brain context and accepts the campaign/content brief. It is explicitly instructed not to invent product claims, prices, discounts, customer facts, URLs, guarantees, features, or offers.
+The optional `platform` input produces channel-aware copy. The creator uses the existing Business Brain context and is explicitly instructed not to invent product claims, prices, discounts, customer facts, URLs, guarantees, features, or offers.
 
 ## Persistence
 
@@ -47,16 +63,27 @@ The creator uses the existing Business Brain context and accepts the campaign/co
 
 `marketing_content_item_products` references canonical Commerce `products` and does not duplicate product data.
 
+`marketing_content_item_variants` stores one variant per platform for a Content Item.
+
 `marketing_content_item_posts` provides structural lineage from a planned content item to execution-level Posts.
 
 Media references canonical `media_library` through `media_id`.
 
 ## Lifecycle
 
+Content Item:
+
 - `draft` — being prepared
 - `planned` — part of a marketing plan
 - `ready` — sufficiently prepared for conversion into execution
 - `converted` — linked to an execution-level Post
+- `archived` — no longer active
+
+Variant:
+
+- `draft` — being prepared
+- `ready` — available for Post conversion
+- `converted` — used to create a Post
 - `archived` — no longer active
 
 ## API
@@ -66,6 +93,8 @@ Media references canonical `media_library` through `media_id`.
 - `POST /api/marketing/content-items`
 - `GET /api/marketing/content-items/:id`
 - `PATCH /api/marketing/content-items/:id`
+- `GET /api/marketing/content-items/:id/variants`
+- `POST /api/marketing/content-items/:id/variants`
 - `POST /api/marketing/content-items/:id/posts`
 - `POST /api/marketing/content-items/:id/create-post`
 - `POST /api/marketing/generate-content`
@@ -74,13 +103,12 @@ All endpoints require authentication and enforce user ownership.
 
 ## Boundary
 
-Content Items do not yet implement:
+Channel variants do not implement:
 
-- channel-specific content variants
-- AI image generation directly from the Content Item
 - campaign analytics
 - customer actions
 - attribution or revenue measurement
 - automatic publishing
+- AI optimization
 
-Those capabilities will consume this planning layer later.
+Those capabilities will consume this planning and execution lineage later.
