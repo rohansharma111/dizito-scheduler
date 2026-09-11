@@ -24,6 +24,9 @@ export async function POST(request: Request) {
     return Response.json({ weeklyPlan });
   } catch (error) {
     console.error(error);
+    if (error instanceof Error && error.message === "Weekly plan is already approved") {
+      return Response.json({ error: error.message }, { status: 409 });
+    }
     return Response.json({ error: "Failed to approve weekly plan" }, { status: 500 });
   }
 }
