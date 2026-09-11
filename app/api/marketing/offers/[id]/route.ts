@@ -7,12 +7,16 @@ async function getUserId() {
   return session?.user ? (session.user as any).id : null;
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const userId = await getUserId();
     if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const offerId = Number(params.id);
+    const { id } = await params;
+    const offerId = Number(id);
     if (!Number.isInteger(offerId) || offerId <= 0) {
       return Response.json({ error: "Invalid offer id" }, { status: 400 });
     }
