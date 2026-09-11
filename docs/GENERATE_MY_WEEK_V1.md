@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Generate My Week is the first AI-assisted marketing planning workflow for Dizito. V1 establishes persistent weekly-plan storage and retrieval before introducing model-driven strategy generation or UI.
+Generate My Week is Dizito's first AI-assisted marketing planning workflow. It combines Business Brain context with controlled AI strategy generation, user review/editing, and explicit approval persistence.
 
 ## Inputs
 
-The eventual planner should use Business Brain context including:
+The planner uses Business Brain context including:
 
 - business profile
 - active marketing goals
@@ -17,30 +17,62 @@ The eventual planner should use Business Brain context including:
 - connected social channels
 - recent posts and publishing history
 
+## Workflow
+
+`Business Brain → AI Strategy → Review/Edit → AI Creator (optional) → Approve Week → Campaigns + Content Items`
+
+The UI is intentionally review-first. The user can change campaign details, products, offers, content briefs, hooks, CTAs and full post copy before approval.
+
+AI Creator v1 can generate editable publish-ready body copy for an individual Content Item from the Business Brain and campaign brief.
+
 ## Output
 
-A weekly plan is persisted in `marketing_weekly_plans`. It can contain a strategy summary, structured `plan_payload`, and an ordered set of Campaign references.
+An approved weekly plan is persisted in `marketing_weekly_plans` with an ordered set of Campaign references. Campaigns and Content Items are created transactionally.
+
+Generated Content Item bodies are persisted when supplied by the reviewed strategy.
 
 ## Approval boundary
 
-Weekly plans have an explicit `approved` state. Approval is a planning decision; it does not itself publish content. Future approval orchestration may convert approved Content Items into Posts and then hand execution to the existing scheduler.
+Approval is a planning decision. It does not publish or schedule anything.
 
-## Current API
+After approval, Content Items can be converted individually through the existing post creation flow. That flow creates normal `posts` and `post_targets` and hands execution to Dizito's existing scheduler/publishers.
 
+## Current APIs
+
+- `POST /api/marketing/generate-week` — recommendation-only weekly strategy
+- `POST /api/marketing/generate-content` — recommendation-only Content Item copy
 - `GET /api/marketing/weekly-plans`
 - `GET /api/marketing/weekly-plans?weekStart=YYYY-MM-DD`
 - `POST /api/marketing/weekly-plans`
+- `POST /api/marketing/weekly-plans/approve`
+
+## Safety boundaries
+
+AI generation:
+
+- must use supplied Business Brain context
+- must not invent products, offers, prices, discounts, customer facts, URLs, guarantees or unsupported claims
+- does not publish or schedule
+
+Approval:
+
+- is user-controlled
+- is transactionally persisted
+- rejects repeated approval of an already-approved week
+
+Execution:
+
+- remains in the existing Post/Post Target/scheduler/publisher architecture
+- is not replaced by a new marketing scheduler
 
 ## Deliberate non-goals
 
-V1 does not yet:
+V1 does not yet implement:
 
-- call an AI model to generate strategy
-- automatically create campaigns from a model response
-- generate images or copy
-- create Posts
-- schedule or publish anything
-- measure customer actions or revenue
-- optimize based on performance
-
-This keeps planning persistence separate from AI generation and execution.
+- channel-specific content variants
+- automatic approval
+- automatic publishing
+- customer actions
+- attribution or revenue measurement
+- AI optimization/learning loops
+- controlled autopilot
