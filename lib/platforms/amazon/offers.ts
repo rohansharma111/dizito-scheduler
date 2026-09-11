@@ -44,7 +44,6 @@ export function buildAmazonOfferDraft(input: {
     ...(input.attributes ?? {}),
     condition_type: marketplaceValue(input.condition, marketplaceId),
     purchasable_offer: [{
-      audience: "ALL",
       currency: "INR",
       our_price: [{ schedule: [{ value_with_tax: input.price }] }],
       marketplace_id: marketplaceId,
@@ -52,6 +51,7 @@ export function buildAmazonOfferDraft(input: {
     fulfillment_availability: [{
       fulfillment_channel_code: input.fulfillmentChannelCode,
       quantity: input.quantity,
+      marketplace_id: marketplaceId,
     }],
   };
 
