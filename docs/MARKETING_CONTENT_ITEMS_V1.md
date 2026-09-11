@@ -27,6 +27,20 @@ A Content Item can capture:
 - canonical Commerce Products associated with the content
 - lineage to one or more execution-level Posts
 
+## AI Creator
+
+AI Creator v1 provides controlled copy generation for a Content Item brief.
+
+`Business Brain + Campaign + Content Brief → AI Creator → Editable Body`
+
+The creator is recommendation-only. It does not publish, schedule, or mutate Commerce data. The generated body remains editable by the user before approval or post conversion.
+
+Endpoint:
+
+- `POST /api/marketing/generate-content`
+
+The creator uses the existing Business Brain context and accepts the campaign/content brief. It is explicitly instructed not to invent product claims, prices, discounts, customer facts, URLs, guarantees, features, or offers.
+
 ## Persistence
 
 `marketing_content_items` belongs to the Marketing domain and is user-scoped.
@@ -53,6 +67,8 @@ Media references canonical `media_library` through `media_id`.
 - `GET /api/marketing/content-items/:id`
 - `PATCH /api/marketing/content-items/:id`
 - `POST /api/marketing/content-items/:id/posts`
+- `POST /api/marketing/content-items/:id/create-post`
+- `POST /api/marketing/generate-content`
 
 All endpoints require authentication and enforce user ownership.
 
@@ -60,8 +76,8 @@ All endpoints require authentication and enforce user ownership.
 
 Content Items do not yet implement:
 
-- AI content generation
-- Generate My Week
+- channel-specific content variants
+- AI image generation directly from the Content Item
 - campaign analytics
 - customer actions
 - attribution or revenue measurement
