@@ -33,6 +33,14 @@ export async function persistApprovedWeek(
   try {
     await client.query("BEGIN");
 
+    const existing = await client.query(
+      `SELECT id, status FROM marketing_weekly_plans WHERE user_id=$1 AND week_start=$2 FOR UPDATE`,
+      [userId, weekStart],
+    );
+    if (existing.rows[0]?.status === "approved") {
+      throw new Error("Weekly plan is already approved");
+    }
+
     const planResult = await client.query(
       `INSERT INTO marketing_weekly_plans
        (user_id, week_start, week_end, status, strategy_summary, plan_payload)
