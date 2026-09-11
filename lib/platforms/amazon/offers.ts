@@ -40,7 +40,14 @@ function schemaProperties(schema: AmazonSchemaProperty | undefined) {
   return schema?.properties ?? {};
 }
 
-function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: number, marketplaceId: string) {
+function buildPriceSchedule(schema: AmazonSchemaProperty | undefined, value: number) {
+  const scheduleSchema = schema?.items?.properties?.schedule;
+  const valueSchema = scheduleSchema?.items?.properties?.value_with_tax;
+  if (!accepts(valueSchema, value)) return null;
+  return [{ schedule: [{ value_with_tax: value }] }];
+}
+
+function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: number, mrp: number | null | undefined, marketplaceId: string) {
   const itemSchema = schema?.items;
   const properties = schemaProperties(itemSchema);
   const offer: Record<string, unknown> = {};
@@ -55,14 +62,19 @@ function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: 
     offer.currency = selectorValue(properties.currency, "INR");
   }
   if (properties.our_price || itemSchema?.required?.includes("our_price") || !schema) {
-    const priceSchema = properties.our_price;
-    const scheduleSchema = priceSchema?.items?.properties?.schedule;
-    const valueSchema = scheduleSchema?.items?.properties?.value_with_tax;
-    const schedule: Record<string, unknown> = { value_with_tax: price };
-    if (!accepts(valueSchema, price)) {
-      throw new Error("Amazon's purchasable_offer schema does not accept the configured offer price");
+    const schedule = buildPriceSchedule(properties.our_price, price);
+    if (!schedule) throw new Error("Amazon's purchasable_offer schema does not accept the configured offer price");
+    offer.our_price = schedule;
+  }
+
+  // Some Amazon product types require list_price inside purchasable_offer.
+  // Dizito already stores MRP on the variant, so resolve it automatically rather
+  // than asking the seller to enter an Amazon-specific JSON structure.
+  if (properties.list_price || itemSchema?.required?.includes("list_price")) {
+    if (Number.isFinite(mrp) && Number(mrp) > 0) {
+      const schedule = buildPriceSchedule(properties.list_price, Number(mrp));
+      if (schedule) offer.list_price = schedule;
     }
-    offer.our_price = [{ schedule: [schedule] }];
   }
 
   return [offer];
@@ -78,14 +90,26 @@ function buildFulfillmentAvailability(schema: AmazonSchemaProperty | undefined, 
   return [availability];
 }
 
+function gtinChecksumValid(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (![8, 12, 13, 14].includes(digits.length) || digits.length !== value.length) return false;
+  const body = digits.slice(0, -1);
+  const check = Number(digits.at(-1));
+  let sum = 0;
+  for (let i = body.length - 1, position = 0; i >= 0; i--, position++) {
+    sum += Number(body[i]) * (position % 2 === 0 ? 3 : 1);
+  }
+  return (10 - (sum % 10)) % 10 === check;
+}
+
 function identifierTypeForBarcode(schema: AmazonSchemaProperty | undefined, barcode: string) {
   const typeSchema = schema?.items?.properties?.type;
   const values = typeSchema?.enum?.filter((value): value is string => typeof value === "string") ?? [];
   if (!values.length) return null;
-  const digits = barcode.replace(/[^0-9]/g, "");
   const normalized = values.map((value) => ({ value, key: value.toLowerCase().replace(/[^a-z0-9]/g, "") }));
+  const digits = barcode.replace(/[^0-9]/g, "");
   const preferredKeys = digits.length === 13
-    ? ["ean", "gtin13", "gtin"]
+    ? ["ean", "ean13", "gtin13", "gtin"]
     : digits.length === 12
       ? ["upc", "gtin12", "gtin"]
       : digits.length === 14
@@ -97,14 +121,13 @@ function identifierTypeForBarcode(schema: AmazonSchemaProperty | undefined, barc
 }
 
 function buildExternalProductIdentifier(schema: AmazonSchemaProperty | undefined, barcode: string, marketplaceId: string) {
+  if (!gtinChecksumValid(barcode)) return null;
   const itemSchema = schema?.items;
   const properties = schemaProperties(itemSchema);
   const type = identifierTypeForBarcode(schema, barcode);
   if (!type && properties.type?.enum?.length) return null;
 
-  const identifier: Record<string, unknown> = {
-    value: barcode,
-  };
+  const identifier: Record<string, unknown> = { value: barcode };
   if (type) identifier.type = type;
   if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) identifier.marketplace_id = marketplaceId;
   return [identifier];
@@ -114,6 +137,7 @@ export function buildAmazonOfferDraft(input: {
   sku: string;
   productType: string;
   price: number;
+  mrp?: number | null;
   quantity: number;
   condition: AmazonOfferCondition;
   fulfillmentChannelCode: AmazonOfferFulfillment;
@@ -132,7 +156,7 @@ export function buildAmazonOfferDraft(input: {
   const attributes: Record<string, unknown> = { ...(input.attributes ?? {}) };
 
   if (schema.condition_type || !input.schemaSummary) attributes.condition_type = marketplaceValue(input.condition, marketplaceId);
-  if (schema.purchasable_offer || !input.schemaSummary) attributes.purchasable_offer = buildPurchasableOffer(schema.purchasable_offer, input.price, marketplaceId);
+  if (schema.purchasable_offer || !input.schemaSummary) attributes.purchasable_offer = buildPurchasableOffer(schema.purchasable_offer, input.price, input.mrp, marketplaceId);
   if (schema.fulfillment_availability || !input.schemaSummary) attributes.fulfillment_availability = buildFulfillmentAvailability(schema.fulfillment_availability, input.quantity, input.fulfillmentChannelCode, marketplaceId);
 
   if (input.asin?.trim() && (schema.merchant_suggested_asin || !input.schemaSummary)) {
