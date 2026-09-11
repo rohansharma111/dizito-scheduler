@@ -1,5 +1,6 @@
 import { getAmazonMarketplaceId } from "@/lib/platforms/amazon/auth";
 import { amazonSpApiRequest } from "@/lib/platforms/amazon/client";
+import type { AmazonListingSchemaSummary, AmazonSchemaProperty } from "@/lib/platforms/amazon/schema";
 
 export type AmazonOfferCondition = "new_new" | "used_like_new" | "used_very_good" | "used_good" | "used_acceptable";
 export type AmazonOfferFulfillment = "DEFAULT" | "AMAZON_IN";
@@ -22,6 +23,61 @@ function marketplaceValue(value: unknown, marketplaceId: string) {
   return [{ value, marketplace_id: marketplaceId }];
 }
 
+function accepts(schema: AmazonSchemaProperty | undefined, value: unknown) {
+  if (!schema) return true;
+  if (schema.const !== undefined && JSON.stringify(schema.const) !== JSON.stringify(value)) return false;
+  if (Array.isArray(schema.enum) && !schema.enum.some((item) => JSON.stringify(item) === JSON.stringify(value))) return false;
+  return true;
+}
+
+function selectorValue(schema: AmazonSchemaProperty | undefined, preferred: unknown) {
+  if (accepts(schema, preferred)) return preferred;
+  if (schema?.enum?.length) return schema.enum[0];
+  return preferred;
+}
+
+function schemaProperties(schema: AmazonSchemaProperty | undefined) {
+  return schema?.properties ?? {};
+}
+
+function buildPurchasableOffer(schema: AmazonSchemaProperty | undefined, price: number, marketplaceId: string) {
+  const itemSchema = schema?.items;
+  const properties = schemaProperties(itemSchema);
+  const offer: Record<string, unknown> = {};
+
+  if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) {
+    offer.marketplace_id = marketplaceId;
+  }
+  if (properties.currency || itemSchema?.required?.includes("currency")) {
+    offer.currency = selectorValue(properties.currency, "INR");
+  }
+  if (properties.audience || itemSchema?.required?.includes("audience")) {
+    offer.audience = selectorValue(properties.audience, "ALL");
+  }
+  if (properties.our_price || itemSchema?.required?.includes("our_price")) {
+    const priceSchema = properties.our_price;
+    const scheduleSchema = priceSchema?.items?.properties?.schedule;
+    const valueSchema = scheduleSchema?.items?.properties?.value_with_tax;
+    const schedule: Record<string, unknown> = { value_with_tax: price };
+    if (!accepts(valueSchema, price)) {
+      throw new Error("Amazon's purchasable_offer schema does not accept the configured offer price");
+    }
+    offer.our_price = [{ schedule: [schedule] }];
+  }
+
+  return [offer];
+}
+
+function buildFulfillmentAvailability(schema: AmazonSchemaProperty | undefined, quantity: number, channel: AmazonOfferFulfillment, marketplaceId: string) {
+  const itemSchema = schema?.items;
+  const properties = schemaProperties(itemSchema);
+  const availability: Record<string, unknown> = {};
+  if (properties.fulfillment_channel_code || itemSchema?.required?.includes("fulfillment_channel_code")) availability.fulfillment_channel_code = selectorValue(properties.fulfillment_channel_code, channel);
+  if (properties.quantity || itemSchema?.required?.includes("quantity")) availability.quantity = quantity;
+  if (properties.marketplace_id || itemSchema?.required?.includes("marketplace_id")) availability.marketplace_id = marketplaceId;
+  return [availability];
+}
+
 export function buildAmazonOfferDraft(input: {
   sku: string;
   productType: string;
@@ -30,9 +86,8 @@ export function buildAmazonOfferDraft(input: {
   condition: AmazonOfferCondition;
   fulfillmentChannelCode: AmazonOfferFulfillment;
   asin?: string | null;
-  externalProductId?: string | null;
-  externalProductIdType?: string | null;
   attributes?: Record<string, unknown>;
+  schemaSummary?: AmazonListingSchemaSummary | null;
 }): AmazonOfferDraft {
   const marketplaceId = getAmazonMarketplaceId();
   if (!input.sku.trim()) throw new Error("SKU is required for the Amazon offer");
@@ -40,31 +95,15 @@ export function buildAmazonOfferDraft(input: {
   if (!Number.isFinite(input.price) || input.price <= 0) throw new Error("Offer price must be greater than zero");
   if (!Number.isInteger(input.quantity) || input.quantity < 0) throw new Error("Offer quantity must be a non-negative integer");
 
-  const attributes: Record<string, unknown> = {
-    ...(input.attributes ?? {}),
-    condition_type: marketplaceValue(input.condition, marketplaceId),
-    purchasable_offer: [{
-      currency: "INR",
-      our_price: [{ schedule: [{ value_with_tax: input.price }] }],
-      marketplace_id: marketplaceId,
-    }],
-    fulfillment_availability: [{
-      fulfillment_channel_code: input.fulfillmentChannelCode,
-      quantity: input.quantity,
-      marketplace_id: marketplaceId,
-    }],
-  };
+  const schema = input.schemaSummary?.properties ?? {};
+  const attributes: Record<string, unknown> = { ...(input.attributes ?? {}) };
 
-  if (input.asin?.trim()) {
+  if (schema.condition_type || !input.schemaSummary) attributes.condition_type = marketplaceValue(input.condition, marketplaceId);
+  if (schema.purchasable_offer || !input.schemaSummary) attributes.purchasable_offer = buildPurchasableOffer(schema.purchasable_offer, input.price, marketplaceId);
+  if (schema.fulfillment_availability || !input.schemaSummary) attributes.fulfillment_availability = buildFulfillmentAvailability(schema.fulfillment_availability, input.quantity, input.fulfillmentChannelCode, marketplaceId);
+
+  if (input.asin?.trim() && (schema.merchant_suggested_asin || !input.schemaSummary)) {
     attributes.merchant_suggested_asin = marketplaceValue(input.asin.trim().toUpperCase(), marketplaceId);
-  }
-
-  if (input.externalProductId?.trim()) {
-    attributes.externally_assigned_product_identifier = [{
-      value: input.externalProductId.trim(),
-      type: input.externalProductIdType?.trim() || "EAN",
-      marketplace_id: marketplaceId,
-    }];
   }
 
   return {
