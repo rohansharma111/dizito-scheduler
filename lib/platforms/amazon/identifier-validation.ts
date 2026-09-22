@@ -29,16 +29,16 @@ function isbn13ChecksumValid(value: string): boolean {
 export function validateAmazonExternalIdentifier(type: string | undefined, rawValue: string): AmazonIdentifierValidation {
   const normalizedType = (type || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   const value = rawValue.replace(/[\s-]/g, "").toUpperCase();
-  if (!value) return { valid: false, message: "External product identifier is required." };
+  if (!value) return { valid: true };
 
   if (normalizedType === "isbn") {
     const valid = value.length === 10 ? isbn10ChecksumValid(value) : value.length === 13 ? isbn13ChecksumValid(value) : false;
     return valid ? { valid: true } : { valid: false, message: "Enter a valid ISBN-10 or ISBN-13 with a correct check digit." };
   }
-  if (["isbn10"].includes(normalizedType)) {
+  if (normalizedType === "isbn10") {
     return isbn10ChecksumValid(value) ? { valid: true } : { valid: false, message: "Enter a valid ISBN-10, including a correct check digit." };
   }
-  if (["isbn13"].includes(normalizedType)) {
+  if (normalizedType === "isbn13") {
     return isbn13ChecksumValid(value) ? { valid: true } : { valid: false, message: "Enter a valid ISBN-13, including a correct check digit." };
   }
 
