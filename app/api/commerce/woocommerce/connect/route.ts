@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createCommerceChannel } from "@/lib/commerce/channels/service";
+import {
+  createCommerceChannel,
+  updateCommerceChannel,
+} from "@/lib/commerce/channels/service";
 import {
   getWooCommerceSystemStatus,
   normalizeWooCommerceStoreUrl,
@@ -47,11 +50,24 @@ export async function POST(request: Request) {
       },
     });
 
-    await saveWooCommerceCredentials({
-      channelId: channel.id,
-      consumerKey,
-      consumerSecret,
-    });
+    try {
+      await saveWooCommerceCredentials({
+        channelId: channel.id,
+        consumerKey,
+        consumerSecret,
+      });
+    } catch (credentialError) {
+      await updateCommerceChannel(channel.id, Number(session.user.id), {
+        status: "error",
+        metadata: {
+          connection: {
+            status: "credential_persistence_failed",
+            failedAt: new Date().toISOString(),
+          },
+        },
+      });
+      throw credentialError;
+    }
 
     return NextResponse.json({
       success: true,
