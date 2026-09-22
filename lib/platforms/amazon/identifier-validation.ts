@@ -48,9 +48,10 @@ export function validateAmazonExternalIdentifier(type: string | undefined, rawVa
   if (!value) return { valid: false, message: "External product identifier is required." };
 
   if (["isbn", "isbn10"].includes(normalizedType)) {
-    return isbn10ChecksumValid(value)
+    const valid = value.length === 13 ? isbn13ChecksumValid(value) : isbn10ChecksumValid(value);
+    return valid
       ? { valid: true }
-      : { valid: false, message: "Enter a valid ISBN-10, including a correct check digit." };
+      : { valid: false, message: "Enter a valid ISBN with a correct check digit." };
   }
 
   if (["isbn13"].includes(normalizedType)) {
