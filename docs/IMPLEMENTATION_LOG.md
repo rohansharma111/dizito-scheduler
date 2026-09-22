@@ -50,3 +50,14 @@
   - The migration's uniqueness is scoped to `(listing_id, publish_idempotency_key)`; cross-listing key reuse is not yet prevented.
 - **Next action:**
   - Add a durable publish-attempt model and reconciliation workflow, then implement mocked retry and ambiguous-timeout tests.
+
+## 2026-09-22 — WooCommerce idempotency key scope hardening
+
+- **Status:** Implemented; migration execution not yet verified.
+- **Commit:**
+  - `f009952f37bb18cf1d275245b4ae4776d5d6696b` — add migration `008_woocommerce_publish_idempotency_scope.sql`.
+- **Implemented behavior:**
+  - Replaces the listing-scoped uniqueness index from migration 007 with a channel-scoped unique index on `(channel_id, publish_idempotency_key)`.
+  - Prevents reuse of the same idempotency key across multiple listings within one commerce channel while allowing independent channels to use their own key namespace.
+- **Remaining risk:**
+  - Durable publish-attempt records, provider-side idempotency, ambiguous-response reconciliation, and automated retry tests remain pending.
