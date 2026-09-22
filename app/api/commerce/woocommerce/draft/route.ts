@@ -75,7 +75,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Invalid product variants" }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, listing: result.listing, payload: result.payload });
+    return NextResponse.json({
+      success: true,
+      listing: result.listing,
+      payload: "payload" in result ? result.payload : undefined,
+    });
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/draft error:", error);
     return NextResponse.json(
