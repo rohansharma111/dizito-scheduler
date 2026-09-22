@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
   createCommerceChannel,
+  getCommerceChannelByExternalAccount,
   updateCommerceChannel,
 } from "@/lib/commerce/channels/service";
 import {
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    const userId = Number(session.user.id);
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const storeUrlInput = typeof body.storeUrl === "string" ? body.storeUrl : "";
     const consumerKey = typeof body.consumerKey === "string" ? body.consumerKey.trim() : "";
@@ -32,11 +34,30 @@ export async function POST(request: Request) {
     }
 
     const storeUrl = normalizeWooCommerceStoreUrl(storeUrlInput);
-    const config = { storeUrl, consumerKey, consumerSecret };
+    const existingChannel = await getCommerceChannelByExternalAccount(
+      userId,
+      "woocommerce",
+      storeUrl,
+    );
 
+    if (existingChannel) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This WooCommerce store is already connected",
+          channel: {
+            id: existingChannel.id,
+            status: existingChannel.status,
+          },
+        },
+        { status: 409 },
+      );
+    }
+
+    const config = { storeUrl, consumerKey, consumerSecret };
     await getWooCommerceSystemStatus(config);
 
-    const channel = await createCommerceChannel(Number(session.user.id), {
+    const channel = await createCommerceChannel(userId, {
       provider: "woocommerce",
       name,
       externalAccountId: storeUrl,
@@ -57,7 +78,7 @@ export async function POST(request: Request) {
         consumerSecret,
       });
     } catch (credentialError) {
-      await updateCommerceChannel(channel.id, Number(session.user.id), {
+      await updateCommerceChannel(channel.id, userId, {
         status: "error",
         metadata: {
           connection: {
