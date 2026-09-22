@@ -51,7 +51,11 @@ export default function AmazonCatalogMatch({ channelId, productId, onSelectASIN 
       });
       const data = (await response.json()) as { success?: boolean; error?: string };
       if (!response.ok || !data.success) throw new Error(data.error || "Unable to save Amazon listing draft");
-      setStatus(`Selected existing ASIN ${asin}. Amazon draft identity saved.`);
+      setStatus(`Selected existing ASIN ${asin}. Amazon draft identity saved. Refreshing offer context…`);
+      // The offer layer loads persisted identity on mount. Refresh only after the
+      // server confirms the draft was saved so the selected ASIN becomes visible
+      // in the validation form without requiring manual copy/paste.
+      window.location.reload();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save Amazon draft identity");
     }
