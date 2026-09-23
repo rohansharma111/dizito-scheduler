@@ -60,20 +60,51 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
     if (!providerId || (externalId && providerId !== externalId)) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
     if (sku && String(product?.sku ?? "") !== sku) return { error: "PROVIDER_SKU_MISMATCH" as const };
 
-    await pool.query(
-      `UPDATE product_listings
-       SET status = 'active', sync_status = 'synced', external_id = $1,
-           last_synced_at = now(), last_error = NULL, updated_at = now()
-       WHERE id = $2 AND user_id = $3`,
-      [providerId, input.listingId, userId],
-    );
-    await pool.query(
-      `UPDATE commerce_publish_attempts
-       SET status = 'succeeded', response_payload = $1::jsonb, external_id = $2,
-           completed_at = now(), updated_at = now()
-       WHERE id = $3 AND user_id = $4`,
-      [JSON.stringify(product), providerId, attempt.id, userId],
-    );
+    const db = await pool.connect();
+    try {
+      await db.query("BEGIN");
+      const lockedAttempt = await db.query(
+        `SELECT id, status
+         FROM commerce_publish_attempts
+         WHERE id = $1 AND user_id = $2
+         FOR UPDATE`,
+        [attempt.id, userId],
+      );
+      const currentAttempt = lockedAttempt.rows[0];
+      if (!currentAttempt) {
+        await db.query("ROLLBACK");
+        return { error: "PUBLISH_ATTEMPT_NOT_FOUND" as const };
+      }
+      if (currentAttempt.status === "succeeded") {
+        await db.query("ROLLBACK");
+        return { error: "PUBLISH_ATTEMPT_ALREADY_RECONCILED" as const };
+      }
+      if (!["started", "ambiguous"].includes(currentAttempt.status)) {
+        await db.query("ROLLBACK");
+        return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
+      }
+
+      await db.query(
+        `UPDATE product_listings
+         SET status = 'active', sync_status = 'synced', external_id = $1,
+             last_synced_at = now(), last_error = NULL, updated_at = now()
+         WHERE id = $2 AND channel_id = $3 AND user_id = $4`,
+        [providerId, input.listingId, input.channelId, userId],
+      );
+      await db.query(
+        `UPDATE commerce_publish_attempts
+         SET status = 'succeeded', response_payload = $1::jsonb, external_id = $2,
+             completed_at = now(), updated_at = now()
+         WHERE id = $3 AND user_id = $4`,
+        [JSON.stringify(product), providerId, attempt.id, userId],
+      );
+      await db.query("COMMIT");
+    } catch (error) {
+      await db.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      db.release();
+    }
 
     return { product, externalId: providerId, reconciled: true };
   } catch (error) {
