@@ -52,6 +52,10 @@ export async function createWooCommerceProduct(config: WooCommerceClientConfig, 
   return wooCommerceRequest<unknown>(config, "products", { method: "POST", body: JSON.stringify(payload) });
 }
 
+export async function getWooCommerceProduct(config: WooCommerceClientConfig, externalId: string) {
+  return wooCommerceRequest<Record<string, unknown>>(config, `products/${encodeURIComponent(externalId)}`);
+}
+
 export async function assertWooCommerceChannel(channelId: string) {
   const channel = await getCommerceChannelByIdInternal(channelId);
   if (!channel || channel.provider !== "woocommerce") throw new Error("WooCommerce channel not found");
