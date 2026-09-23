@@ -36,6 +36,31 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     return { error: "LISTING_IDEMPOTENCY_KEY_MISMATCH" as const };
   }
 
+  let existingAttempt: { id: string; status: string; external_id: string | null; response_payload: unknown } | null = null;
+  if (idempotencyKey) {
+    const attemptResult = await pool.query(
+      `SELECT id, status, external_id, response_payload
+       FROM commerce_publish_attempts
+       WHERE channel_id = $1 AND listing_id = $2 AND idempotency_key = $3
+       LIMIT 1`,
+      [input.channelId, input.listingId, idempotencyKey],
+    );
+    existingAttempt = attemptResult.rows[0] ?? null;
+    if (existingAttempt?.status === "succeeded" && existingAttempt.external_id) {
+      await pool.query(
+        `UPDATE product_listings
+         SET status = 'active', sync_status = 'synced', external_id = $1,
+             last_synced_at = COALESCE(last_synced_at, now()), last_error = NULL, updated_at = now()
+         WHERE id = $2 AND user_id = $3`,
+        [existingAttempt.external_id, input.listingId, userId],
+      );
+      return { result: existingAttempt.response_payload, externalId: existingAttempt.external_id, idempotentReplay: true };
+    }
+    if (existingAttempt && ["started", "ambiguous"].includes(existingAttempt.status)) {
+      return { error: "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION" as const };
+    }
+  }
+
   await pool.query(
     `UPDATE product_listings
      SET sync_status = 'syncing',
@@ -53,7 +78,8 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
         (user_id, channel_id, listing_id, provider, idempotency_key, status, request_payload)
        VALUES ($1, $2, $3, $4, $5, 'started', $6::jsonb)
        ON CONFLICT (channel_id, listing_id, idempotency_key)
-       DO UPDATE SET status = 'started', request_payload = EXCLUDED.request_payload, updated_at = now()
+       DO UPDATE SET status = 'started', request_payload = EXCLUDED.request_payload,
+                     error_message = NULL, completed_at = NULL, updated_at = now()
        RETURNING id`,
       [userId, input.channelId, input.listingId, channel.provider, idempotencyKey, JSON.stringify(input.payload)],
     );
