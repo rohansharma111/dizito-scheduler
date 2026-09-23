@@ -22,6 +22,7 @@
   - Ambiguous attempts keep the listing in `syncing` and do not automatically mark the channel as errored.
 - **Verification:**
   - Repository writes succeeded through GitHub.
+  - The migration source was inspected and confirms the `ambiguous` status value and unique constraint required by the publish `ON CONFLICT (channel_id, listing_id, idempotency_key)` clause.
   - Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
 
 ## 2026-09-23 — WooCommerce publish reconciliation endpoint
@@ -91,3 +92,16 @@
   - Checks that exactly one publish-attempt row is updated before committing.
   - Forces rollback when either update unexpectedly affects zero or multiple rows.
 - **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+
+## 2026-09-23 — Publish migration and repository verification review
+
+- **Status:** Review completed; no code correction required.
+- **Files reviewed:**
+  - `db/migrations/009_woocommerce_publish_attempts.sql`
+  - `lib/platforms/woocommerce/publish.ts`
+  - `package.json`
+- **Findings:**
+  - Migration 009 includes the `ambiguous` status in its check constraint.
+  - Migration 009 includes the unique constraint `(channel_id, listing_id, idempotency_key)` required by the publish upsert conflict target.
+  - The repository currently defines `build`, `lint`, `start`, `dev`, and `db:migrate` scripts, but no automated test script.
+- **Verification limits:** This was a source inspection through GitHub only. No local command execution, build, lint, type-check, migration execution, database test, or provider test was performed.
