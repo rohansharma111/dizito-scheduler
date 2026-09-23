@@ -58,7 +58,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
 
     const providerId = product && product.id != null ? String(product.id) : null;
     if (!providerId || (externalId && providerId !== externalId)) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
-    if (!externalId && String(product?.sku ?? "") !== sku) return { error: "PROVIDER_SKU_MISMATCH" as const };
+    if (sku && String(product?.sku ?? "") !== sku) return { error: "PROVIDER_SKU_MISMATCH" as const };
 
     await pool.query(
       `UPDATE product_listings
