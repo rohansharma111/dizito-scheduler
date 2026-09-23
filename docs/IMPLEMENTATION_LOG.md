@@ -23,12 +23,6 @@
 - **Verification:**
   - Repository writes succeeded through GitHub.
   - Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
-- **Remaining risk:**
-  - Error-message matching is heuristic and should be replaced or supplemented with provider/client error codes.
-  - The attempt ledger does not yet reconcile an already-created provider product after a timeout.
-  - Retry behavior and attempt-state transitions require mocked tests and a dedicated reconciliation workflow.
-- **Next action:**
-  - Add attempt lookup/reconciliation endpoints or jobs and mocked tests for success, provider failure, ambiguous timeout, and retry.
 
 ## 2026-09-23 — WooCommerce publish reconciliation endpoint
 
@@ -39,18 +33,22 @@
   - `1619bc90aff8cb0c26aae0b697d6ce4da79ecdab` — add authenticated reconciliation API route.
   - `93938e3c3df4921965b644a281ba3f976d8cc483` — require reconcilable attempt states and matching listing idempotency key.
   - `ecff17f154dedcc3340397b03b28f87db9e1ef41` — map reconciliation validation and conflict errors to HTTP responses.
+  - `f68062c696d4686b9102d481685f892344786319` — add exact WooCommerce SKU lookup support.
+  - `3d7e7eab6291f8ac87b0acf7ac87a28ad8c8fdcc` — add guarded SKU-based reconciliation discovery.
+  - `339f2ec655a0807b1973ebc7c4917729b24a3cc4` — expose SKU-based reconciliation through the authenticated API.
 - **Implemented behavior:**
-  - Reconciliation requires the channel, listing, idempotency key, and externally observed WooCommerce product ID.
-  - Empty reconciliation identifiers are rejected at the service boundary as well as the API boundary.
+  - Reconciliation accepts either an externally observed WooCommerce product ID or an exact SKU.
+  - Empty identifiers are rejected at the service boundary as well as the API boundary.
   - The attempt and listing are checked for tenant ownership.
   - Only `started` and `ambiguous` attempts can be reconciled; failed attempts are not treated as uncertain provider outcomes.
   - The listing's persisted idempotency key must match the requested key.
-  - WooCommerce is queried directly for the supplied product ID before local state is marked as successfully published.
+  - SKU discovery requires exactly one WooCommerce match; zero matches, multiple matches, and SKU mismatches are rejected.
   - A verified product updates the listing to `active` / `synced` and marks the attempt `succeeded` with the provider response.
   - Already reconciled attempts are not processed again.
 - **Verification:**
   - Repository writes succeeded through GitHub.
   - Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
 - **Remaining risk:**
-  - The workflow requires an externally known WooCommerce product ID; automatic discovery by SKU or payload fingerprint is not implemented.
+  - SKU lookup relies on the provider's exact `sku` query behavior and needs mocked integration coverage.
   - It does not yet offer a background reconciliation job or admin UI.
+  - Provider/network error classification remains heuristic.
