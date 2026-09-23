@@ -1,18 +1,20 @@
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { pool } from "@/lib/db";
-import { getWooCommerceChannelConfig, getWooCommerceProduct } from "@/lib/platforms/woocommerce/client";
+import { findWooCommerceProductsBySku, getWooCommerceChannelConfig, getWooCommerceProduct } from "@/lib/platforms/woocommerce/client";
 
 export interface ReconcileWooCommercePublishInput {
   channelId: string;
   listingId: string;
   idempotencyKey: string;
-  externalId: string;
+  externalId?: string;
+  sku?: string;
 }
 
 export async function reconcileWooCommercePublish(userId: number, input: ReconcileWooCommercePublishInput) {
   const idempotencyKey = input.idempotencyKey.trim();
-  const externalId = input.externalId.trim();
-  if (!idempotencyKey || !externalId) return { error: "INVALID_RECONCILIATION_INPUT" as const };
+  const externalId = input.externalId?.trim() || "";
+  const sku = input.sku?.trim() || "";
+  if (!idempotencyKey || (!externalId && !sku)) return { error: "RECONCILIATION_IDENTIFIER_REQUIRED" as const };
 
   const channel = await getCommerceChannelById(input.channelId, userId);
   if (!channel) return { error: "CHANNEL_NOT_FOUND" as const };
@@ -29,9 +31,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   const attempt = attemptResult.rows[0];
   if (!attempt) return { error: "PUBLISH_ATTEMPT_NOT_FOUND" as const };
   if (attempt.status === "succeeded") return { error: "PUBLISH_ATTEMPT_ALREADY_RECONCILED" as const };
-  if (!["started", "ambiguous"].includes(attempt.status)) {
-    return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
-  }
+  if (!["started", "ambiguous"].includes(attempt.status)) return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
 
   const listingResult = await pool.query(
     `SELECT id, publish_idempotency_key
@@ -42,15 +42,23 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   );
   const listing = listingResult.rows[0];
   if (!listing) return { error: "LISTING_NOT_FOUND" as const };
-  if (listing.publish_idempotency_key !== idempotencyKey) {
-    return { error: "LISTING_IDEMPOTENCY_KEY_MISMATCH" as const };
-  }
+  if (listing.publish_idempotency_key !== idempotencyKey) return { error: "LISTING_IDEMPOTENCY_KEY_MISMATCH" as const };
 
   try {
     const { config } = await getWooCommerceChannelConfig(input.channelId);
-    const product = await getWooCommerceProduct(config, externalId);
+    let product: Record<string, unknown> | null = null;
+    if (externalId) {
+      product = await getWooCommerceProduct(config, externalId);
+    } else {
+      const matches = await findWooCommerceProductsBySku(config, sku);
+      if (matches.length === 0) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
+      if (matches.length > 1) return { error: "MULTIPLE_PROVIDER_PRODUCTS_FOUND" as const };
+      product = matches[0];
+    }
+
     const providerId = product && product.id != null ? String(product.id) : null;
-    if (!providerId || providerId !== externalId) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
+    if (!providerId || (externalId && providerId !== externalId)) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
+    if (!externalId && String(product?.sku ?? "") !== sku) return { error: "PROVIDER_SKU_MISMATCH" as const };
 
     await pool.query(
       `UPDATE product_listings
