@@ -84,20 +84,23 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
         return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
       }
 
-      await db.query(
+      const listingUpdate = await db.query(
         `UPDATE product_listings
          SET status = 'active', sync_status = 'synced', external_id = $1,
              last_synced_at = now(), last_error = NULL, updated_at = now()
          WHERE id = $2 AND channel_id = $3 AND user_id = $4`,
         [providerId, input.listingId, input.channelId, userId],
       );
-      await db.query(
+      if (listingUpdate.rowCount !== 1) throw new Error("Listing changed or was removed during reconciliation");
+
+      const attemptUpdate = await db.query(
         `UPDATE commerce_publish_attempts
          SET status = 'succeeded', response_payload = $1::jsonb, external_id = $2,
              completed_at = now(), updated_at = now()
          WHERE id = $3 AND user_id = $4`,
         [JSON.stringify(product), providerId, attempt.id, userId],
       );
+      if (attemptUpdate.rowCount !== 1) throw new Error("Publish attempt changed during reconciliation");
       await db.query("COMMIT");
     } catch (error) {
       await db.query("ROLLBACK").catch(() => undefined);
