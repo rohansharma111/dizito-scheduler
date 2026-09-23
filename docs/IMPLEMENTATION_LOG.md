@@ -68,3 +68,15 @@
   - Returns `404` when no matching tenant-owned attempt exists.
 - **Verification:** Repository write succeeded through GitHub. Runtime behavior, database execution, and automated tests remain unverified.
 - **Remaining risk:** The endpoint currently returns operational error text and timestamps intended for an authenticated tenant; UI redaction and pagination for broader attempt history are not yet implemented.
+
+## 2026-09-23 — Transactional WooCommerce reconciliation completion
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commit:** `9a3a2a328d0e44a8875d4c74ed7e281ea7e84301`
+- **File:** `lib/platforms/woocommerce/reconcile.ts`
+- **Implemented behavior:**
+  - Locks the publish attempt row inside a database transaction before applying reconciliation state changes.
+  - Rechecks the attempt status after acquiring the lock to prevent duplicate concurrent reconciliation.
+  - Updates the listing and attempt success state within the same transaction.
+  - Rolls back and releases the database client if either update fails.
+- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
