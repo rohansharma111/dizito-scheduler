@@ -80,3 +80,14 @@
   - Updates the listing and attempt success state within the same transaction.
   - Rolls back and releases the database client if either update fails.
 - **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+
+## 2026-09-23 — Reconciliation transaction row-count guards
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commit:** `7c1bcc144a9592b07f655d6e0479e4dbb7b4ae2f`
+- **File:** `lib/platforms/woocommerce/reconcile.ts`
+- **Implemented behavior:**
+  - Checks that exactly one listing row is updated before continuing.
+  - Checks that exactly one publish-attempt row is updated before committing.
+  - Forces rollback when either update unexpectedly affects zero or multiple rows.
+- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
