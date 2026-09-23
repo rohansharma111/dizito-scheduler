@@ -46,6 +46,20 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     [idempotencyKey, input.listingId, userId],
   );
 
+  let attemptId: string | null = null;
+  if (idempotencyKey) {
+    const attempt = await pool.query(
+      `INSERT INTO commerce_publish_attempts
+        (user_id, channel_id, listing_id, provider, idempotency_key, status, request_payload)
+       VALUES ($1, $2, $3, $4, $5, 'started', $6::jsonb)
+       ON CONFLICT (channel_id, listing_id, idempotency_key)
+       DO UPDATE SET status = 'started', request_payload = EXCLUDED.request_payload, updated_at = now()
+       RETURNING id`,
+      [userId, input.channelId, input.listingId, channel.provider, idempotencyKey, JSON.stringify(input.payload)],
+    );
+    attemptId = String(attempt.rows[0].id);
+  }
+
   try {
     const { config } = await getWooCommerceChannelConfig(input.channelId);
     const result = await createWooCommerceProduct(config, { ...input.payload, status: "publish" });
@@ -63,6 +77,16 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
       [externalId, input.listingId, userId],
     );
 
+    if (attemptId) {
+      await pool.query(
+        `UPDATE commerce_publish_attempts
+         SET status = 'succeeded', response_payload = $1::jsonb, external_id = $2,
+             completed_at = now(), updated_at = now()
+         WHERE id = $3`,
+        [JSON.stringify(result), externalId, attemptId],
+      );
+    }
+
     return { result, externalId };
   } catch (error) {
     const message = error instanceof Error ? error.message : "WooCommerce publish failed";
@@ -71,6 +95,14 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
        WHERE id = $2 AND user_id = $3`,
       [message, input.listingId, userId],
     );
+    if (attemptId) {
+      await pool.query(
+        `UPDATE commerce_publish_attempts
+         SET status = 'failed', error_message = $1, completed_at = now(), updated_at = now()
+         WHERE id = $2`,
+        [message, attemptId],
+      );
+    }
     await markWooCommerceChannelError(input.channelId, userId, message);
     throw error;
   }
