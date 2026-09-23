@@ -14,6 +14,11 @@ export interface PublishWooCommerceProductInput {
   idempotencyKey?: string;
 }
 
+function isAmbiguousPublishError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /timeout|timed out|ETIMEDOUT|ECONNRESET|ECONNREFUSED|socket hang up|network/i.test(message);
+}
+
 export async function publishWooCommerceProduct(userId: number, input: PublishWooCommerceProductInput) {
   if (input.confirmLivePublish !== true) return { error: "LIVE_PUBLISH_CONFIRMATION_REQUIRED" as const };
 
@@ -116,20 +121,21 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     return { result, externalId };
   } catch (error) {
     const message = error instanceof Error ? error.message : "WooCommerce publish failed";
+    const ambiguous = isAmbiguousPublishError(error);
     await pool.query(
-      `UPDATE product_listings SET sync_status = 'error', last_error = $1, updated_at = now()
-       WHERE id = $2 AND user_id = $3`,
-      [message, input.listingId, userId],
+      `UPDATE product_listings SET sync_status = $1, last_error = $2, updated_at = now()
+       WHERE id = $3 AND user_id = $4`,
+      [ambiguous ? "syncing" : "error", message, input.listingId, userId],
     );
     if (attemptId) {
       await pool.query(
         `UPDATE commerce_publish_attempts
-         SET status = 'failed', error_message = $1, completed_at = now(), updated_at = now()
-         WHERE id = $2`,
-        [message, attemptId],
+         SET status = $1, error_message = $2, completed_at = now(), updated_at = now()
+         WHERE id = $3`,
+        [ambiguous ? "ambiguous" : "failed", message, attemptId],
       );
     }
-    await markWooCommerceChannelError(input.channelId, userId, message);
+    if (!ambiguous) await markWooCommerceChannelError(input.channelId, userId, message);
     throw error;
   }
 }
