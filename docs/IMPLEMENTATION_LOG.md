@@ -61,3 +61,28 @@
   - Prevents reuse of the same idempotency key across multiple listings within one commerce channel while allowing independent channels to use their own key namespace.
 - **Remaining risk:**
   - Durable publish-attempt records, provider-side idempotency, ambiguous-response reconciliation, and automated retry tests remain pending.
+
+## 2026-09-23 — WooCommerce publish attempt ledger
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commits:**
+  - `115c5b60f7ddced178e52e395984818f8df9bd22` — create `commerce_publish_attempts` table.
+  - `a18e84a3a803cde4ec5350bfa133e175ab35ccb1` — persist attempt lifecycle around provider publish.
+- **Files:**
+  - `db/migrations/009_woocommerce_publish_attempts.sql`
+  - `lib/platforms/woocommerce/publish.ts`
+- **Implemented behavior:**
+  - When an idempotency key is supplied, a durable attempt row is created before the provider request.
+  - The attempt stores tenant, channel, listing, provider, idempotency key, and request payload.
+  - Successful provider responses persist `succeeded`, response payload, external ID, and completion time.
+  - Provider or response-validation failures persist `failed`, error text, and completion time.
+  - The existing listing and channel error-state updates remain active.
+- **Verification:**
+  - Repository writes succeeded through GitHub.
+  - Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
+- **Remaining risk:**
+  - The current failure path records failures but does not yet classify network uncertainty as `ambiguous`.
+  - The attempt ledger does not yet reconcile an already-created provider product after a timeout.
+  - Retry behavior and attempt-state reads require mocked tests and a dedicated reconciliation workflow.
+- **Next action:**
+  - Add attempt lookup/reconciliation endpoints or jobs and mocked tests for success, provider failure, ambiguous timeout, and retry.
