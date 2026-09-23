@@ -54,3 +54,17 @@
   - SKU lookup relies on the provider's exact `sku` query behavior and needs mocked integration coverage.
   - It does not yet offer a background reconciliation job or admin UI.
   - Provider/network error classification remains heuristic.
+
+## 2026-09-23 — WooCommerce reconciliation status lookup
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commit:** `baf498edc83d7abc65c3f4b4139500108bacc2d8`
+- **File:** `app/api/commerce/woocommerce/reconcile/route.ts`
+- **Implemented behavior:**
+  - Adds an authenticated `GET` endpoint alongside reconciliation `POST`.
+  - Requires `channelId`, `listingId`, and `idempotencyKey` query parameters.
+  - Returns attempt state, provider, external ID, error details, timestamps, and linked listing sync state.
+  - Applies tenant ownership checks to both the attempt and listing in one query.
+  - Returns `404` when no matching tenant-owned attempt exists.
+- **Verification:** Repository write succeeded through GitHub. Runtime behavior, database execution, and automated tests remain unverified.
+- **Remaining risk:** The endpoint currently returns operational error text and timestamps intended for an authenticated tenant; UI redaction and pagination for broader attempt history are not yet implemented.
