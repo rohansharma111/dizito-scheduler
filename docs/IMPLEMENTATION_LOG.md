@@ -30,7 +30,7 @@
 - **Commits:**
   - `ef2b8e800165f4a9a9b1aedad101e0584b581e84` — add WooCommerce product lookup support.
   - `7bf51076797b8c20b192b9c11a8cf18d1aa7c6c4` — add tenant-scoped reconciliation service.
-  - `1619bc90aff8cb0c26aae0a3a...` — add authenticated reconciliation API route.
+  - `1619bc90aff8cb0c26aae0b697d6ce4da79ecdab` — add authenticated reconciliation API route.
   - `93938e3c3df4921965b644a281ba3f976d8cc483` — require reconcilable attempt states and matching listing idempotency key.
   - `ecff17f154dedcc3340397b03b28f87db9e1ef41` — map reconciliation validation and conflict errors to HTTP responses.
   - `f68062c696d4686b9102d481685f892344786319` — add exact WooCommerce SKU lookup support.
