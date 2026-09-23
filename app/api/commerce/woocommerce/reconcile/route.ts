@@ -24,8 +24,9 @@ export async function POST(request: Request) {
     externalId,
   });
   if ("error" in result) {
-    const status = result.error === "CHANNEL_NOT_FOUND" || result.error === "LISTING_NOT_FOUND" || result.error === "PUBLISH_ATTEMPT_NOT_FOUND" ? 404
-      : result.error === "PUBLISH_ATTEMPT_ALREADY_RECONCILED" ? 409
+    const status = result.error === "INVALID_RECONCILIATION_INPUT" ? 400
+      : result.error === "CHANNEL_NOT_FOUND" || result.error === "LISTING_NOT_FOUND" || result.error === "PUBLISH_ATTEMPT_NOT_FOUND" ? 404
+      : result.error === "PUBLISH_ATTEMPT_ALREADY_RECONCILED" || result.error === "PUBLISH_ATTEMPT_NOT_RECONCILABLE" || result.error === "LISTING_IDEMPOTENCY_KEY_MISMATCH" ? 409
       : result.error === "PROVIDER_PRODUCT_NOT_FOUND" ? 422
       : 502;
     return NextResponse.json(result, { status });
