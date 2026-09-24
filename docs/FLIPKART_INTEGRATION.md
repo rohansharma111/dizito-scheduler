@@ -6,7 +6,7 @@
 - Status: Implemented; runtime verification pending
 - Branch: `feature/commerce-flipkart`
 - Live publishing: Not enabled
-- Database migration: Not added
+- Database migration: No new Flipkart-specific migration required
 
 ## Verified provider capabilities
 
@@ -30,7 +30,7 @@ The implementation in this phase intentionally exposes only read-only listing op
   - Read-only listing lookup.
   - Read-only listing details lookup.
   - Listing search.
-  - Channel provider/status checks.
+  - Tenant-scoped channel provider/status checks.
   - Channel error metadata helper.
 - `lib/platforms/flipkart/credentials.ts`
   - Encrypted credential payload storage using the existing provider-neutral credential table.
@@ -40,11 +40,11 @@ The implementation in this phase intentionally exposes only read-only listing op
 ## Credential and security notes
 
 - Credentials are stored in `commerce_channel_credentials.access_token_encrypted`.
+- The existing provider-neutral table is created by `db/migrations/002_shopify_channel_credentials.sql`; its schema is not Shopify-exclusive.
 - The credential payload is never returned by the client helper.
-- The encryption key is read from `FLIPKART_TOKEN_ENCRYPTION_KEY`, with the existing `SHOPIFY_TOKEN_ENCRYPTION_KEY` accepted as a compatibility fallback.
-- Production deployments should configure a dedicated Flipkart encryption key and should not rely on the fallback.
-- Channel provider and active-status checks are required before requests are made.
-- Tenant ownership must be enforced by the caller/service that resolves the channel for the authenticated user; the client itself does not accept arbitrary tenant identity as trusted input.
+- The encryption key is read only from `FLIPKART_TOKEN_ENCRYPTION_KEY`.
+- Channel provider, active-status, and authenticated-user ownership checks are required before requests are made through `getFlipkartChannelConfig`.
+- Credential helper functions require server-side callers to perform channel ownership authorization before use.
 
 ## Not yet implemented
 
