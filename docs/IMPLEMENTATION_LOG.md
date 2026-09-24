@@ -105,3 +105,14 @@
   - Migration 009 includes the unique constraint `(channel_id, listing_id, idempotency_key)` required by the publish upsert conflict target.
   - The repository currently defines `build`, `lint`, `start`, `dev`, and `db:migrate` scripts, but no automated test script.
 - **Verification limits:** This was a source inspection through GitHub only. No local command execution, build, lint, type-check, migration execution, database test, or provider test was performed.
+
+## 2026-09-24 — Require idempotency key for live WooCommerce publishing
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commit:** `87fe8a6a1804f5ceb50fff803246d3649fdffe54`
+- **File:** `app/api/commerce/woocommerce/publish/route.ts`
+- **Implemented behavior:**
+  - The authenticated live-publish endpoint now requires a non-empty `idempotencyKey`.
+  - Requests without an idempotency key receive HTTP `400` before the publish service is called.
+  - This ensures API-triggered live publishes enter the durable attempt-ledger flow instead of bypassing attempt persistence.
+- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
