@@ -4,7 +4,7 @@
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Branch:** `feature/commerce-meesho`  
 **Last reviewed:** 2026-09-24  
-**Status:** Discovery / verification in progress
+**Status:** Discovery / verification in progress; implementation blocked on authoritative provider access
 
 ## Purpose
 
@@ -33,6 +33,8 @@ Meesho-specific requirements must remain inside the provider adapter, mapping, v
 - Existing project instructions require encrypted credentials, tenant ownership checks, provider-neutral canonical data, focused commits, and explicit verification before declaring production readiness.
 - The repository uses raw SQL migrations through the existing migration runner.
 - The current project roadmap identifies Meesho as a future provider expansion; this work is being developed on an isolated branch.
+- The repository's package scripts include `build`, `lint`, `start`, `dev`, and `db:migrate`; no automated test script is declared in `package.json`.
+- WooCommerce now has reusable publish-attempt and reconciliation patterns for durable state and network uncertainty, but these patterns have not been verified for Meesho and should only be reused through provider-neutral abstractions after contract verification.
 
 ## Meesho capability matrix
 
@@ -107,6 +109,8 @@ Implement live publishing only after explicit approval and controlled verificati
 | Date | Check | Result |
 |---|---|---|
 | 2026-09-24 | Repository instructions and project status reviewed | Completed through GitHub source inspection |
+| 2026-09-24 | Provider directory audit | Amazon, Shopify, and WooCommerce directories confirmed; WooCommerce contains client, credentials, draft, mapper, publish, and reconciliation modules |
+| 2026-09-24 | Package script audit | `build`, `lint`, `start`, `dev`, and `db:migrate` present; no automated test script declared |
 | 2026-09-24 | Meesho public/seller API discovery | Partner-gated API lead identified; official Dizito access not verified |
 | 2026-09-24 | Meesho live authentication or provider request | Not performed |
 | 2026-09-24 | Meesho publishing | Not performed |
@@ -114,8 +118,9 @@ Implement live publishing only after explicit approval and controlled verificati
 
 ## Next actions
 
-1. Review the exact existing provider credential and channel implementations.
-2. Review listing lifecycle and publish-attempt abstractions for reusable provider-neutral behavior.
-3. Obtain or request authoritative Meesho API onboarding documentation/access.
-4. Update this document with exact verified endpoint and authentication details once available.
-5. Only then create the first Meesho implementation commit.
+1. Obtain or request authoritative Meesho API onboarding documentation/access.
+2. Inspect the exact shared channel, credential, listing, and publish-attempt schema before proposing any migration.
+3. Define a provider-neutral adapter contract only after Meesho's supported operations and authentication are verified.
+4. Add local validation/draft preparation before any live provider write.
+5. Implement controlled publishing, idempotency, and reconciliation only after explicit approval and test access.
+6. Update this document with exact verified endpoint and authentication details once available.
