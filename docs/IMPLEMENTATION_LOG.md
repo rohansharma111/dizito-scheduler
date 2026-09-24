@@ -1,5 +1,17 @@
 # Dizito Implementation Log
 
+## 2026-09-24 — Enforce idempotency at WooCommerce publish service boundary
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commit:** `73482b8307f853a5000b224ea360f1e4aba70b81`
+- **File:** `lib/platforms/woocommerce/publish.ts`
+- **Implemented behavior:**
+  - Requires a non-empty, trimmed idempotency key inside the publish service itself.
+  - Returns `IDEMPOTENCY_KEY_REQUIRED` before channel or database work when the key is missing.
+  - Removes the optional no-key path from the attempt-ledger flow so non-HTTP callers cannot accidentally bypass durable publish-attempt tracking.
+  - Simplifies the publish path because every accepted request now creates or reuses a durable attempt row.
+- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+
 ## 2026-09-23 — WooCommerce publish attempt ledger and uncertainty handling
 
 - **Status:** Implemented; not yet verified in a running environment.
