@@ -38,6 +38,8 @@ The implementation in this phase intentionally exposes only read-only listing op
   - Encrypted credential payload storage using the existing provider-neutral credential table.
   - Access-token retrieval for server-side use.
   - Optional refresh-token and application credential fields stored inside the encrypted payload.
+  - Access-token and refresh-token expiry persistence using the existing timestamp columns.
+  - Date validation before expiry metadata is written.
 
 ## Credential and security notes
 
@@ -47,11 +49,13 @@ The implementation in this phase intentionally exposes only read-only listing op
 - The encryption key is read only from `FLIPKART_TOKEN_ENCRYPTION_KEY`.
 - Channel provider, active-status, and authenticated-user ownership checks are required before requests are made through `getFlipkartChannelConfig`.
 - Credential helper functions require server-side callers to perform channel ownership authorization before use.
+- Expiry timestamps are metadata only at this stage; refresh rotation and expiry-aware request enforcement are not yet implemented.
 
 ## Not yet implemented
 
 - Flipkart OAuth authorization routes and callback handling.
 - Access-token refresh and expiry-aware rotation.
+- Expiry-aware request enforcement.
 - Provider-specific product/category/attribute mapping.
 - Draft listing persistence and validation workflow.
 - Live listing creation or update.
