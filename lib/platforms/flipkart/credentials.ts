@@ -6,7 +6,7 @@ const IV_BYTES = 12;
 const KEY_BYTES = 32;
 
 function getEncryptionKey() {
-  const raw = process.env.FLIPKART_TOKEN_ENCRYPTION_KEY ?? process.env.SHOPIFY_TOKEN_ENCRYPTION_KEY;
+  const raw = process.env.FLIPKART_TOKEN_ENCRYPTION_KEY;
   if (!raw) {
     throw new Error("FLIPKART_TOKEN_ENCRYPTION_KEY is not configured");
   }
