@@ -14,6 +14,7 @@ const BASE_URLS: Record<FlipkartEnvironment, string> = {
 };
 
 const REQUEST_TIMEOUT_MS = 15_000;
+const EXPIRY_SKEW_MS = 60_000;
 
 function normalizeEnvironment(value: unknown): FlipkartEnvironment {
   return value === "sandbox" ? "sandbox" : "production";
@@ -21,6 +22,17 @@ function normalizeEnvironment(value: unknown): FlipkartEnvironment {
 
 function getApiUrl(environment: FlipkartEnvironment, path: string) {
   return `${BASE_URLS[environment]}/${path.replace(/^\//, "")}`;
+}
+
+function assertAccessTokenUsable(expiresAt: Date | string | null | undefined) {
+  if (!expiresAt) return;
+  const expiry = new Date(expiresAt).getTime();
+  if (!Number.isFinite(expiry)) {
+    throw new Error("Flipkart access token expiry is invalid");
+  }
+  if (expiry <= Date.now() + EXPIRY_SKEW_MS) {
+    throw new Error("Flipkart access token is expired or nearing expiry; refresh is required");
+  }
 }
 
 export async function flipkartRequest<T>(
@@ -75,10 +87,7 @@ export async function flipkartRequest<T>(
   }
 }
 
-export async function getFlipkartListings(
-  config: FlipkartClientConfig,
-  skuIds: string[],
-) {
+export async function getFlipkartListings(config: FlipkartClientConfig, skuIds: string[]) {
   const normalizedSkuIds = skuIds.map((sku) => sku.trim()).filter(Boolean);
   if (normalizedSkuIds.length === 0 || normalizedSkuIds.length > 10) {
     throw new Error("Flipkart listing lookup requires between 1 and 10 SKU IDs");
@@ -90,10 +99,7 @@ export async function getFlipkartListings(
   );
 }
 
-export async function getFlipkartListingDetails(
-  config: FlipkartClientConfig,
-  skuIds: string[],
-) {
+export async function getFlipkartListingDetails(config: FlipkartClientConfig, skuIds: string[]) {
   const normalizedSkuIds = skuIds.map((sku) => sku.trim()).filter(Boolean);
   if (normalizedSkuIds.length === 0 || normalizedSkuIds.length > 10) {
     throw new Error("Flipkart listing details requires between 1 and 10 SKU IDs");
@@ -112,10 +118,7 @@ export async function searchFlipkartListings(
   const filters = input.listingStatus ? { listing_status: input.listingStatus } : {};
   return flipkartRequest<unknown>(config, "listings/v3/search", {
     method: "POST",
-    body: JSON.stringify({
-      filters,
-      page_id: input.pageId ?? null,
-    }),
+    body: JSON.stringify({ filters, page_id: input.pageId ?? null }),
   });
 }
 
@@ -137,6 +140,8 @@ export async function getFlipkartChannelConfig(channelId: string, userId: number
     throw new Error("Flipkart credentials not found");
   }
 
+  assertAccessTokenUsable(credentials.accessTokenExpiresAt);
+
   const metadata = (channel.metadata ?? {}) as Record<string, unknown>;
   const environment = normalizeEnvironment(metadata.flipkartEnvironment);
 
@@ -149,19 +154,11 @@ export async function getFlipkartChannelConfig(channelId: string, userId: number
   };
 }
 
-export async function markFlipkartChannelError(
-  channelId: string,
-  userId: number,
-  message: string,
-) {
+export async function markFlipkartChannelError(channelId: string, userId: number, message: string) {
   await updateCommerceChannel(channelId, userId, {
     status: "error",
     metadata: {
-      flipkartHealth: {
-        status: "error",
-        message,
-        updatedAt: new Date().toISOString(),
-      },
+      flipkartHealth: { status: "error", message, updatedAt: new Date().toISOString() },
     },
   }).catch((error) => {
     console.error("Unable to mark Flipkart channel as error:", error);
