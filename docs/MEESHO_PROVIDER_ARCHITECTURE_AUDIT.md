@@ -27,6 +27,17 @@ This audit identifies reusable patterns for a future Meesho adapter without impl
 4. The provider adapter must not assume that Meesho supports the same publication model as WooCommerce. In particular, local draft preparation, provider-side draft state, catalog approval, and publication may be distinct or unavailable operations.
 5. No Meesho-specific fields should be added to canonical product or variant tables solely based on seller-panel screens or third-party API descriptions.
 
+## Credential isolation review
+
+The shared credential retrieval implementation currently looks up encrypted credentials by `channel_id` without independently checking the owning `user_id` before decryption. This does not prove an exploitable path by itself, because callers may enforce ownership elsewhere, but it creates a security-sensitive boundary that must be made explicit before introducing Meesho credential flows.
+
+Required follow-up:
+
+- Verify channel ownership before credential retrieval and decryption.
+- Prefer a credential API that requires both `channelId` and `userId`, or accepts an already tenant-validated channel record.
+- Add negative tests for cross-tenant channel, credential, listing, and reconciliation access.
+- Treat shared credential hardening as a separate cross-provider security change; do not silently alter it as part of Meesho-specific implementation.
+
 ## Not yet verified
 
 - Meesho authentication and credential fields.
@@ -44,4 +55,5 @@ The first Meesho code change should be limited to verified contract elements, li
 ## Verification record
 
 - Repository inspection performed through GitHub source access.
+- Credential retrieval boundary reviewed on the shared channel credential service.
 - No local build, lint, type-check, migration execution, automated test suite, Meesho authentication, or provider write was run in this environment.
