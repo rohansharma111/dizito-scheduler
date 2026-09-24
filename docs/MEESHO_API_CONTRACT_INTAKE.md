@@ -8,9 +8,23 @@ This document is the implementation gate for the Meesho commerce adapter. It pre
 
 No Meesho live client, connection route, publish route, or provider-specific database migration should be implemented until an authoritative Meesho API contract and authorized test access are available.
 
+## Current discovery update — partner-mediated integration lead
+
+A third-party Fynd Konnect documentation page describes a Meesho integration onboarding flow involving:
+
+- A seller/location-specific external identifier.
+- An onboarding request sent to a Meesho integration contact.
+- Meesho-issued refresh tokens associated with selling locations.
+- Seller activation events delivered through a partner webhook.
+- Partner-side validation of the seller and location identifiers.
+
+This is recorded as a **third-party integration lead only**. It does not establish that Dizito can use the same flow, that the same credentials or endpoints are available to Dizito, or that the process is a general public Meesho API. No implementation should be based on this description without direct authorization and documentation from Meesho or an authorized integration partner.
+
+Reference lead: Fynd Konnect Meesho registration and API credential onboarding documentation, reviewed on 2026-09-24.
+
 ## Required evidence before provider code
 
-- [ ] Official Meesho partner/supplier API onboarding confirmation.
+- [ ] Official Meesho partner/supplier API onboarding confirmation for Dizito or its authorized integration partner.
 - [ ] Authentication mechanism, credential names, signing rules, and token lifetime.
 - [ ] Official base URL(s) and environment separation, including sandbox or test mode.
 - [ ] Catalog/listing create and update endpoints, including whether draft state exists.
@@ -21,6 +35,8 @@ No Meesho live client, connection route, publish route, or provider-specific dat
 - [ ] Rate limits, pagination, timeout expectations, and error taxonomy.
 - [ ] Webhook/event support or an approved polling/reconciliation strategy.
 - [ ] Data retention and permitted storage requirements for seller/customer data.
+- [ ] Confirmation whether Dizito integrates directly with Meesho or through a partner-mediated channel such as a supported connector.
+- [ ] Confirmation of whether credentials are tenant-level, seller-level, location-level, or partner-account-level.
 
 ## Implementation gates
 
@@ -47,14 +63,16 @@ If a provider request can end in an unknown state, the adapter must persist an a
 - Never log access tokens, secrets, signed headers, or complete customer/order payloads.
 - Validate external identifiers and bound response sizes before persisting provider data.
 - Keep Meesho credentials separate from unrelated provider credentials and use explicit credential types.
+- Do not treat a refresh token or location identifier described by a third-party connector as portable to Dizito without explicit authorization.
 
 ## Verification record
 
 - Repository inspection: completed through GitHub source access.
 - Official Meesho API contract: not yet verified.
+- Partner-mediated integration lead: identified, but not authorized for Dizito.
 - Authorized Meesho test credentials: not available in this workstream.
 - Local build, lint, type-check, automated tests, migrations, and provider calls: not run in this workstream.
 
 ## Next actionable input
 
-Obtain official Meesho API/partner documentation or authorized test onboarding material. Once supplied, update this document with endpoint-level evidence and implement only the verified contract slice.
+Obtain official Meesho API/partner documentation or authorized test onboarding material. Specifically clarify whether Dizito should pursue direct Meesho integration or an authorized partner-mediated connector. Once supplied, update this document with endpoint-level evidence and implement only the verified contract slice.
