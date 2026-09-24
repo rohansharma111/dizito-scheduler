@@ -105,3 +105,23 @@
   - Migration 009 includes the unique constraint `(channel_id, listing_id, idempotency_key)` required by the publish upsert conflict target.
   - The repository currently defines `build`, `lint`, `start`, `dev`, and `db:migrate` scripts, but no automated test script.
 - **Verification limits:** This was a source inspection through GitHub only. No local command execution, build, lint, type-check, migration execution, database test, or provider test was performed.
+
+## 2026-09-24 — WooCommerce credential isolation caller review
+
+- **Status:** Source review completed; no additional code correction identified.
+- **Files reviewed:**
+  - `lib/platforms/woocommerce/credentials.ts`
+  - `lib/platforms/woocommerce/client.ts`
+  - `lib/platforms/woocommerce/publish.ts`
+  - `lib/platforms/woocommerce/reconcile.ts`
+- **Findings:**
+  - Credential persistence now scopes the channel write through `commerce_channels.user_id` before the upsert can occur.
+  - Credential retrieval joins `commerce_channel_credentials` to `commerce_channels` and requires the channel owner ID before decrypting the stored value.
+  - The shared WooCommerce client derives the owner ID from the validated internal channel record before requesting credentials.
+  - Both publish and reconciliation obtain provider configuration through the shared client, so they inherit the owner-scoped credential lookup.
+  - Publish and reconciliation independently retain tenant-scoped channel, listing, and publish-attempt checks.
+- **Remaining concerns:**
+  - This review was source inspection only; TypeScript compilation and runtime behavior remain unverified.
+  - The encryption environment variable retains the existing name `SHOPIFY_TOKEN_ENCRYPTION_KEY`; renaming it would be a separate migration/configuration task and was not changed in this review.
+  - Cross-tenant negative tests should be added when the repository test harness is established.
+- **Verification limits:** No local command execution, build, lint, type-check, automated tests, migration execution, database test, or provider test was performed.
