@@ -29,7 +29,9 @@ export async function POST(request: Request) {
     if ("error" in result) {
       const status = result.error === "CHANNEL_NOT_FOUND" || result.error === "LISTING_NOT_FOUND"
         ? 404
-        : result.error === "LISTING_ALREADY_PUBLISHED" || result.error === "LISTING_IDEMPOTENCY_KEY_MISMATCH"
+        : result.error === "LISTING_ALREADY_PUBLISHED"
+          || result.error === "LISTING_IDEMPOTENCY_KEY_MISMATCH"
+          || result.error === "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION"
           ? 409
           : 400;
       return NextResponse.json({ success: false, error: result.error }, { status });
