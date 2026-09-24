@@ -65,6 +65,11 @@ export async function flipkartRequest<T>(
     }
 
     return body as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`Flipkart request timed out after ${REQUEST_TIMEOUT_MS}ms`);
+    }
+    throw error;
   } finally {
     if (timeout) clearTimeout(timeout);
   }
