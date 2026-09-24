@@ -6,6 +6,7 @@ export type FlipkartEnvironment = "sandbox" | "production";
 export interface FlipkartClientConfig {
   accessToken: string;
   environment: FlipkartEnvironment;
+  accessTokenExpiresAt?: Date | string | null;
 }
 
 const BASE_URLS: Record<FlipkartEnvironment, string> = {
@@ -43,6 +44,8 @@ export async function flipkartRequest<T>(
   if (!config.accessToken.trim()) {
     throw new Error("Flipkart access token is required");
   }
+
+  assertAccessTokenUsable(config.accessTokenExpiresAt);
 
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${config.accessToken}`);
@@ -149,6 +152,7 @@ export async function getFlipkartChannelConfig(channelId: string, userId: number
     channel,
     config: {
       accessToken: credentials.accessToken,
+      accessTokenExpiresAt: credentials.accessTokenExpiresAt,
       environment,
     } satisfies FlipkartClientConfig,
   };
