@@ -116,3 +116,15 @@
   - Requests without an idempotency key receive HTTP `400` before the publish service is called.
   - This ensures API-triggered live publishes enter the durable attempt-ledger flow instead of bypassing attempt persistence.
 - **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+
+## 2026-09-24 — CI quality workflow
+
+- **Status:** Workflow committed; execution pending.
+- **Commit:** `6301f8d9fbd6c10a8557cc20d0307d08929be949`
+- **File:** `.github/workflows/quality.yml`
+- **Implemented behavior:**
+  - Runs on pushes and pull requests targeting `main`.
+  - Uses Node.js 20 and npm dependency caching.
+  - Runs `npm ci`, `npm run lint`, and `npm run build`.
+- **Verification:** The workflow file was committed successfully through GitHub. No workflow run was available yet for the commit, so lint/build success is not claimed.
+- **Remaining limitation:** The repository still has no automated test script; mocked integration coverage remains a separate follow-up.
