@@ -29,6 +29,7 @@ The implementation in this phase intentionally exposes only read-only listing op
   - Bearer-token request wrapper.
   - Bounded 15-second timeout when the caller does not provide an abort signal.
   - Explicit timeout error handling without exposing response bodies or credentials.
+  - Expiry-aware channel configuration checks with a 60-second safety skew.
   - Read-only listing lookup.
   - Read-only listing details lookup.
   - Listing search.
@@ -49,13 +50,12 @@ The implementation in this phase intentionally exposes only read-only listing op
 - The encryption key is read only from `FLIPKART_TOKEN_ENCRYPTION_KEY`.
 - Channel provider, active-status, and authenticated-user ownership checks are required before requests are made through `getFlipkartChannelConfig`.
 - Credential helper functions require server-side callers to perform channel ownership authorization before use.
-- Expiry timestamps are metadata only at this stage; refresh rotation and expiry-aware request enforcement are not yet implemented.
+- Requests through `getFlipkartChannelConfig` reject expired or soon-to-expire access tokens; automatic refresh is still pending.
 
 ## Not yet implemented
 
 - Flipkart OAuth authorization routes and callback handling.
 - Access-token refresh and expiry-aware rotation.
-- Expiry-aware request enforcement.
 - Provider-specific product/category/attribute mapping.
 - Draft listing persistence and validation workflow.
 - Live listing creation or update.
