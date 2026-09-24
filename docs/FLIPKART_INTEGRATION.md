@@ -27,6 +27,8 @@ The implementation in this phase intentionally exposes only read-only listing op
 - `lib/platforms/flipkart/client.ts`
   - Environment-aware production/sandbox base URL selection.
   - Bearer-token request wrapper.
+  - Bounded 15-second timeout when the caller does not provide an abort signal.
+  - Explicit timeout error handling without exposing response bodies or credentials.
   - Read-only listing lookup.
   - Read-only listing details lookup.
   - Listing search.
@@ -59,4 +61,4 @@ The implementation in this phase intentionally exposes only read-only listing op
 
 ## Verification limitations
 
-The files were committed through GitHub repository operations. Local build, lint, type-check, automated tests, migration execution, and live/sandbox provider requests have not been run in this session.
+The files were committed through GitHub repository operations. Local build, lint, type-check, automated tests, migration execution, and live/sandbox provider requests have not been run in this session. The validation workflow is configured in `.github/workflows/validate.yml`, but no successful status check is available for the latest implementation commit through the current GitHub integration.
