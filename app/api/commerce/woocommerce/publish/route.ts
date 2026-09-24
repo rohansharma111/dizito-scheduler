@@ -11,11 +11,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const channelId = typeof body.channelId === "string" ? body.channelId.trim() : "";
     const listingId = typeof body.listingId === "string" ? body.listingId.trim() : "";
-    const idempotencyKey = typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : undefined;
+    const idempotencyKey = typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "";
     const payload = body.payload;
 
-    if (!channelId || !listingId || !payload || typeof payload !== "object" || Array.isArray(payload)) {
-      return NextResponse.json({ success: false, error: "channelId, listingId, and an object payload are required" }, { status: 400 });
+    if (!channelId || !listingId || !idempotencyKey || !payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json({ success: false, error: "channelId, listingId, idempotencyKey, and an object payload are required" }, { status: 400 });
     }
 
     const result = await publishWooCommerceProduct(Number(session.user.id), {
