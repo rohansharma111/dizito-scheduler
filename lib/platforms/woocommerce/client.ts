@@ -67,9 +67,10 @@ export async function assertWooCommerceChannel(channelId: string) {
   return channel;
 }
 
-export async function getWooCommerceChannelConfig(channelId: string) {
+export async function getWooCommerceChannelConfig(channelId: string, userId: number) {
   const channel = await assertWooCommerceChannel(channelId);
-  const credentials = await getWooCommerceCredentials(channelId);
+  if (Number(channel.user_id) !== userId) throw new Error("WooCommerce channel not found");
+  const credentials = await getWooCommerceCredentials(channelId, userId);
   if (!credentials) throw new Error("WooCommerce credentials not found");
   const metadata = (channel.metadata ?? {}) as Record<string, unknown>;
   const storeUrl = typeof metadata.storeUrl === "string" ? metadata.storeUrl : String(channel.external_account_id ?? "");
