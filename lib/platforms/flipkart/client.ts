@@ -13,6 +13,8 @@ const BASE_URLS: Record<FlipkartEnvironment, string> = {
   production: "https://api.flipkart.net/sellers",
 };
 
+const REQUEST_TIMEOUT_MS = 15_000;
+
 function normalizeEnvironment(value: unknown): FlipkartEnvironment {
   return value === "sandbox" ? "sandbox" : "production";
 }
@@ -37,25 +39,35 @@ export async function flipkartRequest<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(getApiUrl(config.environment, path), {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  const controller = init.signal ? null : new AbortController();
+  const timeout = controller
+    ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+    : null;
 
-  const text = await response.text();
-  let body: unknown = null;
   try {
-    body = text ? JSON.parse(text) : null;
-  } catch {
-    body = text;
-  }
+    const response = await fetch(getApiUrl(config.environment, path), {
+      ...init,
+      headers,
+      signal: init.signal ?? controller?.signal,
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    throw new Error(`Flipkart request failed with status ${response.status}`);
-  }
+    const text = await response.text();
+    let body: unknown = null;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = text;
+    }
 
-  return body as T;
+    if (!response.ok) {
+      throw new Error(`Flipkart request failed with status ${response.status}`);
+    }
+
+    return body as T;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 export async function getFlipkartListings(
