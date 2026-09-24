@@ -1,4 +1,4 @@
-import { getCommerceChannelByIdInternal, updateCommerceChannel } from "@/lib/commerce/channels/service";
+import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getFlipkartCredentials } from "@/lib/platforms/flipkart/credentials";
 
 export type FlipkartEnvironment = "sandbox" | "production";
@@ -102,8 +102,8 @@ export async function searchFlipkartListings(
   });
 }
 
-export async function assertFlipkartChannel(channelId: string) {
-  const channel = await getCommerceChannelByIdInternal(channelId);
+export async function assertFlipkartChannel(channelId: string, userId: number) {
+  const channel = await getCommerceChannelById(channelId, userId);
   if (!channel || channel.provider !== "flipkart") {
     throw new Error("Flipkart channel not found");
   }
@@ -113,8 +113,8 @@ export async function assertFlipkartChannel(channelId: string) {
   return channel;
 }
 
-export async function getFlipkartChannelConfig(channelId: string) {
-  const channel = await assertFlipkartChannel(channelId);
+export async function getFlipkartChannelConfig(channelId: string, userId: number) {
+  const channel = await assertFlipkartChannel(channelId, userId);
   const credentials = await getFlipkartCredentials(channelId);
   if (!credentials) {
     throw new Error("Flipkart credentials not found");
