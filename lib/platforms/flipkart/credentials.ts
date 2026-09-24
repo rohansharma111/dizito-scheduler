@@ -45,6 +45,17 @@ export interface FlipkartCredentials {
   refreshToken?: string;
   appId?: string;
   appSecret?: string;
+  accessTokenExpiresAt?: Date | string | null;
+  refreshTokenExpiresAt?: Date | string | null;
+}
+
+function normalizeExpiry(value?: Date | string | null) {
+  if (value === undefined || value === null) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Flipkart credential expiry must be a valid date");
+  }
+  return date.toISOString();
 }
 
 export async function saveFlipkartCredentials(input: FlipkartCredentials) {
@@ -57,22 +68,39 @@ export async function saveFlipkartCredentials(input: FlipkartCredentials) {
 
   await pool.query(
     `
-      INSERT INTO commerce_channel_credentials (channel_id, access_token_encrypted, scopes)
-      VALUES ($1, $2, $3)
+      INSERT INTO commerce_channel_credentials (
+        channel_id,
+        access_token_encrypted,
+        access_token_expires_at,
+        refresh_token_expires_at,
+        scopes
+      )
+      VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (channel_id)
       DO UPDATE SET
         access_token_encrypted = EXCLUDED.access_token_encrypted,
+        access_token_expires_at = EXCLUDED.access_token_expires_at,
+        refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
         scopes = EXCLUDED.scopes,
         updated_at = now()
     `,
-    [input.channelId, encrypt(payload), "flipkart:Seller_Api"],
+    [
+      input.channelId,
+      encrypt(payload),
+      normalizeExpiry(input.accessTokenExpiresAt),
+      normalizeExpiry(input.refreshTokenExpiresAt),
+      "flipkart:Seller_Api",
+    ],
   );
 }
 
 export async function getFlipkartCredentials(channelId: string) {
   const result = await pool.query(
     `
-      SELECT access_token_encrypted
+      SELECT
+        access_token_encrypted,
+        access_token_expires_at,
+        refresh_token_expires_at
       FROM commerce_channel_credentials
       WHERE channel_id = $1
       LIMIT 1
@@ -97,5 +125,7 @@ export async function getFlipkartCredentials(channelId: string) {
     refreshToken: parsed.refreshToken,
     appId: parsed.appId,
     appSecret: parsed.appSecret,
+    accessTokenExpiresAt: row.access_token_expires_at,
+    refreshTokenExpiresAt: row.refresh_token_expires_at,
   };
 }
