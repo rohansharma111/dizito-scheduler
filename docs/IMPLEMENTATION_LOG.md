@@ -1,5 +1,17 @@
 # Dizito Implementation Log
 
+## 2026-10-05 — WooCommerce reconciliation API error hardening
+
+- **Status:** Implemented; not yet verified in a running environment.
+- **Commit:** `677ec48d9da7e3bdc5554c9401d2c8576f4a8ef8`
+- **File:** `app/api/commerce/woocommerce/reconcile/route.ts`
+- **Implemented behavior:**
+  - Wraps reconciliation status database access in guarded error handling.
+  - Returns `503 RECONCILIATION_STATUS_UNAVAILABLE` instead of exposing an unexpected database exception through the status endpoint.
+  - Wraps reconciliation POST execution and returns a stable `RECONCILIATION_FAILED` response for unexpected provider/service exceptions.
+  - Preserves existing validation and explicit domain-error HTTP mappings.
+- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+
 ## 2026-09-24 — Enforce idempotency at WooCommerce publish service boundary
 
 - **Status:** Implemented; not yet verified in a running environment.
@@ -32,10 +44,7 @@
   - A previously succeeded attempt can restore listing state and return the stored response without issuing another provider create request.
   - Attempts in `started` or `ambiguous` state are blocked with `PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION` rather than being blindly replayed.
   - Ambiguous attempts keep the listing in `syncing` and do not automatically mark the channel as errored.
-- **Verification:**
-  - Repository writes succeeded through GitHub.
-  - The migration source was inspected and confirms the `ambiguous` status value and unique constraint required by the publish `ON CONFLICT (channel_id, listing_id, idempotency_key)` clause.
-  - Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
+- **Verification:** Repository writes succeeded through GitHub. The migration source was inspected and confirms the `ambiguous` status value and unique constraint required by the publish `ON CONFLICT (channel_id, listing_id, idempotency_key)` clause. Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
 
 ## 2026-09-23 — WooCommerce publish reconciliation endpoint
 
@@ -50,48 +59,24 @@
   - `3d7e7eab6291f8ac87b0acf7ac87a28ad8c8fdcc` — add guarded SKU-based reconciliation discovery.
   - `339f2ec655a0807b1973ebc7c4917729b24a3cc4` — expose SKU-based reconciliation through the authenticated API.
   - `b916ec2787a61f0a5786499e717406bf7bda6374` — verify SKU even when reconciliation starts from an external product ID.
-- **Implemented behavior:**
-  - Reconciliation accepts either an externally observed WooCommerce product ID or an exact SKU.
-  - Empty identifiers are rejected at the service boundary as well as the API boundary.
-  - The attempt and listing are checked for tenant ownership.
-  - Only `started` and `ambiguous` attempts can be reconciled; failed attempts are not treated as uncertain provider outcomes.
-  - The listing's persisted idempotency key must match the requested key.
-  - SKU discovery requires exactly one WooCommerce match; zero matches, multiple matches, and SKU mismatches are rejected.
-  - When both external ID and SKU are supplied, the returned product's SKU is also verified.
-  - A verified product updates the listing to `active` / `synced` and marks the attempt `succeeded` with the provider response.
-  - Already reconciled attempts are not processed again.
-- **Verification:**
-  - Repository writes succeeded through GitHub.
-  - Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
-- **Remaining risk:**
-  - SKU lookup relies on the provider's exact `sku` query behavior and needs mocked integration coverage.
-  - It does not yet offer a background reconciliation job or admin UI.
-  - Provider/network error classification remains heuristic.
+- **Implemented behavior:** Reconciliation accepts either an externally observed WooCommerce product ID or an exact SKU. Empty identifiers are rejected at the service boundary as well as the API boundary. The attempt and listing are checked for tenant ownership. Only `started` and `ambiguous` attempts can be reconciled; failed attempts are not treated as uncertain provider outcomes. The listing's persisted idempotency key must match the requested key. SKU discovery requires exactly one WooCommerce match; zero matches, multiple matches, and SKU mismatches are rejected. When both external ID and SKU are supplied, the returned product's SKU is also verified. A verified product updates the listing to `active` / `synced` and marks the attempt `succeeded` with the provider response. Already reconciled attempts are not processed again.
+- **Verification:** Repository writes succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
+- **Remaining risk:** SKU lookup relies on the provider's exact `sku` query behavior and needs mocked integration coverage. It does not yet offer a background reconciliation job or admin UI. Provider/network error classification remains heuristic.
 
 ## 2026-09-23 — WooCommerce reconciliation status lookup
 
 - **Status:** Implemented; not yet verified in a running environment.
 - **Commit:** `baf498edc83d7abc65c3f4b4139500108bacc2d8`
 - **File:** `app/api/commerce/woocommerce/reconcile/route.ts`
-- **Implemented behavior:**
-  - Adds an authenticated `GET` endpoint alongside reconciliation `POST`.
-  - Requires `channelId`, `listingId`, and `idempotencyKey` query parameters.
-  - Returns attempt state, provider, external ID, error details, timestamps, and linked listing sync state.
-  - Applies tenant ownership checks to both the attempt and listing in one query.
-  - Returns `404` when no matching tenant-owned attempt exists.
+- **Implemented behavior:** Adds an authenticated `GET` endpoint alongside reconciliation `POST`. Requires `channelId`, `listingId`, and `idempotencyKey` query parameters. Returns attempt state, provider, external ID, error details, timestamps, and linked listing sync state. Applies tenant ownership checks to both the attempt and listing in one query. Returns `404` when no matching tenant-owned attempt exists.
 - **Verification:** Repository write succeeded through GitHub. Runtime behavior, database execution, and automated tests remain unverified.
-- **Remaining risk:** The endpoint currently returns operational error text and timestamps intended for an authenticated tenant; UI redaction and pagination for broader attempt history are not yet implemented.
 
 ## 2026-09-23 — Transactional WooCommerce reconciliation completion
 
 - **Status:** Implemented; not yet verified in a running environment.
 - **Commit:** `9a3a2a328d0e44a8875d4c74ed7e281ea7e84301`
 - **File:** `lib/platforms/woocommerce/reconcile.ts`
-- **Implemented behavior:**
-  - Locks the publish attempt row inside a database transaction before applying reconciliation state changes.
-  - Rechecks the attempt status after acquiring the lock to prevent duplicate concurrent reconciliation.
-  - Updates the listing and attempt success state within the same transaction.
-  - Rolls back and releases the database client if either update fails.
+- **Implemented behavior:** Locks the publish attempt row inside a database transaction before applying reconciliation state changes, rechecks status after locking, updates listing and attempt success state in one transaction, and rolls back/releases the client on failure.
 - **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
 
 ## 2026-09-23 — Reconciliation transaction row-count guards
@@ -99,34 +84,22 @@
 - **Status:** Implemented; not yet verified in a running environment.
 - **Commit:** `7c1bcc144a9592b07f655d6e0479e4dbb7b4ae2f`
 - **File:** `lib/platforms/woocommerce/reconcile.ts`
-- **Implemented behavior:**
-  - Checks that exactly one listing row is updated before continuing.
-  - Checks that exactly one publish-attempt row is updated before committing.
-  - Forces rollback when either update unexpectedly affects zero or multiple rows.
+- **Implemented behavior:** Checks that exactly one listing row and one publish-attempt row are updated; unexpected counts force rollback.
 - **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
 
 ## 2026-09-23 — Publish migration and repository verification review
 
 - **Status:** Review completed; no code correction required.
-- **Files reviewed:**
-  - `db/migrations/009_woocommerce_publish_attempts.sql`
-  - `lib/platforms/woocommerce/publish.ts`
-  - `package.json`
-- **Findings:**
-  - Migration 009 includes the `ambiguous` status in its check constraint.
-  - Migration 009 includes the unique constraint `(channel_id, listing_id, idempotency_key)` required by the publish upsert conflict target.
-  - The repository currently defines `build`, `lint`, `start`, `dev`, and `db:migrate` scripts, but no automated test script.
-- **Verification limits:** This was a source inspection through GitHub only. No local command execution, build, lint, type-check, migration execution, database test, or provider test was performed.
+- **Files reviewed:** `db/migrations/009_woocommerce_publish_attempts.sql`, `lib/platforms/woocommerce/publish.ts`, `package.json`.
+- **Findings:** Migration 009 includes `ambiguous` and the unique constraint `(channel_id, listing_id, idempotency_key)`. The repository defines `build`, `lint`, `start`, `dev`, and `db:migrate`, but no automated test script.
+- **Verification limits:** Source inspection only; no local command execution, build, lint, type-check, migration execution, database test, or provider test was performed.
 
 ## 2026-09-24 — Require idempotency key for live WooCommerce publishing
 
 - **Status:** Implemented; not yet verified in a running environment.
 - **Commit:** `87fe8a6a1804f5ceb50fff803246d3649fdffe54`
 - **File:** `app/api/commerce/woocommerce/publish/route.ts`
-- **Implemented behavior:**
-  - The authenticated live-publish endpoint now requires a non-empty `idempotencyKey`.
-  - Requests without an idempotency key receive HTTP `400` before the publish service is called.
-  - This ensures API-triggered live publishes enter the durable attempt-ledger flow instead of bypassing attempt persistence.
+- **Implemented behavior:** Authenticated live-publish requests without a non-empty `idempotencyKey` return HTTP `400` before the publish service is called.
 - **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
 
 ## 2026-09-24 — CI quality workflow
@@ -134,9 +107,6 @@
 - **Status:** Workflow committed; execution pending.
 - **Commit:** `6301f8d9fbd6c10a8557cc20d0307d08929be949`
 - **File:** `.github/workflows/quality.yml`
-- **Implemented behavior:**
-  - Runs on pushes and pull requests targeting `main`.
-  - Uses Node.js 20 and npm dependency caching.
-  - Runs `npm ci`, `npm run lint`, and `npm run build`.
-- **Verification:** The workflow file was committed successfully through GitHub. No workflow run was available yet for the commit, so lint/build success is not claimed.
+- **Implemented behavior:** Runs on pushes and pull requests targeting `main`, uses Node.js 20/npm caching, and runs `npm ci`, `npm run lint`, and `npm run build`.
+- **Verification:** Workflow file committed successfully; no workflow run was available for the commit, so lint/build success is not claimed.
 - **Remaining limitation:** The repository still has no automated test script; mocked integration coverage remains a separate follow-up.
