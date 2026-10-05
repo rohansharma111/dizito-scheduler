@@ -35,8 +35,9 @@ export async function POST(request: Request) {
   );
   if (media.rowCount === 0) return errorResponse("Media not found", 404);
 
-  const productIds = [...new Set((body.productIds ?? []).map(Number))];
-  if (productIds.some((id) => !Number.isInteger(id) || id <= 0)) return errorResponse("Invalid productIds");
+  const rawProductIds: unknown[] = Array.isArray(body.productIds) ? body.productIds : [];
+  const productIds: number[] = [...new Set(rawProductIds.map((value) => Number(value)))];
+  if (productIds.some((id: number) => !Number.isInteger(id) || id <= 0)) return errorResponse("Invalid productIds");
   if (productIds.length) {
     const products = await pool.query(`SELECT id FROM products WHERE id = ANY($1) AND user_id = $2`, [productIds, userId]);
     if (products.rowCount !== productIds.length) return errorResponse("Invalid product selection");
