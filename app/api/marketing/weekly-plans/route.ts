@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { pool } from "@/lib/db";
 import { getWeeklyPlan, listWeeklyPlans } from "@/lib/marketing/weeklyPlans";
+import { pool } from "@/lib/db";
 
 function jsonError(error: string, status = 400) {
   return Response.json({ error }, { status });
@@ -46,8 +46,9 @@ export async function POST(request: Request) {
     const plan = result.rows[0];
 
     if (body.campaignIds !== undefined) {
-      const campaignIds = [...new Set((body.campaignIds ?? []).map(Number))];
-      if (campaignIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+      const rawCampaignIds: unknown[] = Array.isArray(body.campaignIds) ? body.campaignIds : [];
+      const campaignIds: number[] = [...new Set(rawCampaignIds.map((value) => Number(value)))];
+      if (campaignIds.some((id: number) => !Number.isInteger(id) || id <= 0)) {
         await client.query("ROLLBACK");
         return jsonError("Invalid campaignIds");
       }
