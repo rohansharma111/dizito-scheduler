@@ -34,11 +34,10 @@ export async function POST(request: Request) {
   if (!Number.isInteger(campaignId) || campaignId <= 0) return jsonError("Invalid campaignId");
   if (!body.contentType || typeof body.contentType !== "string") return jsonError("contentType is required");
 
-  const productIds = Array.isArray(body.productIds)
-    ? [...new Set(body.productIds.map(Number))]
-    : [];
+  const rawProductIds: unknown[] = Array.isArray(body.productIds) ? body.productIds : [];
+  const productIds: number[] = [...new Set(rawProductIds.map((value) => Number(value)))];
 
-  if (productIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+  if (productIds.some((id: number) => !Number.isInteger(id) || id <= 0)) {
     return jsonError("Invalid productIds");
   }
 
