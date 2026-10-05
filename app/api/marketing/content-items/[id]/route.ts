@@ -104,8 +104,9 @@ export async function PATCH(
     }
 
     if (body.productIds !== undefined) {
-      const productIds = [...new Set((body.productIds ?? []).map(Number))];
-      if (productIds.some((productId) => !Number.isInteger(productId) || productId <= 0)) {
+      const rawProductIds: unknown[] = Array.isArray(body.productIds) ? body.productIds : [];
+      const productIds: number[] = [...new Set(rawProductIds.map((value) => Number(value)))];
+      if (productIds.some((productId: number) => !Number.isInteger(productId) || productId <= 0)) {
         await client.query("ROLLBACK");
         return jsonError("Invalid productIds");
       }
