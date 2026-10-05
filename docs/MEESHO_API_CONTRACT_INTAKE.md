@@ -8,6 +8,16 @@ This document is the implementation gate for the Meesho commerce adapter. It pre
 
 No Meesho live client, connection route, publish route, or provider-specific database migration should be implemented until an authoritative Meesho API contract and authorized test access are available.
 
+## Current discovery update — official-source verification (2026-10-05)
+
+A fresh review of Meesho's public official web properties did not locate a public seller API specification, developer portal, authenticated seller API reference, sandbox documentation, or endpoint-level catalog/listing contract suitable for implementation.
+
+Meesho's official public seller material confirms that suppliers use a seller/supplier panel to list products and manage orders and inventory. That establishes seller-facing product and operational workflows, but it does **not** establish a programmatic API contract for Dizito.
+
+Meesho's current public corporate material also describes technology integrations with logistics partners. This demonstrates that Meesho supports partner technology integrations in some contexts, but it does **not** establish that a public seller-commerce API is available to Dizito or that logistics-partner interfaces can be reused for catalog/listing operations.
+
+Therefore the integration remains contract-gated. No endpoint, authentication scheme, token type, payload, identifier, webhook, or publication capability is being inferred from these public materials.
+
 ## Current discovery update — partner-mediated integration lead
 
 A third-party Fynd Konnect documentation page describes a Meesho integration onboarding flow involving:
@@ -68,7 +78,8 @@ If a provider request can end in an unknown state, the adapter must persist an a
 ## Verification record
 
 - Repository inspection: completed through GitHub source access.
-- Official Meesho API contract: not yet verified.
+- Official Meesho public-source review: completed 2026-10-05; no public seller API contract sufficient for implementation was located.
+- Official seller workflow: confirmed at the public seller-facing level only; not treated as an API contract.
 - Partner-mediated integration lead: identified, but not authorized for Dizito.
 - Authorized Meesho test credentials: not available in this workstream.
 - Local build, lint, type-check, automated tests, migrations, and provider calls: not run in this workstream.
