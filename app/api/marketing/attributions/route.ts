@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const campaignId = rawCampaignId == null ? undefined : positiveId(rawCampaignId);
   if (campaignId === undefined) return errorResponse("Invalid campaignId");
   try {
-    return Response.json({ attributions: await listMarketingAttributions(userId, campaignId) });
+    return Response.json({ attributions: await listMarketingAttributions(userId, campaignId ?? undefined) });
   } catch (error) {
     console.error(error);
     return errorResponse("Failed to load attributions", 500);
