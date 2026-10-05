@@ -9,6 +9,15 @@ import { incrementPostsCreated } from "@/lib/usage/incrementPostsCreated";
 function jsonError(error: string, status = 400) { return Response.json({ error }, { status }); }
 function buildPostCopy(item: any) { return [item.hook, item.body, item.topic ? `Topic: ${item.topic}` : null, item.cta].filter(Boolean).join("\n\n").trim(); }
 
+type ContentVariant = {
+  id: number;
+  platform: string;
+  hook: string | null;
+  body: string | null;
+  cta: string | null;
+  media_id: number | null;
+};
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return jsonError("Unauthorized", 401);
@@ -40,15 +49,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (accounts.rows.length !== selectedAccounts.length) { await client.query("ROLLBACK"); return jsonError("Invalid account selection"); }
 
     let copyItem = item;
-    let variant = null;
+    let variant: ContentVariant | null = null;
     if (variantId !== null) {
-      const variantResult = await client.query(
+      const variantResult = await client.query<ContentVariant>(
         `SELECT id, platform, hook, body, cta, media_id FROM marketing_content_item_variants
          WHERE id = $1 AND content_item_id = $2 AND user_id = $3 AND status IN ('draft','ready') FOR SHARE`,
         [variantId, contentItemId, userId]);
-      variant = variantResult.rows[0];
+      variant = variantResult.rows[0] ?? null;
       if (!variant) { await client.query("ROLLBACK"); return jsonError("Content variant not found", 404); }
-      if (accounts.rows.some((account: any) => account.platform !== variant.platform)) {
+      if (accounts.rows.some((account: any) => account.platform !== variant!.platform)) {
         await client.query("ROLLBACK");
         return jsonError("A channel-specific variant can only be published to accounts on the same platform");
       }
