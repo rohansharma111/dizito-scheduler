@@ -199,7 +199,7 @@ export async function markCommercePublishOperationSucceeded(
 
     if (externalIdConflict.rows[0]) {
       await client.query("ROLLBACK");
-      throw new Error("LISTING_EXTERNAL_ID_MISMATCH");
+      throw new Error("LISTING_EXTERNAL_ID_CONFLICT");
     }
 
     const updatedOperationResult = await client.query(`
