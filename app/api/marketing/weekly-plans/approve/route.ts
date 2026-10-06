@@ -6,8 +6,24 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(body.weekStart) || !/^\d{4}-\d{2}-\d{2}$/.test(body.weekEnd)) {
+  const userId = Number((session.user as any).id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return Response.json({ error: "Invalid user" }, { status: 401 });
+  }
+
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const isValidDateOnly = (value: unknown) => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  };
+  if (!isValidDateOnly(body.weekStart) || !isValidDateOnly(body.weekEnd) || body.weekStart > body.weekEnd) {
     return Response.json({ error: "Invalid week dates" }, { status: 400 });
   }
   if (!body.strategy || typeof body.strategy.strategySummary !== "string" || !Array.isArray(body.strategy.campaigns)) {
@@ -54,7 +70,7 @@ export async function POST(request: Request) {
 
   try {
     const weeklyPlan = await persistApprovedWeek(
-      Number((session.user as any).id),
+      userId,
       body.weekStart,
       body.weekEnd,
       body.strategy,
@@ -64,6 +80,19 @@ export async function POST(request: Request) {
     console.error(error);
     if (error instanceof Error && error.message === "Weekly plan is already approved") {
       return Response.json({ error: error.message }, { status: 409 });
+    }
+    if (error instanceof Error && [
+      "Invalid user",
+      "Invalid week range",
+      "Invalid strategy",
+      "Invalid offer reference",
+      "Invalid product reference",
+      "Invalid media reference",
+      "Invalid supporting experiment reference",
+      "Unable to scope weekly experiment to approved campaign",
+      "Unable to scope weekly experiment to approved content item",
+    ].includes(error.message)) {
+      return Response.json({ error: error.message }, { status: 400 });
     }
     return Response.json({ error: "Failed to approve weekly plan" }, { status: 500 });
   }
