@@ -209,10 +209,9 @@ export async function upsertProductListingDraft(
       );
 
       const current = existingVariant.rows[0];
-      const externalId =
-        variant.externalId !== undefined
-          ? variant.externalId
-          : current?.external_id ?? null;
+      const externalId = normalizeExternalId(
+        variant.externalId !== undefined ? variant.externalId : current?.external_id,
+      );
 
       if (externalId) {
         const conflict = await client.query(
