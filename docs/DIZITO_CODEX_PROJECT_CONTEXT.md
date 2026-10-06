@@ -418,3 +418,14 @@ At the latest observed main head (`2ceb7fbeaf6828e4b18e936e753d65a48cffdc1e`):
 - overall production readiness is still pending runtime/provider verification.
 
 This is the current baseline. Future work must start from this state, not from the older September Amazon-only handover.
+
+
+## 19. Latest safety-test additions
+
+The latest repository state also includes:
+- `ee24383a78bfda2c3e03f65d60eb84849b65bb42`: publish success requires a non-empty provider-confirmed external ID and persists it explicitly.
+- `c0e6b8ed4c760208adb6b537480e31549e8d8b34`: lifecycle tests enforce legal publish state transitions.
+- `f3bda849a663a5dde97ec076051cf6daa0e3e2f2`: deterministic Flipkart client transport-contract tests.
+- `bb01a2701ebf5df54d67386e2f8a371216b2d74c`: provider verification seam documented.
+
+These tests are deterministic repository tests. They do not replace live/sandbox provider verification.
