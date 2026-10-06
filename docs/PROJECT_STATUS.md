@@ -481,3 +481,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Before issuing a new create, the publisher searches for that exact marker. One match is adopted and routed through the existing Shopify sync/reconciliation flow; multiple matches fail closed rather than guessing.
 - Variant recovery handles the specific partial-create case where Shopify has exactly one existing variant and Dizito has no saved variant mappings, binding that sole provider variant to the canonical first variant instead of creating a duplicate.
 - Existing orphan products created before this marker was introduced are intentionally not heuristically claimed.
+
+
+### Amazon SP-API tenant propagation — 2026-10-06
+- Completed tenant-context propagation through Amazon catalog search, catalog identity resolution, listing validation preview, offer validation preview, product-type definition retrieval, and connection verification.
+- Amazon credential persistence in the OAuth callback now explicitly binds the credential write to the authenticated user.
+- All Commerce-facing Amazon SP-API helper paths now require and forward authenticated `userId`; provider access no longer relies on channel ID alone.
+- Runtime tests remain intentionally deferred until the implementation pass is complete.
