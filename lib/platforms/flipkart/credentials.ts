@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { type PoolClient } from "pg";
 import { pool } from "@/lib/db";
 
 const ALGORITHM = "aes-256-gcm";
@@ -58,7 +59,10 @@ function normalizeExpiry(value?: Date | string | null) {
   return date.toISOString();
 }
 
-export async function saveFlipkartCredentials(input: FlipkartCredentials) {
+export async function saveFlipkartCredentials(
+  input: FlipkartCredentials,
+  db: typeof pool | PoolClient = pool,
+) {
   const payload = JSON.stringify({
     accessToken: input.accessToken,
     refreshToken: input.refreshToken,
@@ -66,7 +70,7 @@ export async function saveFlipkartCredentials(input: FlipkartCredentials) {
     appSecret: input.appSecret,
   });
 
-  await pool.query(
+  await db.query(
     `
       INSERT INTO commerce_channel_credentials (
         channel_id,
