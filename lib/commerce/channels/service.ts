@@ -79,24 +79,39 @@ export async function createCommerceChannel(
   userId: number,
   input: CreateCommerceChannelInput,
 ) {
-  const result = await pool.query(
-    `
-    INSERT INTO commerce_channels
-      (user_id, provider, name, external_account_id, status, metadata)
-    VALUES
-      ($1, $2, $3, $4, $5, $6::jsonb)
-    RETURNING id, provider, name, external_account_id, status, metadata, created_at, updated_at
-    `,
-    [
+  try {
+    const result = await pool.query(
+      `
+      INSERT INTO commerce_channels
+        (user_id, provider, name, external_account_id, status, metadata)
+      VALUES
+        ($1, $2, $3, $4, $5, $6::jsonb)
+      RETURNING id, provider, name, external_account_id, status, metadata, created_at, updated_at
+      `,
+      [
+        userId,
+        input.provider,
+        input.name,
+        input.externalAccountId ?? null,
+        input.status ?? "active",
+        JSON.stringify(input.metadata ?? {}),
+      ],
+    );
+    return result.rows[0];
+  } catch (error) {
+    if ((error as { code?: string }).code !== "23505" || input.externalAccountId == null) {
+      throw error;
+    }
+
+    // OAuth callbacks can race (for example, a user reconnecting while a
+    // provider retries the callback). The unique channel identity constraint
+    // makes one row authoritative; return it instead of creating a duplicate.
+    return getCommerceChannelByExternalAccount(
       userId,
       input.provider,
-      input.name,
-      input.externalAccountId ?? null,
-      input.status ?? "active",
-      JSON.stringify(input.metadata ?? {}),
-    ],
-  );
-  return result.rows[0];
+      input.externalAccountId,
+    );
+  }
 }
 
 export async function updateCommerceChannel(
