@@ -4,6 +4,7 @@ export type GeneratedWeek = {
   weekStart: string;
   weekEnd: string;
   strategySummary: string;
+  experiment: { hypothesis: string; change: string; metric: string } | null;
   recommendations: Array<{
     day: string;
     objective: string;
@@ -38,7 +39,11 @@ function isoDate(date: Date) {
 export type StrategyHint = {
   strategySummary?: string;
   recommendations?: Array<{ action?: string; why?: string; channels?: string[]; goalId?: number | null; campaignId?: number | null; productIds?: number[]; offerId?: number | null }>;
-  optimization?: { summary?: string; opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null }> };
+  optimization?: {
+    summary?: string;
+    opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null }>;
+    experiments?: Array<{ hypothesis?: string; change?: string; metric?: string }>;
+  };
 };
 
 export async function generateWeeklyPlan(userId: number, weekStart: string, strategyHint?: StrategyHint): Promise<GeneratedWeek> {
@@ -54,6 +59,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   const strategyRecommendations = Array.isArray(strategyHint?.recommendations) ? strategyHint.recommendations : [];
   const optimizationOpportunities = Array.isArray(strategyHint?.optimization?.opportunities) ? strategyHint.optimization.opportunities : [];
   const optimizationOpportunity = optimizationOpportunities.find((item) => item.priority === "high") ?? optimizationOpportunities[0];
+  const optimizationExperiment = strategyHint?.optimization?.experiments?.find((item) => item.hypothesis && item.change && item.metric) ?? null;
   const strategyRecommendation = strategyRecommendations[0];
   const strategyGoal = strategyRecommendation?.goalId != null
     ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null
@@ -110,6 +116,9 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   return {
     weekStart,
     weekEnd: isoDate(addDays(start, 6)),
+    experiment: optimizationExperiment
+      ? { hypothesis: String(optimizationExperiment.hypothesis), change: String(optimizationExperiment.change), metric: String(optimizationExperiment.metric) }
+      : null,
     strategySummary: strategyHint?.optimization?.summary
       ? strategyHint.optimization.summary + " The weekly plan turns the optimization recommendation into a reviewable execution draft; nothing is published automatically."
       : strategyHint?.strategySummary
