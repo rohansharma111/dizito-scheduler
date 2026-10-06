@@ -235,6 +235,7 @@ export async function claimProductListingSync(
       last_synced_at,
       last_error,
       provider_metadata,
+      sync_claim_token,
       created_at,
       updated_at
     `,
