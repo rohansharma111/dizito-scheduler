@@ -17,6 +17,7 @@ export type GeneratedWeek = {
     mediaId: number | null;
     offerId: number | null;
     rationale: string;
+    evidence: { actionType: string; count: number; value: number; platform: string | null } | null;
   }>;
   context: {
     goalIds: number[];
@@ -41,7 +42,7 @@ export type StrategyHint = {
   recommendations?: Array<{ action?: string; why?: string; channels?: string[]; goalId?: number | null; campaignId?: number | null; productIds?: number[]; offerId?: number | null }>;
   optimization?: {
     summary?: string;
-    opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null }>;
+    opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null; observedOutcome?: { actionType?: string; count?: number; value?: number; platform?: string | null } | null }>;
     experiments?: Array<{ hypothesis?: string; change?: string; metric?: string }>;
   };
 };
@@ -110,6 +111,9 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
         : primaryGoal
           ? `Prioritizes the active goal “${primaryGoal.name}” and reuses available business context before creating new assets.`
           : "Uses available products and media to create a balanced week until a primary marketing goal is configured.",
+      evidence: optimizationOpportunity?.observedOutcome?.actionType && typeof optimizationOpportunity.observedOutcome.count === "number" && typeof optimizationOpportunity.observedOutcome.value === "number"
+        ? { actionType: String(optimizationOpportunity.observedOutcome.actionType), count: Number(optimizationOpportunity.observedOutcome.count), value: Number(optimizationOpportunity.observedOutcome.value), platform: optimizationOpportunity.observedOutcome.platform ?? null }
+        : null
     };
   });
 
