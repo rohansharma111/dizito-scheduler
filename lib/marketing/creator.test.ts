@@ -58,7 +58,7 @@ describe("marketing Creator grounding", () => {
         offer_id: 9,
       }],
     });
-    createMock.mockImplementationOnce(async (request: any) => {
+    createMock.mockImplementationOnce(async (request: { input: Array<{ content: string }> }) => {
       const payload = JSON.parse(request.input[1].content);
       expect(payload.contentBrief.productIds).toEqual([7]);
       expect(payload.contentBrief.offerId).toBe(9);
