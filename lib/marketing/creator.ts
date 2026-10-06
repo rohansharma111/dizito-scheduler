@@ -25,7 +25,7 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
   const platform = input.platform;
   let selectedProductIds = [...new Set((input.productIds ?? []).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
   let selectedOfferId = input.offerId == null ? null : Number(input.offerId);
-  let resolvedItem: { rows: Array<Record<string, any>>; rowCount: number } | null = null;
+  let resolvedItem: { rows: Array<Record<string, unknown>>; rowCount: number } | null = null;
   if (input.contentItemId !== undefined) {
     if (!Number.isInteger(input.contentItemId) || input.contentItemId <= 0) throw new Error("Invalid content item reference");
     const item = await pool.query(
