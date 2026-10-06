@@ -29,25 +29,32 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
   if (!channel) return { error: "CHANNEL_NOT_FOUND" as const };
   if (channel.provider !== "woocommerce") return { error: "INVALID_PROVIDER" as const };
 
-  const listingResult = await pool.query(
-    `SELECT id, status, sync_status, external_id, publish_idempotency_key
-     FROM product_listings
-     WHERE id = $1 AND channel_id = $2 AND user_id = $3 LIMIT 1`,
-    [input.listingId, input.channelId, userId],
-  );
-
-  const listing = listingResult.rows[0];
-  if (!listing) return { error: "LISTING_NOT_FOUND" as const };
-  if (listing.external_id) return { error: "LISTING_ALREADY_PUBLISHED" as const };
-  if (listing.publish_idempotency_key && listing.publish_idempotency_key !== idempotencyKey) {
-    return { error: "LISTING_IDEMPOTENCY_KEY_MISMATCH" as const };
-  }
-
   let existingAttempt: { id: string; status: string; external_id: string | null; response_payload: unknown } | null = null;
   const reservationClient = await pool.connect();
   let attemptId: string;
   try {
     await reservationClient.query("BEGIN");
+
+    const listingResult = await reservationClient.query(
+      `SELECT id, external_id, publish_idempotency_key
+       FROM product_listings
+       WHERE id = $1 AND channel_id = $2 AND user_id = $3
+       FOR UPDATE`,
+      [input.listingId, input.channelId, userId],
+    );
+    const listing = listingResult.rows[0];
+    if (!listing) {
+      await reservationClient.query("ROLLBACK");
+      return { error: "LISTING_NOT_FOUND" as const };
+    }
+    if (listing.external_id) {
+      await reservationClient.query("ROLLBACK");
+      return { error: "LISTING_ALREADY_PUBLISHED" as const };
+    }
+    if (listing.publish_idempotency_key && listing.publish_idempotency_key !== idempotencyKey) {
+      await reservationClient.query("ROLLBACK");
+      return { error: "LISTING_IDEMPOTENCY_KEY_MISMATCH" as const };
+    }
 
     const attemptResult = await reservationClient.query(
       `SELECT id, status, external_id, response_payload
