@@ -89,6 +89,7 @@ export default function GenerateMyWeekPage() {
             cta: item.cta,
             mediaId: item.mediaId ?? null,
             plannedFor: item.day,
+            sourceCampaignId: item.sourceCampaignId ?? null,
             evidence: item.evidence ?? null,
             supportingExperimentIds: Array.isArray(item.supportingExperimentIds) ? item.supportingExperimentIds.map(Number).filter((id: number) => Number.isFinite(id)) : [],
           })),
