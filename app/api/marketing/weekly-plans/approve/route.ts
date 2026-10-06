@@ -20,6 +20,9 @@ export async function POST(request: Request) {
     if (!campaign || typeof campaign !== "object" || typeof campaign.name !== "string" || typeof campaign.objective !== "string" || typeof campaign.audience !== "string" || typeof campaign.cta !== "string") {
       return Response.json({ error: "Invalid campaign" }, { status: 400 });
     }
+    if (campaign.channelStrategy != null && (typeof campaign.channelStrategy !== "object" || Array.isArray(campaign.channelStrategy))) {
+      return Response.json({ error: "Invalid campaign channel strategy" }, { status: 400 });
+    }
     if (campaign.productIds != null && (!Array.isArray(campaign.productIds) || campaign.productIds.some((id: unknown) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
       return Response.json({ error: "Invalid campaign product references" }, { status: 400 });
     }
@@ -29,6 +32,12 @@ export async function POST(request: Request) {
     for (const item of campaign.contentItems ?? []) {
       if (!item || typeof item !== "object" || typeof item.contentType !== "string" || typeof item.format !== "string" || typeof item.topic !== "string" || typeof item.cta !== "string") {
         return Response.json({ error: "Invalid content item" }, { status: 400 });
+      }
+      if (item.mediaId != null && (!Number.isInteger(Number(item.mediaId)) || Number(item.mediaId) <= 0)) {
+        return Response.json({ error: "Invalid content media reference" }, { status: 400 });
+      }
+      if (item.plannedFor != null && (typeof item.plannedFor !== "string" || Number.isNaN(new Date(item.plannedFor).getTime()))) {
+        return Response.json({ error: "Invalid content planned time" }, { status: 400 });
       }
       if (item.supportingExperimentIds != null && (!Array.isArray(item.supportingExperimentIds) || item.supportingExperimentIds.some((id: unknown) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
         return Response.json({ error: "Invalid supporting experiment references" }, { status: 400 });
