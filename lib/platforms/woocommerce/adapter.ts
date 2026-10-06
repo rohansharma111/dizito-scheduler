@@ -117,15 +117,41 @@ export const wooCommerceAdapter: CommerceProviderAdapter<
       return invalidOperation("publish", "publish");
     }
 
-    return result(
-      "publish",
-      await publishWooCommerceProduct(input.context.userId, {
-        ...input.payload.input,
-        channelId: input.context.channelId,
-        confirmLivePublish: true,
-        idempotencyKey: input.idempotencyKey ?? input.payload.input.idempotencyKey,
-      }),
-    );
+    const publishResult = await publishWooCommerceProduct(input.context.userId, {
+      ...input.payload.input,
+      channelId: input.context.channelId,
+      confirmLivePublish: true,
+      idempotencyKey: input.idempotencyKey ?? input.payload.input.idempotencyKey,
+    });
+
+    if (publishResult && typeof publishResult === "object" && "error" in publishResult) {
+      return result("publish", publishResult);
+    }
+
+    if (
+      publishResult &&
+      typeof publishResult === "object" &&
+      "reconciliationRequired" in publishResult &&
+      publishResult.reconciliationRequired === true
+    ) {
+      return {
+        operation: "publish",
+        status: "ambiguous",
+        externalId:
+          typeof publishResult.externalId === "string"
+            ? publishResult.externalId
+            : undefined,
+        data: publishResult,
+        error: {
+          code: "RECONCILIATION_REQUIRED",
+          message: "WooCommerce publish requires provider read-back before success can be confirmed",
+          retryable: false,
+          ambiguous: true,
+        },
+      };
+    }
+
+    return result("publish", publishResult);
   },
 
   async reconcilePublish(
