@@ -80,6 +80,7 @@ export async function refreshFlipkartCredentials(
 
     await saveFlipkartCredentials({
       channelId,
+      userId,
       accessToken: refreshed.accessToken,
       refreshToken: refreshed.refreshToken,
       appId: credentials.appId,
