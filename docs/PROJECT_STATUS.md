@@ -474,3 +474,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Legacy Shopify publish now acquires a PostgreSQL advisory lock keyed by tenant, channel, and product for the full remote-create/persistence lifecycle.
 - This prevents concurrent requests for the same listing from both observing a missing external ID and issuing duplicate Shopify productCreate mutations.
 - The lock deliberately does not claim to provide a Shopify-native idempotency contract; crash/retry reconciliation remains a future durability improvement.
+
+
+### Shopify deterministic crash recovery — 2026-10-06
+- Shopify product creation now writes a `dizito.listing_id` metafield marker during `productCreate`, using the canonical Dizito listing ID as the recovery identity. Shopify supports product-create metafields and product search by metafield value.
+- Before issuing a new create, the publisher searches for that exact marker. One match is adopted and routed through the existing Shopify sync/reconciliation flow; multiple matches fail closed rather than guessing.
+- Variant recovery handles the specific partial-create case where Shopify has exactly one existing variant and Dizito has no saved variant mappings, binding that sole provider variant to the canonical first variant instead of creating a duplicate.
+- Existing orphan products created before this marker was introduced are intentionally not heuristically claimed.
