@@ -24,8 +24,8 @@ export async function POST(request: Request) {
     if (channel.status !== "active") return NextResponse.json({ success: false, error: `Amazon channel is not active (status: ${channel.status})` }, { status: 409 });
 
     const result = body.identifier
-      ? await searchAmazonCatalogByIdentifier(String(channel.id), body.identifier.trim(), body.identifierType!)
-      : await searchAmazonCatalogByKeyword(String(channel.id), body.keywords!.trim());
+      ? await searchAmazonCatalogByIdentifier(String(channel.id), userId, body.identifier.trim(), body.identifierType!)
+      : await searchAmazonCatalogByKeyword(String(channel.id), userId, body.keywords!.trim());
     return NextResponse.json({ success: true, items: result.items, requestId: result.requestId, rateLimit: result.rateLimit });
   } catch (error) {
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Amazon catalog search failed" }, { status: 502 });
