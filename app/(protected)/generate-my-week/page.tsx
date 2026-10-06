@@ -143,6 +143,12 @@ export default function GenerateMyWeekPage() {
         <div style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
           <h2 style={{ marginTop: 0 }}>{plan.strategySummary}</h2>
           <p style={{ marginBottom: 0, opacity: 0.7 }}>Review the recommendations below before approving. Approval creates a planned campaign and Content Items; it does not schedule or publish posts.</p>
+          {plan.experiment && <div style={{ marginTop: 16, padding: 14, borderRadius: 8, background: "#f7f7f7" }}>
+            <strong>Experiment to review</strong>
+            <p><strong>Hypothesis:</strong> {plan.experiment.hypothesis}</p>
+            <p><strong>Change:</strong> {plan.experiment.change}</p>
+            <p style={{ marginBottom: 0 }}><strong>Measure:</strong> {plan.experiment.metric}</p>
+          </div>}
         </div>
         <div style={{ display: "grid", gap: 12 }}>
           {recommendations.map((item: any, index: number) => (
