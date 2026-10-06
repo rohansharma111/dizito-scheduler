@@ -302,6 +302,11 @@ export async function updateProductListingSyncState(
       input.externalId !== undefined ? input.externalId : existing.external_id;
 
     if (externalId) {
+      await client.query(
+        `SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`,
+        [`commerce-external-id:${userId}:${existing.channel_id}:${externalId}`],
+      );
+
       const conflict = await client.query(
         `
         SELECT id
