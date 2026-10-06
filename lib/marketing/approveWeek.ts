@@ -191,6 +191,15 @@ export async function persistApprovedWeek(
         if (supportingExperiments.rowCount !== supportingExperimentIds.length) throw new Error("Invalid supporting experiment reference");
       }
 
+      const scopedContent = await client.query(
+        `SELECT ci.id
+         FROM marketing_content_items ci
+         JOIN marketing_campaigns c ON c.id = ci.campaign_id
+         WHERE ci.id=$1 AND ci.campaign_id=$2 AND ci.user_id=$3 AND c.user_id=$3`,
+        [contentItemId, campaignId, userId],
+      );
+      if (scopedContent.rowCount !== 1) throw new Error("Invalid weekly experiment scope");
+
       const experimentProvenance = { scope: "approved_weekly_content_item", campaignId, contentItemId, weekStart, weekEnd, disposition: strategy.experiment.disposition, selectionReason: strategy.experiment.selectionReason, supportingExperimentIds };
 
       await client.query(
