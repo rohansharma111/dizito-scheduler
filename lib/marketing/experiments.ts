@@ -185,7 +185,7 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             AND (e.ends_at IS NULL OR a.occurred_at <= e.ends_at)
 
           GROUP BY a.action_type
-       ) metric_stats ON true       )
+       ) metric_stats ON true
        LEFT JOIN LATERAL (
          SELECT a.action_type,
                 COUNT(*)::int AS count,
