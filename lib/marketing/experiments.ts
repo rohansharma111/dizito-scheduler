@@ -21,6 +21,39 @@ export type MarketingExperiment = {
   updatedAt: string;
 };
 
+export type ExperimentOutcome = {
+  actionType: string;
+  count: number;
+  value: number;
+};
+
+export async function getMarketingExperimentOutcomes(userId: number, id: number): Promise<ExperimentOutcome[]> {
+  const result = await pool.query(
+    `SELECT a.action_type AS "actionType",
+            COUNT(*)::int AS count,
+            COALESCE(SUM(a.value), 0)::int AS value
+       FROM marketing_customer_actions a
+       JOIN marketing_experiments e ON e.user_id = a.user_id
+      WHERE e.id = $2
+        AND e.user_id = $1
+        AND a.status = 'completed'
+        AND (
+          (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
+          OR (e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+          OR (e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+        )
+      GROUP BY a.action_type
+      ORDER BY count DESC`,
+    [userId, id],
+  );
+  return result.rows as ExperimentOutcome[];
+}
+
+function outcomeSummary(outcomes: ExperimentOutcome[]) {
+  if (!outcomes.length) return "No completed customer actions were observed for the linked experiment scope.";
+  return outcomes.map((item) => `${item.actionType}: ${item.count} action${item.count === 1 ? "" : "s"}, observed value ${item.value}`).join("; ");
+}
+
 export async function listMarketingExperiments(userId: number, status?: MarketingExperimentStatus) {
   const result = await pool.query("SELECT id, user_id AS \"userId\", campaign_id AS \"campaignId\", content_item_id AS \"contentItemId\", variant_id AS \"variantId\", name, hypothesis, change_description AS \"changeDescription\", metric, status, starts_at AS \"startsAt\", ends_at AS \"endsAt\", result_summary AS \"resultSummary\", created_at AS \"createdAt\", updated_at AS \"updatedAt\" FROM marketing_experiments WHERE user_id = $1 AND ($2::text IS NULL OR status = $2) ORDER BY starts_at DESC NULLS LAST, id DESC LIMIT 200", [userId, status ?? null]);
   return result.rows as MarketingExperiment[];
@@ -36,7 +69,9 @@ export async function updateMarketingExperiment(userId: number, id: number, inpu
   if (!current) return null;
   const status = input.status ?? current.status;
   if (current.status === "cancelled" && status !== "cancelled") throw new Error("Cancelled experiments cannot be reopened");
-  if (status === "completed" && !input.resultSummary && !current.resultSummary) throw new Error("Completed experiments require a result summary");
-  const result = await pool.query("UPDATE marketing_experiments SET status=$3, result_summary=$4, starts_at=$5, ends_at=$6, updated_at=now() WHERE id=$1 AND user_id=$2 RETURNING id, user_id AS \"userId\", campaign_id AS \"campaignId\", content_item_id AS \"contentItemId\", variant_id AS \"variantId\", name, hypothesis, change_description AS \"changeDescription\", metric, status, starts_at AS \"startsAt\", ends_at AS \"endsAt\", result_summary AS \"resultSummary\", created_at AS \"createdAt\", updated_at AS \"updatedAt\"", [id, userId, status, input.resultSummary ?? current.resultSummary, input.startsAt ?? current.startsAt, input.endsAt ?? current.endsAt]);
+  const outcomes = status === "completed" ? await getMarketingExperimentOutcomes(userId, id) : [];
+  if (status === "completed" && !input.resultSummary && !current.resultSummary && outcomes.length === 0) throw new Error("Completed experiments require observed outcomes or a result summary");
+  const storedSummary = input.resultSummary ?? current.resultSummary ?? (status === "completed" ? outcomeSummary(outcomes) : null);
+  const result = await pool.query("UPDATE marketing_experiments SET status=$3, result_summary=$4, starts_at=$5, ends_at=$6, updated_at=now() WHERE id=$1 AND user_id=$2 RETURNING id, user_id AS \"userId\", campaign_id AS \"campaignId\", content_item_id AS \"contentItemId\", variant_id AS \"variantId\", name, hypothesis, change_description AS \"changeDescription\", metric, status, starts_at AS \"startsAt\", ends_at AS \"endsAt\", result_summary AS \"resultSummary\", created_at AS \"createdAt\", updated_at AS \"updatedAt\"", [id, userId, status, storedSummary, input.startsAt ?? current.startsAt, input.endsAt ?? current.endsAt]);
   return result.rows[0] as MarketingExperiment;
 }
