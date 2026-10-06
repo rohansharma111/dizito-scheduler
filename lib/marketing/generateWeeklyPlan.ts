@@ -4,7 +4,7 @@ export type GeneratedWeek = {
   weekStart: string;
   weekEnd: string;
   strategySummary: string;
-  experiment: { hypothesis: string; change: string; metric: string; disposition: "refine" | "retest" | "avoid" | "measure" } | null;
+  experiment: { hypothesis: string; change: string; metric: string; disposition: "refine" | "retest" | "avoid" | "measure"; selectionReason: string } | null;
   recommendations: Array<{
     day: string;
     objective: string;
@@ -138,7 +138,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
     weekStart,
     weekEnd: isoDate(addDays(start, 6)),
     experiment: optimizationExperiment
-      ? { hypothesis: String(optimizationExperiment.hypothesis), change: String(optimizationExperiment.change), metric: String(optimizationExperiment.metric), disposition: optimizationExperiment.disposition ?? "measure" }
+      ? { hypothesis: String(optimizationExperiment.hypothesis), change: String(optimizationExperiment.change), metric: String(optimizationExperiment.metric), disposition: optimizationExperiment.disposition ?? "measure", selectionReason: optimizationExperiment.disposition === "refine" ? "Selected because the optimizer found directionally positive historical evidence to build on." : optimizationExperiment.disposition === "retest" ? "Selected because the optimizer recommends a narrower or better-measured retest after an unfavorable historical direction." : "Selected as a measurement-first experiment because directional historical evidence is insufficient." }
       : null,
     strategySummary: strategyHint?.optimization?.summary
       ? strategyHint.optimization.summary + " The weekly plan turns the optimization recommendation into a reviewable execution draft; nothing is published automatically."
