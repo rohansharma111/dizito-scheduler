@@ -28,8 +28,6 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const parsed = JSON.parse(cleaned) as MarketingOptimization;
   if (!parsed || typeof parsed.summary !== "string" || !Array.isArray(parsed.opportunities) || !Array.isArray(parsed.experiments) || !Array.isArray(parsed.measurement) || !Array.isArray(parsed.guardrails)) throw new Error("Invalid AI Optimizer response");
   const campaignIds = new Set(context.campaigns.map((campaign) => campaign.id));
-  const observedContentIds = new Set(context.impact.observedContentSummary.map((item) => Number(item.contentItemId)).filter(Number.isInteger));
-  const observedVariantIds = new Set(context.impact.observedVariantSummary.map((item) => Number(item.variantId)).filter(Number.isInteger));
   const contentItems = context.contentItems;
   const contentItemIds = new Set(contentItems.map((item) => item.id));
   const variants = await listContentVariantsForContentItems(userId, contentItems.slice(0, 50).map((item) => item.id));
