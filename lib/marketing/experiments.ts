@@ -22,6 +22,8 @@ export type MarketingExperiment = {
   resultSummary: string | null;
   createdAt: string;
   updatedAt: string;
+  baselineStartsAt: string | null;
+  baselineEndsAt: string | null;
 };
 
 export type ExperimentOutcome = {
@@ -92,6 +94,7 @@ function outcomeSummary(outcomes: ExperimentOutcome[]) {
 export type CompletedExperimentEvidence = MarketingExperiment & {
   outcomes: ExperimentOutcome[];
   metricEvidence: ExperimentOutcome[];
+  baselineOutcomes: ExperimentOutcome[];
 };
 
 export async function listCompletedExperimentEvidence(userId: number): Promise<CompletedExperimentEvidence[]> {
@@ -114,6 +117,8 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             e.result_summary AS "resultSummary",
             e.created_at AS "createdAt",
             e.updated_at AS "updatedAt",
+            e.baseline_starts_at AS "baselineStartsAt",
+            e.baseline_ends_at AS "baselineEndsAt",
             COALESCE(
               json_agg(
                 json_build_object(
@@ -135,7 +140,18 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
                 ORDER BY metric_stats.count DESC, metric_stats.action_type
               ) FILTER (WHERE metric_stats.action_type IS NOT NULL),
               '[]'::json
-            ) AS "metricEvidence"
+            ) AS "metricEvidence",
+            COALESCE(
+              json_agg(
+                json_build_object(
+                  'actionType', baseline_stats.action_type,
+                  'count', baseline_stats.count,
+                  'value', baseline_stats.value
+                )
+                ORDER BY baseline_stats.count DESC, baseline_stats.action_type
+              ) FILTER (WHERE baseline_stats.action_type IS NOT NULL),
+              '[]'::json
+            ) AS "baselineOutcomes"
        FROM marketing_experiments e
        LEFT JOIN LATERAL (
          SELECT a.action_type,
@@ -169,7 +185,25 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             AND (e.ends_at IS NULL OR a.occurred_at <= e.ends_at)
 
           GROUP BY a.action_type
-       ) metric_stats ON true
+       ) metric_stats ON true       )
+       LEFT JOIN LATERAL (
+         SELECT a.action_type,
+                COUNT(*)::int AS count,
+                COALESCE(SUM(a.value), 0)::int AS value
+           FROM marketing_customer_actions a
+          WHERE a.user_id = e.user_id
+            AND a.status = 'completed'
+            AND (
+              (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
+              OR (e.variant_id IS NULL AND e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+              OR (e.variant_id IS NULL AND e.content_item_id IS NULL AND e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+            )
+            AND e.baseline_starts_at IS NOT NULL
+            AND e.baseline_ends_at IS NOT NULL
+            AND a.occurred_at >= e.baseline_starts_at
+            AND a.occurred_at <= e.baseline_ends_at
+          GROUP BY a.action_type
+       ) baseline_stats ON true
       WHERE e.user_id = $1
         AND e.status = 'completed'
       GROUP BY e.id
@@ -181,9 +215,10 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
     const metricTypes = new Set(metricActionTypes(String(row.metric)));
     const metricEvidence = (row.metricEvidence as ExperimentOutcome[]).filter((outcome) => metricTypes.has(outcome.actionType));
     return {
-      ...(row as Omit<CompletedExperimentEvidence, "outcomes" | "metricEvidence">),
+      ...(row as Omit<CompletedExperimentEvidence, "outcomes" | "metricEvidence" | "baselineOutcomes">),
       outcomes: row.outcomes as ExperimentOutcome[],
       metricEvidence,
+      baselineOutcomes: row.baselineOutcomes as ExperimentOutcome[],
     };
   });
 }
