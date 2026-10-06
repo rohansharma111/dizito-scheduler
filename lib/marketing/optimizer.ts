@@ -188,7 +188,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         const score = (duplicate ? -40 : 0)
           + (metricEvidenceAvailable ? 30 : metricHistorical ? 20 : 5)
           + resultEvidenceScore
-          + (directionalEvidence > 0 ? 10 : directionalEvidence < 0 ? 5 : 0);
+          + (directionalEvidence == null ? 0 : directionalEvidence > 0 ? 10 : directionalEvidence < 0 ? 5 : 0);
         const disposition: "refine" | "retest" | "avoid" | "measure" = duplicate
           ? "avoid"
           : directionalEvidence == null
