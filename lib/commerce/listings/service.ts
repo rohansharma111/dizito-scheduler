@@ -406,54 +406,133 @@ export async function upsertProductListingVariant(
   userId: number,
   input: UpsertProductListingVariantInput,
 ) {
-  const listing = await getProductListingById(listingId, userId);
-  if (!listing) return { error: "LISTING_NOT_FOUND" as const };
+  const client = await pool.connect();
 
-  const variant = await pool.query(
-    `
-    SELECT id
-    FROM product_variants
-    WHERE id = $1
-      AND product_id = $2
-    LIMIT 1
-    `,
-    [input.variantId, listing.product_id],
-  );
+  try {
+    await client.query("BEGIN");
 
-  if (variant.rows.length === 0) {
-    return { error: "VARIANT_NOT_FOUND" as const };
+    const listingResult = await client.query(
+      `
+      SELECT
+        pl.id,
+        pl.product_id
+      FROM product_listings pl
+      INNER JOIN commerce_channels cc
+        ON cc.id = pl.channel_id
+       AND cc.user_id = pl.user_id
+      WHERE pl.id = $1
+        AND pl.user_id = $2
+      FOR UPDATE
+      `,
+      [listingId, userId],
+    );
+
+    const listing = listingResult.rows[0];
+    if (!listing) {
+      await client.query("ROLLBACK");
+      return { error: "LISTING_NOT_FOUND" as const };
+    }
+
+    const variant = await client.query(
+      `
+      SELECT id
+      FROM product_variants
+      WHERE id = $1
+        AND product_id = $2
+      LIMIT 1
+      `,
+      [input.variantId, listing.product_id],
+    );
+
+    if (variant.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return { error: "VARIANT_NOT_FOUND" as const };
+    }
+
+    const existing = await client.query(
+      `
+      SELECT
+        id,
+        external_id,
+        provider_metadata
+      FROM product_listing_variants
+      WHERE listing_id = $1
+        AND variant_id = $2
+      FOR UPDATE
+      `,
+      [listingId, input.variantId],
+    );
+
+    const current = existing.rows[0];
+    const externalId =
+      input.externalId !== undefined ? input.externalId : current?.external_id ?? null;
+
+    if (externalId) {
+      const conflict = await client.query(
+        `
+        SELECT id
+        FROM product_listing_variants
+        WHERE listing_id = $1
+          AND external_id = $2
+          AND variant_id <> $3
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [listingId, externalId, input.variantId],
+      );
+
+      if (conflict.rows[0]) {
+        await client.query("ROLLBACK");
+        return { error: "LISTING_VARIANT_EXTERNAL_ID_CONFLICT" as const };
+      }
+    }
+
+    const providerMetadata = {
+      ...(current?.provider_metadata ?? {}),
+      ...(input.providerMetadata ?? {}),
+    };
+
+    const result = await client.query(
+      `
+      INSERT INTO product_listing_variants
+        (listing_id, variant_id, external_id, sync_status, provider_metadata)
+      VALUES
+        ($1, $2, $3, $4, $5::jsonb)
+      ON CONFLICT (listing_id, variant_id)
+      DO UPDATE SET
+        external_id = EXCLUDED.external_id,
+        sync_status = EXCLUDED.sync_status,
+        provider_metadata = EXCLUDED.provider_metadata,
+        updated_at = now()
+      RETURNING
+        id,
+        listing_id,
+        variant_id,
+        external_id,
+        sync_status,
+        provider_metadata,
+        created_at,
+        updated_at
+      `,
+      [
+        listingId,
+        input.variantId,
+        externalId,
+        input.syncStatus ?? current?.sync_status ?? "pending",
+        JSON.stringify(providerMetadata),
+      ],
+    );
+
+    await client.query("COMMIT");
+    return { listingVariant: result.rows[0] };
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // Preserve the original failure.
+    }
+    throw error;
+  } finally {
+    client.release();
   }
-
-  const result = await pool.query(
-    `
-    INSERT INTO product_listing_variants
-      (listing_id, variant_id, external_id, sync_status, provider_metadata)
-    VALUES
-      ($1, $2, $3, $4, $5::jsonb)
-    ON CONFLICT (listing_id, variant_id)
-    DO UPDATE SET
-      external_id = EXCLUDED.external_id,
-      sync_status = EXCLUDED.sync_status,
-      provider_metadata = EXCLUDED.provider_metadata,
-      updated_at = now()
-    RETURNING
-      id,
-      listing_id,
-      variant_id,
-      external_id,
-      sync_status,
-      provider_metadata,
-      created_at,
-      updated_at
-    `,
-    [
-      listingId,
-      input.variantId,
-      input.externalId ?? null,
-      input.syncStatus ?? "pending",
-      JSON.stringify(input.providerMetadata ?? {}),
-    ],
-  );
-
-  return { listingVariant: result.rows[0] };
 }
