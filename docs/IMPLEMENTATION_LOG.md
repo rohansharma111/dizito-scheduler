@@ -1,102 +1,222 @@
 # Dizito Implementation Log
 
-## 2026-10-06 — Bind WooCommerce reconciliation to listing identity
+**Purpose:** chronological durable record of meaningful implementation, architecture, verification and scope decisions.  
+**Repository:** `rohansharma111/dizito-scheduler`  
+**Latest observed main:** `898317777d5aee193022452da45411648dd926ba`  
+**Last refreshed:** 2026-10-06
 
-- **Status:** Implemented; automated tests passed in GitHub Actions, while repository lint remains failing.
-- **Commits:**
-  - `4b20471e615b1e4117f29271fb32ec47d47ee820` — harden reconciliation identity and API error mapping.
-  - `b70448f84393da421a6225ef475e7e539ee3d8c5` — add reconciliation identity unit tests.
-- **Files:** `lib/platforms/woocommerce/reconcile.ts`, `app/api/commerce/woocommerce/reconcile/route.ts`, `lib/platforms/woocommerce/reconcile.test.ts`
-- **Implemented behavior:**
-  - Reconciliation reads the expected WooCommerce SKU from the listing's persisted draft payload.
-  - A caller-supplied SKU must match the listing SKU when both are present.
-  - External-ID reconciliation additionally verifies that the provider product SKU matches the listing identity before marking the attempt successful.
-  - SKU-based reconciliation continues to require exactly one provider match.
-  - Added focused tests for missing, inherited, conflicting, and matching SKU identities.
-- **Verification:** GitHub Actions run `37417617314` completed the Vitest test step successfully. The same run failed at repository lint, so the full quality workflow is not green. No provider/live WooCommerce verification is claimed.
+## 2026-10-06 — Current-state consolidation
 
-## 2026-10-05 — Enable automated Vitest execution in CI
+- Status: Documentation refreshed.
+- Scope: synchronized `AGENTS.md`, `docs/PROJECT_STATUS.md`, and this Codex context with the current repository direction.
+- Current architecture now explicitly recognizes:
+  - provider-neutral commerce dispatch;
+  - WooCommerce and Flipkart as active hardening targets;
+  - Amazon catalog/offer foundation;
+  - marketing AI grounding/review/optimizer workflows;
+  - Meesho as externally blocked.
+- Verification limitation: documentation was reconciled from repository source and git history; no claim of fresh repository-wide runtime verification is made.
 
-- **Status:** Implemented; test execution still requires the GitHub Actions run to complete.
-- **Commits:**
-  - `5bdbf1bac424722dfb2c98319d5f471f2e8fe727` — add `test` and `test:watch` scripts to `package.json`.
-  - `ee11425b2015bef8ab57def60f1394482fbcd113` — run `npm test` in the quality workflow before lint/build.
-- **Finding:** Vitest `^2.1.9` was already present in `package.json` and `package-lock.json`; a new dependency installation was therefore unnecessary.
-- **Implemented behavior:**
-  - `npm test` now runs `vitest run`.
-  - `npm run test:watch` provides the local watch-mode runner.
-  - CI installs dependencies with `npm ci`, executes the Vitest suite, then runs lint and build.
-- **Verification:** Repository writes succeeded through GitHub. The actual Vitest, lint, and build results must be taken from the resulting GitHub Actions run; they are not claimed here without execution evidence.
+## 2026-10-06 — Flipkart publish confirmation safety
 
-## 2026-10-05 — WooCommerce reconciliation API error hardening
+- Commits:
+  - `5a0e73273b5ac168f1088e583fd70e90519babc2` — harden publish confirmation path
+  - `82becf4460275587fce22788f4cbc8c92c26bf2b` — remove direct confirmation bypass
+  - `398ddd435bc31addcae6fb5b181b0a1a94230081` — update publish safety audit
+- Implemented:
+  - canonical reconciliation is the intended path to publish success;
+  - provider lookup must produce a concrete external listing identifier;
+  - caller-supplied external IDs cannot independently confirm success;
+  - direct confirmation helpers that could bypass provider reconciliation were removed;
+  - `FLIPKART_LIVE_PUBLISH_ENABLED` remains fail-closed.
+- Verification:
+  - source inspection completed;
+  - live/sandbox mutation not run;
+  - runtime CI/build/lint/type verification remains unclaimed.
 
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `677ec48d9da7e3bdc5554c9401d2c8576f4a8ef8`
-- **File:** `app/api/commerce/woocommerce/reconcile/route.ts`
-- **Implemented behavior:**
-  - Wraps reconciliation status database access in guarded error handling.
-  - Returns `503 RECONCILIATION_STATUS_UNAVAILABLE` instead of exposing an unexpected database exception through the status endpoint.
-  - Wraps reconciliation POST execution and returns a stable `RECONCILIATION_FAILED` response for unexpected provider/service exceptions.
-  - Preserves existing validation and explicit domain-error HTTP mappings.
-- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+## 2026-10-06 — Flipkart provider dispatch, state and route hardening
 
-## 2026-09-24 — Enforce idempotency at WooCommerce publish service boundary
+- Provider cutover:
+  - `947f89b3e5757989db58df2b52ad1c1f924e5349` — draft route
+  - `9e81aad54e501bb5022358bd1ec5efdf4d09be6c` — publish route
+  - `ea597b01cd129daeb138ceeef0f99e7db24f56ef` — reconcile route
+  - `6332539d9f096c1b78ba9b8c030d436541d4e937` — provider lookup required for reconciliation
+- Adapter/contract work:
+  - `d5f02523b886595dec3707d42156ae025c3b16ce` — Flipkart provider adapter
+  - `ff78a740af4f42087086c3241b8b47e1abde9992` — provider registration
+  - `63aaf6b5bb302eb4358aae14a41e74ae18ae34d9` through `e73340925bed949a066fa8e05335ad4f155ee5e6` — reconciliation contract alignment/identity normalization.
+- Hardening:
+  - `04d68fc7744a28c0cb75b0d12ae00db9c7bde344` — persist confirmed external listing identity
+  - `8252024b781ed12596d309d9848f3b51b974153c` — reconciliation persistence safety tests
+  - `5552f59c1d5147e4e62c9162ba4f662843c0bf07` — terminal publish transitions
+  - `4a29c439633e2d901e0c73c583e487daa1c11ff8` — prevent duplicate mutation on successful replay
+  - `a73c0c312444e991ac37c8b3355822c6648cb952` — replay/state regression tests
+  - `f613cb6308785908f94851a2269049396724e6ab` — idempotency conflicts classified correctly
+  - `5e9dd809ec0beb8009c5122d0c4c8abd3ec0b91a`, `f638434e2c5e4d492f30ca017d78a045c36a5fcf`, `e0cd0ef753c355364292590ad8f593253bd1aad8` — route boundary tests
+  - `5a90761a372d47b621a4529cfe7182344b920535`, `54e465641baf2deaa420bbb0e9a79e5c5a849e69` — provider dispatch/idempotency conflict coverage.
+- Verification limitation:
+  - repository/source inspection and test code are present;
+  - no fresh green CI result or provider mutation evidence is claimed.
 
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `73482b8307f853a5000b224ea360f1e4aba70b81`
-- **File:** `lib/platforms/woocommerce/publish.ts`
-- **Implemented behavior:**
-  - Requires a non-empty, trimmed idempotency key inside the publish service itself.
-  - Returns `IDEMPOTENCY_KEY_REQUIRED` before channel or database work when the key is missing.
-  - Removes the optional no-key path from the attempt-ledger flow so non-HTTP callers cannot accidentally bypass durable publish-attempt tracking.
-  - Simplifies the publish path because every accepted request now creates or reuses a durable attempt row.
-- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
+## 2026-10-06 — Provider-neutral commerce orchestration
 
-## 2026-09-23 — WooCommerce publish attempt ledger and uncertainty handling
+- Commits:
+  - `3108264c8a4c90025e7779119b55af7f3ffb1cec` — provider-neutral adapter contracts
+  - `7e0bb4728f67fcf1230bd6e88a62926a51cc4e6c` — centralize provider operations
+  - `0fe085898d35038751783e7f868e139cf89ad27a` — central provider-operation tests
+  - `9cd341108363cc5dd7becd173677fc804264ef11`, `d2c93e339effc5fbd0883da63452532ebb38fd7f`, `f735003fd8d81ede18a42a1eb2c3fafeabb0d555` — route WooCommerce draft/publish/reconcile through provider service.
+- Implemented:
+  - common operation vocabulary/capabilities/results;
+  - shared adapter registry/service;
+  - provider payload/response opacity;
+  - explicit live-publish confirmation;
+  - WooCommerce and Flipkart dispatch through the shared boundary.
+- Remaining:
+  - provider-neutral sync and broader lifecycle implementation;
+  - runtime verification.
 
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commits:**
-  - `115c5b60f7ddced178e52e395984818f8df9bd22` — create `commerce_publish_attempts` table.
-  - `a18e84a3a803cde4ec5350bfa133e175ab35ccb1` — persist attempt lifecycle around provider publish.
-  - `0c490f769b6b376570dce04ca87135c88e150aed` — safely replay completed attempts and block unresolved attempts.
-  - `3e2dc77dae5808b4e582b9d6c2cbc1685c14f205` — classify likely network uncertainty as `ambiguous`.
-- **Files:** `db/migrations/009_woocommerce_publish_attempts.sql`, `lib/platforms/woocommerce/publish.ts`
-- **Implemented behavior:** Durable attempt rows, persisted success/failure/ambiguous states, idempotent replay, reconciliation blocking for `started`/ambiguous, and preservation of listing `syncing` state for ambiguous outcomes.
-- **Verification:** Repository writes succeeded through GitHub. Migration source inspection confirmed the `ambiguous` status and required unique constraint. Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
+## 2026-10-06 — WooCommerce publish/reconciliation hardening
 
-## 2026-09-23 — WooCommerce publish reconciliation endpoint
+- Important commits:
+  - `115c5b60f7ddced178e52e395984818f8df9bd22` — durable publish-attempt table
+  - `a18e84a3a803cde4ec5350bfa133e175ab35ccb1` — attempt lifecycle persistence
+  - `0c490f769b6b376570dce04ca87135c88e150aed` — replay/block unresolved attempts
+  - `3e2dc77dae5808b4e582b9d6c2cbc1685c14f205` — ambiguous network outcomes
+  - `73482b8307f853a5000b224ea360f1e4aba70b81` — service-level idempotency requirement
+  - `677ec48d9da7e3bdc5554c9401d2c8576f4a8ef8` — reconciliation API error hardening
+  - `4b20471e615b1e4117f29271fb32ec47d47ee820`, `b70448f84393da421a6225ef475e7e539ee3d8c5` — reconciliation identity and tests.
+- Current behavior:
+  - durable operation attempts;
+  - idempotent replay;
+  - ambiguous/unknown outcomes;
+  - reconciliation before unresolved operations can converge;
+  - listing identity checks;
+  - stable API error mapping.
+- Verification:
+  - focused automated tests exist;
+  - full runtime/provider verification remains pending.
 
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commits:** `ef2b8e800165f4a9a9b1aedad101e0584b581e84`, `7bf51076797b8c20b192b9c11a8cf18d1aa7c6c4`, `1619bc90aff8cb0c26aae0b697d6ce4da79ecdab`, `93938e3c3df4921965b644a281ba3f976d8cc483`, `ecff17f154dedcc3340397b03b28f87db9e1ef41`, `f68062c696d4686b9102d481685f892344786319`, `3d7e7eab6291f8ac87b0acf7ac87a28ad8c8fdcc`, `339f2ec655a0807b1973ebc7c4917729b24a3cc4`, `b916ec2787a61f0a5786499e717406bf7bda6374`
-- **Implemented behavior:** Reconciliation accepts an external WooCommerce product ID or exact SKU; validates tenant ownership and idempotency; rejects zero/multiple/SKU-mismatched matches; and transactionally marks verified listings and attempts successful.
-- **Verification:** Repository writes succeeded through GitHub. Runtime build, lint, type-check, automated tests, migration execution, and provider verification remain pending.
+## 2026-10-06 — AI Creator grounding and human review
 
-## 2026-09-23 — WooCommerce reconciliation status lookup
+- Commits:
+  - `73a5cd58e3f43d696ce5d4e47b3f3caa1db0ce27` — ground Creator in product/offer context
+  - `db4aca750b57cb37f5b587de105ebc88df05f156` — enforce AI copy review/product grounding
+  - `f6d01fdec93bf5453b080cd2e6ded051f0ae9212`, `87cd09ea937eedea524cb908120606b356dca5ed` — require human review before saving AI copy/channel variants
+  - `f646eb28e05ff2d1f57e6bc16bf8e0ef11657a5a` — fail closed on malformed output
+  - `1d6f44feab886e6de55c65ce654554881b79c0cf` — explicit Creator validation errors
+  - `9b38127050af8991207a292b35a00a1b379d6d80`, `40aac020af34a2f3992984bb42b79e109da1bc75`, `fd20f371cc5746e8325abb56acc57d6eb0797e21` — content-item grounding/identity
+  - `49674fae9f02b57777d24e92cd5352457e0db218`, `3826e90643c73c679ff9cdab7438ca5b78fe8f52`, `83d9ded22698371ca5121f84c6e1a00f9ee5864c` — campaign strategy context.
+- Implemented:
+  - selected product/offer/content/campaign grounding;
+  - review gate before persistence;
+  - fail-closed malformed model output;
+  - explicit validation errors;
+  - campaign strategy context preservation.
 
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `...`
+## 2026-10-06 — Optimizer evidence and experiment learning
 
-## 2026-10-06 — Provider-neutral commerce adapter contract
+- Commits include:
+  - `bfbc830a02825f1f602c624c4e6fe0a6a91f4dfa` — evidence-ranked opportunities
+  - `b41ee495cf44ef5da1eecd1aca28c77d3f5bbd65` — evidence-ranked experiments
+  - `946331dd4f5e93264c46b11034f2bf8b0169a162` — deterministic experiment ranking
+  - `8bdef61fb8e6e83ffcf75b7f15fb5c98aa9c86ff` — classify experiments by historical evidence
+  - `8b5a07ccd85d5467b3bef0ad179b6c15c8498e18` — deterministic dispositions
+  - `79711495aad9dae8ea218f8fb0423656a08da0b4` — persist dispositions
+  - `74baac63fff2fe9ca69b8f1a250650308d972937`, `e4881c0aca367b60e8870a6c46a9c60c0bc64dac0` — surface/carry disposition through weekly review/approval
+  - `4265261dd577680dfe72f410a724eac061aee873`, `2a152e40c4eeb9525f0c1de3b609b4d0d6e627ca`, `54bcf76cce57a117f002297d6895512c7cb42e3e` — persist/surface experiment provenance
+  - `0d42a6fa9ab422bad1f6794b710e08d0b2554fec`, `2b692caf1e1f7d7386ae6a00711f607894b196ff` — expose learning signals.
+- Principle:
+  - observed evidence is surfaced explicitly;
+  - causal claims are not fabricated;
+  - weekly planning carries rationale, provenance and disposition.
 
-- **Status:** Implemented; not yet runtime-verified.
-- **Commit:** `3108264c8a4c90025e7779119b55af7f3ffb1cec`
-- **File:** `lib/commerce/providers/contracts.ts`
-- **Implemented behavior:**
-  - Defines provider-neutral operation names for draft, publish, reconcile, and sync.
-  - Defines a capability surface for draft, publish, reconciliation, synchronization, inventory, pricing, orders, returns, and webhooks.
-  - Defines bounded success, confirmed-failure, and ambiguous operation results with retryability/error metadata.
-  - Carries tenant/channel context without embedding provider-specific authentication assumptions.
-  - Keeps provider payload and response types opaque so provider mappers remain responsible for external schemas.
-  - Requires explicit live-publish confirmation in the adapter publish contract.
-- **Architecture review:** Shared channel and listing services were inspected and found to be provider-neutral; no WooCommerce-specific logic was introduced into the shared persistence layer.
-- **Verification limits:** Repository writes and source inspection succeeded through GitHub. Local TypeScript compilation, lint, automated tests, migration execution, and provider calls were not run in this environment.
-- **Next step:** Once the contract is reviewed, migrate the WooCommerce workflow to use the shared result types without changing behavior, then add contract-focused tests before introducing any Meesho client code.
+## 2026-10-06 — Social account reconnect/status hardening
 
+- Commit:
+  - `c86311028015b6d58d156095953f70494bb67f007` — merge account reconnect/status fixes.
+- Related commits:
+  - `dbfa9a78c47f71ece3c5436f49b5af621c7fb532`, `6579fe42505ee4712af9f39f019992601fe829bd` — Pinterest reconnect state/board behavior.
+  - `46303b94571257c3b46a096818d73e9dd7fa1036`, `35ccf4ea9126f88918e035c8ab8c8159ce568bb1`, `a4c1af895b6c4f34b97b996c6a38ad4cbdd0d349` — Google Business reconnect behavior.
+  - `ce1aeb3002eaf293d704e817ca4ed92ec6f2cd7a`, `5fb1e3907d0beccbb0d204f0d420be89d6a4de49` — scoped/reliable account status refresh.
+  - `0b75a9eadf1da6c57a0a97eff29c913fe1403873`, `e757e3165d6bfef6ce81f90e2b19f2aa6a96277b`, `3e2202a5d890f4a657dbc11c93f7cdc8be0f2e73` — hide disconnected targets from post surfaces.
+- Implemented:
+  - reconnect no longer forces unrelated selections;
+  - status refresh is user-scoped;
+  - disconnected targets are excluded from publishable post views.
 
-## 2026-10-06 — Meesho architecture status update
+## 2026-10-05 — Automated Vitest execution in CI
 
-- **Status:** Documentation updated; Meesho provider implementation remains blocked.
-- **Commit:** `65f0b6ab7743dc3a568a4fd694db4ea8ebb6b97f`
-- **Canonical status:** `docs/PROJECT_STATUS.md` now records the provider-neutral contract work, exact commits, verification limits, Meesho blocker, and next action.
-- **Current blocker:** No authoritative Meesho API/partner contract or authorized test access has been established, so no Meesho-specific client, authentication flow, endpoint, publish route, or migration is being claimed or added.
-- **Next action:** Migrate WooCommerce to the provider-neutral contract with behavior-preserving tests, then establish provider dispatch before returning to Meesho implementation.
+- Commits:
+  - `5bdbf1bac424722dfb2c98319d5f471f2e8fe727` — test scripts
+  - `ee11425b2015bef8ab57def60f1394482fbcd113` — run Vitest in quality workflow.
+- Implemented:
+  - `npm test` → `vitest run`;
+  - `npm run test:watch`;
+  - CI test execution before lint/build.
+- Verification:
+  - workflow configuration is present;
+  - the latest overall quality result must still be observed before claiming green CI.
+
+## 2026-09-24 to 2026-09-23 — WooCommerce publish foundation
+
+Historical implementation established:
+- duplicate connection protection;
+- guarded publish endpoint;
+- durable `commerce_publish_attempts`;
+- idempotency enforcement;
+- ambiguous provider outcome classification;
+- reconciliation endpoint and identity validation;
+- stable error handling.
+
+## 2026-09-10 and earlier — Amazon foundation
+
+Historical implementation established:
+- Amazon LWA OAuth;
+- product-type discovery fallbacks;
+- linked schema retrieval;
+- schema-aware product editor;
+- conditional requirement evaluation;
+- seller-friendly identity;
+- explicit typed identifier/ASIN handling;
+- product-only validation preview;
+- separation of offer/fulfillment fields;
+- Amazon catalog matching foundation;
+- offer-layer foundation.
+
+Historical incidents that shaped the architecture:
+- product details SQL alias issue;
+- Shopify status typing;
+- Shopify sync stuck before catch/finalization;
+- mistaken AWS/IAM expectation for Amazon LWA;
+- Amazon structured-response `[object Object]` rendering;
+- exact product-type lookup failures;
+- schema link retrieval;
+- conditional requirements activating after data entry;
+- Amazon 90248 from operational fulfillment data in product preview;
+- Amazon 90188 from invalid external identifier.
+
+## 2026-09-08 — Payment/refund audit
+
+Historical validation passed a critical failed-refund → new-idempotency-key retry → successful provider refund scenario.
+
+Production-hardening remains deferred:
+- webhook edge cases;
+- ambiguous provider failures;
+- reconciliation;
+- concurrency/idempotency;
+- authorization/security;
+- operational readiness;
+- test-data cleanup.
+
+Do not treat the audit as current production certification.
+
+## Persistent verification rule
+
+Every implementation entry must distinguish:
+- repository/source inspection;
+- automated test evidence;
+- build/type/lint evidence;
+- database/migration execution;
+- real provider verification.
+
+Never convert “implemented” to “verified” or “production-ready” without the corresponding evidence.
