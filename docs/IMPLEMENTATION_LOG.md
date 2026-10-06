@@ -427,3 +427,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - A unique-constraint race now resolves to the existing tenant-owned listing and continues the draft mapping transaction.
 - This complements the existing listing row lock for already-created listings.
 - Tests/lint/build remain deferred until the implementation pass is complete.
+
+
+## 2026-10-06 — Commerce draft race transaction correction
+
+- Added savepoint-based recovery around concurrent `product_listings` creation.
+- This is required because PostgreSQL marks the transaction failed after a constraint violation; the recovery SELECT now runs after `ROLLBACK TO SAVEPOINT`.
+- Non-unique errors remain fatal and preserve the original failure.
+- Tests/lint/build remain deferred until the implementation pass is complete.
