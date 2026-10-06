@@ -40,7 +40,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const itemResult = await client.query(
       `SELECT ci.*, c.id AS campaign_id FROM marketing_content_items ci
        JOIN marketing_campaigns c ON c.id = ci.campaign_id AND c.user_id = ci.user_id
-       WHERE ci.id = $1 AND ci.user_id = $2 FOR SHARE`, [contentItemId, userId]);
+       WHERE ci.id = $1 AND ci.user_id = $2 FOR UPDATE`, [contentItemId, userId]);
     const item = itemResult.rows[0];
     if (!item) { await client.query("ROLLBACK"); return jsonError("Content item not found", 404); }
     if (item.status === "converted" && variantId === null) {
@@ -56,7 +56,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (variantId !== null) {
       const variantResult = await client.query<ContentVariant>(
         `SELECT id, platform, hook, body, cta, media_id FROM marketing_content_item_variants
-         WHERE id = $1 AND content_item_id = $2 AND user_id = $3 AND status IN ('draft','ready') FOR SHARE`,
+         WHERE id = $1 AND content_item_id = $2 AND user_id = $3 AND status IN ('draft','ready') FOR UPDATE`,
         [variantId, contentItemId, userId]);
       variant = variantResult.rows[0] ?? null;
       if (!variant) { await client.query("ROLLBACK"); return jsonError("Content variant not found", 404); }
