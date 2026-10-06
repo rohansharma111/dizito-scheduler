@@ -257,3 +257,53 @@ Use this compact format for future entries:
 - Next action:
   - <specific follow-up>
 ```
+
+### 2026-10-06 — Meesho provider architecture hardening
+
+- Status: Implemented / Blocked for provider-specific implementation
+- Commits:
+  - `3108264c8a4c90025e7779119b55af7f3ffb1cec` — provider-neutral adapter contracts
+  - `3754711aabba2cffab7d341ca2488b477bba9a35` — project status update
+  - `36fdc48bfbd8bdaa68b0cb7a90ee03e4c84e3be5` — Meesho architecture/security audit refresh
+- Files:
+  - `lib/commerce/providers/contracts.ts`
+  - `docs/MEESHO_PROVIDER_ARCHITECTURE_AUDIT.md`
+  - `docs/IMPLEMENTATION_LOG.md`
+- Implementation:
+  - Added a provider-neutral operation/capability/result contract without assuming Meesho API behavior.
+  - Confirmed shared channel/listing persistence is provider-neutral and tenant-scoped.
+  - Confirmed WooCommerce credential retrieval is owner-scoped before decryption.
+- Verification:
+  - GitHub source inspection and repository writes completed.
+  - Local build, lint, type-check, automated tests, migration execution, database execution, and provider calls were not run.
+- Remaining risk/blocker:
+  - Meesho-specific client/auth/publish code remains blocked pending authoritative Meesho API/partner documentation and authorized test access.
+- Next action:
+  - Migrate WooCommerce workflow to the shared contract with behavior-preserving tests, then establish provider dispatch. Do not implement Meesho endpoints until the external contract is verified.
+
+## 10. Decision log
+
+| Date | Decision | Reason |
+|---|---|---|
+| 2026-09-22 | Maintain this file as the canonical project tracker | Keep project vision, progress, pending work, verification, and launch gates visible to the user and future contributors |
+| 2026-09-22 | Treat WooCommerce publishing as guarded foundation only | Live provider writes require idempotency, durable state, retries, reconciliation, and controlled verification |
+| 2026-09-22 | Preserve Amazon catalog-first direction in parallel | Amazon matching and offer separation remain important to the long-term commerce architecture |
+
+## 11. Update template
+
+Use this compact format for future entries:
+
+```md
+### YYYY-MM-DD — <change>
+
+- Status: Implemented / Verified / Production-ready / Blocked / Deferred
+- Commit: `<sha>`
+- Files:
+  - `<path>`
+- Verification:
+  - <exact command, provider check, or reason not run>
+- Remaining risk:
+  - <known limitation>
+- Next action:
+  - <specific follow-up>
+```
