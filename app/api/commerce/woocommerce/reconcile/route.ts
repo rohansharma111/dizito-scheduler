@@ -26,8 +26,9 @@ export async function GET(request: Request) {
               l.status AS listing_status, l.sync_status, l.last_error, l.external_id AS listing_external_id
        FROM commerce_publish_attempts a
        JOIN product_listings l ON l.id = a.listing_id
+       JOIN commerce_channels c ON c.id = a.channel_id AND c.user_id = a.user_id
        WHERE a.channel_id = $1 AND a.listing_id = $2 AND a.idempotency_key = $3
-         AND a.user_id = $4 AND l.user_id = $4
+         AND a.user_id = $4 AND l.user_id = $4 AND c.provider = 'woocommerce'
        LIMIT 1`,
       [channelId, listingId, idempotencyKey, userId],
     );
