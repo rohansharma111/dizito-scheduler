@@ -81,6 +81,43 @@ describe("flipkartAdapter", () => {
     expect(result).toMatchObject({ operation: "draft", status: "succeeded" });
   });
 
+
+  it("normalizes a confirmed reconciliation external id", async () => {
+    mocks.reconcile.mockResolvedValue({
+      operationId: "operation-1",
+      listingId: "listing-1",
+      provider: "flipkart",
+      status: "succeeded",
+      providerResult: { externalId: "FK-123" },
+      externalIdConfirmed: true,
+    });
+
+    const result = await flipkartAdapter.reconcilePublish({
+      context: { channelId: "channel-1", userId: 7 },
+      payload: {
+        action: "reconcile",
+        input: {
+          channelId: "payload-channel",
+          operationId: "operation-1",
+          listingId: "listing-1",
+          skuIds: ["SKU-1"],
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      operation: "reconcile",
+      status: "succeeded",
+      externalId: "FK-123",
+    });
+    expect(mocks.reconcile).toHaveBeenCalledWith(7, {
+      channelId: "context-channel",
+      operationId: "operation-1",
+      listingId: "listing-1",
+      skuIds: ["SKU-1"],
+    });
+  });
+
   it("normalizes a disabled live publish to a provider-neutral failure", async () => {
     mocks.preparePublish.mockResolvedValue({
       operation: {
