@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prepareWooCommerceListingDraft } from "@/lib/platforms/woocommerce/draft";
+import { requireCommerceProviderAdapter } from "@/lib/commerce/providers/service";
+import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adapter";
 
 export async function POST(request: Request) {
   try {
@@ -13,13 +14,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     const channelId = typeof body.channelId === "string" ? body.channelId.trim() : "";
     const productId = typeof body.productId === "string" ? body.productId.trim() : "";
-    const product = body.product && typeof body.product === "object" && !Array.isArray(body.product)
-      ? body.product
-      : null;
+    const product =
+      body.product && typeof body.product === "object" && !Array.isArray(body.product)
+        ? body.product
+        : null;
     const variants = Array.isArray(body.variants) ? body.variants : [];
-    const providerMetadata = body.providerMetadata && typeof body.providerMetadata === "object" && !Array.isArray(body.providerMetadata)
-      ? body.providerMetadata
-      : {};
+    const providerMetadata =
+      body.providerMetadata &&
+      typeof body.providerMetadata === "object" &&
+      !Array.isArray(body.providerMetadata)
+        ? body.providerMetadata
+        : {};
 
     if (!channelId || !productId || !product) {
       return NextResponse.json(
@@ -44,41 +49,57 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await prepareWooCommerceListingDraft(Number(session.user.id), {
-      channelId,
-      productId,
-      product,
-      providerMetadata,
-      variants: variants.map((variant: { variantId: string; externalId?: unknown; providerMetadata?: unknown }) => ({
-        variantId: variant.variantId.trim(),
-        externalId: typeof variant.externalId === "string" ? variant.externalId : null,
-        providerMetadata:
-          variant.providerMetadata && typeof variant.providerMetadata === "object" && !Array.isArray(variant.providerMetadata)
-            ? variant.providerMetadata as Record<string, unknown>
-            : {},
-      })),
+    const adapter = requireCommerceProviderAdapter("woocommerce");
+    const payload = {
+      action: "draft",
+      input: {
+        channelId,
+        productId,
+        product,
+        providerMetadata,
+        variants: variants.map(
+          (variant: {
+            variantId: string;
+            externalId?: unknown;
+            providerMetadata?: unknown;
+          }) => ({
+            variantId: variant.variantId.trim(),
+            externalId: typeof variant.externalId === "string" ? variant.externalId : null,
+            providerMetadata:
+              variant.providerMetadata &&
+              typeof variant.providerMetadata === "object" &&
+              !Array.isArray(variant.providerMetadata)
+                ? (variant.providerMetadata as Record<string, unknown>)
+                : {},
+          }),
+        ),
+      },
+    } satisfies WooCommerceAdapterPayload;
+
+    const result = await adapter.prepareDraft({
+      context: { channelId, userId: Number(session.user.id) },
+      payload,
     });
 
-    if (result.error === "CHANNEL_NOT_FOUND") {
-      return NextResponse.json({ success: false, error: "Channel not found" }, { status: 404 });
+    if (result.status === "failed" && result.error) {
+      const status =
+        result.error.code === "CHANNEL_NOT_FOUND" || result.error.code === "PRODUCT_NOT_FOUND"
+          ? 404
+          : 400;
+      return NextResponse.json(
+        { success: false, error: result.error.code },
+        { status },
+      );
     }
 
-    if (result.error === "INVALID_PROVIDER") {
-      return NextResponse.json({ success: false, error: "Channel is not a WooCommerce channel" }, { status: 400 });
-    }
-
-    if (result.error === "PRODUCT_NOT_FOUND") {
-      return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
-    }
-
-    if (result.error === "VARIANTS_REQUIRED" || result.error === "VARIANT_NOT_FOUND") {
-      return NextResponse.json({ success: false, error: "Invalid product variants" }, { status: 400 });
-    }
-
+    const data =
+      result.data && typeof result.data === "object"
+        ? (result.data as { listing?: unknown; payload?: unknown })
+        : {};
     return NextResponse.json({
       success: true,
-      listing: result.listing,
-      payload: "payload" in result ? result.payload : undefined,
+      listing: data.listing,
+      payload: data.payload,
     });
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/draft error:", error);
