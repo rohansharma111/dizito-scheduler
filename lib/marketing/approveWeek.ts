@@ -27,6 +27,7 @@ export type ApprovedWeeklyStrategy = {
       mediaId?: number | null;
       plannedFor?: string | null;
       evidence?: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
+      supportingExperimentIds?: number[];
     }>;
   }>;
 };
@@ -162,6 +163,17 @@ export async function persistApprovedWeek(
       if (campaignId === null) throw new Error("Unable to scope weekly experiment to approved campaign");
       if (contentItemId === null) throw new Error("Unable to scope weekly experiment to approved content item");
 
+      const supportingExperimentIds = [...new Set(strategy.campaigns.flatMap((campaign) => (campaign.contentItems ?? []).flatMap((item) => item.supportingExperimentIds ?? []).map(Number).filter(Number.isFinite)))];
+      if (supportingExperimentIds.length) {
+        const supportingExperiments = await client.query(
+          `SELECT id FROM marketing_experiments WHERE id=ANY($1::bigint[]) AND user_id=$2 AND status='completed'`,
+          [supportingExperimentIds, userId],
+        );
+        if (supportingExperiments.rowCount !== supportingExperimentIds.length) throw new Error("Invalid supporting experiment reference");
+      }
+
+      const experimentProvenance = { scope: "approved_weekly_content_item", campaignId, contentItemId, weekStart, weekEnd, supportingExperimentIds };
+
       await client.query(
         `INSERT INTO marketing_experiments
          (user_id, campaign_id, content_item_id, variant_id, target_type, target_field, target_metadata, name, hypothesis, change_description, metric, status, starts_at, ends_at, baseline_starts_at, baseline_ends_at)
@@ -172,7 +184,7 @@ export async function persistApprovedWeek(
           userId,
           campaignId,
           contentItemId,
-          { scope: "approved_weekly_content_item", campaignId, contentItemId, weekStart, weekEnd },
+          experimentProvenance,
           "Weekly experiment " + weekStart,
           strategy.experiment.hypothesis,
           strategy.experiment.change,
