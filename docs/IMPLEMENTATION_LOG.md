@@ -345,3 +345,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added migration `017_commerce_channel_identity_uniqueness.sql` with a tenant/provider/external-account unique index.
 - Updated `createCommerceChannel` to catch PostgreSQL unique-constraint races and return the authoritative existing channel for concrete external account identities.
 - This protects OAuth reconnect flows from duplicate channel creation under concurrent callbacks.
+
+
+## 2026-10-06 — WooCommerce ambiguity propagation hardening
+
+- Updated WooCommerce publish to return an explicit reconciliation-required result when provider mutation succeeded or network state is uncertain.
+- Updated WooCommerce adapter to preserve that result as `ambiguous` rather than `failed`.
+- Updated WooCommerce reconciliation to mark provider-state uncertainty as ambiguous and the reconcile route to return HTTP 202.
+- Deterministic reconciliation errors remain normal failed outcomes.
