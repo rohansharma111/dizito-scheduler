@@ -45,6 +45,19 @@ export async function PATCH(
   const existing = await getContentItem(userId, contentItemId);
   if (!existing) return jsonError("Content item not found", 404);
 
+  if (body.status !== undefined && body.status !== existing.status) {
+    const allowedTransitions: Record<string, string[]> = {
+      draft: ["planned", "ready", "archived"],
+      planned: ["ready", "archived"],
+      ready: ["archived"],
+      converted: [],
+      archived: [],
+    };
+    if (!allowedTransitions[existing.status]?.includes(body.status)) {
+      return jsonError("Invalid status transition from " + existing.status + " to " + body.status);
+    }
+  }
+
   if (existing.status === "converted") {
     const mutableFields = ["contentType", "format", "topic", "angle", "hook", "body", "cta", "channelStrategy", "mediaId", "plannedFor", "productIds"];
     if (mutableFields.some((field) => body[field] !== undefined)) {
