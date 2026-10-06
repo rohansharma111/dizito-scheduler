@@ -38,12 +38,6 @@ export async function POST(request: Request) {
     if (!Number.isSafeInteger(userId) || userId <= 0) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return NextResponse.json(
-        { success: false, error: "Invalid authenticated user" },
-        { status: 401 },
-      );
-    }
 
     const listing = await publishShopifyProduct(userId, channelId, productId, true);
 
