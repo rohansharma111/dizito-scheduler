@@ -94,7 +94,7 @@ export async function saveFlipkartCredentials(input: FlipkartCredentials) {
   );
 }
 
-export async function getFlipkartCredentials(channelId: string) {
+export async function getFlipkartCredentials(channelId: string, userId?: number) {
   const result = await pool.query(
     `
       SELECT
@@ -103,9 +103,13 @@ export async function getFlipkartCredentials(channelId: string) {
         refresh_token_expires_at
       FROM commerce_channel_credentials
       WHERE channel_id = $1
+        AND ($2::bigint IS NULL OR EXISTS (
+          SELECT 1 FROM commerce_channels c
+          WHERE c.id = $1 AND c.user_id = $2
+        ))
       LIMIT 1
     `,
-    [channelId],
+    [channelId, userId ?? null],
   );
 
   const row = result.rows[0];
