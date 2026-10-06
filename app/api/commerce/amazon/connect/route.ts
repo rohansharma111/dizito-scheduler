@@ -16,6 +16,9 @@ export async function GET(request: Request) {
 
   try {
     const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
     if (!Number.isInteger(userId) || userId <= 0) {
       return NextResponse.json({ success: false, error: "Invalid user session" }, { status: 401 });
     }
