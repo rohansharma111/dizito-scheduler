@@ -24,6 +24,7 @@ export type MarketingContentItem = {
   plannedFor: string | null;
   productIds: number[];
   postIds: number[];
+  postLinks: Array<{ postId: number; variantId: number | null }>;
   planningMetadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -54,6 +55,10 @@ function mapContentItem(row: any): MarketingContentItem {
     plannedFor: row.planned_for,
     productIds: (row.product_ids ?? []).map(Number),
     postIds: (row.post_ids ?? []).map(Number),
+    postLinks: (row.post_links ?? []).map((link: any) => ({
+      postId: Number(link.postId),
+      variantId: link.variantId == null ? null : Number(link.variantId),
+    })),
     planningMetadata: row.planning_metadata ?? {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -90,7 +95,16 @@ export async function listContentItems(userId: number, campaignId?: number) {
         COALESCE(
           ARRAY_AGG(DISTINCT cipost.post_id) FILTER (WHERE cipost.post_id IS NOT NULL),
           '{}'
-        ) AS post_ids
+        ) AS post_ids,
+        COALESCE(
+          ARRAY_AGG(
+            DISTINCT jsonb_build_object(
+              'postId', cipost.post_id,
+              'variantId', cipost.variant_id
+            )
+          ) FILTER (WHERE cipost.post_id IS NOT NULL),
+          '{}'
+        ) AS post_links
       FROM marketing_content_items ci
       JOIN marketing_campaigns c ON c.id = ci.campaign_id AND c.user_id = ci.user_id
       LEFT JOIN marketing_offers o ON o.id = c.offer_id AND o.user_id = ci.user_id
@@ -132,7 +146,16 @@ export async function getContentItem(userId: number, contentItemId: number) {
         COALESCE(
           ARRAY_AGG(DISTINCT cipost.post_id) FILTER (WHERE cipost.post_id IS NOT NULL),
           '{}'
-        ) AS post_ids
+        ) AS post_ids,
+        COALESCE(
+          ARRAY_AGG(
+            DISTINCT jsonb_build_object(
+              'postId', cipost.post_id,
+              'variantId', cipost.variant_id
+            )
+          ) FILTER (WHERE cipost.post_id IS NOT NULL),
+          '{}'
+        ) AS post_links
       FROM marketing_content_items ci
       JOIN marketing_campaigns c ON c.id = ci.campaign_id AND c.user_id = ci.user_id
       LEFT JOIN marketing_offers o ON o.id = c.offer_id AND o.user_id = ci.user_id
