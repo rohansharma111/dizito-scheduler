@@ -2,39 +2,57 @@
 
 ## Status
 
-- Phase: OAuth onboarding + verified listing mutation contract + idempotent publish preparation + read-before-retry reconciliation + validated drafts + read-only client + token-refresh foundation
+- Phase: OAuth onboarding + verified listing mutation contract + idempotent publish preparation + fail-closed mutation executor + read-before-retry reconciliation
 - Status: Implemented; runtime verification pending
 - Branch: `feature/commerce-flipkart`
-- Live publishing: Not enabled
+- Live publishing: Disabled by default
 
-## Reconciliation foundation
+## Mutation executor
 
-`lib/platforms/flipkart/reconcile.ts` adds a safe read-before-retry flow for ambiguous publish operations.
+`lib/platforms/flipkart/publish.ts` now contains the provider mutation execution boundary.
 
-It:
+Supported operation paths:
 
-1. Loads the tenant-scoped Flipkart channel and current credentials.
-2. Reads the relevant Flipkart listing(s) through the verified listing GET API.
-3. Returns the provider response for explicit reconciliation.
-4. Does not infer mutation success merely from an HTTP 200.
-5. Requires an explicit external listing ID before the operation can be marked `succeeded`.
+- create → `POST /listings/v3`
+- update → `POST /listings/v3/update`
 
-This is intentionally conservative because the provider response may contain account/listing-specific fields that cannot safely be interpreted without a verified response fixture or live sandbox verification.
+Execution is fail-closed unless:
 
-## Current publish lifecycle
+`FLIPKART_LIVE_PUBLISH_ENABLED=true`
 
-`prepared` → `in_progress` → `succeeded` / `failed` / `unknown`
+is explicitly configured.
 
-For an ambiguous timeout:
+Even when enabled:
 
-`in_progress` → `unknown` → **read Flipkart listing** → explicit confirmation → `succeeded`
+1. The operation is marked `in_progress`.
+2. The tenant-scoped Flipkart credentials are loaded.
+3. The verified payload is sent to Flipkart.
+4. A normal provider response is returned as `submitted`, not `succeeded`.
+5. Timeout/ambiguous outcomes become `unknown`.
+6. A reconciliation step must confirm the external listing ID before the operation becomes `succeeded`.
+7. Non-timeout failures become `failed`.
 
-A retry should not be issued merely because the original request timed out.
+This avoids treating a transport-level success or failure as proof of the final marketplace state.
 
-## Remaining before live publishing
+## Reconciliation
 
-- Verify real create/update response fixtures or sandbox responses.
-- Define exact provider-response-to-external-ID extraction.
-- Implement actual mutation calls behind the operation ledger.
-- Update product listing/variant external IDs only after confirmed success.
-- Add automated unit/integration coverage once the repository can be built in a network-capable environment.
+`lib/platforms/flipkart/reconcile.ts` performs a provider read using the verified listing GET endpoint. It intentionally does not guess the external ID from an unverified response shape.
+
+The intended lifecycle is:
+
+`prepared` → `in_progress` → `submitted` → **reconcile** → `succeeded`
+
+or:
+
+`in_progress` → `unknown` → **reconcile** → `succeeded` / manual resolution
+
+## Remaining before production enablement
+
+- Obtain a verified sandbox/approved-seller mutation response fixture.
+- Implement exact external-ID extraction from the verified response.
+- Persist confirmed external IDs to `product_listings` / `product_listing_variants`.
+- Add automated tests for payload validation, idempotency conflicts, timeout classification, and reconciliation.
+- Perform an explicit approved sandbox mutation test.
+- Only then consider enabling `FLIPKART_LIVE_PUBLISH_ENABLED`.
+
+No live mutation has been executed by this implementation.
