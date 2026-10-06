@@ -59,7 +59,8 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   const primaryGoal = activeGoals[0] ?? null;
   const strategyRecommendations = Array.isArray(strategyHint?.recommendations) ? strategyHint.recommendations : [];
   const optimizationOpportunities = Array.isArray(strategyHint?.optimization?.opportunities) ? strategyHint.optimization.opportunities : [];
-  // The optimizer returns opportunities in deterministic evidence-score order. Preserve that order here so the weekly planner uses the highest-evidence recommendation rather than re-ranking by LLM priority labels.\n  const optimizationOpportunity = optimizationOpportunities[0] ?? null;
+  // The optimizer returns opportunities in deterministic evidence-score order. Preserve that order here so the weekly planner uses the highest-evidence recommendation rather than re-ranking by LLM priority labels.
+  const optimizationOpportunity = optimizationOpportunities[0] ?? null;
   const optimizationExperiment = strategyHint?.optimization?.experiments?.find((item) => item.hypothesis && item.change && item.metric) ?? null;
   const supportingExperimentIds = Array.isArray(optimizationOpportunity?.supportingExperimentIds)
     ? optimizationOpportunity.supportingExperimentIds.map(Number).filter(Number.isFinite)
