@@ -94,7 +94,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     for (const account of accounts.rows) {
       await client.query(`INSERT INTO post_targets (post_id, social_account_id, platform, status) VALUES ($1,$2,$3,'scheduled')`, [post.id, account.id, account.platform]);
     }
-    await client.query(`INSERT INTO marketing_content_item_posts (content_item_id, post_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [contentItemId, post.id]);
+    await client.query(`INSERT INTO marketing_content_item_posts (content_item_id, post_id, variant_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`, [contentItemId, post.id, variant ? Number(variant.id) : null]);
     await client.query(`INSERT INTO marketing_campaign_posts (campaign_id, post_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [item.campaign_id, post.id]);
     await client.query(`UPDATE marketing_content_items SET status='converted', updated_at=now() WHERE id=$1 AND user_id=$2`, [contentItemId, userId]);
     if (variant) await client.query(`UPDATE marketing_content_item_variants SET status='converted', updated_at=now() WHERE id=$1 AND user_id=$2`, [variant.id, userId]);
