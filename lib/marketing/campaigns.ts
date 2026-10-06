@@ -48,6 +48,8 @@ export type MarketingCampaign = {
 
 export async function listCampaigns(userId: number): Promise<MarketingCampaign[]> {
   const result = await pool.query(
+export async function getCampaign(userId: number, campaignId: number): Promise<MarketingCampaign | null> {
+  const result = await pool.query(
     `SELECT c.id, c.user_id, c.goal_id, c.offer_id, c.name, c.objective, c.audience,
             c.cta, c.channel_strategy, c.status, c.starts_at, c.ends_at,
             c.created_at, c.updated_at,
