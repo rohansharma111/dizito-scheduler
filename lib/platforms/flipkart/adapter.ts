@@ -122,23 +122,13 @@ export const flipkartAdapter: CommerceProviderAdapter<
       ...(lookupKey ? { lookupKey } : {}),
     });
 
-    if (result.externalIdConfirmed && result.providerResult) {
-      const confirmedId =
-        typeof result.providerResult === "object" &&
-        result.providerResult !== null &&
-        "externalId" in result.providerResult &&
-        typeof (result.providerResult as { externalId?: unknown }).externalId === "string"
-          ? (result.providerResult as { externalId: string }).externalId
-          : undefined;
-
-      if (confirmedId) {
-        return {
-          operation: "reconcile",
-          status: "succeeded",
-          externalId: confirmedId,
-          data: result,
-        };
-      }
+    if (result.externalIdConfirmed && result.externalId) {
+      return {
+        operation: "reconcile",
+        status: "succeeded",
+        externalId: result.externalId,
+        data: result,
+      };
     }
 
     return {
