@@ -450,3 +450,10 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 ### Provider adapter outcome normalization — 2026-10-06
 - WooCommerce adapter now checks reconciliation-required outcomes before generic error normalization, preserving ambiguous publish state and preventing accidental retry classification.
 - Flipkart publish adapter outcomes are normalized so disabled/not-found/failed states cannot be mistaken for reconciliation success.
+
+### Flipkart reconciliation state-consistency hardening — 2026-10-06
+- Reconciliation validates the tenant/listing/provider-bound publish operation before provider lookup.
+- Confirmed external identity is now persisted transactionally to both the provider-neutral publish ledger and product listing state.
+- Existing conflicting listing external identities are protected from overwrite.
+- Flipkart reconciliation now returns provider-neutral deterministic failures or retryable ambiguity rather than leaking raw exceptions.
+- WooCommerce reconciliation POST authentication now uses the validated session user ID consistently.
