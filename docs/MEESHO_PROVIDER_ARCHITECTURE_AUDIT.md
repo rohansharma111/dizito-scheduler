@@ -1,7 +1,7 @@
 # Meesho Provider Architecture Audit
 
 **Repository:** `rohansharma111/dizito-scheduler`  
-**Branch:** `feature/commerce-meesho`  
+**Branch:** `main`  
 **Reviewed:** 2026-10-06  
 **Status:** Discovery / architecture review only
 
