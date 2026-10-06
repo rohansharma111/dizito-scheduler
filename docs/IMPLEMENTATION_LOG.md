@@ -435,3 +435,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - This is required because PostgreSQL marks the transaction failed after a constraint violation; the recovery SELECT now runs after `ROLLBACK TO SAVEPOINT`.
 - Non-unique errors remain fatal and preserve the original failure.
 - Tests/lint/build remain deferred until the implementation pass is complete.
+
+
+## 2026-10-06 — Commerce listing-media concurrency hardening
+
+- Converted listing-media upsert to an explicit transaction.
+- Locks the tenant-owned listing before checking/updating media mappings.
+- Locks the current mapping and performs external-ID conflict detection within the transaction.
+- Preserves existing external IDs and provider metadata merge behavior.
+- Tests/lint/build remain deferred.
