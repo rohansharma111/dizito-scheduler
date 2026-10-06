@@ -37,6 +37,7 @@ function decrypt(value: string) {
 
 export interface WooCommerceCredentials {
   channelId: string;
+  userId: number;
   consumerKey: string;
   consumerSecret: string;
 }
@@ -47,29 +48,35 @@ export async function saveWooCommerceCredentials(input: WooCommerceCredentials) 
     consumerSecret: input.consumerSecret,
   });
 
-  await pool.query(
+  const result = await pool.query(
     `
       INSERT INTO commerce_channel_credentials (channel_id, access_token_encrypted, scopes)
-      VALUES ($1, $2, $3)
+      SELECT c.id, $2, $3
+      FROM commerce_channels c
+      WHERE c.id = $1 AND c.user_id = $4
       ON CONFLICT (channel_id)
       DO UPDATE SET
         access_token_encrypted = EXCLUDED.access_token_encrypted,
         scopes = EXCLUDED.scopes,
         updated_at = now()
+      RETURNING channel_id
     `,
-    [input.channelId, encrypt(payload), "woocommerce:consumer_credentials"],
+    [input.channelId, encrypt(payload), "woocommerce:consumer_credentials", input.userId],
   );
+
+  if (!result.rows[0]) throw new Error("WooCommerce channel not found for this user");
 }
 
-export async function getWooCommerceCredentials(channelId: string) {
+export async function getWooCommerceCredentials(channelId: string, userId: number) {
   const result = await pool.query(
     `
-      SELECT access_token_encrypted
-      FROM commerce_channel_credentials
-      WHERE channel_id = $1
+      SELECT credentials.access_token_encrypted
+      FROM commerce_channel_credentials credentials
+      INNER JOIN commerce_channels channels ON channels.id = credentials.channel_id
+      WHERE credentials.channel_id = $1 AND channels.user_id = $2
       LIMIT 1
     `,
-    [channelId],
+    [channelId, userId],
   );
 
   const row = result.rows[0];
