@@ -121,10 +121,11 @@ export async function POST(
     if (!(MARKETING_PLATFORMS as readonly string[]).includes(platform)) return errorResponse("Unsupported platform");
 
     const item = await pool.query(
-      `SELECT id FROM marketing_content_items WHERE id = $1 AND user_id = $2`,
+      `SELECT id, status FROM marketing_content_items WHERE id = $1 AND user_id = $2`,
       [contentItemId, userId],
     );
     if (item.rowCount === 0) return errorResponse("Content item not found", 404);
+    if (item.rows[0].status === "converted") return errorResponse("Converted content items cannot be edited", 409);
 
     const existingVariant = await pool.query(
       `SELECT id, status
