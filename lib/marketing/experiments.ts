@@ -9,6 +9,9 @@ export type MarketingExperiment = {
   campaignId: number | null;
   contentItemId: number | null;
   variantId: number | null;
+  targetType: "campaign" | "content_item" | "variant" | null;
+  targetField: string | null;
+  targetMetadata: Record<string, unknown>;
   name: string;
   hypothesis: string;
   changeDescription: string;
@@ -98,6 +101,9 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             e.campaign_id AS "campaignId",
             e.content_item_id AS "contentItemId",
             e.variant_id AS "variantId",
+            e.target_type AS "targetType",
+            e.target_field AS "targetField",
+            e.target_metadata AS "targetMetadata",
             e.name,
             e.hypothesis,
             e.change_description AS "changeDescription",
