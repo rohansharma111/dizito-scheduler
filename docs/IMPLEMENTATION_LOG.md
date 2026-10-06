@@ -353,3 +353,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Updated WooCommerce adapter to preserve that result as `ambiguous` rather than `failed`.
 - Updated WooCommerce reconciliation to mark provider-state uncertainty as ambiguous and the reconcile route to return HTTP 202.
 - Deterministic reconciliation errors remain normal failed outcomes.
+
+
+## 2026-10-06 — Commerce channel access/update hardening
+
+- Removed unused unscoped Commerce channel lookup helper.
+- Serialized channel updates with a tenant-scoped `FOR UPDATE` transaction so metadata merges are based on the latest committed row.
+- Reconfirmed Shopify/Amazon credential persistence has channel FK + unique channel identity at the database layer and tenant/provider checks in application code.
