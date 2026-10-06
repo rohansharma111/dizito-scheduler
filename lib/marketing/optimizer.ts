@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getMarketingStrategyContext } from "@/lib/marketing/strategyContext";
+import { listContentVariantsForContentItems } from "@/lib/marketing/contentVariants";
 
 export type MarketingOptimization = {
   summary: string;
@@ -29,8 +30,8 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const campaignIds = new Set(context.campaigns.map((campaign) => campaign.id));
   const contentItems = context.contentItems;
   const contentItemIds = new Set(contentItems.map((item) => item.id));
-  const variantRows = await Promise.all(contentItems.slice(0, 50).map(async (item) => {    const result = await (await import("@/lib/db")).pool.query("SELECT id, content_item_id AS \"contentItemId\" FROM marketing_content_item_variants WHERE user_id = $1 AND content_item_id = $2", [userId, item.id]);    return result.rows;  }));
-  const variantById = new Map<number, number>(variantRows.flat().map((row) => [Number(row.id), Number(row.contentItemId)]));
+  const variants = await listContentVariantsForContentItems(userId, contentItems.slice(0, 50).map((item) => item.id));
+  const variantById = new Map<number, number>(variants.map((variant) => [variant.id, variant.contentItemId]));
   const validPriorities = new Set(["high", "medium", "low"]);
   return {
     summary: parsed.summary.trim(),
