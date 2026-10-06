@@ -43,8 +43,10 @@ export async function assertWooCommerceChannel(channelId: string) {
   return channel;
 }
 
-export async function getWooCommerceChannelConfig(channelId: string) {
-  const channel = await assertWooCommerceChannel(channelId);
+export async function getWooCommerceChannelConfig(channelId: string, userId: number) {
+  const channel = await getCommerceChannelById(channelId, userId);
+  if (!channel) throw new Error("WooCommerce channel not found");
+  if (channel.provider !== "woocommerce") throw new Error("Invalid WooCommerce channel provider");
   const userId = Number(channel.user_id);
   if (!Number.isFinite(userId)) throw new Error("WooCommerce channel owner is invalid");
   const credentials = await getWooCommerceCredentials(channelId, userId);
