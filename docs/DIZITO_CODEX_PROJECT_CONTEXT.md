@@ -475,3 +475,9 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 ### Shopify legacy publish safety checkpoint — 2026-10-06
 - Direct Shopify publishing now requires explicit live-publish confirmation at both the route and publisher boundaries.
 - The Shopify path remains legacy/direct rather than being represented as a shared durable provider operation; idempotency and durable mutation tracking remain a separate future hardening item.
+
+
+### Shopify publish concurrency checkpoint — 2026-10-06
+- Legacy direct Shopify publishing now serializes the same tenant/channel/product with a PostgreSQL advisory lock across the full remote mutation lifecycle.
+- This closes the concurrent-create race without inventing a Shopify idempotency contract.
+- Provider-native/durable crash recovery remains separate follow-up work.
