@@ -58,15 +58,34 @@ export default function AccountsPage() {
   async function refreshHealth() {
     setRefreshing(true);
 
-    await fetch("/api/accounts/health-check");
+    try {
+      const healthResponse = await fetch("/api/accounts/health-check", {
+        cache: "no-store",
+      });
 
-    const response = await fetch("/api/accounts");
+      if (!healthResponse.ok) {
+        throw new Error("Unable to refresh account status");
+      }
 
-    const data = await response.json();
+      const response = await fetch("/api/accounts", {
+        cache: "no-store",
+      });
 
-    setAccounts(data.accounts);
+      if (!response.ok) {
+        throw new Error("Unable to load accounts");
+      }
 
-    setRefreshing(false);
+      const data = await response.json();
+
+      setAccounts(data.accounts);
+      setPlan(data.user.plan);
+      setLimits(data.limits);
+    } catch (error) {
+      console.error("Account status refresh failed", error);
+      alert("Unable to refresh account status. Please try again.");
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   function getReconnectUrl(account: any) {
