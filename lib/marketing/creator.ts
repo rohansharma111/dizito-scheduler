@@ -6,7 +6,7 @@ import { MARKETING_PLATFORMS, type MarketingPlatform } from "@/lib/marketing/con
 export type CreateMarketingCopyInput = {
   contentType: string;
   format: string;
-  topic: string;
+  topic?: string;
   angle?: string;
   hook?: string;
   cta?: string;
