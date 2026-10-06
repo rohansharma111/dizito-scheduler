@@ -97,6 +97,7 @@ export async function GET(request: Request) {
     try {
       await saveAmazonCredentials({
         channelId: String(channel.id),
+        userId,
         refreshToken: token.refresh_token,
         refreshTokenExpiresAt: token.refresh_token_expires_in
           ? new Date(Date.now() + token.refresh_token_expires_in * 1000)
