@@ -43,7 +43,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
        WHERE ci.id = $1 AND ci.user_id = $2 FOR SHARE`, [contentItemId, userId]);
     const item = itemResult.rows[0];
     if (!item) { await client.query("ROLLBACK"); return jsonError("Content item not found", 404); }
-    if (item.status === "converted") { await client.query("ROLLBACK"); return jsonError("Content item has already been converted", 409); }
+    if (item.status === "converted" && variantId === null) {
+      await client.query("ROLLBACK");
+      return jsonError("Content item has already been converted", 409);
+    }
 
     const accounts = await client.query(`SELECT id, platform FROM social_accounts WHERE id = ANY($1) AND user_id = $2`, [selectedAccounts, userId]);
     if (accounts.rows.length !== selectedAccounts.length) { await client.query("ROLLBACK"); return jsonError("Invalid account selection"); }
