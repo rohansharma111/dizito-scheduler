@@ -67,6 +67,44 @@ export async function upsertProductListingMedia(
     return { error: "LISTING_MEDIA_NOT_FOUND" as const };
   }
 
+  const existing = await pool.query(
+    `
+    SELECT external_id, provider_metadata
+    FROM product_listing_media
+    WHERE listing_id = $1
+      AND product_media_id = $2
+    LIMIT 1
+    `,
+    [listingId, input.productMediaId],
+  );
+
+  const current = existing.rows[0];
+  const externalId =
+    input.externalId !== undefined ? input.externalId : current?.external_id ?? null;
+
+  if (externalId) {
+    const conflict = await pool.query(
+      `
+      SELECT id
+      FROM product_listing_media
+      WHERE listing_id = $1
+        AND external_id = $2
+        AND product_media_id <> $3
+      LIMIT 1
+      `,
+      [listingId, externalId, input.productMediaId],
+    );
+
+    if (conflict.rows[0]) {
+      return { error: "LISTING_MEDIA_EXTERNAL_ID_CONFLICT" as const };
+    }
+  }
+
+  const providerMetadata = {
+    ...(current?.provider_metadata ?? {}),
+    ...(input.providerMetadata ?? {}),
+  };
+
   const result = await pool.query(
     `
     INSERT INTO product_listing_media
