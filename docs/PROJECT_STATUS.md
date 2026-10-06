@@ -3,7 +3,7 @@
 **Last updated:** 2026-10-06  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Default branch:** `main`  
-**Latest observed commit:** `421c1c03c2074e0ed4340aed9ba98ad69eb8a9e3`  
+**Latest observed commit:** `d2ae5a76bcf11a10e14002d1f65ef562c29cf4db`  
 **Project:** Dizito — AI Commerce Operating System
 
 > This is the canonical working status document. Repository code/schema and observed verification are authoritative. “Implemented” does not mean “verified,” and “verified” does not mean “production-ready.”
@@ -100,6 +100,18 @@ The contract currently standardizes:
 - tenant/channel context
 - opaque provider payload/response types
 - explicit live-publish confirmation
+
+### Commerce code-level hardening checkpoint — 2026-10-06
+
+Completed code-level hardening before deferred test pass:
+- Flipkart draft/publish/reconcile routes now reject invalid session user identities before provider dispatch.
+- Provider-neutral publish success is bound to the tenant, listing, and provider before terminal success is persisted.
+- Provider-neutral dispatcher enforces draft/publish capabilities and live-publish confirmation at runtime, not only through TypeScript types.
+- WooCommerce channel credential/config lookup is tenant-scoped by authenticated user.
+- WooCommerce publish no longer marks a listing successful solely from the create response; it records an ambiguous/submitted attempt and requires provider read-back reconciliation before success.
+- WooCommerce adapter now exposes that publish state as provider-neutral `ambiguous / RECONCILIATION_REQUIRED` until reconciliation confirms the provider product.
+
+**Verification policy:** full test/lint/build pass is intentionally deferred until the remaining code-level implementation work is complete, per the development workflow for this phase.
 
 ### WooCommerce current state
 
