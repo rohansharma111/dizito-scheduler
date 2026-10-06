@@ -75,7 +75,8 @@ export async function POST(
       `
         INSERT INTO marketing_content_item_posts (content_item_id, post_id, variant_id)
         VALUES ($1, $2, $3)
-        ON CONFLICT DO NOTHING
+        ON CONFLICT (content_item_id, post_id)
+        DO UPDATE SET variant_id = COALESCE(marketing_content_item_posts.variant_id, EXCLUDED.variant_id)
       `,
       [contentItemId, postId, variantId],
     );
