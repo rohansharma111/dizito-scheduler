@@ -57,6 +57,13 @@ export async function PATCH(
     if (!variant) return errorResponse("Content variant not found", 404);
     if (variant.status === "converted") return errorResponse("Converted variants cannot be edited", 409);
 
+    const item = await pool.query(
+      `SELECT status FROM marketing_content_items WHERE id = $1 AND user_id = $2`,
+      [contentItemId, userId],
+    );
+    if (item.rowCount === 0) return errorResponse("Content item not found", 404);
+    if (item.rows[0].status === "converted") return errorResponse("Converted content items cannot be edited", 409);
+
     const mediaId = body.mediaId === undefined ? undefined : body.mediaId == null ? null : Number(body.mediaId);
     if (mediaId !== undefined) {
       if (mediaId !== null && (!Number.isInteger(mediaId) || mediaId <= 0)) return errorResponse("Invalid mediaId");
