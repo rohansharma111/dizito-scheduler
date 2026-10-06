@@ -4,6 +4,15 @@ import { listContentVariantsForContentItems } from "@/lib/marketing/contentVaria
 
 export type MarketingOptimization = {
   summary: string;
+  completedExperimentEvidence: Array<{
+    experimentId: number;
+    name: string;
+    hypothesis: string;
+    change: string;
+    metric: string;
+    resultSummary: string | null;
+    outcomes: Array<{ actionType: string; count: number; value: number }>;
+  }>;
   opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null }>;
   experiments: Array<{ hypothesis: string; change: string; metric: string }>;
   measurement: Array<{ metric: string; reason: string }>;
@@ -42,6 +51,20 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const validPriorities = new Set(["high", "medium", "low"]);
   return {
     summary: parsed.summary.trim(),
+    completedExperimentEvidence: context.completedExperiments.map((experiment) => ({
+      experimentId: experiment.id,
+      name: experiment.name,
+      hypothesis: experiment.hypothesis,
+      change: experiment.changeDescription,
+      metric: experiment.metric,
+      resultSummary: experiment.resultSummary,
+      outcomes: experiment.outcomes.map((outcome) => ({
+        actionType: outcome.actionType,
+        count: outcome.count,
+        value: outcome.value,
+      })),
+    })),
+
     opportunities: parsed.opportunities.slice(0, 8).map((item) => ({ action: String(item.action), rationale: String(item.rationale), campaignId: item.campaignId != null && campaignIds.has(Number(item.campaignId)) ? Number(item.campaignId) : null, contentItemId: item.contentItemId != null && contentItemIds.has(Number(item.contentItemId)) ? Number(item.contentItemId) : null, variantId: item.variantId != null && variantById.has(Number(item.variantId)) && (item.contentItemId == null || variantById.get(Number(item.variantId)) === Number(item.contentItemId)) ? Number(item.variantId) : null, priority: validPriorities.has(String(item.priority)) ? item.priority : "medium", observedOutcome: (() => { const variantId = item.variantId != null ? Number(item.variantId) : null; const contentItemId = item.contentItemId != null ? Number(item.contentItemId) : null; const variantOutcome = variantId != null ? context.impact.observedVariantSummary.find((outcome) => outcome.variantId === variantId) : null; const contentOutcome = contentItemId != null ? context.impact.observedContentSummary.find((outcome) => outcome.contentItemId === contentItemId) : null; const outcome = variantOutcome || contentOutcome; return outcome ? { actionType: outcome.actionType, count: outcome.count, value: outcome.value, platform: "platform" in outcome ? outcome.platform : null } : null; })() })),
     experiments: parsed.experiments.slice(0, 6).map((item) => ({ hypothesis: String(item.hypothesis), change: String(item.change), metric: String(item.metric) })),
     measurement: parsed.measurement.slice(0, 8).map((item) => ({ metric: String(item.metric), reason: String(item.reason) })),
