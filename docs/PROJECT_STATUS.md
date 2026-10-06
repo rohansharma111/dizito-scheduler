@@ -389,3 +389,24 @@ Use this compact format for future entries:
   - The repository still needs an observed CI run before these changes can be marked verified.
 - Next action:
   - Review the first CI result for the new test suite; fix any TypeScript/lint/test failures, then perform controlled Flipkart sandbox reconciliation/publish verification without enabling unrestricted production mutation.
+
+
+### 2026-10-06 — Flipkart provider dispatch and idempotency conflict hardening
+
+- Status: Implemented; runtime verification pending
+- Commits:
+  - `f613cb6308785908f94851a2269049396724e6ab` — classify idempotency key/payload conflicts as HTTP 409
+  - `5a90761a372d47b621a4529cfe7182344b920535` — add Flipkart dispatch coverage through the shared provider service
+  - `54e465641baf2deaa420bbb0e9a79e5c5a849e69` — add idempotency conflict route regression coverage
+- Implementation:
+  - Verified the Flipkart adapter is registered and reachable through the provider-neutral service for draft, publish, and reconciliation operations.
+  - Added service-level tests that exercise all three Flipkart provider-service dispatch paths.
+  - Publish idempotency-key conflicts and request-payload conflicts now return HTTP 409 rather than generic validation 400.
+- Verification:
+  - Repository source inspection completed.
+  - GitHub Actions remains configured for test/lint/build on `main`, but no workflow run is currently reported for the latest commits.
+  - No CI pass, local npm test/lint/build, database execution, or live provider call is claimed.
+- Remaining risk:
+  - Runtime verification remains the blocking evidence gap; Flipkart sandbox response/behavior is still not verified.
+- Next action:
+  - Once CI is observable, resolve any test/type/lint failures. Then run controlled sandbox reconciliation and publish verification with production mutation still disabled by default.
