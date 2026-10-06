@@ -138,7 +138,7 @@ export async function assertFlipkartChannel(channelId: string, userId: number) {
 
 export async function getFlipkartChannelConfig(channelId: string, userId: number) {
   const channel = await assertFlipkartChannel(channelId, userId);
-  const credentials = await getFlipkartCredentials(channelId);
+  const credentials = await getFlipkartCredentials(channelId, userId);
   if (!credentials) {
     throw new Error("Flipkart credentials not found");
   }
