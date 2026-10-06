@@ -46,6 +46,28 @@ async function reconcileVariantMappings(channelId: string, listingId: string, us
     const current = mapped.get(String(variant.id));
     const currentExternalId = current?.external_id ? String(current.external_id) : null;
     if (currentExternalId && byId.has(currentExternalId)) continue;
+    if (
+      mappings.length === 0 &&
+      shopifyVariants.length === 1 &&
+      variants.length >= 1 &&
+      String(variants[0]?.id) === String(variant.id)
+    ) {
+      const candidate = shopifyVariants[0];
+      if (!candidate || usedExternalIds.has(String(candidate.id))) continue;
+      const saved = await upsertProductListingVariant(listingId, userId, {
+        variantId: variant.id,
+        externalId: candidate.id,
+        syncStatus: "synced",
+        providerMetadata: { recoveredBy: "single_existing_variant" },
+      });
+      if (saved.error) throw new Error(saved.error);
+      if (saved.listingVariant) {
+        mapped.set(String(variant.id), saved.listingVariant);
+        usedExternalIds.add(String(candidate.id));
+      }
+      continue;
+    }
+
     const sku = variant.sku?.trim(); if (!sku) continue;
     const matches = bySku.get(sku) ?? []; if (matches.length !== 1) continue;
     const candidate = matches[0]; if (!candidate || usedExternalIds.has(String(candidate.id))) continue;
