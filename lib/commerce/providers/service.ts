@@ -29,7 +29,21 @@ export async function prepareCommerceProviderDraft<TPayload, TResponse>(
   provider: string,
   input: CommerceProviderOperationInput<TPayload>,
 ): Promise<CommerceProviderOperationResult<TResponse>> {
-  return requireCommerceProviderAdapter(provider).prepareDraft(
+  const adapter = requireCommerceProviderAdapter(provider);
+  if (!adapter.capabilities.draft) {
+    return {
+      operation: "draft",
+      status: "failed",
+      error: {
+        code: "COMMERCE_OPERATION_NOT_SUPPORTED",
+        message: `Provider ${provider} does not support draft`,
+        retryable: false,
+        ambiguous: false,
+      },
+    };
+  }
+
+  return adapter.prepareDraft(
     input as never,
   ) as Promise<CommerceProviderOperationResult<TResponse>>;
 }
@@ -39,6 +53,18 @@ export async function publishCommerceProvider<TPayload, TResponse>(
   input: CommerceProviderOperationInput<TPayload> & { confirmLivePublish: true },
 ): Promise<CommerceProviderOperationResult<TResponse>> {
   const adapter = requireCommerceProviderAdapter(provider);
+  if (input.confirmLivePublish !== true) {
+    return {
+      operation: "publish",
+      status: "failed",
+      error: {
+        code: "LIVE_PUBLISH_CONFIRMATION_REQUIRED",
+        message: "Live publish confirmation is required",
+        retryable: false,
+        ambiguous: false,
+      },
+    };
+  }
   if (!adapter.capabilities.publish) {
     return {
       operation: "publish",
