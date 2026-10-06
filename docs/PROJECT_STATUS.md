@@ -568,3 +568,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - A `23505` no longer leaves the outer transaction aborted before resolving the authoritative listing row.
 - Non-unique insertion failures are rolled back to the savepoint and rethrown; successful inserts release the savepoint normally.
 - Validation remains deferred.
+
+
+### Commerce listing-media concurrency hardening — 2026-10-06
+- Hardened `upsertProductListingMedia` with a tenant/provider-aware listing lock and transaction.
+- Existing media mappings are locked before merge; external-ID conflict checks now execute under the same transaction.
+- This prevents concurrent media workers from both passing the conflict check and creating conflicting mappings.
+- Validation remains deferred until the implementation pass is complete.
