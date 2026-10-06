@@ -148,7 +148,12 @@ export default function GenerateMyWeekPage() {
             <strong>Highest-evidence optimization focus</strong>
             <p style={{ margin: "8px 0" }}>{recommendations[0].rationale}</p>
             {Array.isArray(recommendations[0].supportingExperimentIds) && recommendations[0].supportingExperimentIds.length > 0
-              ? <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>Supporting completed experiments: {recommendations[0].supportingExperimentIds.map((id: number) => `#${id}`).join(", ")}.</p>
+              ? <div style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>
+                <p style={{ margin: 0 }}>Supporting completed experiments: {recommendations[0].supportingExperimentIds.map((id: number) => `#${id}`).join(", ")}.</p>
+                <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {recommendations[0].supportingExperimentIds.map((id: number) => <button key={id} type="button" onClick={() => { window.location.href = `/experiments?focus=${id}`; }} style={{ padding: "6px 10px", borderRadius: 7, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: 600 }}>View Experiment #{id}</button>)}
+                </div>
+              </div>
               : <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>No completed experiment history is attached to this recommendation.</p>}
             {recommendations[0].evidence && <p style={{ margin: "8px 0 0", fontSize: 13, opacity: 0.7 }}>
               Observed evidence: {recommendations[0].evidence.sourceType === "variant" ? `Variant #${recommendations[0].evidence.sourceId}` : `Content Item #${recommendations[0].evidence.sourceId}`} · {recommendations[0].evidence.count} {String(recommendations[0].evidence.actionType).replaceAll("_", " ")} action{recommendations[0].evidence.count === 1 ? "" : "s"} · value {recommendations[0].evidence.value}{recommendations[0].evidence.platform ? ` · ${recommendations[0].evidence.platform}` : ""}. This is observational evidence, not causal proof.
