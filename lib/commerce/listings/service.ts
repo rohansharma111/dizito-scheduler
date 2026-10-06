@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { pool } from "@/lib/db";
 
 export type ProductListingStatus = "draft" | "active" | "paused" | "archived";
@@ -214,6 +215,7 @@ export async function claimProductListingSync(
     UPDATE product_listings
     SET
       sync_status = 'syncing',
+      sync_claim_token = $3,
       last_error = NULL,
       updated_at = now()
     WHERE id = $1
@@ -235,10 +237,12 @@ export async function claimProductListingSync(
       created_at,
       updated_at
     `,
-    [listingId, userId],
+    [listingId, userId, randomUUID()],
   );
 
-  if (result.rows[0]) return { listing: result.rows[0] };
+  if (result.rows[0]) {
+    return { listing: result.rows[0], claimToken: result.rows[0].sync_claim_token as string };
+  }
 
   const existing = await getProductListingById(listingId, userId);
   if (!existing) return { error: "LISTING_NOT_FOUND" as const };
@@ -267,7 +271,8 @@ export async function updateProductListingSyncState(
         pl.channel_id,
         pl.product_id,
         pl.external_id,
-        pl.provider_metadata
+        pl.provider_metadata,
+        pl.sync_claim_token
       FROM product_listings pl
       INNER JOIN commerce_channels cc
         ON cc.id = pl.channel_id
@@ -283,6 +288,11 @@ export async function updateProductListingSyncState(
     if (!existing) {
       await client.query("ROLLBACK");
       return { error: "LISTING_NOT_FOUND" as const };
+    }
+
+    if (existing.sync_claim_token !== input.claimToken) {
+      await client.query("ROLLBACK");
+      return { error: "LISTING_SYNC_CLAIM_LOST" as const };
     }
 
     const externalId =
@@ -330,9 +340,11 @@ export async function updateProductListingSyncState(
         END,
         last_error = $3::text,
         provider_metadata = $4::jsonb,
+        sync_claim_token = NULL,
         updated_at = now()
       WHERE id = $5
         AND user_id = $6
+        AND sync_claim_token = $7
       RETURNING
         id,
         channel_id,
@@ -353,6 +365,7 @@ export async function updateProductListingSyncState(
         JSON.stringify(providerMetadata),
         listingId,
         userId,
+        input.claimToken,
       ],
     );
 
