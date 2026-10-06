@@ -89,7 +89,7 @@ async function getAccessToken(channelId: string, userId: number) {
     throw new Error(`Shopify channel is not active (status: ${channel.status})`);
   }
 
-  const credentials = await getShopifyCredentials(channelId);
+  const credentials = await getShopifyCredentials(channelId, userId);
   if (!credentials) {
     await markShopifyChannelError(
       channelId,
