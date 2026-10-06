@@ -431,3 +431,7 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Shopify GraphQL access now resolves the channel through authenticated tenant-scoped channel lookup rather than an unscoped internal channel lookup.
 - Shopify publish/sync provider calls now carry authenticated user context into the provider client and credential access path.
 - Shopify connect/callback and Commerce channel listing routes now validate authenticated user IDs as safe positive integers before database/provider work.
+
+### Commerce tenant-integrity and canonical fingerprint hardening — 2026-10-06
+- Added PostgreSQL tenant-integrity constraints linking commerce listings and publish ledgers back to their owning channel/listing tenant. Legacy rows remain reviewable because the new composite foreign keys are NOT VALID, while new writes are enforced.
+- Publish idempotency fingerprints now use canonical object-key ordering, preventing semantically identical JSON payloads with different key order from producing different fingerprints.
