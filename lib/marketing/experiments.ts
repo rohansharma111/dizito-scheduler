@@ -57,6 +57,7 @@ function outcomeSummary(outcomes: ExperimentOutcome[]) {
 
 export type CompletedExperimentEvidence = MarketingExperiment & {
   outcomes: ExperimentOutcome[];
+  metricEvidence: ExperimentOutcome[];
 };
 
 export async function listCompletedExperimentEvidence(userId: number): Promise<CompletedExperimentEvidence[]> {
@@ -83,10 +84,21 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
                   'count', action_stats.count,
                   'value', action_stats.value
                 )
-                ORDER BY action_stats.count DESC, a.action_type
+                ORDER BY action_stats.count DESC, action_stats.action_type
               ) FILTER (WHERE action_stats.action_type IS NOT NULL),
               '[]'::json
-            ) AS outcomes
+            ) AS outcomes,
+            COALESCE(
+              json_agg(
+                json_build_object(
+                  'actionType', metric_stats.action_type,
+                  'count', metric_stats.count,
+                  'value', metric_stats.value
+                )
+                ORDER BY metric_stats.count DESC, metric_stats.action_type
+              ) FILTER (WHERE metric_stats.action_type IS NOT NULL),
+              '[]'::json
+            ) AS "metricEvidence"
        FROM marketing_experiments e
        LEFT JOIN LATERAL (
          SELECT a.action_type,
@@ -102,6 +114,21 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             )
           GROUP BY a.action_type
        ) action_stats ON true
+       LEFT JOIN LATERAL (
+         SELECT a.action_type,
+                COUNT(*)::int AS count,
+                COALESCE(SUM(a.value), 0)::int AS value
+           FROM marketing_customer_actions a
+          WHERE a.user_id = e.user_id
+            AND a.status = 'completed'
+            AND (
+              (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
+              OR (e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+              OR (e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+            )
+            AND LOWER(REPLACE(REPLACE(e.metric, '-', '_'), ' ', '_')) LIKE '%' || a.action_type || '%'
+          GROUP BY a.action_type
+       ) metric_stats ON true
       WHERE e.user_id = $1
         AND e.status = 'completed'
       GROUP BY e.id
@@ -112,6 +139,7 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
   return result.rows.map((row) => ({
     ...(row as Omit<CompletedExperimentEvidence, "outcomes">),
     outcomes: row.outcomes as ExperimentOutcome[],
+    metricEvidence: row.metricEvidence as ExperimentOutcome[],
   }));
 }
 
