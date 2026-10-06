@@ -69,7 +69,7 @@ export default function GenerateMyWeekPage() {
     const first = recommendations[0];
     const strategy = {
       strategySummary: plan.strategySummary,
-      experiment: plan.experiment ? { hypothesis: plan.experiment.hypothesis, change: plan.experiment.change, metric: plan.experiment.metric } : null,
+      experiment: plan.experiment ? { hypothesis: plan.experiment.hypothesis, change: plan.experiment.change, metric: plan.experiment.metric, disposition: plan.experiment.disposition } : null,
       campaigns: [
         {
           name: `Weekly ${plan.weekStart} marketing campaign`,
@@ -165,7 +165,7 @@ export default function GenerateMyWeekPage() {
             <strong>Experiment to review</strong>
             <p><strong>Hypothesis:</strong> {plan.experiment.hypothesis}</p>
             <p><strong>Change:</strong> {plan.experiment.change}</p>
-            <p style={{ marginBottom: 0 }}><strong>Measure:</strong> {plan.experiment.metric}</p>
+            <p><strong>Measure:</strong> {plan.experiment.metric}</p><p style={{ marginBottom: 0 }}><strong>Disposition:</strong> {plan.experiment.disposition}</p>
           </div>}
         </div>
         <div style={{ display: "grid", gap: 12 }}>
