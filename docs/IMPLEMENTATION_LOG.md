@@ -141,3 +141,12 @@
 - **Architecture review:** Shared channel and listing services were inspected and found to be provider-neutral; no WooCommerce-specific logic was introduced into the shared persistence layer.
 - **Verification limits:** Repository writes and source inspection succeeded through GitHub. Local TypeScript compilation, lint, automated tests, migration execution, and provider calls were not run in this environment.
 - **Next step:** Once the contract is reviewed, migrate the WooCommerce workflow to use the shared result types without changing behavior, then add contract-focused tests before introducing any Meesho client code.
+
+
+## 2026-10-06 — Meesho architecture status update
+
+- **Status:** Documentation updated; Meesho provider implementation remains blocked.
+- **Commit:** `65f0b6ab7743dc3a568a4fd694db4ea8ebb6b97f`
+- **Canonical status:** `docs/PROJECT_STATUS.md` now records the provider-neutral contract work, exact commits, verification limits, Meesho blocker, and next action.
+- **Current blocker:** No authoritative Meesho API/partner contract or authorized test access has been established, so no Meesho-specific client, authentication flow, endpoint, publish route, or migration is being claimed or added.
+- **Next action:** Migrate WooCommerce to the provider-neutral contract with behavior-preserving tests, then establish provider dispatch before returning to Meesho implementation.
