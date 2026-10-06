@@ -33,6 +33,10 @@ export async function POST(request: Request) {
 
   if (!Number.isInteger(campaignId) || campaignId <= 0) return jsonError("Invalid campaignId");
   if (!body.contentType || typeof body.contentType !== "string") return jsonError("contentType is required");
+  if (body.contentType.length > 30) return jsonError("contentType is too long");
+  if (body.format !== undefined && body.format !== null && (typeof body.format !== "string" || body.format.length > 30)) return jsonError("Invalid format");
+  if (body.plannedFor !== undefined && body.plannedFor !== null && (typeof body.plannedFor !== "string" || Number.isNaN(new Date(body.plannedFor).getTime()))) return jsonError("Invalid plannedFor");
+  if (body.channelStrategy !== undefined && (typeof body.channelStrategy !== "object" || Array.isArray(body.channelStrategy) || body.channelStrategy === null)) return jsonError("Invalid channelStrategy");
 
   const allowedStatuses = ["draft", "planned", "ready", "archived"];
   if (body.status !== undefined && !allowedStatuses.includes(body.status)) return jsonError("Invalid status");
