@@ -15,6 +15,11 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = userId;
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json().catch(() => null);
     const status = body?.status;
@@ -26,7 +31,7 @@ export async function PATCH(
       );
     }
 
-    const result = await updateProductListing(id, Number(session.user.id), {
+    const result = await updateProductListing(id, userId, {
       status: status as "draft" | "active" | "paused" | "archived",
     });
     if (result.error === "LISTING_NOT_FOUND") {
