@@ -231,6 +231,32 @@ After changing code:
 - Record new risks, blockers, and follow-up tasks.
 - Never convert “implemented” into “production-ready” without evidence.
 
+
+### 2026-10-06 — Flipkart provider-service contract migration
+
+- Status: Implemented; runtime verification pending
+- Commits:
+  - `63aaf6b5bb302eb4358aae14a41e74ae18ae34d9` — align Flipkart adapter with shared reconciliation method
+  - `0fc57bc96bee7484b5521f37d672702dcbee70bc` — normalize reconciliation contract output
+  - `42c515545d304a4509a20f3cdf500baa02f83403` — expose reconciliation identity input/output
+  - `8bd23136d2a00c6490508e59ddb44a2841f0309d` — add adapter reconciliation contract test
+  - `3474ed6e049bb8dcbf113bf27b57a1c1f2f60d88` — normalize confirmed reconciliation ID
+  - `e73340925bed949a066fa8e05335ad4f155e6` — support SKU/external-ID reconciliation identity
+- Implementation:
+  - Flipkart now conforms to the provider-neutral `reconcilePublish` adapter contract used by the central commerce provider service.
+  - Reconciliation can carry an explicit external ID or lookup key through the shared boundary.
+  - Confirmed external IDs are returned as provider-neutral `externalId` results; unconfirmed responses remain ambiguous.
+  - Live Flipkart mutation remains fail-closed behind `FLIPKART_LIVE_PUBLISH_ENABLED`.
+- Verification:
+  - GitHub source inspection completed.
+  - Adapter test coverage was updated in-repository.
+  - GitHub Actions has not reported a run for the latest commit sequence; no CI pass is claimed.
+  - Local build/lint/type-check/test execution and provider mutation were not run in this environment.
+- Remaining risk:
+  - The exact live Flipkart response shape and approved sandbox mutation remain unverified, so automatic external-ID parsing must not be treated as production-ready.
+- Next action:
+  - Add/route the canonical Flipkart draft/publish/reconcile API entry points through provider service, then harden operation transitions and external-ID persistence without enabling live publishing.
+
 ## 10. Decision log
 
 | Date | Decision | Reason |
