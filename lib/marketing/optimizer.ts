@@ -74,9 +74,9 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
 
     opportunities: parsed.opportunities.slice(0, 8).map((item) => ({ action: String(item.action), rationale: String(item.rationale), campaignId: item.campaignId != null && campaignIds.has(Number(item.campaignId)) ? Number(item.campaignId) : null, contentItemId: item.contentItemId != null && contentItemIds.has(Number(item.contentItemId)) ? Number(item.contentItemId) : null, variantId: item.variantId != null && variantById.has(Number(item.variantId)) && (item.contentItemId == null || variantById.get(Number(item.variantId)) === Number(item.contentItemId)) ? Number(item.variantId) : null, priority: validPriorities.has(String(item.priority)) ? item.priority : "medium", supportingExperimentIds: completedExperiments
         .filter((experiment) => (
-          (item.variantId != null && experiment.variantId === Number(item.variantId))
-          || (item.contentItemId != null && experiment.contentItemId === Number(item.contentItemId))
-          || (item.campaignId != null && experiment.campaignId === Number(item.campaignId))
+          (experiment.variantId != null && item.variantId != null && experiment.variantId === Number(item.variantId))
+          || (experiment.variantId == null && experiment.contentItemId != null && item.contentItemId != null && experiment.contentItemId === Number(item.contentItemId))
+          || (experiment.variantId == null && experiment.contentItemId == null && experiment.campaignId != null && item.campaignId != null && experiment.campaignId === Number(item.campaignId))
         ))
         .map((experiment) => experiment.id),
       observedOutcome: (() => { const variantId = item.variantId != null ? Number(item.variantId) : null; const contentItemId = item.contentItemId != null ? Number(item.contentItemId) : null; const variantOutcome = variantId != null ? context.impact.observedVariantSummary.find((outcome) => outcome.variantId === variantId) : null; const contentOutcome = contentItemId != null ? context.impact.observedContentSummary.find((outcome) => outcome.contentItemId === contentItemId) : null; const outcome = variantOutcome || contentOutcome; return outcome ? { actionType: outcome.actionType, count: outcome.count, value: outcome.value, platform: "platform" in outcome ? outcome.platform : null } : null; })() })),
