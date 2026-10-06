@@ -14,6 +14,7 @@ export type MarketingOptimization = {
     outcomes: Array<{ actionType: string; count: number; value: number }>;
     metricEvidence: Array<{ actionType: string; count: number; value: number }>;
     baselineOutcomes: Array<{ actionType: string; count: number; value: number }>;
+    baselineComparison: { actionType: string; experimentCount: number; baselineCount: number; countChange: number; countChangePercent: number | null; experimentValue: number; baselineValue: number; valueChange: number; valueChangePercent: number | null } | null;
   }>;
   opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null; supportingExperimentIds: number[] }>;
   experiments: Array<{ hypothesis: string; change: string; metric: string }>;
@@ -54,7 +55,12 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const completedExperiments = context.completedExperiments;
   return {
     summary: parsed.summary.trim(),
-    completedExperimentEvidence: context.completedExperiments.map((experiment) => ({
+    completedExperimentEvidence: context.completedExperiments.map((experiment) => {
+      const metricOutcome = experiment.metricEvidence[0] ?? null;
+      const baselineOutcome = metricOutcome ? experiment.baselineOutcomes.find((item) => item.actionType === metricOutcome.actionType) ?? null : null;
+      const countChange = metricOutcome && baselineOutcome ? metricOutcome.count - baselineOutcome.count : null;
+      const valueChange = metricOutcome && baselineOutcome ? metricOutcome.value - baselineOutcome.value : null;
+      return {
       experimentId: experiment.id,
       name: experiment.name,
       hypothesis: experiment.hypothesis,
@@ -76,7 +82,19 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         count: outcome.count,
         value: outcome.value,
       })),
-    })),
+      baselineComparison: metricOutcome && baselineOutcome ? {
+        actionType: metricOutcome.actionType,
+        experimentCount: metricOutcome.count,
+        baselineCount: baselineOutcome.count,
+        countChange: countChange!,
+        countChangePercent: baselineOutcome.count === 0 ? null : Number(((countChange! / baselineOutcome.count) * 100).toFixed(2)),
+        experimentValue: metricOutcome.value,
+        baselineValue: baselineOutcome.value,
+        valueChange: valueChange!,
+        valueChangePercent: baselineOutcome.value === 0 ? null : Number(((valueChange! / baselineOutcome.value) * 100).toFixed(2)),
+      } : null,
+    };
+    }),
 
     opportunities: parsed.opportunities.slice(0, 8).map((item) => ({ action: String(item.action), rationale: String(item.rationale), campaignId: item.campaignId != null && campaignIds.has(Number(item.campaignId)) ? Number(item.campaignId) : null, contentItemId: item.contentItemId != null && contentItemIds.has(Number(item.contentItemId)) ? Number(item.contentItemId) : null, variantId: item.variantId != null && variantById.has(Number(item.variantId)) && (item.contentItemId == null || variantById.get(Number(item.variantId)) === Number(item.contentItemId)) ? Number(item.variantId) : null, priority: validPriorities.has(String(item.priority)) ? item.priority : "medium", supportingExperimentIds: completedExperiments
         .filter((experiment) => (
