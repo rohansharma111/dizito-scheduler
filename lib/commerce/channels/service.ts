@@ -158,6 +158,11 @@ export async function updateCommerceChannel(
     return result.rows[0] ?? null;
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
+
+    if ((error as { code?: string }).code === "23505") {
+      return { error: "CHANNEL_IDENTITY_CONFLICT" as const };
+    }
+
     throw error;
   } finally {
     client.release();
