@@ -396,3 +396,14 @@ As of `898317777d5aee193022452da45411648dd926ba`:
 - Social reconnect/status/disconnected-target fixes have landed.
 
 No new provider should be considered production-ready until runtime/provider verification is recorded.
+
+
+## 16. Latest post-consolidation changes
+
+After the main repository checkpoint used for this refresh, the current head also contains:
+- `ee24383a78bfda2c3e03f65d60eb84849b65bb42` — publish success now requires a non-empty confirmed external ID and persists it explicitly.
+- `c0e6b8ed4c760208adb6b537480e31549e8d8b34` — publish-operation lifecycle regression tests.
+- `f3bda849a663a5dde97ec076051cf6daa0e3e2f2` — Flipkart client contract tests.
+- `bb01a2701ebf5df54d67386e2f8a371216b2d74c` — documentation of the Flipkart provider verification seam.
+
+These strengthen the safety boundary but do not constitute live provider verification or a green repository-wide quality result.
