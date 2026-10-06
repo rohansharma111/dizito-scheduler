@@ -255,49 +255,119 @@ export async function updateProductListingSyncState(
     providerMetadata?: Record<string, unknown>;
   },
 ) {
-  const existing = await getProductListingById(listingId, userId);
-  if (!existing) return { error: "LISTING_NOT_FOUND" as const };
+  const client = await pool.connect();
 
-  const result = await pool.query(
-    `
-    UPDATE product_listings
-    SET
-      status = CASE
-        WHEN $1::varchar(20) = 'synced' AND $2::text IS NOT NULL THEN 'active'
-        ELSE status
-      END,
-      sync_status = $1::varchar(20),
-      external_id = $2::text,
-      last_synced_at = CASE WHEN $1::varchar(20) = 'synced' THEN now() ELSE last_synced_at END,
-      last_error = $3::text,
-      provider_metadata = $4::jsonb,
-      updated_at = now()
-    WHERE id = $5
-      AND user_id = $6
-    RETURNING
-      id,
-      channel_id,
-      product_id,
-      status,
-      sync_status,
-      external_id,
-      last_synced_at,
-      last_error,
-      provider_metadata,
-      created_at,
-      updated_at
-    `,
-    [
-      input.syncStatus,
-      input.externalId !== undefined ? input.externalId : existing.external_id,
-      input.lastError ?? null,
-      JSON.stringify(input.providerMetadata ?? existing.provider_metadata ?? {}),
-      listingId,
-      userId,
-    ],
-  );
+  try {
+    await client.query("BEGIN");
 
-  return { listing: result.rows[0] ?? null };
+    const locked = await client.query(
+      `
+      SELECT
+        pl.id,
+        pl.channel_id,
+        pl.product_id,
+        pl.external_id,
+        pl.provider_metadata
+      FROM product_listings pl
+      INNER JOIN commerce_channels cc
+        ON cc.id = pl.channel_id
+       AND cc.user_id = pl.user_id
+      WHERE pl.id = $1
+        AND pl.user_id = $2
+      FOR UPDATE
+      `,
+      [listingId, userId],
+    );
+
+    const existing = locked.rows[0];
+    if (!existing) {
+      await client.query("ROLLBACK");
+      return { error: "LISTING_NOT_FOUND" as const };
+    }
+
+    const externalId =
+      input.externalId !== undefined ? input.externalId : existing.external_id;
+
+    if (externalId) {
+      const conflict = await client.query(
+        `
+        SELECT id
+        FROM product_listings
+        WHERE channel_id = $1
+          AND user_id = $2
+          AND external_id = $3
+          AND id <> $4
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [existing.channel_id, userId, externalId, listingId],
+      );
+
+      if (conflict.rows[0]) {
+        await client.query("ROLLBACK");
+        return { error: "LISTING_EXTERNAL_ID_CONFLICT" as const };
+      }
+    }
+
+    const providerMetadata = {
+      ...(existing.provider_metadata ?? {}),
+      ...(input.providerMetadata ?? {}),
+    };
+
+    const result = await client.query(
+      `
+      UPDATE product_listings
+      SET
+        status = CASE
+          WHEN $1::varchar(20) = 'synced' AND $2::text IS NOT NULL THEN 'active'
+          ELSE status
+        END,
+        sync_status = $1::varchar(20),
+        external_id = $2::text,
+        last_synced_at = CASE
+          WHEN $1::varchar(20) = 'synced' THEN now()
+          ELSE last_synced_at
+        END,
+        last_error = $3::text,
+        provider_metadata = $4::jsonb,
+        updated_at = now()
+      WHERE id = $5
+        AND user_id = $6
+      RETURNING
+        id,
+        channel_id,
+        product_id,
+        status,
+        sync_status,
+        external_id,
+        last_synced_at,
+        last_error,
+        provider_metadata,
+        created_at,
+        updated_at
+      `,
+      [
+        input.syncStatus,
+        externalId,
+        input.lastError ?? null,
+        JSON.stringify(providerMetadata),
+        listingId,
+        userId,
+      ],
+    );
+
+    await client.query("COMMIT");
+    return { listing: result.rows[0] ?? null };
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // Preserve the original failure.
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getProductListingVariants(
