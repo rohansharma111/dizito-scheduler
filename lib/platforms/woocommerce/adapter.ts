@@ -182,14 +182,35 @@ export const wooCommerceAdapter: CommerceProviderAdapter<
       return invalidOperation("reconcile", "reconcile");
     }
 
-    return result(
-      "reconcile",
-      await reconcileWooCommercePublish(input.context.userId, {
-        ...input.payload.input,
-        channelId: input.context.channelId,
-        externalId: input.externalId ?? input.payload.input.externalId,
-        sku: input.lookupKey ?? input.payload.input.sku,
-      }),
-    );
+    const reconcileResult = await reconcileWooCommercePublish(input.context.userId, {
+      ...input.payload.input,
+      channelId: input.context.channelId,
+      externalId: input.externalId ?? input.payload.input.externalId,
+      sku: input.lookupKey ?? input.payload.input.sku,
+    });
+
+    if (
+      reconcileResult &&
+      typeof reconcileResult === "object" &&
+      "reconciliationRequired" in reconcileResult &&
+      reconcileResult.reconciliationRequired === true
+    ) {
+      return {
+        operation: "reconcile",
+        status: "ambiguous",
+        data: reconcileResult,
+        error: {
+          code: "RECONCILIATION_FAILED",
+          message:
+            typeof (reconcileResult as { message?: unknown }).message === "string"
+              ? (reconcileResult as { message: string }).message
+              : "WooCommerce provider state could not be confirmed",
+          retryable: true,
+          ambiguous: true,
+        },
+      };
+    }
+
+    return result("reconcile", reconcileResult);
   },
 };
