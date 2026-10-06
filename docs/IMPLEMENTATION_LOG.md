@@ -313,3 +313,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - The legacy Shopify publish route now requires confirmLivePublish=true and returns a conflict when omitted.
 - The underlying Shopify publisher also requires explicit confirmation, so the safety boundary cannot be bypassed by another direct caller.
 - Shopify remains outside the shared durable publish ledger; this change intentionally closes the confirmation bypass without introducing a broad legacy-path refactor during the current pass.
+
+
+## 2026-10-06 — Shopify publish concurrency hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Added a PostgreSQL advisory lock around the legacy Shopify create lifecycle, keyed by authenticated tenant + channel + product.
+- The lock covers listing resolution, remote product creation, variant/media persistence, and final listing state, preventing concurrent duplicate productCreate calls for the same logical listing.
+- This is concurrency protection, not provider-native idempotency; crash-after-remote-create recovery remains a separate durability concern.
