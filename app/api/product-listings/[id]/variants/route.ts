@@ -52,7 +52,7 @@ export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const result = await upsertProductListingVariant(id, userId, {
     variantId: String(body.variantId),
-    externalId: body.externalId ?? null,
+    ...(typeof body.externalId === "string" ? { externalId: body.externalId } : {}),
     syncStatus: body.syncStatus,
     providerMetadata: body.providerMetadata,
   });
