@@ -305,3 +305,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - **Flipkart:** credential writes now require userId and verify tenant/provider ownership; OAuth callback and locked refresh rotation pass authenticated tenant identity. Publish responses now distinguish ambiguous reconciliation-required submission with HTTP 202 from normal creation (201) and idempotent replay (200).
 - **Amazon:** credential persistence and lookup now require authenticated tenant context; the SP-API client no longer uses an unscoped internal channel lookup and requires userId for provider calls. Product-type discovery and connection verification pass the tenant context through.
 - **Verification limitation:** no tests/lint/build or provider mutation was executed during this implementation pass, per the current development sequence. Repository code remains pending the later verification pass.
+
+
+## 2026-10-06 — Shopify live-publish confirmation hardening
+
+- **Status:** Implemented; not runtime-verified.
+- The legacy Shopify publish route now requires confirmLivePublish=true and returns a conflict when omitted.
+- The underlying Shopify publisher also requires explicit confirmation, so the safety boundary cannot be bypassed by another direct caller.
+- Shopify remains outside the shared durable publish ledger; this change intentionally closes the confirmation bypass without introducing a broad legacy-path refactor during the current pass.
