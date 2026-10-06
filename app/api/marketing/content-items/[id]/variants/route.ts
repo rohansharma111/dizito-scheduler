@@ -144,6 +144,12 @@ export async function POST(
       return errorResponse("Converted variants cannot be edited", 409);
     }
 
+    for (const field of ["hook", "body", "cta"]) {
+      if (body[field] !== undefined && body[field] !== null && typeof body[field] !== "string") {
+        return errorResponse("Invalid " + field);
+      }
+    }
+
     const mediaId = body.mediaId == null ? null : Number(body.mediaId);
     if (mediaId !== null) {
       const media = await pool.query(
