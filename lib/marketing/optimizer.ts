@@ -173,7 +173,16 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         const score = (duplicate ? -40 : 0)
           + (metricEvidenceAvailable ? 30 : metricHistorical ? 20 : 5)
           + resultEvidenceScore;
-        return { item: { hypothesis, change, metric }, index, score };
+        const disposition: "refine" | "retest" | "avoid" | "measure" = duplicate
+          ? "avoid"
+          : directionalEvidence == null
+            ? "measure"
+            : directionalEvidence > 0
+              ? "refine"
+              : directionalEvidence < 0
+                ? "retest"
+                : "measure";
+        return { item: { hypothesis, change, metric, disposition }, index, score };
       })
       .sort((a, b) => b.score - a.score || a.index - b.index)
       .slice(0, 6)
