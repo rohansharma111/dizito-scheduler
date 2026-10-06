@@ -88,6 +88,8 @@ describe("publishWooCommerceProduct", () => {
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [{ id: "listing-1", external_id: null, publish_idempotency_key: "request-1" }] })
       .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "succeeded", external_id: "wc-101", response_payload: { id: 101 } }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({})
       .mockResolvedValueOnce({});
     const client = makeReservationClient(query);
     mocks.pool.connect.mockResolvedValue(client);
@@ -147,6 +149,7 @@ describe("publishWooCommerceProduct", () => {
     ).resolves.toEqual({
       result: { id: 202, name: "Demo" },
       externalId: "202",
+      reconciliationRequired: true,
     });
 
     expect(mocks.createWooCommerceProduct).toHaveBeenCalledWith(
@@ -175,7 +178,11 @@ describe("publishWooCommerceProduct", () => {
 
     await expect(
       publishWooCommerceProduct(7, input),
-    ).rejects.toThrow("ETIMEDOUT");
+    ).resolves.toEqual({
+      error: "PUBLISH_REQUIRES_RECONCILIATION",
+      reconciliationRequired: true,
+      message: "WooCommerce publish outcome is uncertain and requires provider read-back",
+    });
 
     expect(mocks.pool.query).toHaveBeenCalledTimes(2);
     expect(mocks.markWooCommerceChannelError).not.toHaveBeenCalled();
