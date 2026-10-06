@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getMarketingStrategyContext } from "@/lib/marketing/strategyContext";
 import { listContentVariantsForContentItems } from "@/lib/marketing/contentVariants";
+import { getExperimentLearningSignal } from "@/lib/marketing/experiments";
 
 export type MarketingOptimization = {
   summary: string;
@@ -102,14 +103,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       const baselineOutcome = metricOutcome ? experiment.baselineOutcomes.find((item) => item.actionType === metricOutcome.actionType) ?? null : null;
       const countChange = metricOutcome && baselineOutcome ? metricOutcome.count - baselineOutcome.count : null;
       const valueChange = metricOutcome && baselineOutcome ? metricOutcome.value - baselineOutcome.value : null;
-      const direction = valueChange != null && baselineOutcome && baselineOutcome.value > 0
-        ? valueChange / baselineOutcome.value
-        : countChange != null && baselineOutcome && baselineOutcome.count > 0
-          ? countChange / baselineOutcome.count
-          : null;
-      const learningSignal: "positive" | "negative" | "insufficient" = direction == null
-        ? "insufficient"
-        : direction > 0 ? "positive" : direction < 0 ? "negative" : "insufficient";
+      const learningSignal = getExperimentLearningSignal(experiment);
       return {
         experimentId: experiment.id,
       name: experiment.name,
