@@ -72,14 +72,35 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     );
 
     if (attemptDecision.action === "replay") {
-      await reservationClient.query("COMMIT");
-      await pool.query(
+      await reservationClient.query(
+        `SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`,
+        [`commerce-external-id:${userId}:${input.channelId}:${attemptDecision.externalId}`],
+      );
+
+      const externalIdConflict = await reservationClient.query(
+        `SELECT id
+         FROM product_listings
+         WHERE channel_id = $1
+           AND user_id = $2
+           AND external_id = $3
+           AND id <> $4
+         LIMIT 1
+         FOR UPDATE`,
+        [input.channelId, userId, attemptDecision.externalId, input.listingId],
+      );
+      if (externalIdConflict.rows[0]) {
+        await reservationClient.query("ROLLBACK");
+        return { error: "LISTING_EXTERNAL_ID_CONFLICT" as const };
+      }
+
+      await reservationClient.query(
         `UPDATE product_listings
          SET status = 'active', sync_status = 'synced', external_id = $1,
              last_synced_at = COALESCE(last_synced_at, now()), last_error = NULL, updated_at = now()
          WHERE id = $2 AND user_id = $3`,
         [attemptDecision.externalId, input.listingId, userId],
       );
+      await reservationClient.query("COMMIT");
       return { result: existingAttempt?.response_payload, externalId: attemptDecision.externalId, idempotentReplay: true };
     }
     if (attemptDecision.action === "reconcile") {
