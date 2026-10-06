@@ -86,12 +86,14 @@ describe("POST /api/commerce/flipkart/publish", () => {
       }),
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(202);
     await expect(response.json()).resolves.toEqual({
       success: true,
       status: "ambiguous",
       result: { operationId: "operation-1" },
       externalId: undefined,
+      idempotentReplay: false,
+      reconciliationRequired: true,
       error: undefined,
     });
     expect(mocks.publish).toHaveBeenCalledWith("flipkart", {
