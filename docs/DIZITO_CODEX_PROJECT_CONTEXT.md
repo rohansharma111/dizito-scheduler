@@ -470,3 +470,8 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - Amazon credential save/read and SP-API provider access now require explicit authenticated tenant context; unscoped internal channel resolution was removed from the Amazon client path.
 - Amazon product-type discovery and connection verification propagate tenant identity to provider access.
 - Testing remains intentionally deferred until the code-level implementation pass is complete; these changes are implemented but not yet repository-verified.
+
+
+### Shopify legacy publish safety checkpoint — 2026-10-06
+- Direct Shopify publishing now requires explicit live-publish confirmation at both the route and publisher boundaries.
+- The Shopify path remains legacy/direct rather than being represented as a shared durable provider operation; idempotency and durable mutation tracking remain a separate future hardening item.
