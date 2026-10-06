@@ -264,3 +264,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 - WooCommerce channel configuration/credentials are tenant-scoped by user context.
 - WooCommerce publish now records provider submission as ambiguous and requires provider read-back reconciliation before terminal success.
 - Full tests/lint/build are intentionally deferred until the remaining code-level implementation pass is complete.
+
+### 2026-10-06 — Commerce code-level hardening continuation
+- Made publish-operation reservation atomic and race-safe; bound idempotency keys to operation type and validated key/input bounds.
+- Preserved WooCommerce ambiguous state after a provider mutation if database persistence fails, preventing unsafe duplicate retries.
+- Exposed WooCommerce publish ambiguity as HTTP 202 with explicit reconciliation-required state.
+- Hardened WooCommerce route identity and reconciliation-status tenant/provider scoping.
