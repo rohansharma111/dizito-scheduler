@@ -265,6 +265,7 @@ export async function updateProductListingSyncState(
     externalId?: string | null;
     lastError?: string | null;
     providerMetadata?: Record<string, unknown>;
+    releaseClaim?: boolean;
   },
 ) {
   const client = await pool.connect();
@@ -354,7 +355,10 @@ export async function updateProductListingSyncState(
         END,
         last_error = $3::text,
         provider_metadata = $4::jsonb,
-        sync_claim_token = NULL,
+        sync_claim_token = CASE
+          WHEN $8::boolean THEN NULL
+          ELSE $7::text
+        END,
         updated_at = now()
       WHERE id = $5
         AND user_id = $6
@@ -380,6 +384,7 @@ export async function updateProductListingSyncState(
         listingId,
         userId,
         input.claimToken,
+        input.releaseClaim !== false,
       ],
     );
 
