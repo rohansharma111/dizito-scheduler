@@ -374,3 +374,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
 
 - Listing-variant reads now explicitly join the tenant-owned canonical product before returning mappings, closing a legacy-row tenant-boundary gap.
+
+
+## 2026-10-06 — Commerce sync claim-token hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Added a durable sync claim token to product_listings to close the stale-worker race left by the existing 10-minute lease timeout.
+- claimProductListingSync now issues a unique token; updateProductListingSyncState requires the token and clears it atomically when committing the result.
+- Shopify sync propagates the claim token for both success and error persistence, so a reclaimed listing cannot be overwritten by an older worker.
+- Added migration 019_product_listing_sync_claims.sql.
+- Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
