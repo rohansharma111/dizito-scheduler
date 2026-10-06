@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     return Response.json({ weeklyPlan });
   } catch (error) {
     console.error(error);
-    if (error instanceof Error && error.message === "Weekly plan is already approved") {
+    if (error instanceof Error && ["Weekly plan is already approved", "Weekly plan already has linked campaigns"].includes(error.message)) {
       return Response.json({ error: error.message }, { status: 409 });
     }
     if (error instanceof Error && [
