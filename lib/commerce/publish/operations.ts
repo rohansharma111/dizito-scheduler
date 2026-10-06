@@ -72,7 +72,13 @@ export async function markCommercePublishOperationStarted(userId: number, operat
   return result.rows[0] ?? null;
 }
 
-export async function markCommercePublishOperationSucceeded(userId: number, operationId: string, externalId?: string | null) {
+export async function markCommercePublishOperationSucceeded(
+  userId: number,
+  operationId: string,
+  externalId: string | null | undefined,
+  listingId: string,
+  provider: string,
+) {
   const normalizedExternalId = externalId?.trim();
   if (!normalizedExternalId) return null;
 
@@ -80,9 +86,10 @@ export async function markCommercePublishOperationSucceeded(userId: number, oper
     UPDATE commerce_publish_operations
     SET status = 'succeeded', external_id = $3,
         last_error = NULL, completed_at = now(), updated_at = now()
-    WHERE id = $1 AND user_id = $2 AND status IN ('prepared', 'in_progress', 'unknown')
+    WHERE id = $1 AND user_id = $2 AND listing_id = $4 AND provider = $5
+      AND status IN ('prepared', 'in_progress', 'unknown')
     RETURNING *
-  `, [operationId, userId, normalizedExternalId]);
+  `, [operationId, userId, normalizedExternalId, listingId, provider]);
   return result.rows[0] ?? null;
 }
 
