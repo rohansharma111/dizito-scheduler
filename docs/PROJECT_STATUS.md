@@ -1,6 +1,6 @@
 # Dizito Project Status & Roadmap
 
-**Last updated:** 2026-09-22  
+**Last updated:** 2026-10-06  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Branch:** `main`  
 **Project:** Dizito — AI Commerce Operating System
@@ -113,7 +113,7 @@ Do not infer ASINs from SKU or barcode. Do not fabricate identifiers. Do not pla
 
 ### P1 — Commerce foundation hardening
 
-- [ ] Introduce a provider-neutral publish/sync result contract.
+- [x] Introduce a provider-neutral publish/sync result contract (`lib/commerce/providers/contracts.ts`); migrate existing providers to it only after behavior-preserving test coverage.
 - [ ] Define listing lifecycle states and legal transitions.
 - [ ] Define listing-variant mapping behavior for simple and variable products.
 - [ ] Add explicit inventory and price synchronization boundaries.
