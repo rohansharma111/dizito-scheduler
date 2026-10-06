@@ -10,6 +10,24 @@ export interface ReconcileWooCommercePublishInput {
   sku?: string;
 }
 
+export function validateWooCommerceReconciliationIdentity(input: {
+  requestedSku?: string;
+  expectedSku?: string;
+}) {
+  const requestedSku = input.requestedSku?.trim() || "";
+  const expectedSku = input.expectedSku?.trim() || "";
+
+  if (!requestedSku && !expectedSku) {
+    return { error: "RECONCILIATION_IDENTITY_REQUIRED" as const };
+  }
+
+  if (requestedSku && expectedSku && requestedSku !== expectedSku) {
+    return { error: "RECONCILIATION_SKU_MISMATCH" as const };
+  }
+
+  return { expectedSku: expectedSku || requestedSku };
+}
+
 export async function reconcileWooCommercePublish(userId: number, input: ReconcileWooCommercePublishInput) {
   const idempotencyKey = input.idempotencyKey.trim();
   const externalId = input.externalId?.trim() || "";
@@ -34,7 +52,8 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   if (!["started", "ambiguous"].includes(attempt.status)) return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
 
   const listingResult = await pool.query(
-    `SELECT id, publish_idempotency_key
+    `SELECT id, publish_idempotency_key,
+            provider_metadata->'woocommerce'->'payload'->>'sku' AS expected_sku
      FROM product_listings
      WHERE id = $1 AND channel_id = $2 AND user_id = $3
      LIMIT 1`,
@@ -44,13 +63,19 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   if (!listing) return { error: "LISTING_NOT_FOUND" as const };
   if (listing.publish_idempotency_key !== idempotencyKey) return { error: "LISTING_IDEMPOTENCY_KEY_MISMATCH" as const };
 
+  const identity = validateWooCommerceReconciliationIdentity({
+    requestedSku: sku,
+    expectedSku: listing.expected_sku,
+  });
+  if ("error" in identity) return identity;
+
   try {
     const { config } = await getWooCommerceChannelConfig(input.channelId);
     let product: Record<string, unknown> | null = null;
     if (externalId) {
       product = await getWooCommerceProduct(config, externalId);
     } else {
-      const matches = await findWooCommerceProductsBySku(config, sku);
+      const matches = await findWooCommerceProductsBySku(config, identity.expectedSku);
       if (matches.length === 0) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
       if (matches.length > 1) return { error: "MULTIPLE_PROVIDER_PRODUCTS_FOUND" as const };
       product = matches[0];
@@ -58,7 +83,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
 
     const providerId = product && product.id != null ? String(product.id) : null;
     if (!providerId || (externalId && providerId !== externalId)) return { error: "PROVIDER_PRODUCT_NOT_FOUND" as const };
-    if (sku && String(product?.sku ?? "") !== sku) return { error: "PROVIDER_SKU_MISMATCH" as const };
+    if (String(product?.sku ?? "") !== identity.expectedSku) return { error: "PROVIDER_SKU_MISMATCH" as const };
 
     const db = await pool.connect();
     try {
