@@ -27,7 +27,7 @@ describe("commerce publish operation lifecycle", () => {
 
   it("requires a confirmed external id before marking success", async () => {
     await expect(
-      markCommercePublishOperationSucceeded(7, "operation-1", "   "),
+      markCommercePublishOperationSucceeded(7, "operation-1", "   ", "listing-1", "flipkart"),
     ).resolves.toBeNull();
 
     expect(mocks.query).not.toHaveBeenCalled();
@@ -42,6 +42,8 @@ describe("commerce publish operation lifecycle", () => {
       7,
       "operation-1",
       "  FK-123  ",
+      "listing-1",
+      "flipkart",
     );
 
     expect(result).toMatchObject({
@@ -51,16 +53,17 @@ describe("commerce publish operation lifecycle", () => {
     });
     expect(mocks.query).toHaveBeenCalledWith(
       expect.stringContaining("status IN ('prepared', 'in_progress', 'unknown')"),
-      ["operation-1", 7, "FK-123"],
+      ["operation-1", 7, "FK-123", "listing-1", "flipkart"],
     );
   });
 
   it("does not allow a terminal success to be reopened", async () => {
-    await markCommercePublishOperationSucceeded(7, "operation-1", "FK-123");
+    await markCommercePublishOperationSucceeded(7, "operation-1", "FK-123", "listing-1", "flipkart");
 
     const sql = mocks.query.mock.calls[0]?.[0] as string;
     expect(sql).toContain("status IN ('prepared', 'in_progress', 'unknown')");
     expect(sql).not.toContain("status IN ('succeeded'");
+    expect(sql).toContain("listing_id = $4 AND provider = $5");
   });
 
   it("only starts prepared or failed operations", async () => {
