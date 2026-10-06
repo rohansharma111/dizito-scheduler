@@ -141,21 +141,24 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
 
     await pool.query(
       `UPDATE product_listings
-       SET status = 'active', sync_status = 'synced', external_id = $1,
-           last_synced_at = now(), last_error = NULL, updated_at = now()
+       SET sync_status = 'syncing', last_error = NULL, updated_at = now()
        WHERE id = $2 AND user_id = $3`,
       [externalId, input.listingId, userId],
     );
 
     await pool.query(
       `UPDATE commerce_publish_attempts
-       SET status = 'succeeded', response_payload = $1::jsonb, external_id = $2,
-           completed_at = now(), updated_at = now()
-       WHERE id = $3`,
-      [JSON.stringify(result), externalId, attemptId],
+       SET status = 'ambiguous', response_payload = $1::jsonb, external_id = $2,
+           error_message = NULL, completed_at = NULL, updated_at = now()
+       WHERE id = $3 AND user_id = $4`,
+      [JSON.stringify(result), externalId, attemptId, userId],
     );
 
-    return { result, externalId };
+    return {
+      result,
+      externalId,
+      reconciliationRequired: true as const,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : "WooCommerce publish failed";
     const ambiguous = isAmbiguousPublishError(error);
