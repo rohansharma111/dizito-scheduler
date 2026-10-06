@@ -481,3 +481,10 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - Legacy direct Shopify publishing now serializes the same tenant/channel/product with a PostgreSQL advisory lock across the full remote mutation lifecycle.
 - This closes the concurrent-create race without inventing a Shopify idempotency contract.
 - Provider-native/durable crash recovery remains separate follow-up work.
+
+
+### Shopify deterministic recovery checkpoint — 2026-10-06
+- Shopify creates now carry a `dizito.listing_id` metafield marker, enabling exact recovery of a remote product after a local persistence crash.
+- The publisher searches by the marker before creating; one match is reconciled, multiple matches fail closed.
+- Partial-create variant recovery recognizes the sole existing provider variant as the canonical first variant when no local mapping exists.
+- Legacy orphan products without the marker are not automatically claimed by heuristic matching.
