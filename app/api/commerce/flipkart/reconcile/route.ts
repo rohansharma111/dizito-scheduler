@@ -6,7 +6,8 @@ import type { FlipkartAdapterPayload } from "@/lib/platforms/flipkart/adapter";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  const userId = Number(session?.user?.id);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     } satisfies FlipkartAdapterPayload;
 
     const result = await reconcileCommerceProvider("flipkart", {
-      context: { channelId, userId: Number(session.user.id) },
+      context: { channelId, userId },
       payload,
       externalId: externalId || undefined,
       lookupKey: lookupKey || undefined,
