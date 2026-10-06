@@ -52,7 +52,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   if (!["started", "ambiguous"].includes(attempt.status)) return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
 
   const listingResult = await pool.query(
-    `SELECT id, publish_idempotency_key,
+    `SELECT id, publish_idempotency_key, external_id,
             provider_metadata->'woocommerce'->'payload'->>'sku' AS expected_sku
      FROM product_listings
      WHERE id = $1 AND channel_id = $2 AND user_id = $3
@@ -113,7 +113,8 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
         `UPDATE product_listings
          SET status = 'active', sync_status = 'synced', external_id = $1,
              last_synced_at = now(), last_error = NULL, updated_at = now()
-         WHERE id = $2 AND channel_id = $3 AND user_id = $4`,
+         WHERE id = $2 AND channel_id = $3 AND user_id = $4
+           AND (external_id IS NULL OR external_id = $1)`,
         [providerId, input.listingId, input.channelId, userId],
       );
       if (listingUpdate.rowCount !== 1) throw new Error("Listing changed or was removed during reconciliation");
