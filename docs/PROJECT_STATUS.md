@@ -358,3 +358,34 @@ Use this compact format for future entries:
 - Next action:
   - <specific follow-up>
 ```
+
+
+### 2026-10-06 — Flipkart route tests and publish-state hardening
+
+- Status: Implemented; runtime verification pending
+- Commits:
+  - `5e9dd809ec0beb8009c5122d0c4c8abd3ec0b91a` — add Flipkart draft route boundary tests
+  - `f638434e2c5e4d492f30ca017d78a045c36a5fcf` — add Flipkart publish route boundary tests
+  - `e0cd0ef753c355364292590ad8f593253bd1aad8` — add Flipkart reconciliation route boundary tests
+  - `04d68fc7744a28c0cb75b0d12ae00db9c7bde344` — persist provider-confirmed external ID during reconciliation
+  - `8252024b781ed12596d309d9848f3b51b974153c` — add reconciliation persistence/safety regression tests
+  - `5552f59c1d5147e4e62c9162ba4f662843c0bf07` — harden publish operation terminal state transitions
+  - `4a29c439633e2d901e0c73c583e487daa1c11ff8` — prevent duplicate provider execution on successful idempotency replay
+  - `a73c0c312444e991ac37c8b3355822c6648cb952` — add publish replay/state-transition regression tests
+- Implementation:
+  - Added focused POST route tests for draft, publish, and reconcile boundaries.
+  - Reconciliation now requires provider lookup evidence and persists the confirmed external ID before returning success.
+  - Caller-supplied external IDs are no longer accepted as standalone confirmation; mismatches are rejected.
+  - Publish operation transitions are guarded so terminal success cannot be overwritten by later failure/unknown transitions.
+  - Reusing a successful idempotency key returns the stored external ID without executing another Flipkart mutation.
+  - In-progress/unknown operations return an explicit reconciliation-required state instead of triggering another provider write.
+- Verification:
+  - Repository source inspection completed.
+  - GitHub Actions workflow is configured to run tests/lint/build on pushes to `main`.
+  - This environment cannot reach GitHub Actions execution results or clone the repository for local npm execution; therefore no test/lint/build pass is claimed.
+  - No live Flipkart mutation or database migration execution was performed.
+- Remaining risk:
+  - Exact live Flipkart response shapes and authorized sandbox mutation behavior remain externally unverified.
+  - The repository still needs an observed CI run before these changes can be marked verified.
+- Next action:
+  - Review the first CI result for the new test suite; fix any TypeScript/lint/test failures, then perform controlled Flipkart sandbox reconciliation/publish verification without enabling unrestricted production mutation.
