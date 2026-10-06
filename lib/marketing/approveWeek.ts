@@ -28,6 +28,7 @@ export type ApprovedWeeklyStrategy = {
       cta: string;
       mediaId?: number | null;
       plannedFor?: string | null;
+      sourceCampaignId?: number | null;
       evidence?: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
       supportingExperimentIds?: number[];
     }>;
@@ -82,6 +83,7 @@ export async function persistApprovedWeek(
 
     for (let i = 0; i < strategy.campaigns.length; i++) {
       const campaign = strategy.campaigns[i];
+      if (campaign.contentItems?.some((item) => item.sourceCampaignId != null && (!Number.isInteger(Number(item.sourceCampaignId)) || Number(item.sourceCampaignId) <= 0))) throw new Error("Invalid source campaign reference");
       const offerId = campaign.offerId ?? null;
       if (offerId !== null && (!Number.isInteger(offerId) || offerId <= 0)) {
         throw new Error("Invalid offer reference");
