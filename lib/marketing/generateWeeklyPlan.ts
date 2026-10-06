@@ -42,7 +42,7 @@ export type StrategyHint = {
   recommendations?: Array<{ action?: string; why?: string; channels?: string[]; goalId?: number | null; campaignId?: number | null; productIds?: number[]; offerId?: number | null }>;
   optimization?: {
     summary?: string;
-    opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null; observedOutcome?: { actionType?: string; count?: number; value?: number; platform?: string | null } | null }>;
+    opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null; supportingExperimentIds?: number[]; observedOutcome?: { actionType?: string; count?: number; value?: number; platform?: string | null } | null }>;
     experiments?: Array<{ hypothesis?: string; change?: string; metric?: string }>;
   };
 };
@@ -106,6 +106,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
       offerId: selectedOffer?.id ?? null,
+      supportingExperimentIds: Array.isArray(optimizationOpportunity?.supportingExperimentIds) ? optimizationOpportunity.supportingExperimentIds.map(Number).filter(Number.isFinite) : [],
       rationale: optimizationOpportunity?.rationale
         ? `Optimization focus: ${optimizationOpportunity.rationale}${optimizationOpportunity.contentItemId != null ? ` This was informed by content item ${optimizationOpportunity.contentItemId}.` : ""}${optimizationOpportunity.variantId != null ? ` This was informed by variant ${optimizationOpportunity.variantId}.` : ""}`
         : primaryGoal
