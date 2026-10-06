@@ -61,6 +61,9 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   const optimizationOpportunities = Array.isArray(strategyHint?.optimization?.opportunities) ? strategyHint.optimization.opportunities : [];
   const optimizationOpportunity = optimizationOpportunities.find((item) => item.priority === "high") ?? optimizationOpportunities[0];
   const optimizationExperiment = strategyHint?.optimization?.experiments?.find((item) => item.hypothesis && item.change && item.metric) ?? null;
+  const supportingExperimentIds = Array.isArray(optimizationOpportunity?.supportingExperimentIds)
+    ? optimizationOpportunity.supportingExperimentIds.map(Number).filter(Number.isFinite)
+    : [];
   const strategyRecommendation = strategyRecommendations[0];
   const strategyGoal = strategyRecommendation?.goalId != null
     ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null
@@ -106,7 +109,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
       offerId: selectedOffer?.id ?? null,
-      supportingExperimentIds: Array.isArray(optimizationOpportunity?.supportingExperimentIds) ? optimizationOpportunity.supportingExperimentIds.map(Number).filter(Number.isFinite) : [],
+      supportingExperimentIds,
       rationale: optimizationOpportunity?.rationale
         ? `Optimization focus: ${optimizationOpportunity.rationale}${optimizationOpportunity.contentItemId != null ? ` This was informed by content item ${optimizationOpportunity.contentItemId}.` : ""}${optimizationOpportunity.variantId != null ? ` This was informed by variant ${optimizationOpportunity.variantId}.` : ""}`
         : primaryGoal
