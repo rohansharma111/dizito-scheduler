@@ -15,7 +15,7 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = userId;
+    const userId = Number(session.user.id);
     if (!Number.isSafeInteger(userId) || userId <= 0) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
