@@ -13,6 +13,7 @@ export type MarketingOptimization = {
     resultSummary: string | null;
     outcomes: Array<{ actionType: string; count: number; value: number }>;
     metricEvidence: Array<{ actionType: string; count: number; value: number }>;
+    baselineOutcomes: Array<{ actionType: string; count: number; value: number }>;
   }>;
   opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null; supportingExperimentIds: number[] }>;
   experiments: Array<{ hypothesis: string; change: string; metric: string }>;
@@ -26,7 +27,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
     ? "Observed outcome data exists at content/variant level. Use it to prioritize measurable recommendations, while explicitly describing it as observed rather than causal."
     : "No completed content/variant-level customer action outcomes are available. Treat content/variant performance as unknown and recommend measurement before claiming improvement.";
   const experimentGuidance = context.completedExperiments.length
-    ? "Completed experiment evidence is available. Use each experiment's hypothesis, change, metric, observed outcomes, and result summary as historical evidence. Prefer recommendations that build on clearly observed experiment results, but never treat completion or correlation as causal proof."
+    ? "Completed experiment evidence is available. Use each experiment's hypothesis, change, metric, observed outcomes, baseline window outcomes, and result summary as historical evidence. Baseline comparisons are descriptive historical context, not controls or causal estimates. Prefer recommendations that build on clearly observed experiment results, but never treat completion or correlation as causal proof."
     : "No completed experiments are available. Do not imply that a tested change has already been validated; recommend a measurable experiment when evidence is insufficient.";
 
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -66,6 +67,11 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         value: outcome.value,
       })),
       metricEvidence: experiment.metricEvidence.map((outcome) => ({
+        actionType: outcome.actionType,
+        count: outcome.count,
+        value: outcome.value,
+      })),
+      baselineOutcomes: experiment.baselineOutcomes.map((outcome) => ({
         actionType: outcome.actionType,
         count: outcome.count,
         value: outcome.value,
