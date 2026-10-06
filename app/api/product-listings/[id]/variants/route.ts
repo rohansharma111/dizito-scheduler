@@ -61,5 +61,9 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: result.error }, { status: 404 });
   }
 
+  if (result.error === "LISTING_VARIANT_EXTERNAL_ID_CONFLICT") {
+    return NextResponse.json({ error: result.error }, { status: 409 });
+  }
+
   return NextResponse.json({ listingVariant: result.listingVariant });
 }
