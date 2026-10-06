@@ -50,7 +50,8 @@ export async function PATCH(
     const existing = await pool.query(
       `SELECT id, platform, status
          FROM marketing_content_item_variants
-        WHERE id = $1 AND content_item_id = $2 AND user_id = $3`,
+        WHERE id = $1 AND content_item_id = $2 AND user_id = $3
+        FOR UPDATE`,
       [variantId, contentItemId, userId],
     );
     const variant = existing.rows[0];
