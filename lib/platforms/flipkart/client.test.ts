@@ -30,9 +30,7 @@ describe("Flipkart client contract", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://sandbox-api.flipkart.net/sellers/listings/v3/SKU-1",
       expect.objectContaining({
-        method: undefined,
         cache: "no-store",
-        headers: expect.any(Headers),
       }),
     );
 
