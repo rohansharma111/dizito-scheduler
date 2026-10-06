@@ -38,23 +38,26 @@ export default function MarketingContentClient() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const value = params.get("campaignId");
-    if (value && /^\d+$/.test(value)) setCampaignFilter(Number(value));
+    const nextCampaign = value && /^\d+$/.test(value) ? Number(value) : null;
     const contentValue = params.get("contentItemId");
-    if (contentValue && /^\d+$/.test(contentValue)) setContentFocus(Number(contentValue));
+    const nextContent = contentValue && /^\d+$/.test(contentValue) ? Number(contentValue) : null;
+    setCampaignFilter(nextCampaign);
+    setContentFocus(nextContent);
+    load(nextCampaign, nextContent);
   }, []);
 
-  async function load() {
+  async function load(selectedCampaignId = campaignFilter, selectedContentId = contentFocus) {
     setLoading(true);
     try {
-      const contentUrl = campaignFilter ? `/api/marketing/content-items?campaignId=${campaignFilter}` : "/api/marketing/content-items";
+      const contentUrl = selectedCampaignId ? `/api/marketing/content-items?campaignId=${selectedCampaignId}` : "/api/marketing/content-items";
       const [contentResponse, accountResponse] = await Promise.all([fetch(contentUrl), fetch("/api/social-accounts")]);
       const contentData = await contentResponse.json(); const accountData = await accountResponse.json();
       if (!contentResponse.ok) throw new Error(contentData.error || "Failed to load content");
       if (!accountResponse.ok) throw new Error(accountData.error || "Failed to load accounts");
       const rawItems: ContentItem[] = contentData.contentItems || [];
-      if (contentFocus) {
-        const focusedItem = rawItems.find((item) => item.id === contentFocus);
-        if (focusedItem && !campaignFilter && focusedItem.campaignId) {
+      if (selectedContentId) {
+        const focusedItem = rawItems.find((item) => item.id === selectedContentId);
+        if (focusedItem && !selectedCampaignId && focusedItem.campaignId) {
           const focusedResponse = await fetch(`/api/marketing/content-items?campaignId=${focusedItem.campaignId}`);
           const focusedData = await focusedResponse.json();
           if (focusedResponse.ok) rawItems.splice(0, rawItems.length, ...(focusedData.contentItems || []));
@@ -163,7 +166,7 @@ export default function MarketingContentClient() {
         <div className="mt-5 rounded-xl border bg-gray-50 p-4"><div className="mb-2 text-sm font-semibold text-gray-700">Connected accounts</div><div className="flex flex-wrap gap-2">{accounts.map((account) => { const selected = selectedAccounts.includes(account.id); return <button key={account.id} onClick={() => toggleAccount(account.id)} className={`rounded-full border px-3 py-1.5 text-sm ${selected ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-600"}`}>{platformLabel(account.platform)} · {account.account_name}</button>; })}{accounts.length === 0 && <span className="text-sm text-gray-500">No connected social accounts.</span>}</div></div>
       </header>
       {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {loading ? <div className="py-16 text-center text-gray-500">Loading marketing content...</div> : items.length === 0 ? <div className="rounded-2xl border border-dashed bg-white p-12 text-center text-gray-500">{campaignFilter ? "No content items exist for this campaign yet." : "No content items yet. Generate and approve a weekly plan first."}</div> : <div className="space-y-4">{items.map((item) => <article key={item.id} className="rounded-2xl border bg-white p-5 shadow-sm"><div className="flex flex-col gap-4"><div><div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span>{item.contentType}</span><span>·</span><span>{item.format || "content"}</span>{item.status === "converted" && <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700 normal-case tracking-normal"><CheckCircle2 size={13} /> Converted</span>}</div><h2 className="mt-2 text-lg font-semibold text-gray-900">{item.topic || item.hook || "Untitled content item"}</h2>
+      {loading ? <div className="py-16 text-center text-gray-500">Loading marketing content...</div> : items.length === 0 ? <div className="rounded-2xl border border-dashed bg-white p-12 text-center text-gray-500">{campaignFilter ? "No content items exist for this campaign yet." : "No content items yet. Generate and approve a weekly plan first."}</div> : <div className="space-y-4">{items.map((item) => <article key={item.id} id={`content-item-${item.id}`} className="rounded-2xl border bg-white p-5 shadow-sm"><div className="flex flex-col gap-4"><div><div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span>{item.contentType}</span><span>·</span><span>{item.format || "content"}</span>{item.status === "converted" && <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700 normal-case tracking-normal"><CheckCircle2 size={13} /> Converted</span>}</div><h2 className="mt-2 text-lg font-semibold text-gray-900">{item.topic || item.hook || "Untitled content item"}</h2>
 <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
   <div className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">Campaign strategy</div>
   <div className="mt-1 text-sm font-semibold text-gray-900">{item.campaignName || "Campaign"}</div>
@@ -181,3 +184,9 @@ export default function MarketingContentClient() {
     </div>
   );
 }
+  useEffect(() => {
+    if (!contentFocus || loading) return;
+    const target = document.getElementById(`content-item-${contentFocus}`);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [contentFocus, loading, items]);
+
