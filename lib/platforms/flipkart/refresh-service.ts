@@ -86,7 +86,7 @@ export async function refreshFlipkartCredentials(
       appSecret: credentials.appSecret,
       accessTokenExpiresAt: refreshed.accessTokenExpiresAt,
       refreshTokenExpiresAt: refreshed.refreshTokenExpiresAt,
-    });
+    }, client);
 
     await client.query("COMMIT");
 
