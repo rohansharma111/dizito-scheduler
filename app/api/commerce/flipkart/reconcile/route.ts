@@ -21,11 +21,11 @@ export async function POST(request: Request) {
       ? body.skuIds.filter((value: unknown): value is string => typeof value === "string" && value.trim()).map((value: string) => value.trim())
       : [];
 
-    if (!channelId || !operationId || !listingId || (!externalId && !lookupKey && skuIds.length === 0)) {
+    if (!channelId || !operationId || !listingId || (!lookupKey && skuIds.length === 0)) {
       return NextResponse.json(
         {
           error:
-            "channelId, operationId, listingId, and at least one of externalId, lookupKey, or skuIds are required",
+            "channelId, operationId, listingId, and at least one of lookupKey or skuIds are required",
         },
         { status: 400 },
       );
