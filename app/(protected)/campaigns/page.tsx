@@ -47,7 +47,16 @@ export default function CampaignsPage() {
     setItems(data.contentItems || []);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load().then(() => {
+      const focus = new URLSearchParams(window.location.search).get("focus");
+      const id = focus ? Number(focus) : null;
+      if (id && Number.isInteger(id) && id > 0) {
+        setSelectedId(id);
+        loadContent(id);
+      }
+    });
+  }, []);
 
   function toggleProduct(id: number) {
     setForm((current) => ({ ...current, productIds: current.productIds.includes(id) ? current.productIds.filter((value) => value !== id) : [...current.productIds, id] }));
