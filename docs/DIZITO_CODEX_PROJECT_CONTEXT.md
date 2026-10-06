@@ -435,3 +435,6 @@ The active Commerce provider boundary now treats provider mutations as tenant-sc
 
 ### Commerce hardening continuation — 2026-10-06
 The publish ledger now reserves idempotency keys atomically and validates listing/provider/operation identity, preventing concurrent duplicate mutations and cross-operation key reuse. WooCommerce provider mutation state remains ambiguous until read-back reconciliation, including when post-mutation persistence fails; its API exposes that state as HTTP 202 rather than a false publish success.
+
+### Shopify tenant boundary hardening — 2026-10-06
+Shopify provider GraphQL calls now require authenticated tenant context and resolve channels through tenant-scoped lookup. Related connect/callback and channel-list routes validate session identity before provider/database operations.
