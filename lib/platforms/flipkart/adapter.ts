@@ -109,12 +109,33 @@ export const flipkartAdapter: CommerceProviderAdapter<
       operation: existing.operation,
       payload: prepared.payload,
     });
-    if (result.status === "failed" || result.status === "disabled" || result.status === "OPERATION_NOT_FOUND") {
-      return { operation: "publish", status: "failed", data: result, error: {
-        code: result.status === "disabled" ? "LIVE_PUBLISH_DISABLED" : result.status,
-        message: result.status === "disabled" ? "Flipkart live publishing is disabled" : "Flipkart publish " + result.status,
-        retryable: false, ambiguous: false,
-      }};
+    if (result.status === "disabled" || result.status === "OPERATION_NOT_FOUND") {
+      return {
+        operation: "publish",
+        status: "failed",
+        data: result,
+        error: {
+          code: result.status === "disabled" ? "LIVE_PUBLISH_DISABLED" : result.status,
+          message: result.status === "disabled"
+            ? "Flipkart live publishing is disabled"
+            : "Flipkart publish operation was not found",
+          retryable: result.status === "disabled",
+          ambiguous: false,
+        },
+      };
+    }
+    if (result.status === "failed") {
+      return {
+        operation: "publish",
+        status: "failed",
+        data: result,
+        error: {
+          code: "FLIPKART_PUBLISH_FAILED",
+          message: "Flipkart publish failed",
+          retryable: false,
+          ambiguous: false,
+        },
+      };
     }
     return { operation: "publish", status: "ambiguous", data: result, error: {
       code: "RECONCILIATION_REQUIRED",
