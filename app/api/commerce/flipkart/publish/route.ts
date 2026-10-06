@@ -75,13 +75,27 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      status: result.status,
-      result: result.data,
-      externalId: result.externalId,
-      error: result.error,
-    });
+    const data =
+      result.data && typeof result.data === "object"
+        ? (result.data as { idempotentReplay?: unknown; reconciliationRequired?: unknown })
+        : null;
+    const idempotentReplay = Boolean(data?.idempotentReplay);
+    const reconciliationRequired = result.status === "ambiguous";
+
+    return NextResponse.json(
+      {
+        success: true,
+        status: result.status,
+        result: result.data,
+        externalId: result.externalId,
+        idempotentReplay,
+        reconciliationRequired,
+        error: result.error?.code,
+      },
+      {
+        status: reconciliationRequired ? 202 : idempotentReplay ? 200 : 201,
+      },
+    );
   } catch (error) {
     console.error("POST /api/commerce/flipkart/publish error:", error);
     return NextResponse.json(
