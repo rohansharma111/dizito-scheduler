@@ -35,7 +35,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const existing = await getCampaign(userId, campaignId);
   if (!existing) return errorResponse("Campaign not found", 404);
 
-  if (body.status !== undefined) {\n    if (typeof body.status !== "string" || !STATUSES.includes(body.status)) return errorResponse("Invalid campaign status");\n    if (body.status !== existing.status && !TRANSITIONS[existing.status]?.includes(body.status)) return errorResponse("Invalid status transition from " + existing.status + " to " + body.status);\n  }
+  if (body.status !== undefined) {
+    if (typeof body.status !== "string" || !STATUSES.includes(body.status)) return errorResponse("Invalid campaign status");
+    if (body.status !== existing.status && !TRANSITIONS[existing.status]?.includes(body.status)) return errorResponse("Invalid status transition from " + existing.status + " to " + body.status);
+  }
   if (body.name !== undefined && (typeof body.name !== "string" || !body.name.trim() || body.name.length > 200)) return errorResponse("Invalid campaign name");
   for (const field of ["objective", "audience", "cta"]) {
     if (body[field] !== undefined && body[field] !== null && typeof body[field] !== "string") return errorResponse("Invalid " + field);
@@ -65,10 +68,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     await client.query("BEGIN");
     await client.query(
-      \`UPDATE marketing_campaigns
+      `UPDATE marketing_campaigns
        SET name=$1, goal_id=$2, offer_id=$3, objective=$4, audience=$5, cta=$6,
            channel_strategy=$7::jsonb, status=$8, starts_at=$9, ends_at=$10, updated_at=now()
-       WHERE id=$11 AND user_id=$12\`,
+       WHERE id=$11 AND user_id=$12`,
       [
         body.name === undefined ? existing.name : body.name.trim(),
         goalId, offerId,
@@ -81,9 +84,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ],
     );
     if (body.productIds !== undefined) {
-      await client.query(\`DELETE FROM marketing_campaign_products WHERE campaign_id=$1\`, [campaignId]);
+      await client.query(`DELETE FROM marketing_campaign_products WHERE campaign_id=$1`, [campaignId]);
       for (const productId of productIds) {
-        await client.query(\`INSERT INTO marketing_campaign_products (campaign_id, product_id) VALUES ($1,$2)\`, [campaignId, productId]);
+        await client.query(`INSERT INTO marketing_campaign_products (campaign_id, product_id) VALUES ($1,$2)`, [campaignId, productId]);
       }
     }
     await client.query("COMMIT");
