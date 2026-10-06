@@ -18,10 +18,7 @@ import {
 
 export type FlipkartAdapterPayload =
   | { action: "draft"; input: PrepareFlipkartListingDraftInput }
-  | {
-      action: "publish";
-      input: PrepareFlipkartPublishInput;
-    }
+  | { action: "publish"; input: PrepareFlipkartPublishInput }
   | { action: "reconcile"; input: ReconcileFlipkartOperationInput };
 
 export type FlipkartAdapterResponse =
@@ -81,10 +78,35 @@ export const flipkartAdapter: CommerceProviderAdapter<
         code: prepared.error, message: prepared.error, retryable: false, ambiguous: false,
       }};
     }
+
+    const existing = prepared.operation;
+    if (existing.status === "succeeded") {
+      return {
+        operation: "publish",
+        status: "succeeded",
+        externalId: existing.external_id ?? undefined,
+        data: { operation: existing, idempotentReplay: true },
+      };
+    }
+
+    if (existing.status === "in_progress" || existing.status === "unknown") {
+      return {
+        operation: "publish",
+        status: "ambiguous",
+        data: { operation: existing, reconciliationRequired: true },
+        error: {
+          code: "RECONCILIATION_REQUIRED",
+          message: "Flipkart publish operation already requires reconciliation",
+          retryable: false,
+          ambiguous: true,
+        },
+      };
+    }
+
     const result = await executePreparedFlipkartPublish(context.userId, {
       channelId: context.channelId,
-      operationId: prepared.operation.id,
-      operation: prepared.operation.operation,
+      operationId: existing.id,
+      operation: existing.operation,
       payload: prepared.payload,
     });
     if (result.status === "failed" || result.status === "disabled" || result.status === "OPERATION_NOT_FOUND") {
@@ -101,12 +123,7 @@ export const flipkartAdapter: CommerceProviderAdapter<
     }};
   },
 
-  async reconcilePublish({
-    context,
-    payload,
-    externalId,
-    lookupKey,
-  }) {
+  async reconcilePublish({ context, payload, externalId, lookupKey }) {
     if (payload.action !== "reconcile") {
       return failed(
         "reconcile",
