@@ -29,6 +29,10 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
     if (!Number.isInteger(input.contentItemId) || input.contentItemId <= 0) throw new Error("Invalid content item reference");
     const item = await pool.query(
       `SELECT ci.id,
+              mc.name AS campaign_name,
+              mc.objective AS campaign_objective,
+              mc.audience AS campaign_audience,
+              mc.cta AS campaign_cta,
               COALESCE(ARRAY_AGG(DISTINCT cip.product_id) FILTER (WHERE cip.product_id IS NOT NULL), '{}') AS product_ids,
               mc.offer_id
          FROM marketing_content_items ci
@@ -42,6 +46,12 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
     selectedProductIds = (item.rows[0].product_ids ?? []).map(Number);
     selectedOfferId = item.rows[0].offer_id == null ? null : Number(item.rows[0].offer_id);
   }
+  const resolvedCampaign = input.contentItemId !== undefined ? {
+    name: item.rows[0].campaign_name,
+    objective: item.rows[0].campaign_objective,
+    audience: item.rows[0].campaign_audience,
+    cta: item.rows[0].campaign_cta,
+  } : null;
   if (selectedOfferId !== null && (!Number.isInteger(selectedOfferId) || selectedOfferId <= 0)) throw new Error("Invalid offer reference");
   const availableProductIds = new Set(context.businessBrain.products.map((product) => product.id));
   const invalidProductId = selectedProductIds.find((id) => !availableProductIds.has(id));
@@ -58,6 +68,7 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
           productIds: selectedProductIds,
           offerId: selectedOfferId,
           grounding: {
+            campaign: resolvedCampaign,
             selectedProducts: context.businessBrain.products.filter((product) => selectedProductIds.includes(product.id)),
             selectedOffer: selectedOfferId === null ? null : context.businessBrain.offers.find((offer) => offer.id === selectedOfferId) || null,
           },
