@@ -197,16 +197,7 @@ export async function publishShopifyProduct(
   if (channel.provider !== "shopify") throw new Error("Commerce channel is not Shopify");
   if (channel.status !== "active") throw new Error("Shopify channel is not active");
 
-  return withShopifyPublishLock(userId, channelId, productId, async () => {
-  if (confirmLivePublish !== true) {
-    throw new Error("LIVE_PUBLISH_CONFIRMATION_REQUIRED");
-  }
-
-  const channel = await getCommerceChannelById(channelId, userId);
-  if (!channel) throw new Error("Commerce channel not found");
-  if (channel.provider !== "shopify") throw new Error("Commerce channel is not Shopify");
-  if (channel.status !== "active") throw new Error("Shopify channel is not active");
-
+  return withShopifyPublishLock(userId, channelId, productId, async () => 
   const product = asShopifyCatalogProduct(await getProductDetails(productId, userId));
   if (!product) throw new Error("Product not found");
   if (product.variants.length === 0) throw new Error("Shopify publishing requires at least one product variant");
