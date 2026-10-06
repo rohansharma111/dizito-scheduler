@@ -49,6 +49,9 @@ export async function POST(request: Request) {
       if (!item || typeof item !== "object" || typeof item.contentType !== "string" || typeof item.format !== "string" || typeof item.topic !== "string" || typeof item.cta !== "string") {
         return Response.json({ error: "Invalid content item" }, { status: 400 });
       }
+      if (item.sourceCampaignId != null && (!Number.isInteger(Number(item.sourceCampaignId)) || Number(item.sourceCampaignId) <= 0)) {
+        return Response.json({ error: "Invalid source campaign reference" }, { status: 400 });
+      }
       if (item.mediaId != null && (!Number.isInteger(Number(item.mediaId)) || Number(item.mediaId) <= 0)) {
         return Response.json({ error: "Invalid content media reference" }, { status: 400 });
       }
