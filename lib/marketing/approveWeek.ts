@@ -8,6 +8,7 @@ export type ApprovedWeeklyStrategy = {
     change: string;
     metric: string;
     disposition: "refine" | "retest" | "avoid" | "measure";
+    selectionReason: string;
   } | null;
   campaigns: Array<{
     name: string;
@@ -173,7 +174,7 @@ export async function persistApprovedWeek(
         if (supportingExperiments.rowCount !== supportingExperimentIds.length) throw new Error("Invalid supporting experiment reference");
       }
 
-      const experimentProvenance = { scope: "approved_weekly_content_item", campaignId, contentItemId, weekStart, weekEnd, disposition: strategy.experiment.disposition, supportingExperimentIds };
+      const experimentProvenance = { scope: "approved_weekly_content_item", campaignId, contentItemId, weekStart, weekEnd, disposition: strategy.experiment.disposition, selectionReason: strategy.experiment.selectionReason, supportingExperimentIds };
 
       await client.query(
         `INSERT INTO marketing_experiments
