@@ -44,7 +44,7 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
       [input.contentItemId, userId],
     );
     if (item.rowCount === 0) throw new Error("Content item not found");
-    resolvedItem = item;
+    resolvedItem = { rows: item.rows, rowCount: item.rowCount ?? 0 };
     selectedProductIds = (item.rows[0].product_ids ?? []).map(Number);
     selectedOfferId = item.rows[0].offer_id == null ? null : Number(item.rows[0].offer_id);
   }
