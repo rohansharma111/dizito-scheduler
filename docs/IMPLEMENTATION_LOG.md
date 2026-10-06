@@ -404,3 +404,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Shopify's legacy publish/sync implementation remains intentionally separate because it has its own durable crash-recovery mechanism.
 - Removed redundant duplicate user-ID validation in Shopify publish/sync routes.
 - No tests/lint/build executed yet; implementation pass remains in progress.
+
+
+## 2026-10-06 — Commerce credential provider-boundary hardening
+
+- Identified and fixed a WooCommerce credential boundary gap: tenant ownership was checked, but provider identity was not.
+- WooCommerce credential save/read now require `commerce_channels.provider = 'woocommerce'` in addition to user ownership.
+- Re-audited the four Commerce credential implementations and confirmed provider/tenant scoping is present for Shopify, Amazon, Flipkart, and WooCommerce.
+- Validation remains deferred until the complete code implementation pass is finished.
