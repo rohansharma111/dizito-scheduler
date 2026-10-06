@@ -426,3 +426,8 @@ These strengthen the safety boundary but do not constitute live provider verific
 - WooCommerce provider mutation success remains reconciliation-safe if post-mutation persistence fails; the attempt is kept ambiguous rather than failed to prevent duplicate creation.
 - WooCommerce publish API now returns HTTP 202 with explicit ambiguous/reconciliation-required state instead of presenting provider submission as a normal 201 success.
 - WooCommerce reconciliation-status reads are scoped to the WooCommerce provider channel and authenticated tenant.
+
+### Commerce code-level hardening continuation — Shopify tenant boundary — 2026-10-06
+- Shopify GraphQL access now resolves the channel through authenticated tenant-scoped channel lookup rather than an unscoped internal channel lookup.
+- Shopify publish/sync provider calls now carry authenticated user context into the provider client and credential access path.
+- Shopify connect/callback and Commerce channel listing routes now validate authenticated user IDs as safe positive integers before database/provider work.
