@@ -4,12 +4,15 @@ const mocks = vi.hoisted(() => ({
   getChannelConfig: vi.fn(),
   getListings: vi.fn(),
   markSucceeded: vi.fn(),
+  pool: { query: vi.fn() },
 }));
 
 vi.mock("@/lib/platforms/flipkart/client", () => ({
   getFlipkartChannelConfig: mocks.getChannelConfig,
   getFlipkartListings: mocks.getListings,
 }));
+
+vi.mock("@/lib/db", () => ({ pool: mocks.pool }));
 
 vi.mock("@/lib/commerce/publish/operations", () => ({
   markCommercePublishOperationSucceeded: mocks.markSucceeded,
@@ -20,6 +23,9 @@ import { reconcileFlipkartPublishOperation } from "@/lib/platforms/flipkart/reco
 describe("reconcileFlipkartPublishOperation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.pool.query.mockResolvedValue({
+      rows: [{ id: "operation-1", listing_id: "listing-1", provider: "flipkart", status: "in_progress" }],
+    });
     mocks.getChannelConfig.mockResolvedValue({
       config: { accessToken: "token", environment: "sandbox" },
     });
