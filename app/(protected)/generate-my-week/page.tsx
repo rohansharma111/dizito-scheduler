@@ -69,6 +69,7 @@ export default function GenerateMyWeekPage() {
     const first = recommendations[0];
     const strategy = {
       strategySummary: plan.strategySummary,
+      experiment: plan.experiment ? { hypothesis: plan.experiment.hypothesis, change: plan.experiment.change, metric: plan.experiment.metric, campaignId: null, contentItemId: null, variantId: null } : null,
       campaigns: [
         {
           name: `Weekly ${plan.weekStart} marketing campaign`,
