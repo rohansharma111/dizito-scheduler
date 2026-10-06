@@ -17,21 +17,30 @@ export interface ReconcileFlipkartOperationInput {
 }
 
 function extractConfirmedExternalId(providerResult: unknown): string | null {
-  if (!providerResult || typeof providerResult !== "object") return null;
-  const candidate = providerResult as Record<string, unknown>;
-  const direct = candidate.externalId;
-  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  if (Array.isArray(providerResult)) {
+    for (const item of providerResult) {
+      const id = extractConfirmedExternalId(item);
+      if (id) return id;
+    }
+    return null;
+  }
 
-  const response = candidate.response ?? candidate.data ?? candidate.result;
-  if (!response || typeof response !== "object") return null;
-  const nested = response as Record<string, unknown>;
-  for (const key of ["listingId", "listing_id", "id", "listingID"]) {
-    const value = nested[key];
+  if (!providerResult || typeof providerResult !== "object") return null;
+
+  const candidate = providerResult as Record<string, unknown>;
+  for (const key of ["externalId", "listingId", "listing_id", "id", "listingID"]) {
+    const value = candidate[key];
     if (typeof value === "string" || typeof value === "number") {
       const normalized = String(value).trim();
       if (normalized) return normalized;
     }
   }
+
+  for (const key of ["listing", "listings", "response", "data", "result"]) {
+    const nested = extractConfirmedExternalId(candidate[key]);
+    if (nested) return nested;
+  }
+
   return null;
 }
 
@@ -43,6 +52,7 @@ export interface FlipkartReconciliationResult {
   providerResult: unknown;
   externalIdConfirmed: boolean;
   externalId?: string;
+  operation?: unknown;
 }
 
 export async function reconcileFlipkartPublishOperation(
@@ -56,29 +66,50 @@ export async function reconcileFlipkartPublishOperation(
         ? [input.lookupKey.trim()]
         : [];
 
-  if (identifiers.length === 0 && !input.externalId?.trim()) {
-    throw new Error("Flipkart reconciliation requires a SKU or external ID");
+  if (identifiers.length === 0) {
+    throw new Error("Flipkart reconciliation requires a SKU or lookup key");
   }
 
   const { config } = await getFlipkartChannelConfig(input.channelId, userId);
-  const providerResult = identifiers.length > 0
-    ? await getFlipkartListings(config, identifiers)
-    : { externalId: input.externalId!.trim() };
+  const providerResult = await getFlipkartListings(config, identifiers);
 
-  // Flipkart's API response shape can vary by listing state/account data.
-  // Do not infer success from an HTTP 200 alone. Only a concrete provider
-  // identifier is eligible to transition a publish operation to succeeded.
-  const confirmedExternalId =
-    input.externalId?.trim() || extractConfirmedExternalId(providerResult);
+  const confirmedExternalId = extractConfirmedExternalId(providerResult);
+  const requestedExternalId = input.externalId?.trim();
+
+  if (!confirmedExternalId) {
+    return {
+      operationId: input.operationId,
+      listingId: input.listingId,
+      provider: "flipkart",
+      status: "unknown",
+      providerResult,
+      externalIdConfirmed: false,
+    };
+  }
+
+  if (requestedExternalId && requestedExternalId !== confirmedExternalId) {
+    throw new Error("Flipkart reconciliation external ID mismatch");
+  }
+
+  const operation = await markCommercePublishOperationSucceeded(
+    userId,
+    input.operationId,
+    confirmedExternalId,
+  );
+
+  if (!operation) {
+    throw new Error("PUBLISH_ATTEMPT_NOT_FOUND");
+  }
 
   return {
     operationId: input.operationId,
     listingId: input.listingId,
     provider: "flipkart",
-    status: confirmedExternalId ? "succeeded" : "unknown",
+    status: "succeeded",
     providerResult,
-    externalIdConfirmed: Boolean(confirmedExternalId),
-    ...(confirmedExternalId ? { externalId: confirmedExternalId } : {}),
+    externalIdConfirmed: true,
+    externalId: confirmedExternalId,
+    operation,
   };
 }
 
