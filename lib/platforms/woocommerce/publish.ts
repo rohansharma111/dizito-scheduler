@@ -44,49 +44,79 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
   }
 
   let existingAttempt: { id: string; status: string; external_id: string | null; response_payload: unknown } | null = null;
-  const attemptResult = await pool.query(
-    `SELECT id, status, external_id, response_payload
-     FROM commerce_publish_attempts
-     WHERE channel_id = $1 AND listing_id = $2 AND idempotency_key = $3
-     LIMIT 1`,
-    [input.channelId, input.listingId, idempotencyKey],
-  );
-  existingAttempt = attemptResult.rows[0] ?? null;
-  if (existingAttempt?.status === "succeeded" && existingAttempt.external_id) {
-    await pool.query(
-      `UPDATE product_listings
-       SET status = 'active', sync_status = 'synced', external_id = $1,
-           last_synced_at = COALESCE(last_synced_at, now()), last_error = NULL, updated_at = now()
-       WHERE id = $2 AND user_id = $3`,
-      [existingAttempt.external_id, input.listingId, userId],
+  let existingAttempt: { id: string; status: string; external_id: string | null; response_payload: unknown } | null = null;
+  const reservationClient = await pool.connect();
+  let attemptId: string;
+  try {
+    await reservationClient.query("BEGIN");
+
+    const attemptResult = await reservationClient.query(
+      `SELECT id, status, external_id, response_payload
+       FROM commerce_publish_attempts
+       WHERE channel_id = $1 AND listing_id = $2 AND idempotency_key = $3
+       FOR UPDATE`,
+      [input.channelId, input.listingId, idempotencyKey],
     );
-    return { result: existingAttempt.response_payload, externalId: existingAttempt.external_id, idempotentReplay: true };
-  }
-  if (existingAttempt && ["started", "ambiguous"].includes(existingAttempt.status)) {
-    return { error: "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION" as const };
-  }
+    existingAttempt = attemptResult.rows[0] ?? null;
 
-  await pool.query(
-    `UPDATE product_listings
-     SET sync_status = 'syncing',
-         publish_idempotency_key = COALESCE(publish_idempotency_key, $1),
-         last_error = NULL,
-         updated_at = now()
-     WHERE id = $2 AND user_id = $3`,
-    [idempotencyKey, input.listingId, userId],
-  );
+    if (existingAttempt?.status === "succeeded" && existingAttempt.external_id) {
+      await reservationClient.query("COMMIT");
+      await pool.query(
+        `UPDATE product_listings
+         SET status = 'active', sync_status = 'synced', external_id = $1,
+             last_synced_at = COALESCE(last_synced_at, now()), last_error = NULL, updated_at = now()
+         WHERE id = $2 AND user_id = $3`,
+        [existingAttempt.external_id, input.listingId, userId],
+      );
+      return { result: existingAttempt.response_payload, externalId: existingAttempt.external_id, idempotentReplay: true };
+    }
+    if (existingAttempt && ["started", "ambiguous"].includes(existingAttempt.status)) {
+      await reservationClient.query("COMMIT");
+      return { error: "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION" as const };
+    }
 
-  const attempt = await pool.query(
-    `INSERT INTO commerce_publish_attempts
-      (user_id, channel_id, listing_id, provider, idempotency_key, status, request_payload)
-     VALUES ($1, $2, $3, $4, $5, 'started', $6::jsonb)
-     ON CONFLICT (channel_id, listing_id, idempotency_key)
-     DO UPDATE SET status = 'started', request_payload = EXCLUDED.request_payload,
-                   error_message = NULL, completed_at = NULL, updated_at = now()
-     RETURNING id`,
-    [userId, input.channelId, input.listingId, channel.provider, idempotencyKey, JSON.stringify(input.payload)],
-  );
-  const attemptId = String(attempt.rows[0].id);
+    const attempt = existingAttempt
+      ? await reservationClient.query(
+          `UPDATE commerce_publish_attempts
+           SET status = 'started', request_payload = $1::jsonb,
+               error_message = NULL, completed_at = NULL, updated_at = now()
+           WHERE id = $2
+           RETURNING id`,
+          [JSON.stringify(input.payload), existingAttempt.id],
+        )
+      : await reservationClient.query(
+          `INSERT INTO commerce_publish_attempts
+            (user_id, channel_id, listing_id, provider, idempotency_key, status, request_payload)
+           VALUES ($1, $2, $3, $4, $5, 'started', $6::jsonb)
+           ON CONFLICT (channel_id, listing_id, idempotency_key) DO NOTHING
+           RETURNING id`,
+          [userId, input.channelId, input.listingId, channel.provider, idempotencyKey, JSON.stringify(input.payload)],
+        );
+
+    if (attempt.rows.length === 0) {
+      await reservationClient.query("ROLLBACK");
+      return { error: "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION" as const };
+    }
+
+    attemptId = String(attempt.rows[0].id);
+
+    await reservationClient.query(
+      `UPDATE product_listings
+       SET sync_status = 'syncing',
+           publish_idempotency_key = COALESCE(publish_idempotency_key, $1),
+           last_error = NULL,
+           updated_at = now()
+       WHERE id = $2 AND user_id = $3`,
+      [idempotencyKey, input.listingId, userId],
+    );
+
+    await reservationClient.query("COMMIT");
+  } catch (error) {
+    await reservationClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    reservationClient.release();
+  }
 
   try {
     const { config } = await getWooCommerceChannelConfig(input.channelId);
