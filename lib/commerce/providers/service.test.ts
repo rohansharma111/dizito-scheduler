@@ -75,6 +75,72 @@ describe("commerce provider service", () => {
     expect(mocks.reconcile).toHaveBeenCalled();
   });
 
+  it("dispatches Flipkart through the shared provider service", async () => {
+    const adapter = commerceProviderAdapters.flipkart;
+    const originalDraft = adapter.prepareDraft;
+    const originalPublish = adapter.publish;
+    const originalReconcile = adapter.reconcilePublish;
+
+    const draft = vi.fn().mockResolvedValue({
+      operation: "draft",
+      status: "succeeded",
+      data: { listing: { id: "fk-listing" } },
+    });
+    const publish = vi.fn().mockResolvedValue({
+      operation: "publish",
+      status: "ambiguous",
+      error: { code: "RECONCILIATION_REQUIRED", message: "reconcile", retryable: false, ambiguous: true },
+    });
+    const reconcile = vi.fn().mockResolvedValue({
+      operation: "reconcile",
+      status: "succeeded",
+      externalId: "FK-123",
+    });
+
+    adapter.prepareDraft = draft;
+    adapter.publish = publish;
+    adapter.reconcilePublish = reconcile;
+
+    try {
+      const draftResult = await prepareCommerceProviderDraft("flipkart", {
+        context: { channelId: "fk-channel", userId: 7 },
+        payload: { action: "draft", input: {} },
+      });
+      const publishResult = await publishCommerceProvider("flipkart", {
+        context: { channelId: "fk-channel", userId: 7 },
+        payload: { action: "publish", input: {} },
+        confirmLivePublish: true,
+      });
+      const reconcileResult = await reconcileCommerceProvider("flipkart", {
+        context: { channelId: "fk-channel", userId: 7 },
+        payload: { action: "reconcile", input: {} },
+        lookupKey: "SKU-1",
+      });
+
+      expect(draftResult.status).toBe("succeeded");
+      expect(publishResult.status).toBe("ambiguous");
+      expect(reconcileResult.externalId).toBe("FK-123");
+      expect(draft).toHaveBeenCalledWith({
+        context: { channelId: "fk-channel", userId: 7 },
+        payload: { action: "draft", input: {} },
+      });
+      expect(publish).toHaveBeenCalledWith({
+        context: { channelId: "fk-channel", userId: 7 },
+        payload: { action: "publish", input: {} },
+        confirmLivePublish: true,
+      });
+      expect(reconcile).toHaveBeenCalledWith({
+        context: { channelId: "fk-channel", userId: 7 },
+        payload: { action: "reconcile", input: {} },
+        lookupKey: "SKU-1",
+      });
+    } finally {
+      adapter.prepareDraft = originalDraft;
+      adapter.publish = originalPublish;
+      adapter.reconcilePublish = originalReconcile;
+    }
+  });
+
   it("returns a bounded unsupported-operation result", async () => {
     const adapter = getCommerceProviderAdapter("woocommerce");
     const original = adapter.capabilities.publish;
