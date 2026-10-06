@@ -64,6 +64,7 @@ export async function GET(
       WHERE
         pt.post_id = $1
         AND p.user_id = $2
+        AND sa.id IS NOT NULL
 
       ORDER BY pt.id
       `,

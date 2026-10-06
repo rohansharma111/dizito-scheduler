@@ -1,7 +1,10 @@
 import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const reconnect = searchParams.get("reconnect");
+  const reconnectType = searchParams.get("type") ?? "account";
   const clientId = process.env.PINTEREST_CLIENT_ID;
   const redirectUri = process.env.PINTEREST_REDIRECT_URI;
   const scopes =
@@ -39,6 +42,22 @@ export async function GET() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 10, // 10 minutes
+    path: "/",
+  });
+
+  cookieStore.set("pinterest_oauth_reconnect", reconnect ?? "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
+
+  cookieStore.set("pinterest_oauth_reconnect_type", reconnectType, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
     path: "/",
   });
 
