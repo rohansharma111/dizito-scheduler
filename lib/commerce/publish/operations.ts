@@ -18,8 +18,28 @@ export interface PreparePublishOperationInput {
   requestPayload: unknown;
 }
 
+function stableSerialize(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) {
+      throw new Error("PUBLISH_OPERATION_PAYLOAD_INVALID");
+    }
+    return serialized;
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableSerialize(item)).join(",")}]`;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => `${JSON.stringify(key)}:${stableSerialize(item)}`);
+
+  return `{${entries.join(",")}}`;
+}
+
 function fingerprint(payload: unknown) {
-  return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+  return crypto.createHash("sha256").update(stableSerialize(payload)).digest("hex");
 }
 
 export async function prepareCommercePublishOperation(input: PreparePublishOperationInput) {
