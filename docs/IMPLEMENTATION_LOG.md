@@ -384,3 +384,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Shopify sync propagates the claim token for both success and error persistence, so a reclaimed listing cannot be overwritten by an older worker.
 - Added migration 019_product_listing_sync_claims.sql.
 - Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
+
+
+## 2026-10-06 — Legacy Commerce listing/media hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Standardized safe positive session user-ID validation across the legacy product-listing APIs.
+- Hardened listing media persistence to preserve omitted external IDs, merge provider metadata, and reject duplicate provider media identities within a listing.
+- Hardened the legacy variant API so omitted external IDs do not clear existing mappings and deterministic mapping conflicts return HTTP 409.
+- Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
