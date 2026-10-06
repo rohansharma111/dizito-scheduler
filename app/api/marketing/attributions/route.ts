@@ -70,14 +70,47 @@ export async function POST(request: Request) {
       if (result.rowCount === 0) return errorResponse("Content item not found", 404);
       if (campaignId != null && Number(result.rows[0].campaignId) !== campaignId) return errorResponse("Content item does not belong to campaign");
     }
+    let resolvedVariantContentItemId: number | null = null;
     if (variantId != null) {
-      const result = await pool.query(`SELECT id, content_item_id AS "contentItemId" FROM marketing_content_item_variants WHERE id=$1 AND user_id=$2`, [variantId, userId]);
+      const result = await pool.query(
+        `SELECT id, content_item_id AS "contentItemId"
+           FROM marketing_content_item_variants
+          WHERE id=$1 AND user_id=$2`,
+        [variantId, userId],
+      );
       if (result.rowCount === 0) return errorResponse("Content variant not found", 404);
-      if (contentItemId != null && Number(result.rows[0].contentItemId) !== contentItemId) return errorResponse("Variant does not belong to content item");
+      resolvedVariantContentItemId = Number(result.rows[0].contentItemId);
+      if (contentItemId != null && resolvedVariantContentItemId !== contentItemId) return errorResponse("Variant does not belong to content item");
+      if (contentItemId == null) {
+        const variantItem = await pool.query(
+          `SELECT campaign_id AS "campaignId" FROM marketing_content_items WHERE id=$1 AND user_id=$2`,
+          [resolvedVariantContentItemId, userId],
+        );
+        if (variantItem.rowCount === 0) return errorResponse("Variant content item not found", 404);
+        if (campaignId != null && Number(variantItem.rows[0].campaignId) !== campaignId) return errorResponse("Variant does not belong to campaign");
+      }
     }
     if (postId != null) {
-      const result = await pool.query(`SELECT id FROM posts WHERE id=$1 AND user_id=$2`, [postId, userId]);
+      const result = await pool.query(
+        `SELECT id FROM posts WHERE id=$1 AND user_id=$2`,
+        [postId, userId],
+      );
       if (result.rowCount === 0) return errorResponse("Post not found", 404);
+
+      if (contentItemId != null) {
+        const linked = await pool.query(
+          `SELECT 1 FROM marketing_content_item_posts WHERE content_item_id=$1 AND post_id=$2`,
+          [contentItemId, postId],
+        );
+        if (linked.rowCount === 0) return errorResponse("Post is not linked to content item");
+      }
+      if (campaignId != null) {
+        const linked = await pool.query(
+          `SELECT 1 FROM marketing_campaign_posts WHERE campaign_id=$1 AND post_id=$2`,
+          [campaignId, postId],
+        );
+        if (linked.rowCount === 0) return errorResponse("Post is not linked to campaign");
+      }
     }
     if (orderId != null) {
       const result = await pool.query(`SELECT id, total, currency FROM orders WHERE id=$1 AND user_id=$2`, [orderId, userId]);
