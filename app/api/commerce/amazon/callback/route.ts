@@ -35,6 +35,7 @@ export async function GET(request: Request) {
 
   try {
     const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) return redirectWithError(request, "Unauthorized");
     const url = new URL(request.url);
     const state = url.searchParams.get("state");
     const sellingPartnerId = url.searchParams.get("selling_partner_id");
