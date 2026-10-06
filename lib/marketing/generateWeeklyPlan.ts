@@ -35,7 +35,13 @@ function isoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export type StrategyHint = {  strategySummary?: string;  recommendations?: Array<{    action?: string;    why?: string;    channels?: string[];    goalId?: number | null;    campaignId?: number | null;    productIds?: number[];    offerId?: number | null;  }>;};export async function generateWeeklyPlan(userId: number, weekStart: string, strategyHint?: StrategyHint): Promise<GeneratedWeek> {
+export type StrategyHint = {
+  strategySummary?: string;
+  recommendations?: Array<{ action?: string; why?: string; channels?: string[]; goalId?: number | null; campaignId?: number | null; productIds?: number[]; offerId?: number | null }>;
+  optimization?: { summary?: string; opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null }> };
+};
+
+export async function generateWeeklyPlan(userId: number, weekStart: string, strategyHint?: StrategyHint): Promise<GeneratedWeek> {
   const brain = await getBusinessBrain(userId);
   const start = new Date(`${weekStart}T00:00:00.000Z`);
   if (Number.isNaN(start.getTime())) throw new Error("Invalid weekStart");
@@ -44,12 +50,14 @@ export type StrategyHint = {  strategySummary?: string;  recommendations?: Array
   const activeOffers = brain.offers.filter((offer) => offer.status === "active" || offer.status === "draft");
   const channels = brain.socialAccounts.filter((account) => account.status === "active").map((account) => account.platform);
   const suggestedChannels = [...new Set(channels)];
-  const primaryGoal = activeGoals[0] ?? null;  const strategyRecommendations = Array.isArray(strategyHint?.recommendations) ? strategyHint.recommendations : [];  const strategyRecommendation = strategyRecommendations[0];  const strategyGoal = strategyRecommendation?.goalId != null ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null : null;  const strategyProduct = strategyRecommendation?.productIds?.length ? brain.products.find((item) => item.id === Number(strategyRecommendation.productIds?.[0])) ?? null : null;  const strategyOffer = strategyRecommendation?.offerId != null ? activeOffers.find((offer) => offer.id === Number(strategyRecommendation.offerId)) ?? null : null;
+  const primaryGoal = activeGoals[0] ?? null;  const strategyRecommendations = Array.isArray(strategyHint?.recommendations) ? strategyHint.recommendations : [];
+  const optimizationOpportunities = Array.isArray(strategyHint?.optimization?.opportunities) ? strategyHint.optimization.opportunities : [];
+  const optimizationOpportunity = optimizationOpportunities[0];  const strategyRecommendation = strategyRecommendations[0];  const strategyGoal = strategyRecommendation?.goalId != null ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null : null;  const strategyProduct = strategyRecommendation?.productIds?.length ? brain.products.find((item) => item.id === Number(strategyRecommendation.productIds?.[0])) ?? null : null;  const strategyOffer = strategyRecommendation?.offerId != null ? activeOffers.find((offer) => offer.id === Number(strategyRecommendation.offerId)) ?? null : null;
   const product = brain.products[0] ?? null;
   const media = brain.media[0] ?? null;
   const offer = activeOffers[0] ?? null;
 
-  const objective = strategyRecommendation?.action || strategyGoal?.name || primaryGoal?.name || "Build awareness and drive customer action";
+  const objective = optimizationOpportunity?.action || strategyRecommendation?.action || strategyGoal?.name || primaryGoal?.name || "Build awareness and drive customer action";
   const goalType = primaryGoal?.goalType ?? "awareness";
   const selectedProduct = strategyProduct ?? product;  const selectedOffer = strategyOffer ?? offer;  const productName = selectedProduct?.name ?? "your business";
   const businessName = brain.profile?.businessName ?? "your business";
@@ -85,7 +93,7 @@ export type StrategyHint = {  strategySummary?: string;  recommendations?: Array
   return {
     weekStart,
     weekEnd: isoDate(addDays(start, 6)),
-    strategySummary: strategyHint?.strategySummary ? `${strategyHint.strategySummary} The weekly plan turns that recommendation into a reviewable execution draft; nothing is published automatically.` : `A five-post draft week focused on ${objective.toLowerCase()}, using existing products, offers, media and connected channels where available. This is a recommendation draft and is not published automatically.`,
+    strategySummary: strategyHint?.optimization?.summary ? strategyHint.optimization.summary + " The weekly plan turns the optimization recommendation into a reviewable execution draft; nothing is published automatically." : strategyHint?.strategySummary ? strategyHint.strategySummary + " The weekly plan turns that recommendation into a reviewable execution draft; nothing is published automatically." : `A five-post draft week focused on ${objective.toLowerCase()}, using existing products, offers, media and connected channels where available. This is a recommendation draft and is not published automatically.`,
     recommendations,
     context: {
       goalIds: activeGoals.map((goal) => goal.id),
