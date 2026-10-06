@@ -136,6 +136,7 @@ export async function persistApprovedWeek(
 
       for (const item of campaign.contentItems ?? []) {
         const mediaId = item.mediaId ?? null;
+        if (mediaId !== null && (!Number.isInteger(Number(mediaId)) || Number(mediaId) <= 0)) throw new Error("Invalid media reference");
         if (mediaId !== null) {
           const media = await client.query(
             `SELECT id FROM media_library WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`,
