@@ -67,7 +67,16 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
   });
 
   const cleaned = response.output_text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-  const parsed = JSON.parse(cleaned);
-  if (!parsed || typeof parsed.body !== "string" || !parsed.body.trim()) throw new Error("Invalid AI Creator response");
-  return { body: parsed.body.trim() };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error("Invalid AI Creator response");
+  }
+  if (!parsed || typeof parsed !== "object" || !("body" in parsed) || typeof parsed.body !== "string") {
+    throw new Error("Invalid AI Creator response");
+  }
+  const body = parsed.body.trim();
+  if (!body || body.length > 10000) throw new Error("Invalid AI Creator response");
+  return { body };
 }
