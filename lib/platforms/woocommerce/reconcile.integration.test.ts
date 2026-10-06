@@ -115,4 +115,52 @@ describe("reconcileWooCommercePublish", () => {
     expect(mocks.pool.connect).not.toHaveBeenCalled();
     expect(mocks.getWooCommerceChannelConfig).not.toHaveBeenCalled();
   });
+
+  it("rolls back when listing persistence fails", async () => {
+    mockReadyState();
+    mocks.getWooCommerceProduct.mockResolvedValue({ id: 101, sku: "SKU-1", name: "Demo" });
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
+      .mockRejectedValueOnce(new Error("listing update failed"));
+    const client = { query, release: vi.fn() };
+    mocks.pool.connect.mockResolvedValue(client);
+
+    await expect(
+      reconcileWooCommercePublish(7, input),
+    ).resolves.toEqual({
+      error: "RECONCILIATION_FAILED",
+      message: "listing update failed",
+    });
+
+    expect(query).toHaveBeenCalledWith("BEGIN");
+    expect(query).toHaveBeenCalledWith("ROLLBACK");
+    expect(query).not.toHaveBeenCalledWith("COMMIT");
+    expect(client.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("rolls back when attempt persistence fails after the listing update", async () => {
+    mockReadyState();
+    mocks.getWooCommerceProduct.mockResolvedValue({ id: 101, sku: "SKU-1", name: "Demo" });
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
+      .mockResolvedValueOnce({ rowCount: 1 })
+      .mockRejectedValueOnce(new Error("attempt update failed"));
+    const client = { query, release: vi.fn() };
+    mocks.pool.connect.mockResolvedValue(client);
+
+    await expect(
+      reconcileWooCommercePublish(7, input),
+    ).resolves.toEqual({
+      error: "RECONCILIATION_FAILED",
+      message: "attempt update failed",
+    });
+
+    expect(query).toHaveBeenCalledWith("ROLLBACK");
+    expect(query).not.toHaveBeenCalledWith("COMMIT");
+    expect(client.release).toHaveBeenCalledTimes(1);
+  });
 });
