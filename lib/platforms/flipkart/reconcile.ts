@@ -95,6 +95,8 @@ export async function reconcileFlipkartPublishOperation(
     userId,
     input.operationId,
     confirmedExternalId,
+    input.listingId,
+    "flipkart",
   );
 
   if (!operation) {
