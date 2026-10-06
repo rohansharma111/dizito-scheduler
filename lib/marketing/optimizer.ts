@@ -61,7 +61,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       const countChange = metricOutcome && baselineOutcome ? metricOutcome.count - baselineOutcome.count : null;
       const valueChange = metricOutcome && baselineOutcome ? metricOutcome.value - baselineOutcome.value : null;
       return {
-      experimentId: experiment.id,
+        experimentId: experiment.id,
       name: experiment.name,
       hypothesis: experiment.hypothesis,
       change: experiment.changeDescription,
@@ -93,9 +93,8 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         valueChange: valueChange!,
         valueChangePercent: baselineOutcome.value === 0 ? null : Number(((valueChange! / baselineOutcome.value) * 100).toFixed(2)),
       } : null,
-    };
+      };
     }),
-
     opportunities: parsed.opportunities.slice(0, 8).map((item) => ({ action: String(item.action), rationale: String(item.rationale), campaignId: item.campaignId != null && campaignIds.has(Number(item.campaignId)) ? Number(item.campaignId) : null, contentItemId: item.contentItemId != null && contentItemIds.has(Number(item.contentItemId)) ? Number(item.contentItemId) : null, variantId: item.variantId != null && variantById.has(Number(item.variantId)) && (item.contentItemId == null || variantById.get(Number(item.variantId)) === Number(item.contentItemId)) ? Number(item.variantId) : null, priority: validPriorities.has(String(item.priority)) ? item.priority : "medium", supportingExperimentIds: completedExperiments
         .filter((experiment) => (
           (experiment.variantId != null && item.variantId != null && experiment.variantId === Number(item.variantId))
