@@ -50,6 +50,16 @@ export default function ExperimentsPage() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    const focusId = new URLSearchParams(window.location.search).get("focus");
+    if (!focusId) return;
+    const target = document.getElementById(`experiment-${focusId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.focus({ preventScroll: true });
+    }
+  }, [experiments]);
+
   async function update(id: number, status: string, resultSummary?: string) {
     setSaving(id);
     try {
@@ -77,7 +87,7 @@ export default function ExperimentsPage() {
     {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
     {experiments.length === 0 && <div className="rounded-2xl border border-dashed p-8 text-sm text-gray-500">No experiments have been planned yet.</div>}
     <div className="space-y-4">
-      {experiments.map((item) => <article key={item.id} className="rounded-2xl border bg-white p-5 shadow-sm">
+      {experiments.map((item) => <article key={item.id} id={`experiment-${item.id}`} tabIndex={-1} className="rounded-2xl border bg-white p-5 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">{item.name}</h2><p className="mt-1 text-sm text-gray-500">Status: {item.status}</p></div><div className="flex gap-2">
           {item.status === "planned" && <button disabled={saving === item.id} onClick={() => update(item.id, "running")} className="rounded-lg border px-3 py-2 text-sm font-semibold">Start</button>}
           {item.status === "running" && <button disabled={saving === item.id} onClick={() => update(item.id, "completed", window.prompt("Enter observed result summary") || "")} className="rounded-lg border px-3 py-2 text-sm font-semibold">Complete</button>}
