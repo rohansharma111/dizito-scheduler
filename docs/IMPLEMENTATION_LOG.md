@@ -412,3 +412,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - WooCommerce credential save/read now require `commerce_channels.provider = 'woocommerce'` in addition to user ownership.
 - Re-audited the four Commerce credential implementations and confirmed provider/tenant scoping is present for Shopify, Amazon, Flipkart, and WooCommerce.
 - Validation remains deferred until the complete code implementation pass is finished.
+
+
+## 2026-10-06 — Sync claim-token regression fix
+
+- Found during code-only audit that `claimProductListingSync()` wrote `sync_claim_token` but omitted it from `RETURNING`.
+- Fixed the query to return the token and preserve the worker lease handoff contract.
+- No runtime tests executed yet, per implementation-first sequencing.
