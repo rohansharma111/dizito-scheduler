@@ -502,3 +502,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 - WooCommerce adapter normalization now maps reconciliation-required publish results to `status=ambiguous`.
 - WooCommerce reconciliation provider-read/persistence uncertainty is also exposed as `status=ambiguous` and the API returns HTTP 202 for that state.
 - Existing deterministic validation/not-found outcomes remain failed with their prior error semantics.
+
+
+### Commerce channel authorization/update hardening — 2026-10-06
+- Removed the unused unscoped `getCommerceChannelByIdInternal` helper so provider code cannot accidentally bypass tenant-scoped channel lookup.
+- `updateCommerceChannel` now locks the tenant-owned channel row inside a transaction before merging metadata, preventing concurrent reconnect/update operations from losing metadata fields.
+- Shopify and Amazon credential tables already use channel foreign keys and one-to-one channel uniqueness; application reads/writes remain tenant/provider scoped.
