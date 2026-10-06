@@ -41,6 +41,7 @@ export async function GET() {
         )
       ) FILTER (
         WHERE pt.id IS NOT NULL
+          AND sa.id IS NOT NULL
       ),
       '[]'
     ) AS targets
