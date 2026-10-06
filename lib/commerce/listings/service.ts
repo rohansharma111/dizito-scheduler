@@ -303,8 +303,9 @@ export async function updateProductListingSyncState(
       return { error: "LISTING_SYNC_CLAIM_LOST" as const };
     }
 
-    const externalId =
-      input.externalId !== undefined ? input.externalId : existing.external_id;
+    const externalId = normalizeExternalId(
+      input.externalId !== undefined ? input.externalId : existing.external_id,
+    );
 
     if (externalId) {
       await client.query(
