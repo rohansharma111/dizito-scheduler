@@ -131,7 +131,7 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
   }
 
   try {
-    const { config } = await getWooCommerceChannelConfig(input.channelId);
+    const { config } = await getWooCommerceChannelConfig(input.channelId, userId);
     const result = await createWooCommerceProduct(config, { ...input.payload, status: "publish" });
     const externalId = result && typeof result === "object" && "id" in result
       ? String((result as { id: number | string }).id)
