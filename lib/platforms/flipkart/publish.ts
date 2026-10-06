@@ -2,7 +2,6 @@ import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import {
   markCommercePublishOperationFailed,
   markCommercePublishOperationStarted,
-  markCommercePublishOperationSucceeded,
   markCommercePublishOperationUnknown,
   prepareCommercePublishOperation,
   type CommercePublishOperation,
@@ -116,18 +115,3 @@ export async function executePreparedFlipkartPublish(
   }
 }
 
-export async function confirmPreparedFlipkartPublish(
-  userId: number,
-  operationId: string,
-  externalId: string,
-) {
-  const result = await markCommercePublishOperationSucceeded(
-    userId,
-    operationId,
-    externalId.trim(),
-  );
-
-  return result
-    ? { status: "succeeded" as const, operation: result }
-    : { status: "OPERATION_NOT_FOUND" as const };
-}
