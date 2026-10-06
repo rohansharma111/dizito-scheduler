@@ -40,6 +40,8 @@ function decrypt(value: string) {
   ]).toString("utf8");
 }
 
+export type FlipkartEnvironment = "sandbox" | "production";
+
 export interface FlipkartCredentials {
   channelId: string;
   userId: number;
