@@ -29,6 +29,9 @@ export async function POST(request: Request) {
   if (!body.strategy || typeof body.strategy.strategySummary !== "string" || !Array.isArray(body.strategy.campaigns)) {
     return Response.json({ error: "Invalid strategy" }, { status: 400 });
   }
+  if (body.strategy.strategySummary.length > 10000 || body.strategy.campaigns.length > 20) {
+    return Response.json({ error: "Weekly strategy exceeds allowed limits" }, { status: 400 });
+  }
   if (body.strategy.campaigns.length === 0) {
     return Response.json({ error: "At least one campaign is required" }, { status: 400 });
   }
@@ -42,12 +45,21 @@ export async function POST(request: Request) {
     if (campaign.productIds != null && (!Array.isArray(campaign.productIds) || campaign.productIds.some((id: unknown) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
       return Response.json({ error: "Invalid campaign product references" }, { status: 400 });
     }
+    if (campaign.name.length > 200 || campaign.objective.length > 5000 || campaign.audience.length > 5000 || campaign.cta.length > 1000) {
+      return Response.json({ error: "Campaign fields exceed allowed limits" }, { status: 400 });
+    }
     if (campaign.contentItems != null && !Array.isArray(campaign.contentItems)) {
       return Response.json({ error: "Invalid campaign content items" }, { status: 400 });
+    }
+    if ((campaign.contentItems?.length ?? 0) > 31 || (campaign.productIds?.length ?? 0) > 100) {
+      return Response.json({ error: "Campaign item limits exceeded" }, { status: 400 });
     }
     for (const item of campaign.contentItems ?? []) {
       if (!item || typeof item !== "object" || typeof item.contentType !== "string" || typeof item.format !== "string" || typeof item.topic !== "string" || typeof item.cta !== "string") {
         return Response.json({ error: "Invalid content item" }, { status: 400 });
+      }
+      if (item.contentType.length > 30 || item.format.length > 30 || item.topic.length > 5000 || item.cta.length > 1000 || (item.hook != null && (typeof item.hook !== "string" || item.hook.length > 5000)) || (item.body != null && (typeof item.body !== "string" || item.body.length > 10000))) {
+        return Response.json({ error: "Content item fields exceed allowed limits" }, { status: 400 });
       }
       if (item.sourceCampaignId != null && (!Number.isInteger(Number(item.sourceCampaignId)) || Number(item.sourceCampaignId) <= 0)) {
         return Response.json({ error: "Invalid source campaign reference" }, { status: 400 });
