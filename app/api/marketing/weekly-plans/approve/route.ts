@@ -13,6 +13,13 @@ export async function POST(request: Request) {
   if (!body.strategy || typeof body.strategy.strategySummary !== "string" || !Array.isArray(body.strategy.campaigns)) {
     return Response.json({ error: "Invalid strategy" }, { status: 400 });
   }
+  if (body.strategy.experiment != null) {
+    const experiment = body.strategy.experiment;
+    const validDispositions = new Set(["refine", "retest", "avoid", "measure"]);
+    if (typeof experiment !== "object" || typeof experiment.hypothesis !== "string" || typeof experiment.change !== "string" || typeof experiment.metric !== "string" || !validDispositions.has(experiment.disposition) || typeof experiment.selectionReason !== "string") {
+      return Response.json({ error: "Invalid experiment" }, { status: 400 });
+    }
+  }
 
   try {
     const weeklyPlan = await persistApprovedWeek(
