@@ -15,6 +15,7 @@ export type MarketingOptimization = {
     metricEvidence: Array<{ actionType: string; count: number; value: number }>;
     baselineOutcomes: Array<{ actionType: string; count: number; value: number }>;
     baselineComparison: { actionType: string; experimentCount: number; baselineCount: number; countChange: number; countChangePercent: number | null; experimentValue: number; baselineValue: number; valueChange: number; valueChangePercent: number | null } | null;
+    learningSignal: "positive" | "negative" | "insufficient";
   }>;
   opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null; supportingExperimentIds: number[] }>;
   experiments: Array<{ hypothesis: string; change: string; metric: string; disposition: "refine" | "retest" | "avoid" | "measure" }>;
@@ -101,6 +102,14 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       const baselineOutcome = metricOutcome ? experiment.baselineOutcomes.find((item) => item.actionType === metricOutcome.actionType) ?? null : null;
       const countChange = metricOutcome && baselineOutcome ? metricOutcome.count - baselineOutcome.count : null;
       const valueChange = metricOutcome && baselineOutcome ? metricOutcome.value - baselineOutcome.value : null;
+      const direction = valueChange != null && baselineOutcome && baselineOutcome.value > 0
+        ? valueChange / baselineOutcome.value
+        : countChange != null && baselineOutcome && baselineOutcome.count > 0
+          ? countChange / baselineOutcome.count
+          : null;
+      const learningSignal: "positive" | "negative" | "insufficient" = direction == null
+        ? "insufficient"
+        : direction > 0 ? "positive" : direction < 0 ? "negative" : "insufficient";
       return {
         experimentId: experiment.id,
       name: experiment.name,
@@ -134,6 +143,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         valueChange: valueChange!,
         valueChangePercent: baselineOutcome.value === 0 ? null : Number(((valueChange! / baselineOutcome.value) * 100).toFixed(2)),
       } : null,
+      learningSignal,
       };
     }),
     opportunities: rankedOpportunities.slice(0, 8).map(({ item, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, evidenceScore }) => ({
