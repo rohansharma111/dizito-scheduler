@@ -54,6 +54,7 @@ function decrypt(value: string): string {
 
 export interface SaveAmazonCredentialsInput {
   channelId: string;
+  userId: number;
   refreshToken: string;
   refreshTokenExpiresAt?: Date | null;
   scopes?: string | null;
@@ -64,7 +65,9 @@ export async function saveAmazonCredentials(input: SaveAmazonCredentialsInput) {
     `
     INSERT INTO amazon_channel_credentials
       (channel_id, refresh_token_encrypted, refresh_token_expires_at, scopes)
-    VALUES ($1, $2, $3, $4)
+    SELECT c.id, $2, $3, $4
+    FROM commerce_channels c
+    WHERE c.id = $1 AND c.user_id = $5 AND c.provider = 'amazon'
     ON CONFLICT (channel_id)
     DO UPDATE SET
       refresh_token_encrypted = EXCLUDED.refresh_token_encrypted,
@@ -78,21 +81,27 @@ export async function saveAmazonCredentials(input: SaveAmazonCredentialsInput) {
       encrypt(input.refreshToken),
       input.refreshTokenExpiresAt ?? null,
       input.scopes ?? null,
+      input.userId,
     ],
   );
 
+  if (!result.rows[0]) throw new Error("Amazon channel not found for this user");
   return result.rows[0];
 }
 
-export async function getAmazonCredentials(channelId: string) {
+export async function getAmazonCredentials(channelId: string, userId: number) {
   const result = await pool.query(
     `
     SELECT channel_id, refresh_token_encrypted, refresh_token_expires_at, scopes
     FROM amazon_channel_credentials
     WHERE channel_id = $1
+      AND EXISTS (
+        SELECT 1 FROM commerce_channels c
+        WHERE c.id = $1 AND c.user_id = $2 AND c.provider = 'amazon'
+      )
     LIMIT 1
     `,
-    [channelId],
+    [channelId, userId],
   );
 
   const row = result.rows[0];
