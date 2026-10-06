@@ -179,6 +179,17 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     if (!ambiguous && !providerMutationSucceeded) {
       await markWooCommerceChannelError(input.channelId, userId, message);
     }
-    throw error;
+
+    if (ambiguous || providerMutationSucceeded) {
+      return {
+        error: "PUBLISH_REQUIRES_RECONCILIATION" as const,
+        reconciliationRequired: true as const,
+        message: providerMutationSucceeded
+          ? "WooCommerce publish reached the provider but local confirmation failed"
+          : "WooCommerce publish outcome is uncertain and requires provider read-back",
+      };
+    }
+
+    return { error: "WOOCOMMERCE_PUBLISH_FAILED" as const, message };
   }
 }
