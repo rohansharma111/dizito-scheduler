@@ -97,6 +97,7 @@ export default function AccountsPage() {
         return `/api/pinterest/login?reconnect=${account.id}`;
 
       case "google-business":
+      case "google_business":
         return `/api/google-business/login?reconnect=${account.id}`;
 
       case "facebook":
@@ -255,7 +256,19 @@ export default function AccountsPage() {
               </div>
             )}
 
-            {account.status === "error" && <div>🟠 Error</div>}
+            {account.status === "error" && (
+              <div className="flex items-center gap-2">
+                🟠 Error
+                <button
+                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                  onClick={() => {
+                    window.location.href = getReconnectUrl(account);
+                  }}
+                >
+                  Reconnect
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="text-sm mt-2">
