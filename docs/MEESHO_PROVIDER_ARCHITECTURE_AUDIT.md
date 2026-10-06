@@ -2,7 +2,7 @@
 
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Branch:** `feature/commerce-meesho`  
-**Reviewed:** 2026-09-24  
+**Reviewed:** 2026-10-06  
 **Status:** Discovery / architecture review only
 
 ## Scope
@@ -57,3 +57,14 @@ The first Meesho code change should be limited to verified contract elements, li
 - Repository inspection performed through GitHub source access.
 - Credential retrieval boundary reviewed on the shared channel credential service.
 - No local build, lint, type-check, migration execution, automated test suite, Meesho authentication, or provider write was run in this environment.
+
+
+## 2026-10-06 architecture hardening
+
+Repository inspection confirms that the shared channel and listing draft services are provider-neutral and already enforce tenant ownership at their database boundaries. No WooCommerce-specific condition was found in those shared services.
+
+A provider-neutral contract boundary was added at `lib/commerce/providers/contracts.ts`. It intentionally keeps provider payloads opaque while standardizing operation names, capabilities, context, and bounded success/failure/ambiguous results. It does not assume Meesho authentication, endpoints, publication semantics, or reconciliation identifiers.
+
+This is a reusable foundation, not a claim that any provider now implements the contract. Existing WooCommerce workflows remain unchanged until their behavior can be migrated to the contract with equivalent verification coverage.
+
+The existing `commerce_publish_attempts` table is structurally provider-neutral despite its historical WooCommerce migration filename: it stores `provider`, channel/listing ownership, idempotency key, status, response payload, and external ID. Renaming migration history is not warranted.
