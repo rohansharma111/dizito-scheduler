@@ -160,6 +160,12 @@ export default function MarketingContentClient() {
     finally { setBusyId(null); }
   }
 
+  useEffect(() => {
+    if (!contentFocus || loading) return;
+    const target = document.getElementById(`content-item-${contentFocus}`);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [contentFocus, loading, items]);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -185,9 +191,3 @@ export default function MarketingContentClient() {
     </div>
   );
 }
-  useEffect(() => {
-    if (!contentFocus || loading) return;
-    const target = document.getElementById(`content-item-${contentFocus}`);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [contentFocus, loading, items]);
-
