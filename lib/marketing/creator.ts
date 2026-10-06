@@ -47,10 +47,10 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
     selectedOfferId = item.rows[0].offer_id == null ? null : Number(item.rows[0].offer_id);
   }
   const resolvedCampaign = input.contentItemId !== undefined ? {
-    name: item.rows[0].campaign_name,
-    objective: item.rows[0].campaign_objective,
-    audience: item.rows[0].campaign_audience,
-    cta: item.rows[0].campaign_cta,
+    name: item?.rows[0]?.campaign_name ?? null,
+    objective: item?.rows[0]?.campaign_objective ?? null,
+    audience: item?.rows[0]?.campaign_audience ?? null,
+    cta: item?.rows[0]?.campaign_cta ?? null,
   } : null;
   if (selectedOfferId !== null && (!Number.isInteger(selectedOfferId) || selectedOfferId <= 0)) throw new Error("Invalid offer reference");
   const availableProductIds = new Set(context.businessBrain.products.map((product) => product.id));
