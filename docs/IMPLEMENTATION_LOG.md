@@ -393,3 +393,14 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Hardened listing media persistence to preserve omitted external IDs, merge provider metadata, and reject duplicate provider media identities within a listing.
 - Hardened the legacy variant API so omitted external IDs do not clear existing mappings and deterministic mapping conflicts return HTTP 409.
 - Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
+
+
+## 2026-10-06 — Commerce route-entry audit
+
+- Reviewed remaining Commerce route entry points for direct provider bypasses and tenant-boundary regressions.
+- Flipkart and WooCommerce publish/reconcile routes remain on the shared provider dispatcher.
+- Flipkart OAuth state and callback credential persistence remain tenant-bound.
+- WooCommerce connection verification and credential persistence remain tenant-bound.
+- Shopify's legacy publish/sync implementation remains intentionally separate because it has its own durable crash-recovery mechanism.
+- Removed redundant duplicate user-ID validation in Shopify publish/sync routes.
+- No tests/lint/build executed yet; implementation pass remains in progress.
