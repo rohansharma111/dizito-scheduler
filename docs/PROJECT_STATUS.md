@@ -455,3 +455,11 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Tenant-scoped Shopify credential reads/writes now require authenticated user context and verify the channel belongs to that tenant/provider.
 - Shopify GraphQL shop lookup now requires explicit tenant context.
 - Shopify callback and token-refresh paths pass authenticated tenant identity into credential persistence.
+
+
+### Commerce credential and provider-client tenant hardening — 2026-10-06
+- Flipkart credential persistence now requires authenticated tenant identity and verifies the channel belongs to that tenant and provider; OAuth callback and refresh rotation pass the tenant ID through.
+- Flipkart publish ambiguity now maps to HTTP 202, while confirmed/idempotent outcomes use explicit 201/200 semantics.
+- Amazon credential save/read now requires tenant identity and verifies the channel/provider; Amazon SP-API client entry points now require explicit tenant context rather than unscoped internal channel resolution.
+- Amazon product-type discovery and connection verification propagate the authenticated tenant context into provider calls.
+- No tests, lint, build, or live provider verification have been run in this code-level pass; verification remains intentionally deferred until implementation work is complete.
