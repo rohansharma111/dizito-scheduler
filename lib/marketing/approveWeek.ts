@@ -160,11 +160,12 @@ export async function persistApprovedWeek(
 
       await client.query(
         `INSERT INTO marketing_experiments
-         (user_id, campaign_id, content_item_id, variant_id, name, hypothesis, change_description, metric, status, starts_at, ends_at)
-         VALUES ($1,$2,NULL,NULL,$3,$4,$5,$6,'planned',$7,$8)`,
+         (user_id, campaign_id, content_item_id, variant_id, target_type, target_field, target_metadata, name, hypothesis, change_description, metric, status, starts_at, ends_at)
+         VALUES ($1,$2,NULL,NULL,'campaign',NULL,$3,$4,$5,$6,$7,'planned',$8,$9)`,
         [
           userId,
           campaignId,
+          { scope: "approved_weekly_campaign", campaignId, weekStart, weekEnd },
           "Weekly experiment " + weekStart,
           strategy.experiment.hypothesis,
           strategy.experiment.change,
