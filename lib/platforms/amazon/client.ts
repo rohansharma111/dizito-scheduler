@@ -1,5 +1,5 @@
 import { getAmazonCredentials } from "@/lib/commerce/channels/amazon-credentials";
-import { getCommerceChannelByIdInternal, updateCommerceChannel } from "@/lib/commerce/channels/service";
+import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getAmazonMarketplaceId, getAmazonSpApiEndpoint, refreshAmazonAccessToken } from "@/lib/platforms/amazon/auth";
 
 export interface AmazonSpApiRequestOptions {
@@ -35,12 +35,12 @@ interface AmazonErrorResponse {
   errors?: Array<{ code?: string; message?: string; details?: string }>;
 }
 
-async function getAccessToken(channelId: string) {
-  const channel = await getCommerceChannelByIdInternal(channelId);
+async function getAccessToken(channelId: string, userId: number) {
+  const channel = await getCommerceChannelById(channelId, userId);
   if (!channel || channel.provider !== "amazon") throw new Error("Amazon channel not found");
   if (channel.status !== "active") throw new Error(`Amazon channel is not active (status: ${channel.status})`);
 
-  const credentials = await getAmazonCredentials(channelId);
+  const credentials = await getAmazonCredentials(channelId, userId);
   if (!credentials) throw new Error("Amazon credentials not found; reconnect the Amazon channel");
 
   const refreshed = await refreshAmazonAccessToken(credentials.refreshToken);
@@ -54,8 +54,8 @@ async function markAmazonChannelError(channelId: string, userId: number, message
   }).catch((error) => console.error("Unable to mark Amazon channel as error:", error));
 }
 
-export async function amazonSpApiRequest<T>(channelId: string, options: AmazonSpApiRequestOptions): Promise<AmazonSpApiResponse<T>> {
-  const { channel, accessToken } = await getAccessToken(channelId);
+export async function amazonSpApiRequest<T>(channelId: string, userId: number, options: AmazonSpApiRequestOptions): Promise<AmazonSpApiResponse<T>> {
+  const { channel, accessToken } = await getAccessToken(channelId, userId);
   const endpoint = getAmazonSpApiEndpoint();
   const url = new URL(options.path, endpoint);
   const method = (options.method ?? "GET").toUpperCase();
@@ -120,14 +120,14 @@ interface AmazonProductTypeSearchResponse {
   productTypeVersion?: string;
 }
 
-export async function getAmazonMarketplaceParticipations(channelId: string) {
-  return amazonSpApiRequest<{ payload: AmazonMarketplaceParticipation[] }>(channelId, {
+export async function getAmazonMarketplaceParticipations(channelId: string, userId: number) {
+  return amazonSpApiRequest<{ payload: AmazonMarketplaceParticipation[] }>(channelId, userId, {
     method: "GET",
     path: "/sellers/v1/marketplaceParticipations",
   });
 }
 
-export async function searchAmazonProductTypes(channelId: string, itemName: string) {
+export async function searchAmazonProductTypes(channelId: string, userId: number, itemName: string) {
   const normalizedItemName = itemName.trim();
   if (!normalizedItemName) throw new Error("Product name is required to search Amazon product types");
 
@@ -137,7 +137,7 @@ export async function searchAmazonProductTypes(channelId: string, itemName: stri
     searchLocale: "en_IN",
   };
 
-  const exactResult = await amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
+  const exactResult = await amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, userId, {
     method: "GET",
     path: "/definitions/2020-09-01/productTypes",
     query: { ...baseQuery, itemName: normalizedItemName },
@@ -172,6 +172,7 @@ export type AmazonListingRequirements = "LISTING" | "LISTING_PRODUCT_ONLY" | "LI
 
 export async function getAmazonProductTypeDefinition(
   channelId: string,
+  userId: number,
   productType: string,
   options: {
     sellerId?: string;
@@ -182,7 +183,7 @@ export async function getAmazonProductTypeDefinition(
   const normalizedProductType = productType.trim();
   if (!normalizedProductType) throw new Error("Amazon product type is required");
 
-  return amazonSpApiRequest<Record<string, unknown>>(channelId, {
+  return amazonSpApiRequest<Record<string, unknown>>(channelId, userId, {
     method: "GET",
     path: `/definitions/2020-09-01/productTypes/${encodeURIComponent(normalizedProductType)}`,
     query: {
@@ -197,8 +198,8 @@ export async function getAmazonProductTypeDefinition(
   });
 }
 
-export async function verifyAmazonConnection(channelId: string) {
-  const result = await getAmazonMarketplaceParticipations(channelId);
+export async function verifyAmazonConnection(channelId: string, userId: number) {
+  const result = await getAmazonMarketplaceParticipations(channelId, userId);
   const marketplaceId = getAmazonMarketplaceId();
   const participation = result.data.payload?.find((item) => item.marketplace.id === marketplaceId);
 
