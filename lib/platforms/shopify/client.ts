@@ -191,7 +191,7 @@ export async function shopifyGraphQL<T>(
   return body.data;
 }
 
-export async function getShop(channelId: string) {
+export async function getShop(channelId: string, userId: number) {
   return shopifyGraphQL<{
     shop: {
       id: string;
