@@ -52,10 +52,10 @@ function metricActionTypes(metric: string) {
   const normalized = metric.toLowerCase().trim().replace(/-/g, "_").replace(/\s+/g, "_");
   const direct = METRIC_ACTION_ALIASES[normalized];
   if (direct) return direct;
-  return Object.entries(METRIC_ACTION_ALIASES)
-    .filter(([alias]) => normalized.includes(alias))
-    .flatMap(([, actionTypes]) => actionTypes)
-    .filter((actionType, index, values) => values.indexOf(actionType) === index);
+
+  const tokens = normalized.split(/[^a-z0-9_]+/).filter(Boolean);
+  const matched = tokens.flatMap((token) => METRIC_ACTION_ALIASES[token] ?? []);
+  return matched.filter((actionType, index, values) => values.indexOf(actionType) === index);
 }
 
 export async function getMarketingExperimentOutcomes(userId: number, id: number): Promise<ExperimentOutcome[]> {
