@@ -152,7 +152,7 @@ export async function searchAmazonProductTypes(channelId: string, userId: number
     .join(" ");
 
   if (keywords) {
-    const keywordResult = await amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
+    const keywordResult = await amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, userId, {
       method: "GET",
       path: "/definitions/2020-09-01/productTypes",
       query: { ...baseQuery, keywords },
@@ -161,7 +161,7 @@ export async function searchAmazonProductTypes(channelId: string, userId: number
     if ((keywordResult.data.productTypes ?? []).length > 0) return keywordResult;
   }
 
-  return amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, {
+  return amazonSpApiRequest<AmazonProductTypeSearchResponse>(channelId, userId, {
     method: "GET",
     path: "/definitions/2020-09-01/productTypes",
     query: baseQuery,
