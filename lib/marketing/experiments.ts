@@ -27,6 +27,37 @@ export type ExperimentOutcome = {
   value: number;
 };
 
+const METRIC_ACTION_ALIASES: Record<string, string[]> = {
+  lead: ["lead"],
+  leads: ["lead"],
+  booking: ["booking"],
+  bookings: ["booking"],
+  message: ["message"],
+  messages: ["message"],
+  call: ["call"],
+  calls: ["call"],
+  website_visit: ["website_visit"],
+  website_visits: ["website_visit"],
+  checkout: ["checkout"],
+  checkouts: ["checkout"],
+  order: ["order"],
+  orders: ["order"],
+  purchase: ["purchase"],
+  purchases: ["purchase"],
+  revenue: ["purchase", "order"],
+  sales: ["purchase", "order"],
+};
+
+function metricActionTypes(metric: string) {
+  const normalized = metric.toLowerCase().trim().replace(/-/g, "_").replace(/\s+/g, "_");
+  const direct = METRIC_ACTION_ALIASES[normalized];
+  if (direct) return direct;
+  return Object.entries(METRIC_ACTION_ALIASES)
+    .filter(([alias]) => normalized.includes(alias))
+    .flatMap(([, actionTypes]) => actionTypes)
+    .filter((actionType, index, values) => values.indexOf(actionType) === index);
+}
+
 export async function getMarketingExperimentOutcomes(userId: number, id: number): Promise<ExperimentOutcome[]> {
   const result = await pool.query(
     `SELECT a.action_type AS "actionType",
@@ -39,8 +70,8 @@ export async function getMarketingExperimentOutcomes(userId: number, id: number)
         AND a.status = 'completed'
         AND (
           (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
-          OR (e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
-          OR (e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+          OR (e.variant_id IS NULL AND e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+          OR (e.variant_id IS NULL AND e.content_item_id IS NULL AND e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
         )
       GROUP BY a.action_type
       ORDER BY count DESC`,
@@ -126,7 +157,7 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
               OR (e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
               OR (e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
             )
-            AND LOWER(REPLACE(REPLACE(e.metric, '-', '_'), ' ', '_')) LIKE '%' || a.action_type || '%'
+
           GROUP BY a.action_type
        ) metric_stats ON true
       WHERE e.user_id = $1
@@ -136,11 +167,15 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
       LIMIT 50`,
     [userId],
   );
-  return result.rows.map((row) => ({
-    ...(row as Omit<CompletedExperimentEvidence, "outcomes">),
-    outcomes: row.outcomes as ExperimentOutcome[],
-    metricEvidence: row.metricEvidence as ExperimentOutcome[],
-  }));
+  return result.rows.map((row) => {
+    const metricTypes = new Set(metricActionTypes(String(row.metric)));
+    const metricEvidence = (row.metricEvidence as ExperimentOutcome[]).filter((outcome) => metricTypes.has(outcome.actionType));
+    return {
+      ...(row as Omit<CompletedExperimentEvidence, "outcomes" | "metricEvidence">),
+      outcomes: row.outcomes as ExperimentOutcome[],
+      metricEvidence,
+    };
+  });
 }
 
 export async function listMarketingExperiments(userId: number, status?: MarketingExperimentStatus) {
