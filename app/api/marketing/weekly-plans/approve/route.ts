@@ -13,6 +13,28 @@ export async function POST(request: Request) {
   if (!body.strategy || typeof body.strategy.strategySummary !== "string" || !Array.isArray(body.strategy.campaigns)) {
     return Response.json({ error: "Invalid strategy" }, { status: 400 });
   }
+  if (body.strategy.campaigns.length === 0) {
+    return Response.json({ error: "At least one campaign is required" }, { status: 400 });
+  }
+  for (const campaign of body.strategy.campaigns) {
+    if (!campaign || typeof campaign !== "object" || typeof campaign.name !== "string" || typeof campaign.objective !== "string" || typeof campaign.audience !== "string" || typeof campaign.cta !== "string") {
+      return Response.json({ error: "Invalid campaign" }, { status: 400 });
+    }
+    if (campaign.productIds != null && (!Array.isArray(campaign.productIds) || campaign.productIds.some((id: unknown) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
+      return Response.json({ error: "Invalid campaign product references" }, { status: 400 });
+    }
+    if (campaign.contentItems != null && !Array.isArray(campaign.contentItems)) {
+      return Response.json({ error: "Invalid campaign content items" }, { status: 400 });
+    }
+    for (const item of campaign.contentItems ?? []) {
+      if (!item || typeof item !== "object" || typeof item.contentType !== "string" || typeof item.format !== "string" || typeof item.topic !== "string" || typeof item.cta !== "string") {
+        return Response.json({ error: "Invalid content item" }, { status: 400 });
+      }
+      if (item.supportingExperimentIds != null && (!Array.isArray(item.supportingExperimentIds) || item.supportingExperimentIds.some((id: unknown) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
+        return Response.json({ error: "Invalid supporting experiment references" }, { status: 400 });
+      }
+    }
+  }
   if (body.strategy.experiment != null) {
     const experiment = body.strategy.experiment;
     const validDispositions = new Set(["refine", "retest", "avoid", "measure"]);
