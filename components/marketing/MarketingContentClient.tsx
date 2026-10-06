@@ -62,6 +62,7 @@ export default function MarketingContentClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          contentItemId: item.id,
           contentType: item.contentType,
           format: item.format || "post",
           topic: item.topic || "",
@@ -84,7 +85,7 @@ export default function MarketingContentClient() {
   async function generateVariant(item: ContentItem, platform: Platform) {
     const key = `${item.id}:${platform}`; setVariantBusy(key); setError(null);
     try {
-      const response = await fetch("/api/marketing/generate-content", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contentType: item.contentType, format: item.format || "post", topic: item.topic || "", angle: item.angle || undefined, hook: item.hook || undefined, cta: item.cta || undefined, productIds: item.productIds, platform }) });
+      const response = await fetch("/api/marketing/generate-content", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contentItemId: item.id, contentType: item.contentType, format: item.format || "post", topic: item.topic || "", angle: item.angle || undefined, hook: item.hook || undefined, cta: item.cta || undefined, productIds: item.productIds, platform }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || "Failed to generate variant");
       setVariantDrafts((current) => ({ ...current, [key]: data.copy.body }));
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to generate variant"); }
