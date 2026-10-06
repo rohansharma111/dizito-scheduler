@@ -15,6 +15,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
+  const userId = Number(session.user.id);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const url = new URL(request.url);
     const shopParam = url.searchParams.get("shop");
