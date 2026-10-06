@@ -554,3 +554,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Corrected `claimProductListingSync()` so the generated `sync_claim_token` is returned from PostgreSQL and handed to the worker.
 - This restores the intended lease protocol: the worker receives the exact token required by `updateProductListingSyncState()` and stale workers remain unable to commit state.
 - Tests/lint/build remain deferred.
+
+
+### Commerce draft creation race hardening — 2026-10-06
+- Hardened `upsertProductListingDraft()` against concurrent first-time listing creation.
+- If the database unique constraint wins a creation race, the transaction now resolves and locks the authoritative existing listing rather than surfacing a raw `23505` error.
+- Existing-listing draft updates continue to use row locking and provider metadata merging.
+- Validation remains deferred.
