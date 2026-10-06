@@ -143,6 +143,8 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
               OR (e.variant_id IS NULL AND e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
               OR (e.variant_id IS NULL AND e.content_item_id IS NULL AND e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
             )
+            AND (e.starts_at IS NULL OR a.occurred_at >= e.starts_at)
+            AND (e.ends_at IS NULL OR a.occurred_at <= e.ends_at)
           GROUP BY a.action_type
        ) action_stats ON true
        LEFT JOIN LATERAL (
@@ -154,9 +156,11 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             AND a.status = 'completed'
             AND (
               (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
-              OR (e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
-              OR (e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+              OR (e.variant_id IS NULL AND e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+              OR (e.variant_id IS NULL AND e.content_item_id IS NULL AND e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
             )
+            AND (e.starts_at IS NULL OR a.occurred_at >= e.starts_at)
+            AND (e.ends_at IS NULL OR a.occurred_at <= e.ends_at)
 
           GROUP BY a.action_type
        ) metric_stats ON true
