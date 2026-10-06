@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
        WHERE ci.id = $1 AND ci.user_id = $2 FOR UPDATE`, [contentItemId, userId]);
     const item = itemResult.rows[0];
     if (!item) { await client.query("ROLLBACK"); return jsonError("Content item not found", 404); }
-    if (item.status === "converted" && variantId === null) {
+    if (item.status === "converted") {
       await client.query("ROLLBACK");
       return jsonError("Content item has already been converted", 409);
     }
