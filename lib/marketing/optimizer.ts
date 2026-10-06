@@ -28,9 +28,9 @@ export type MarketingOptimization = {
 
 export async function generateMarketingOptimization(userId: number): Promise<MarketingOptimization> {
   const context = await getMarketingStrategyContext(userId);
-  const outcomeGuidance = context.impact.observedContentSummary.length || context.impact.observedVariantSummary.length
-    ? "Observed outcome data exists at content/variant level. Use it to prioritize measurable recommendations, while explicitly describing it as observed rather than causal."
-    : "No completed content/variant-level customer action outcomes are available. Treat content/variant performance as unknown and recommend measurement before claiming improvement.";
+  const outcomeGuidance = context.impact.observedContentSummary.length || context.impact.observedVariantSummary.length || context.impact.attributedVariantSummary.length
+    ? "Observed and/or explicitly attributed outcome data exists at content/variant level. Use it to prioritize measurable recommendations, clearly distinguish observed outcomes from manual attribution, and never treat attribution as causal proof."
+    : "No completed content/variant-level customer action or attribution outcomes are available. Treat content/variant performance as unknown and recommend measurement before claiming improvement.";
   const experimentGuidance = context.completedExperiments.length
     ? "Completed experiment evidence is available. Use each experiment's hypothesis, change, metric, observed outcomes, baseline window outcomes, and result summary as historical evidence. Baseline comparisons are descriptive historical context, not controls or causal estimates. Prefer recommendations that build on clearly observed experiment results, but never treat completion or correlation as causal proof."
     : "No completed experiments are available. Do not imply that a tested change has already been validated; recommend a measurable experiment when evidence is insufficient.";
