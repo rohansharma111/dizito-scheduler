@@ -127,6 +127,7 @@ async function getAccessToken(channelId: string, userId: number) {
 
   await saveShopifyCredentials({
     channelId,
+    userId,
     accessToken: refreshed.access_token,
     refreshToken: refreshed.refresh_token,
     accessTokenExpiresAt: refreshed.expires_in
