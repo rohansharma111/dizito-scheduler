@@ -26,6 +26,10 @@ export async function POST(request: Request) {
     return Response.json({ copy });
   } catch (error) {
     console.error(error);
+    const message = error instanceof Error ? error.message : "";
+    if (message === "Invalid content item reference" || message === "Content item not found" || message === "Invalid product reference" || message === "Invalid offer reference" || message === "Unsupported marketing platform" || message === "Invalid AI Creator response") {
+      return Response.json({ error: message }, { status: message === "Invalid AI Creator response" ? 422 : 400 });
+    }
     return Response.json({ error: "Failed to generate marketing copy" }, { status: 500 });
   }
 }
