@@ -16,6 +16,9 @@ export async function POST(request: Request) {
     if (body.identifier && !body.identifierType) return NextResponse.json({ success: false, error: "identifierType is required with an identifier" }, { status: 400 });
 
     const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
     const product = await getProductById(body.productId, userId);
     if (!product) return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
 
