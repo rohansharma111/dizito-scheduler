@@ -1,4 +1,4 @@
-import { getCommerceChannelByIdInternal, updateCommerceChannel } from "@/lib/commerce/channels/service";
+import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getWooCommerceCredentials } from "@/lib/platforms/woocommerce/credentials";
 
 export interface WooCommerceClientConfig { storeUrl: string; consumerKey: string; consumerSecret: string; }
@@ -35,27 +35,6 @@ export async function getWooCommerceSystemStatus(config: WooCommerceClientConfig
 export async function createWooCommerceProduct(config: WooCommerceClientConfig, payload: Record<string, unknown>) { return wooCommerceRequest<unknown>(config, "products", { method: "POST", body: JSON.stringify(payload) }); }
 export async function getWooCommerceProduct(config: WooCommerceClientConfig, externalId: string) { return wooCommerceRequest<Record<string, unknown>>(config, `products/${encodeURIComponent(externalId)}`); }
 export async function findWooCommerceProductsBySku(config: WooCommerceClientConfig, sku: string) { return wooCommerceRequest<Array<Record<string, unknown>>>(config, `products?sku=${encodeURIComponent(sku)}`); }
-
-export async function assertWooCommerceChannel(channelId: string) {
-  const channel = await getCommerceChannelByIdInternal(channelId);
-  if (!channel || channel.provider !== "woocommerce") throw new Error("WooCommerce channel not found");
-  if (channel.status !== "active") throw new Error(`WooCommerce channel is not active (status: ${channel.status})`);
-  return channel;
-}
-
-export async function getWooCommerceChannelConfig(channelId: string, userId: number) {
-  const channel = await getCommerceChannelById(channelId, userId);
-  if (!channel) throw new Error("WooCommerce channel not found");
-  if (channel.provider !== "woocommerce") throw new Error("Invalid WooCommerce channel provider");
-  const userId = Number(channel.user_id);
-  if (!Number.isFinite(userId)) throw new Error("WooCommerce channel owner is invalid");
-  const credentials = await getWooCommerceCredentials(channelId, userId);
-  if (!credentials) throw new Error("WooCommerce credentials not found");
-  const metadata = (channel.metadata ?? {}) as Record<string, unknown>;
-  const storeUrl = typeof metadata.storeUrl === "string" ? metadata.storeUrl : String(channel.external_account_id ?? "");
-  if (!storeUrl) throw new Error("WooCommerce store URL is not configured");
-  return { channel, config: { storeUrl, ...credentials } };
-}
 
 export async function markWooCommerceChannelError(channelId: string, userId: number, message: string) {
   await updateCommerceChannel(channelId, userId, { status: "error", metadata: { woocommerceHealth: { status: "error", message, updatedAt: new Date().toISOString() } } }).catch((error) => console.error("Unable to mark WooCommerce channel as error:", error));
