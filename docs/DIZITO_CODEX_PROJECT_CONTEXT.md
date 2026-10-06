@@ -318,6 +318,14 @@ Recent fixes established:
 
 Preserve these invariants.
 
+
+### Pinterest provider-access status — 2026-10-07
+
+- Pinterest Standard Access has been granted for Dizito.
+- Public Pin publishing is authorized through the approved Pinterest API access level.
+- The previous Standard Access/pending-access blocker is cleared.
+- Keep the distinction between provider authorization and application runtime verification: live end-to-end Pin publication from the current build still requires explicit verification evidence.
+
 ## 12. Testing / verification model
 
 Distinguish:
