@@ -216,6 +216,8 @@ export async function GET(request: Request) {
       (
         user_id,
         access_token,
+        refresh_token,
+        token_expires_at,
         pages,
         reconnect_account_id,
         reconnect_type,
@@ -226,6 +228,8 @@ export async function GET(request: Request) {
         $1,
         $2,
         $3,
+        $4,
+        $5,
         NULL,
         NULL,
         NOW()
@@ -234,6 +238,10 @@ export async function GET(request: Request) {
       [
         userId,
         token.accessToken,
+        token.refreshToken ?? null,
+        token.expiresIn
+          ? new Date(Date.now() + Number(token.expiresIn) * 1000)
+          : null,
         JSON.stringify({
           profile,
           boards,
