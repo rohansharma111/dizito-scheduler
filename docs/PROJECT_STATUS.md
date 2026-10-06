@@ -463,3 +463,8 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Amazon credential save/read now requires tenant identity and verifies the channel/provider; Amazon SP-API client entry points now require explicit tenant context rather than unscoped internal channel resolution.
 - Amazon product-type discovery and connection verification propagate the authenticated tenant context into provider calls.
 - No tests, lint, build, or live provider verification have been run in this code-level pass; verification remains intentionally deferred until implementation work is complete.
+
+
+### Commerce live-publish safety continuation — 2026-10-06
+- The legacy Shopify direct publish path now requires explicit live-publish confirmation at both API and publisher boundaries; missing confirmation fails closed with a conflict response.
+- Shopify remains a legacy direct provider path and is not yet moved into the shared durable publish ledger; its idempotency/durable-operation architecture remains a follow-up hardening item rather than being silently treated as equivalent to Flipkart/WooCommerce.
