@@ -84,6 +84,14 @@ Core principles:
 - Weekly planning/approval carries optimizer rationale, evidence, provenance and experiment disposition.
 
 ### Social account reliability
+
+### Pinterest current access status — 2026-10-07
+
+- Pinterest **Standard Access has been granted** for Dizito.
+- The Pinterest integration is now authorized to publish Pins publicly through the approved API access level.
+- This replaces the previous Standard Access application/pending-access blocker.
+- This records provider access authorization; it does **not** by itself claim that an end-to-end live Pin publication has been runtime-verified from the current application build.
+
 Recent fixes cover:
 - reconnect routing;
 - Pinterest reconnect without unnecessary board selection;
@@ -291,6 +299,13 @@ The optimizer must continue to distinguish observed outcomes from causal claims.
 - [ ] Advanced AI commerce workflows.
 
 ## 7. Verification ledger
+
+### Pinterest provider-access verification — 2026-10-07
+
+- User-confirmed external provider status: Pinterest Standard Access has been granted.
+- Public Pin publishing is now authorized by Pinterest for the Dizito integration.
+- End-to-end live Pin publication from the current application build remains a separate runtime verification item.
+
 
 ### Verified / observed evidence
 
