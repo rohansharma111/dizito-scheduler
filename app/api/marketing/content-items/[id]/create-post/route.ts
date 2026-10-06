@@ -49,6 +49,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await client.query("ROLLBACK");
       return jsonError("Content item has already been converted", 409);
     }
+    if (item.status !== "ready") {
+      await client.query("ROLLBACK");
+      return jsonError("Content item must be approved before it can be scheduled", 409);
+    }
 
     const accounts = await client.query(`SELECT id, platform FROM social_accounts WHERE id = ANY($1) AND user_id = $2`, [selectedAccounts, userId]);
     if (accounts.rows.length !== selectedAccounts.length) { await client.query("ROLLBACK"); return jsonError("Invalid account selection"); }
