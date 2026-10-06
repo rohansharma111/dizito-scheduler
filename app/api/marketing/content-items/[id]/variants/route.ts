@@ -134,43 +134,53 @@ export async function POST(
     if (item.rowCount === 0) return errorResponse("Content item not found", 404);
     if (item.rows[0].status === "converted") return errorResponse("Converted content items cannot be edited", 409);
 
-    const existingVariant = await pool.query(
-      `SELECT id, status
-         FROM marketing_content_item_variants
-        WHERE content_item_id = $1 AND user_id = $2 AND platform = $3`,
-      [contentItemId, userId, platform],
-    );
-    if (existingVariant.rows[0]?.status === "converted") {
-      return errorResponse("Converted variants cannot be edited", 409);
-    }
-
-    for (const field of ["hook", "body", "cta"]) {
-      if (body[field] !== undefined && body[field] !== null && typeof body[field] !== "string") {
-        return errorResponse("Invalid " + field);
-      }
-    }
-
-    const mediaId = body.mediaId == null ? null : Number(body.mediaId);
-    if (mediaId !== null) {
-      const media = await pool.query(
-        `SELECT id FROM media_library WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
-        [mediaId, userId],
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existingVariant = await client.query(
+        `SELECT id, status
+           FROM marketing_content_item_variants
+          WHERE content_item_id = $1 AND user_id = $2 AND platform = $3
+          FOR UPDATE`,
+        [contentItemId, userId, platform],
       );
-      if (media.rowCount === 0) return errorResponse("Media not found", 400);
-    }
+      if (existingVariant.rows[0]?.status === "converted") {
+        await client.query("ROLLBACK");
+        return errorResponse("Converted variants cannot be edited", 409);
+      }
 
-    const result = await pool.query(
-      `INSERT INTO marketing_content_item_variants
-        (user_id, content_item_id, platform, hook, body, cta, media_id, status, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'ready',now())
-       ON CONFLICT (content_item_id, platform)
-       DO UPDATE SET hook=EXCLUDED.hook, body=EXCLUDED.body, cta=EXCLUDED.cta,
-                     media_id=EXCLUDED.media_id, status='ready', updated_at=now()
-       RETURNING id, user_id AS "userId", content_item_id AS "contentItemId", platform,
-                 hook, body, cta, media_id AS "mediaId", status,
-                 created_at AS "createdAt", updated_at AS "updatedAt"`,
-      [userId, contentItemId, platform, body.hook ? String(body.hook) : null, body.body ? String(body.body) : null, body.cta ? String(body.cta) : null, mediaId],
-    );
+      const mediaId = body.mediaId == null ? null : Number(body.mediaId);
+      if (mediaId !== null) {
+        const media = await client.query(
+          `SELECT id FROM media_library WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+          [mediaId, userId],
+        );
+        if (media.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return errorResponse("Media not found", 400);
+        }
+      }
+
+      const result = await client.query(
+        `INSERT INTO marketing_content_item_variants
+          (user_id, content_item_id, platform, hook, body, cta, media_id, status, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'ready',now())
+         ON CONFLICT (content_item_id, platform)
+         DO UPDATE SET hook=EXCLUDED.hook, body=EXCLUDED.body, cta=EXCLUDED.cta,
+                       media_id=EXCLUDED.media_id, status='ready', updated_at=now()
+         RETURNING id, user_id AS "userId", content_item_id AS "contentItemId", platform,
+                   hook, body, cta, media_id AS "mediaId", status,
+                   created_at AS "createdAt", updated_at AS "updatedAt"`,
+        [userId, contentItemId, platform, body.hook ? String(body.hook) : null, body.body ? String(body.body) : null, body.cta ? String(body.cta) : null, mediaId],
+      );
+      await client.query("COMMIT");
+      return Response.json({ variant: result.rows[0] }, { status: 201 });
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch {}
+      throw error;
+    } finally {
+      client.release();
+    }
     return Response.json({ variant: result.rows[0] }, { status: 201 });
   } catch (error) {
     console.error(error);
