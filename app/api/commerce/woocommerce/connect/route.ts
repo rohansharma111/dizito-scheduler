@@ -12,6 +12,9 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const storeUrlInput = typeof body.storeUrl === "string" ? body.storeUrl : "";
     const consumerKey = typeof body.consumerKey === "string" ? body.consumerKey.trim() : "";
