@@ -610,3 +610,11 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Database schema review found no safe incremental composite tenant FK for listing variants/media because those child tables do not carry user_id; their parent listing ownership plus application-level canonical variant/media ownership checks remain the current design.
 - A redundant migration was deliberately removed rather than adding schema churn without a real tenant key.
 - Tests, lint, build, and live provider verification remain intentionally deferred.
+
+
+### Marketing provenance consumer hardening — 2026-10-07
+- Legacy manual Content Item → Post linking now preserves optional Variant → Post provenance with ownership/platform validation.
+- Content Item APIs expose both legacy postIds and durable postLinks with variant identity.
+- Optimizer API/UI now carry and distinguish explicit attributed evidence from observed evidence.
+- Runtime/test/build/database verification remains intentionally deferred until the code-level implementation pass is complete.
+
