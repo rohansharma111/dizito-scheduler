@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Amazon channel not found" }, { status: 404 });
     }
 
-    const result = await verifyAmazonConnection(String(channel.id));
+    const result = await verifyAmazonConnection(String(channel.id), userId);
     return NextResponse.json({ success: true, result });
   } catch (error) {
     return NextResponse.json(
