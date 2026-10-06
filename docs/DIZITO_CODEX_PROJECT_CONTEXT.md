@@ -518,3 +518,5 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - Optimizer opportunities now return and render attributedOutcome separately from observedOutcome, preserving the distinction between explicit attribution and observational evidence.
 - These changes are implemented but not runtime-verified; tests/lint/build/database/provider verification remain pending.
 
+
+- Content Item → Post upsert semantics preserve established variant provenance and only backfill a missing variant ID, preventing later legacy calls from erasing execution identity.
