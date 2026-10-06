@@ -25,6 +25,7 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
   const platform = input.platform;
   let selectedProductIds = [...new Set((input.productIds ?? []).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
   let selectedOfferId = input.offerId == null ? null : Number(input.offerId);
+  let resolvedItem: { rows: Array<Record<string, any>>; rowCount: number } | null = null;
   if (input.contentItemId !== undefined) {
     if (!Number.isInteger(input.contentItemId) || input.contentItemId <= 0) throw new Error("Invalid content item reference");
     const item = await pool.query(
@@ -43,14 +44,15 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
       [input.contentItemId, userId],
     );
     if (item.rowCount === 0) throw new Error("Content item not found");
+    resolvedItem = item;
     selectedProductIds = (item.rows[0].product_ids ?? []).map(Number);
     selectedOfferId = item.rows[0].offer_id == null ? null : Number(item.rows[0].offer_id);
   }
   const resolvedCampaign = input.contentItemId !== undefined ? {
-    name: item?.rows[0]?.campaign_name ?? null,
-    objective: item?.rows[0]?.campaign_objective ?? null,
-    audience: item?.rows[0]?.campaign_audience ?? null,
-    cta: item?.rows[0]?.campaign_cta ?? null,
+    name: resolvedItem?.rows[0]?.campaign_name ?? null,
+    objective: resolvedItem?.rows[0]?.campaign_objective ?? null,
+    audience: resolvedItem?.rows[0]?.campaign_audience ?? null,
+    cta: resolvedItem?.rows[0]?.campaign_cta ?? null,
   } : null;
   if (selectedOfferId !== null && (!Number.isInteger(selectedOfferId) || selectedOfferId <= 0)) throw new Error("Invalid offer reference");
   const availableProductIds = new Set(context.businessBrain.products.map((product) => product.id));
