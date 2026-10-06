@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const externalId = typeof body?.externalId === "string" ? body.externalId.trim() : "";
     const lookupKey = typeof body?.lookupKey === "string" ? body.lookupKey.trim() : "";
     const skuIds = Array.isArray(body?.skuIds)
-      ? body.skuIds.filter((value: unknown): value is string => typeof value === "string" && value.trim()).map((value: string) => value.trim())
+      ? body.skuIds.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0).map((value: string) => value.trim())
       : [];
 
     if (!channelId || !operationId || !listingId || (!lookupKey && skuIds.length === 0)) {
