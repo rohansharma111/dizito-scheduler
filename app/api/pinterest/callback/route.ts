@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { createEvent } from "@/lib/events";
 
 import { exchangeToken } from "@/lib/platforms/pinterest/exchangeToken";
 import { getProfile } from "@/lib/platforms/pinterest/getProfile";
@@ -78,6 +79,12 @@ export async function GET(request: Request) {
 
   const userId = (session.user as any).id;
 
+  const reconnectAccountId =
+    cookieStore.get("pinterest_oauth_reconnect")?.value || null;
+  const reconnectType =
+    cookieStore.get("pinterest_oauth_reconnect_type")?.value || "account";
+  const isReconnect = Boolean(reconnectAccountId);
+
   try {
     /*
       Exchange authorization code
@@ -94,6 +101,81 @@ export async function GET(request: Request) {
     */
     const boards = await getBoards(token.accessToken);
 
+    if (isReconnect) {
+      const accountResult = await pool.query(
+        `
+        SELECT id, account_name, board_id
+        FROM social_accounts
+        WHERE id = $1 AND user_id = $2 AND platform = 'pinterest'
+        `,
+        [reconnectAccountId, userId],
+      );
+
+      const account = accountResult.rows[0];
+
+      if (!account) {
+        throw new Error("Pinterest reconnect account not found");
+      }
+
+      const board = boards.find((item: any) => item.id === account.board_id);
+
+      if (!board) {
+        throw new Error("Pinterest reconnect board is no longer available");
+      }
+
+      await pool.query(
+        `
+        UPDATE social_accounts
+        SET
+          access_token = $1,
+          status = 'connected',
+          health_status = 'healthy',
+          last_checked_at = NOW(),
+          updated_at = NOW()
+        WHERE id = $2 AND user_id = $3
+        `,
+        [token.accessToken, account.id, userId],
+      );
+
+      await createEvent(
+        "ACCOUNT_RECONNECTED",
+        "social_account",
+        account.id,
+        userId,
+        {
+          platform: "pinterest",
+          reconnectType,
+          boardId: account.board_id,
+        },
+      );
+
+      if (reconnectType === "recover") {
+        try {
+          await fetch(
+            process.env.NEXTAUTH_URL + "/api/post-targets/recover-auth",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                socialAccountId: account.id,
+              }),
+            },
+          );
+        } catch (error) {
+          console.error("Pinterest recover auth failed", error);
+        }
+      }
+
+      cookieStore.delete("pinterest_oauth_state");
+      cookieStore.delete("pinterest_oauth_reconnect");
+      cookieStore.delete("pinterest_oauth_reconnect_type");
+
+      return Response.redirect(
+        process.env.NEXTAUTH_URL + "/accounts?reconnected=true",
+      );
+    }
     /*
       Remove previous temporary OAuth session
       (same behaviour as Meta)
