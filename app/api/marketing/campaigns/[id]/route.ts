@@ -5,6 +5,7 @@ import { getBusinessBrain } from "@/lib/marketing/businessBrain";
 import { getCampaign } from "@/lib/marketing/campaigns";
 
 const STATUSES = ["draft", "planned", "active", "paused", "completed", "archived"];
+const TRANSITIONS: Record<string, string[]> = { draft: ["planned", "archived"], planned: ["active", "paused", "archived"], active: ["paused", "completed", "archived"], paused: ["active", "completed", "archived"], completed: ["archived"], archived: [] };
 
 function errorResponse(message: string, status = 400) {
   return Response.json({ error: message }, { status });
@@ -34,7 +35,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const existing = await getCampaign(userId, campaignId);
   if (!existing) return errorResponse("Campaign not found", 404);
 
-  if (body.status !== undefined && (typeof body.status !== "string" || !STATUSES.includes(body.status))) return errorResponse("Invalid campaign status");
+  if (body.status !== undefined) {\n    if (typeof body.status !== "string" || !STATUSES.includes(body.status)) return errorResponse("Invalid campaign status");\n    if (body.status !== existing.status && !TRANSITIONS[existing.status]?.includes(body.status)) return errorResponse("Invalid status transition from " + existing.status + " to " + body.status);\n  }
   if (body.name !== undefined && (typeof body.name !== "string" || !body.name.trim() || body.name.length > 200)) return errorResponse("Invalid campaign name");
   for (const field of ["objective", "audience", "cta"]) {
     if (body[field] !== undefined && body[field] !== null && typeof body[field] !== "string") return errorResponse("Invalid " + field);
