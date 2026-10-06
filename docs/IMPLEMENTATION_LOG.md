@@ -220,3 +220,12 @@ Every implementation entry must distinguish:
 - real provider verification.
 
 Never convert “implemented” to “verified” or “production-ready” without the corresponding evidence.
+
+
+## 2026-10-06 — Commerce publish operation ledger hardening
+
+- **Status:** Implemented; not runtime-verified.
+- **Commits:** `ee24383a78bfda2c3e03f65d60eb84849b65bb42`, `c0e6b8ed4c760208adb6b537480e31549e8d8b34`
+- **Files:** `lib/commerce/publish/operations.ts`, `lib/commerce/publish/operations.test.ts`
+- **Implemented behavior:** Success transitions now fail closed without a non-empty external ID, trim the confirmed provider ID before persistence, and continue to allow success only from `prepared`, `in_progress`, or `unknown`. Focused tests cover the success invariant and lifecycle eligibility for start, failed, and unknown states.
+- **Verification:** GitHub repository writes succeeded. Local test/lint/type-check/build and DB execution remain unverified; no provider mutation was executed.
