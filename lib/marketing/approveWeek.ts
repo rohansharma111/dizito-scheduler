@@ -64,6 +64,8 @@ export async function persistApprovedWeek(
     );
     const plan = planResult.rows[0];
 
+    let approvedCampaignId: number | null = null;
+
     for (let i = 0; i < strategy.campaigns.length; i++) {
       const campaign = strategy.campaigns[i];
       const offerId = campaign.offerId ?? null;
@@ -101,7 +103,8 @@ export async function persistApprovedWeek(
           weekEnd,
         ],
       );
-      const campaignId = campaignResult.rows[0].id;
+      const campaignId = Number(campaignResult.rows[0].id);
+      if (approvedCampaignId === null) approvedCampaignId = campaignId;
 
       for (const productId of productIds) {
         await client.query(
@@ -155,14 +158,8 @@ export async function persistApprovedWeek(
     }
 
     if (strategy.experiment?.hypothesis && strategy.experiment.change && strategy.experiment.metric) {
-      const campaignId = strategy.campaigns[0] ? Number((await client.query(
-        `SELECT id FROM marketing_campaigns
-         WHERE user_id=$1
-         ORDER BY id DESC
-         LIMIT 1`,
-        [userId],
-      )).rows[0]?.id) : null;
-      if (!campaignId) throw new Error("Unable to scope weekly experiment to approved campaign");
+      const campaignId = approvedCampaignId;
+      if (campaignId === null) throw new Error("Unable to scope weekly experiment to approved campaign");
 
       await client.query(
         `INSERT INTO marketing_experiments
