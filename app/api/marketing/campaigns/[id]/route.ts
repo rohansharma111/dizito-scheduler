@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const goalId = body.goalId === undefined ? existing.goalId : body.goalId === null || body.goalId === "" ? null : Number(body.goalId);
   const offerId = body.offerId === undefined ? existing.offerId : body.offerId === null || body.offerId === "" ? null : Number(body.offerId);
-  const productIds: number[] | null = body.productIds === undefined ? existing.productIds : Array.isArray(body.productIds) ? [...new Set(body.productIds.map((value: unknown) => Number(value)))] : null;
+  const productIds: number[] | null = body.productIds === undefined ? existing.productIds : Array.isArray(body.productIds) ? Array.from(new Set<number>((body.productIds as unknown[]).map((value) => Number(value)))) : null;
   if (goalId !== null && (!Number.isInteger(goalId) || goalId <= 0)) return errorResponse("Invalid goalId");
   if (offerId !== null && (!Number.isInteger(offerId) || offerId <= 0)) return errorResponse("Invalid offerId");
   if (!productIds) return errorResponse("Invalid productIds");
