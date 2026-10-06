@@ -161,7 +161,7 @@ export default function GenerateMyWeekPage() {
               <p><strong>Hook:</strong> {item.hook}</p>
               <p><strong>CTA:</strong> {item.cta}</p>
               <p style={{ opacity: 0.7 }}>{item.rationale}</p>
-              {item.evidence && <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: "#f7f7f7", fontSize: 13 }}><strong>Observed evidence:</strong> {item.evidence.count} {String(item.evidence.actionType).replaceAll("_", " ")} action{item.evidence.count === 1 ? "" : "s"} · value {item.evidence.value}{item.evidence.platform ? ` · ${item.evidence.platform}` : ""}<div style={{ marginTop: 4, opacity: 0.65 }}>This is observed customer outcome data, not proof of causality.</div></div>}
+              {item.evidence && <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: "#f7f7f7", fontSize: 13 }}><strong>Observed evidence:</strong> {item.evidence.sourceType === "variant" ? `Variant #${item.evidence.sourceId}` : `Content Item #${item.evidence.sourceId}`} · {item.evidence.count} {String(item.evidence.actionType).replaceAll("_", " ")} action{item.evidence.count === 1 ? "" : "s"} · value {item.evidence.value}{item.evidence.platform ? ` · ${item.evidence.platform}` : ""}<div style={{ marginTop: 4, opacity: 0.65 }}>This is observed customer outcome data, not proof of causality.</div></div>}
               {item.suggestedChannels?.length > 0 && <p style={{ fontSize: 13, opacity: 0.65 }}>Channels: {item.suggestedChannels.join(", ")}</p>}
             </article>
           ))}
