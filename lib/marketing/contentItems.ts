@@ -8,6 +8,9 @@ export type MarketingContentItem = {
   campaignObjective: string | null;
   campaignAudience: string | null;
   campaignCta: string | null;
+  offerId: number | null;
+  offerName: string | null;
+  productNames: string[];
   contentType: string;
   format: string | null;
   topic: string | null;
@@ -34,6 +37,9 @@ function mapContentItem(row: any): MarketingContentItem {
     campaignObjective: row.campaign_objective ?? null,
     campaignAudience: row.campaign_audience ?? null,
     campaignCta: row.campaign_cta ?? null,
+    offerId: row.offer_id === null ? null : Number(row.offer_id),
+    offerName: row.offer_name ?? null,
+    productNames: (row.product_names ?? []).filter(Boolean),
     contentType: row.content_type,
     format: row.format,
     topic: row.topic,
@@ -69,18 +75,26 @@ export async function listContentItems(userId: number, campaignId?: number) {
         c.objective AS campaign_objective,
         c.audience AS campaign_audience,
         c.cta AS campaign_cta,
+        c.offer_id,
+        o.name AS offer_name,
         COALESCE(
           ARRAY_AGG(DISTINCT cip.product_id) FILTER (WHERE cip.product_id IS NOT NULL),
           '{}'
         ) AS product_ids,
+        COALESCE(
+          ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL),
+          '{}'
+        ) AS product_names,
         COALESCE(
           ARRAY_AGG(DISTINCT cipost.post_id) FILTER (WHERE cipost.post_id IS NOT NULL),
           '{}'
         ) AS post_ids
       FROM marketing_content_items ci
       JOIN marketing_campaigns c ON c.id = ci.campaign_id AND c.user_id = ci.user_id
+      LEFT JOIN marketing_offers o ON o.id = c.offer_id AND o.user_id = ci.user_id
       LEFT JOIN marketing_content_item_products cip
         ON cip.content_item_id = ci.id
+      LEFT JOIN products p ON p.id = cip.product_id AND p.user_id = ci.user_id
       LEFT JOIN marketing_content_item_posts cipost
         ON cipost.content_item_id = ci.id
       WHERE ci.user_id = $1
