@@ -439,3 +439,7 @@ These strengthen the safety boundary but do not constitute live provider verific
 ### WooCommerce lifecycle state-machine hardening — 2026-10-06
 - Corrected the WooCommerce post-provider listing persistence parameter binding so a successful remote mutation cannot be recorded against the wrong database row.
 - Reconciliation now rejects conflicting existing external IDs and provider-mismatched durable attempts, and the final listing update only succeeds when the existing external ID is null or matches the provider-confirmed ID.
+
+### Provider adapter outcome normalization — 2026-10-06
+- WooCommerce adapter now checks reconciliation-required outcomes before generic error normalization, preserving ambiguous publish state and preventing accidental retry classification.
+- Flipkart publish adapter outcomes are normalized so disabled/not-found/failed states cannot be mistaken for reconciliation success.
