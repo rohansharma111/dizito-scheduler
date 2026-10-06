@@ -37,6 +37,23 @@ describe("POST /api/commerce/flipkart/publish", () => {
     mocks.getServerSession.mockResolvedValue({ user: { id: "7" } });
   });
 
+  it("rejects an invalid session user id", async () => {
+    mocks.getServerSession.mockResolvedValue({ user: { id: "0" } });
+
+    const response = await POST(
+      request({
+        channelId: "channel-1",
+        listingId: "listing-1",
+        idempotencyKey: "request-1",
+        confirmLivePublish: true,
+        listing,
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+
   it("requires explicit live-publish confirmation", async () => {
     const response = await POST(
       request({
