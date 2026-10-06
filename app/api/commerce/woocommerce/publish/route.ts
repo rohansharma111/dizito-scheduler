@@ -37,7 +37,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: result.error }, { status });
     }
 
-    return NextResponse.json({ success: true, result: result.result, externalId: result.externalId }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        result: result.result,
+        externalId: result.externalId,
+        idempotentReplay: "idempotentReplay" in result ? result.idempotentReplay : false,
+      },
+      { status: "idempotentReplay" in result && result.idempotentReplay ? 200 : 201 },
+    );
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/publish error:", error);
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Unable to publish WooCommerce product" }, { status: 400 });
