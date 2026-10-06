@@ -197,6 +197,7 @@ export async function updateProductListing(
       last_synced_at,
       last_error,
       provider_metadata,
+      sync_claim_token,
       created_at,
       updated_at
     `,
@@ -254,6 +255,7 @@ export async function updateProductListingSyncState(
   userId: number,
   input: {
     syncStatus: ProductListingSyncStatus;
+    claimToken: string;
     externalId?: string | null;
     lastError?: string | null;
     providerMetadata?: Record<string, unknown>;
