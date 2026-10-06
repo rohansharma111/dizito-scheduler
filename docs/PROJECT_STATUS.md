@@ -2,434 +2,397 @@
 
 **Last updated:** 2026-10-06  
 **Repository:** `rohansharma111/dizito-scheduler`  
-**Branch:** `main`  
+**Default branch:** `main`  
+**Latest observed commit:** `898317777d5aee193022452da45411648dd926ba`  
 **Project:** Dizito — AI Commerce Operating System
 
-> This is the canonical working status document for the repository. Update it whenever a meaningful implementation, decision, verification result, scope change, or blocker occurs. Do not mark work complete based only on code being written; distinguish implemented, verified, and production-ready.
+> This is the canonical working status document. Repository code/schema and observed verification are authoritative. “Implemented” does not mean “verified,” and “verified” does not mean “production-ready.”
 
-## 1. Vision and non-negotiable architecture
+## 1. Current phase
 
-Dizito is an existing social publishing and commerce platform evolving into an AI Commerce Operating System.
+**AI Commerce Operating System integration + production hardening**
 
-The long-term product direction is a merchant-owned, provider-neutral canonical catalog connected to external channels through reusable adapters:
+The repository has moved beyond a single-provider Amazon/Shopify commerce foundation. Current work is converging on two reusable operating layers:
 
-```text
-Canonical Product / Variant
-        ↓
-Commerce Channel / Connection
-        ↓
-Provider-specific Listing Workflow
-        ↓
-Validate → Publish / Sync → Monitor → Reconcile
-```
+1. **Provider-neutral commerce orchestration** for connected commerce channels.
+2. **Evidence-grounded AI marketing execution** from business context → weekly plan → reviewed content → customer actions → measurement → optimization.
+
+The immediate engineering priority is reliability and verification of the shared boundaries, not adding arbitrary new features.
+
+## 2. Product vision
+
+Dizito is an existing social publishing + commerce platform evolving into an AI Commerce Operating System.
+
+Long-term flywheel:
+
+`Business Context → AI Strategy → Weekly Plan → Reviewed Content → Distribution → Customer Actions → Business Impact → Optimization → Next Week`
+
+Commerce operates alongside that loop:
+
+`Canonical Product / Variant → Commerce Channel → Provider Adapter → Draft → Publish / Sync → Reconcile → Monitor`
 
 Core principles:
+- canonical Product/Variant data remains provider-neutral;
+- channels represent external destinations/accounts;
+- provider-specific auth, payloads and identifiers remain inside adapters/workflows;
+- tenant ownership is mandatory on mutations;
+- credentials are encrypted and never exposed;
+- product content and operational offer data remain separate;
+- provider mutations require durable state, idempotency, failure classification and reconciliation;
+- AI output must remain grounded, reviewable and fail-closed on malformed output;
+- attribution must be evidence-based rather than fabricated.
 
-- Canonical Products and Variants remain provider-neutral.
-- A marketplace or store is a channel, not the canonical source of truth.
-- Provider-specific requirements belong in provider adapters and workflows.
-- Tenant ownership must be enforced on every commerce mutation.
-- No credentials, refresh tokens, API secrets, encryption keys, or passwords may be committed or exposed.
-- Existing architecture must not be restarted or redesigned without repository evidence.
-- Product content and operational offer data must remain separate.
-- Production publishing requires durable state, idempotency, retry behavior, and reconciliation.
+## 3. Current implementation snapshot
 
-## 2. Status vocabulary
+### Core application
+**Implemented / established**
+- Next.js App Router application and protected dashboard.
+- Catalog/products/variants/media/inventory foundations.
+- Orders, billing/payment foundations.
+- Social publishing, scheduling, drafts, retry/bulk workflows.
+- Existing scheduler workflow remains intentionally preserved.
 
-Use these labels in future updates:
+### Commerce
+**Implemented foundations**
+- Canonical Product/Variant → Listing → Channel architecture.
+- Provider-neutral commerce adapter contracts and registry/service.
+- Shopify foundation considered closed/working.
+- WooCommerce connection, encrypted credentials, draft, publish, reconciliation and publish-operation/idempotency hardening.
+- Flipkart adapter, shared provider registration, draft/publish/reconcile routes, idempotency/state hardening and provider-confirmed reconciliation.
+- Amazon India product-content foundation, catalog matching and offer-layer foundation.
+- Meesho architecture/security audit and provider-neutral contract direction; provider-specific implementation blocked.
 
-- **Implemented:** Code exists in the repository.
-- **Verified:** Relevant tests, build, mocked flow, or provider check has actually been run and recorded.
-- **Production-ready:** Implemented and verified with security, ownership, persistence, failure handling, idempotency, and operational concerns addressed.
-- **Blocked:** Work cannot safely proceed because a dependency, credential, provider approval, or decision is missing.
-- **Deferred:** Intentionally postponed by scope decision; not necessarily unfinished core functionality.
+### Marketing / AI
+**Implemented foundations**
+- Business Brain/context.
+- Goals, offers, products, media, campaigns and content items.
+- AI Creator with product/offer/content/campaign grounding.
+- Human review requirement before saving AI copy/channel variants.
+- AI Strategist.
+- Generate My Week / weekly plans.
+- Customer actions and explicit attribution.
+- Business Impact.
+- Optimizer with evidence/provenance and deterministic experiment dispositions.
+- Weekly planning/approval carries optimizer rationale, evidence, provenance and experiment disposition.
 
-## 3. Current overall state
+### Social account reliability
+Recent fixes cover:
+- reconnect routing;
+- Pinterest reconnect without unnecessary board selection;
+- Google Business reconnect without unnecessary location selection;
+- user-scoped account health refresh;
+- hiding disconnected targets from post listings/details.
 
-### Current phase
+## 4. Commerce provider architecture
 
-**Commerce foundation expansion: WooCommerce connection/draft/publish foundation, while preserving the existing Amazon catalog-first direction.**
+Shared files:
+- `lib/commerce/providers/contracts.ts`
+- `lib/commerce/providers/registry.ts`
+- `lib/commerce/providers/service.ts`
 
-### Current implementation state
+The contract currently standardizes:
+- draft
+- publish
+- reconcile
+- sync vocabulary
+- capability flags
+- bounded succeeded/failed/ambiguous results
+- tenant/channel context
+- opaque provider payload/response types
+- explicit live-publish confirmation
 
-- Existing social publishing capabilities remain in place.
-- Canonical catalog, variants, media, inventory, channels, listings, and credentials foundations exist.
-- Shopify integration is treated as an established/closed foundation unless a concrete dependency requires changes.
-- Amazon India product-content workflow is established around SP-API/LWA, schema-driven requirements, explicit identity, conditional evaluation, and product-only validation preview.
-- WooCommerce connection, encrypted credential storage, draft preparation, duplicate connection protection, and guarded publish endpoint have been added.
+### WooCommerce current state
 
-### Important qualification
+Implemented:
+- adapter dispatch;
+- draft route;
+- publish route;
+- reconciliation route;
+- tenant/channel context binding;
+- encrypted credentials;
+- publish idempotency requirement;
+- durable publish attempts;
+- ambiguous/unknown handling;
+- replay protection;
+- reconciliation identity checks;
+- provider error mapping.
 
-The latest WooCommerce work is a **foundation**, not a declaration that live commerce is production-ready. Full listing synchronization, idempotency, durable publish state, external ID persistence, retries, reconciliation, and end-to-end provider verification remain required.
+**Not production-ready yet:** controlled provider verification, current CI/runtime evidence, durable external-state verification and broader operational sync.
 
-## 4. Recently implemented repository work
+### Flipkart current state
 
-### WooCommerce
+Implemented:
+- provider adapter and registry;
+- client with sandbox/production environments;
+- credential retrieval and access-token refresh;
+- draft route;
+- publish route;
+- reconciliation route;
+- shared provider dispatch;
+- idempotency conflict handling;
+- publish replay protection;
+- terminal state protection;
+- provider lookup requirement before reconciliation success;
+- provider-confirmed external ID persistence;
+- mismatch rejection;
+- live mutation fail-closed behind `FLIPKART_LIVE_PUBLISH_ENABLED`;
+- explicit live-publish confirmation.
 
-| Capability | Status | Repository evidence |
-|---|---|---|
-| Product payload mapper | Implemented | `lib/platforms/woocommerce/mapper.ts` |
-| WooCommerce REST client | Implemented | `lib/platforms/woocommerce/client.ts` |
-| Encrypted consumer key/secret storage | Implemented | `lib/platforms/woocommerce/credentials.ts` |
-| Channel configuration lookup | Implemented | `lib/platforms/woocommerce/client.ts` |
-| Draft listing preparation | Implemented | `lib/platforms/woocommerce/draft.ts` |
-| Draft API endpoint | Implemented | `app/api/commerce/woocommerce/draft/route.ts` |
-| Store connection endpoint | Implemented | `app/api/commerce/woocommerce/connect/route.ts` |
-| Duplicate store connection protection | Implemented | Commit `38ea9e5ca949f823bae83f9d7be2017c04f32169` |
-| Credential persistence failure state handling | Implemented | `connect/route.ts` |
-| Explicit live-publish guard | Implemented | Commit `1d30530f92a658a933d39266a2e67f5e9826954b` |
-| Guarded publish API endpoint | Implemented | Commit `451274ad342e1b8428f9f449bd5a27a1baa2c813` |
-| Full production-grade sync/reconciliation | Pending | Not yet implemented/verified |
+**Important limitation:** exact live Flipkart response shapes and authorized sandbox mutation behavior remain externally unverified. Do not mark Flipkart production-ready or enable unrestricted mutation without evidence.
 
-### Amazon
+### Amazon current state
 
-The existing Amazon direction remains:
+Implemented:
+- Amazon India channel/auth foundation using LWA OAuth;
+- product-type discovery;
+- linked JSON Schema retrieval;
+- schema-driven product editor;
+- conditional requirement evaluation;
+- explicit typed identifier/ASIN handling;
+- product-only validation preview;
+- catalog search/matching UI and API;
+- selected ASIN persisted into listing provider metadata;
+- separate dynamic offer-layer foundation.
 
-1. Discover product type.
-2. Retrieve the product-type definition and linked schema.
-3. Evaluate conditional requirements against the current draft.
-4. Use explicit seller-friendly identity controls.
-5. Keep product content separate from offer/fulfillment data.
-6. Use Amazon validation as the final authority.
-7. Proceed next toward catalog-first matching and existing-ASIN discovery.
+Rules:
+- never infer ASIN/identity from SKU or barcode;
+- never fabricate ASINs;
+- never leak offer fields such as `fulfillment_availability` into product-only validation;
+- Amazon remains the final validation authority.
 
-Do not infer ASINs from SKU or barcode. Do not fabricate identifiers. Do not place operational offer fields such as `fulfillment_availability` into the product-only workflow.
+**Remaining:** deeper catalog-match regression verification, offer persistence/mapping decisions, multiple product-type coverage, and eventual safe production publishing.
 
-## 5. Priority roadmap
+### Meesho current state
 
-### P0 — Must complete before declaring WooCommerce live commerce production-ready
+No provider-specific Meesho implementation is claimed.
 
-- [ ] Review and verify the actual publish service and endpoint behavior against current database schema.
-- [ ] Persist the WooCommerce external product ID after successful creation.
-- [ ] Persist listing and variant publish state transitions.
-- [ ] Prevent duplicate live product creation through idempotency keys or deterministic external mapping.
-- [ ] Define behavior for re-publishing an existing listing: create vs update.
-- [ ] Add tenant ownership checks to every publish path.
-- [ ] Add provider error persistence and safe retry behavior.
-- [ ] Add timeout and response validation handling for provider requests.
-- [ ] Add end-to-end mocked tests for success, provider rejection, credential failure, duplicate publish, and retry.
-- [ ] Run and record build, lint, type-check, and relevant tests.
-- [ ] Perform a controlled WooCommerce sandbox/store verification before any real merchant use.
+Blocked by:
+- no authoritative partner/API contract;
+- no verified authentication/publish contract;
+- no authorized test access.
 
-### P1 — Commerce foundation hardening
+Do not invent endpoints or credentials. Continue provider-neutral architecture work until external evidence is available.
 
-- [ ] Introduce a provider-neutral publish/sync result contract.
-- [ ] Define listing lifecycle states and legal transitions.
-- [ ] Define listing-variant mapping behavior for simple and variable products.
-- [ ] Add explicit inventory and price synchronization boundaries.
-- [ ] Add reconciliation for local listings versus external provider state.
-- [ ] Add retry policy with idempotency and backoff.
-- [ ] Add audit events for connect, draft, publish, update, failure, retry, and reconciliation.
-- [ ] Ensure channel credential rotation and revocation behavior is defined.
-- [ ] Verify URL normalization and channel uniqueness under concurrent requests.
-- [ ] Review database constraints for duplicate channels and listing mappings.
+## 5. Marketing / AI current state
 
-### P1 — Amazon next direction
+### Creator
+Recent hardening:
+- Creator can be grounded in selected product/offer/content-item/campaign context;
+- campaign strategy context is preserved;
+- malformed AI output fails closed;
+- validation errors are explicit;
+- AI copy/channel variants require human review before persistence.
 
-- [ ] Implement catalog-first matching / existing-ASIN discovery.
-- [ ] Define the UX: identifier-first, title/brand search, or combined approach.
-- [ ] Define persistence for confirmed catalog matches and no-match/new-product paths.
-- [ ] Preserve the current product-only new-product workflow.
-- [ ] Build the separate Amazon offer layer from canonical Variant/Inventory data.
-- [ ] Keep price, condition, fulfillment, and inventory out of product-content payloads.
-- [ ] Add regression fixtures for `if/then/else`, `allOf`, `anyOf`, `oneOf`, nested arrays, and inactive branches.
-- [ ] Test multiple representative Amazon product types.
-- [ ] Add identity/payload-builder unit tests, including valid and invalid GTIN/EAN/UPC/ISBN cases.
+### Strategist
+Recommendation layer remains grounded in business context and observed information. It should not silently publish or invent business outcomes.
 
-### P2 — Product and channel operations
+### Generate My Week
+Weekly plans are reviewable execution drafts. Approval persists plan/campaign/content state but does not automatically publish.
 
-- [ ] Complete provider-neutral listing management UI.
-- [ ] Add channel health/status views.
-- [ ] Add listing error and retry UI.
-- [ ] Add bulk draft and bulk publish workflows with explicit safeguards.
-- [ ] Add channel-specific mapping review before publication.
-- [ ] Add operational observability and structured logs.
-- [ ] Add role/permission review for high-impact commerce actions.
+Weekly planning now carries:
+- optimizer rationale;
+- observed evidence;
+- experiment provenance;
+- deterministic experiment disposition (`measure`, `refine`, `retest`);
+- learning-oriented context.
 
-### P3 — Expansion after the foundation is stable
+### Optimizer / experiments
+Recent work added:
+- evidence-ranked opportunities and experiments;
+- deterministic learning signals;
+- experiment dispositions based on historical direction;
+- completed-experiment direction in ranking;
+- provenance surfaced into experiment/weekly-plan workflows;
+- rationale/evidence shown to the user.
 
-- [ ] Flipkart adapter and workflow.
-- [ ] Meesho adapter and workflow.
-- [ ] Additional Shopify/WooCommerce operational sync features.
-- [ ] Orders, fulfillment, returns, payments, refunds, analytics, automation, and AI-assisted workflows according to separate approved scope.
-- [ ] Do not opportunistically implement later-phase capabilities while P0/P1 reliability work is incomplete.
+The optimizer must continue to distinguish observed outcomes from causal claims.
 
-## 6. V1 launch gate
+## 6. Current priority roadmap
 
-A feature may be considered for Dizito V1 only when the following are true for the relevant scope:
+### P0 — Reliability and verification
 
-- [ ] The user-facing workflow is complete enough for a real merchant task.
-- [ ] Authentication and tenant ownership are enforced.
-- [ ] Provider credentials are encrypted and never returned in responses.
-- [ ] Failure states are persisted or safely surfaced.
-- [ ] Duplicate operations are prevented or safely reconciled.
-- [ ] Retry behavior is explicit and idempotent.
-- [ ] The database state remains consistent after provider failure.
-- [ ] Build/type/lint checks are recorded.
-- [ ] Relevant mocked tests exist.
-- [ ] At least one controlled provider verification has been completed where applicable.
-- [ ] Documentation and known limitations are updated.
+- [ ] Obtain/observe a current CI run and resolve any test/type/lint/build failures.
+- [ ] Run relevant Vitest suites locally or through observable CI.
+- [ ] Verify provider-neutral dispatch for WooCommerce and Flipkart without bypassing adapters.
+- [ ] Controlled WooCommerce provider verification.
+- [ ] Controlled Flipkart sandbox/provider verification with authoritative response-shape evidence.
+- [ ] Verify publish-operation state transitions, idempotency replay/conflict handling and reconciliation persistence.
+- [ ] Review tenant ownership and credential boundaries across all commerce mutations.
+- [ ] Verify marketing review gates and grounded Creator behavior end-to-end.
+- [ ] Verify weekly optimizer evidence/disposition flows against actual persisted records.
+- [ ] Keep live provider mutation disabled until controlled verification passes.
 
-The presence of an endpoint alone is not a launch gate.
+### P1 — Commerce production hardening
+
+- [ ] Provider-neutral sync operation implementation where needed.
+- [ ] Durable listing/variant/external-ID mapping across providers.
+- [ ] Explicit lifecycle state machine and reconciliation policy.
+- [ ] Retry/backoff rules for provider failures.
+- [ ] Inventory/price synchronization boundaries.
+- [ ] Operational audit events and observability.
+- [ ] Channel credential rotation/revocation verification.
+- [ ] Concurrency/database constraint review.
+- [ ] Provider-specific sandbox/live verification.
+
+### P1 — Amazon completion
+
+- [ ] Broaden catalog matching regression coverage.
+- [ ] Verify multiple Amazon product types and complex conditional schema branches.
+- [ ] Add identity/payload-builder regression tests for identifier cases.
+- [ ] Define durable representation of matched-ASIN vs new-product paths.
+- [ ] Complete offer mapping from canonical Variant/Inventory.
+- [ ] Define which offer state is persisted versus derived.
+- [ ] Only then plan safe live publishing/update/reconciliation.
+
+### P1 — Marketing V1 reliability
+
+- [ ] Verify complete merchant path from Business Brain → Generate My Week → review → approval → Creator → channel variant → publish/schedule → customer action → Business Impact → optimizer.
+- [ ] Verify AI review cannot be bypassed by alternate API paths.
+- [ ] Verify malformed model output never persists invalid content.
+- [ ] Verify attribution remains explicit and evidence-based.
+- [ ] Verify experiment provenance/disposition remains attached through approval and future optimization.
+- [ ] Add regression coverage for critical weekly-plan/optimizer paths.
+
+### P2 — Product operations
+
+- [ ] Provider-neutral listing management UI.
+- [ ] Channel health views.
+- [ ] Listing error/retry UI.
+- [ ] Bulk commerce workflows with safeguards.
+- [ ] Mapping review UI.
+- [ ] Structured operational observability.
+- [ ] Role/permission review for high-impact actions.
+
+### P3 — Expansion
+
+- [ ] Meesho only after authoritative external contract/access.
+- [ ] Additional commerce providers.
+- [ ] Broader orders/fulfillment/returns/payments/refunds/analytics/automation.
+- [ ] Advanced AI commerce workflows.
 
 ## 7. Verification ledger
 
-Record verification here with date, scope, method, and result. Do not write “passed” without evidence.
+### Verified / observed evidence
 
-### Confirmed historical/current verification
+- Historical Amazon OAuth/LWA, product-type discovery, schema retrieval, validation-preview and seller-identity flows were exercised.
+- Historical Amazon PR builds were reported passing by the user.
+- WooCommerce and Flipkart focused regression tests have been added in-repository.
+- Current source inspection confirms provider-neutral dispatch and guarded provider mutation.
+- Flipkart reconciliation now requires provider lookup evidence before success.
+- Flipkart successful idempotency replay is prevented from executing a second provider mutation.
+- AI Creator review/grounding and optimizer evidence/disposition changes are represented in the current source.
 
-- Amazon OAuth/LWA connection and callback were exercised in prior work.
-- Amazon product-type discovery and linked schema retrieval were exercised in prior work.
-- Amazon product-only validation preview returned real provider issues in prior work.
-- Amazon seller-friendly identity and checksum validation were exercised in prior work.
-- WooCommerce duplicate connection protection is committed and present in the repository.
-- WooCommerce publish guard and endpoint are committed and present in the repository.
+### Not yet verified in the current environment
 
-### Still requiring explicit verification
+- A fresh green repository-wide CI run for the latest commit.
+- Current build/lint/type-check execution.
+- Live/controlled WooCommerce mutation.
+- Live/controlled Flipkart mutation and authoritative response parsing.
+- End-to-end marketing workflow against production-like persisted data.
+- Amazon catalog matching/offer flow across representative product types.
+- Full production readiness of any new provider.
 
-- [ ] Current repository build after latest WooCommerce commits.
-- [ ] Current repository lint/type checks after latest WooCommerce commits.
-- [ ] WooCommerce connect endpoint against a real or controlled test store.
-- [ ] WooCommerce draft endpoint against current schema and ownership rules.
-- [ ] WooCommerce publish success path.
-- [ ] WooCommerce publish failure and channel-error path.
-- [ ] WooCommerce duplicate publish behavior.
-- [ ] WooCommerce retry/idempotency behavior.
-- [ ] WooCommerce variable-product variant mapping.
-- [ ] Amazon matching and offer-layer behavior.
+**Rule:** source inspection and committed tests are not equivalent to runtime/provider verification.
 
-## 8. Known deferred work
+## 8. Known risks / blockers
 
-The payment/refund production audit is intentionally deferred from the current commerce-provider phase. It must not be silently forgotten, but it also must not be treated as proof that the core refund flow is incomplete. When revisited, use the audit document and current repository/database truth as the starting point.
+1. **CI evidence gap:** latest repository changes need an observable quality result.
+2. **Provider verification gap:** WooCommerce and Flipkart mutation/response behavior needs controlled verification.
+3. **Provider-state ambiguity:** network/provider timeouts must reconcile rather than blindly retry.
+4. **Amazon schema variability:** complex conditional JSON Schema needs broader regression coverage.
+5. **AI output risk:** review gates and fail-closed parsing must remain enforced on every persistence path.
+6. **Attribution risk:** observed outcomes must not be represented as causal proof.
+7. **Meesho external-contract blocker:** no implementation until authoritative provider evidence exists.
+8. **Payment/refund production audit:** deferred and separate from current commerce work.
 
-Other intentionally deferred or future areas include:
+## 9. Payment / refund audit — deferred
 
-- broad live publishing before reliability gates are complete
-- generalized retries and reconciliation across all providers
-- durable ASIN persistence decisions
-- broad Marketing UI work
-- additional marketplace adapters beyond the current phase
+The separate September audit recorded a successful refund retry scenario, including failed attempt preservation, new idempotency key, successful Razorpay retry, payment state sync, return completion and inventory restock.
 
-## 9. Working rules for future contributors and ChatGPT sessions
+That is historical validation, not production certification.
 
-Before changing code:
+Still deferred:
+- webhook duplicates/out-of-order events;
+- ambiguous provider timeouts;
+- reconciliation;
+- concurrency/idempotency edge cases;
+- authorization/security/webhook signatures;
+- operational alerting/support visibility;
+- test-data cleanup.
 
-1. Read this file.
-2. Inspect the current repository implementation, migrations, and recent commits.
-3. Identify whether the task is implementation, verification, hardening, or documentation.
-4. Do not repeat completed architecture without evidence of a defect.
-5. Preserve provider-neutral canonical data.
-6. Check tenant ownership and credential safety.
-7. Make focused commits.
-8. Record the commit SHA and verification status here after meaningful work.
+Do not restart this audit opportunistically. Resume before payment/refund is declared production-ready.
 
-After changing code:
+## 10. Launch gates
 
-- Update the relevant status row or checklist.
-- Add the commit SHA.
-- Record what was verified and what was not verified.
-- Record new risks, blockers, and follow-up tasks.
-- Never convert “implemented” into “production-ready” without evidence.
+Dizito V1 is not declared production-ready solely because features exist.
 
+Relevant launch gates:
+- complete merchant-facing workflow;
+- authentication/tenant ownership;
+- encrypted credentials;
+- safe failure persistence/surfacing;
+- idempotency and duplicate prevention;
+- reconciliation for ambiguous provider outcomes;
+- database consistency;
+- build/type/lint/tests;
+- controlled provider verification;
+- AI review and grounding safeguards;
+- documentation of limitations.
 
-### 2026-10-06 — Flipkart provider-service contract migration
+## 11. Current recommended next step
 
-- Status: Implemented; runtime verification pending
-- Commits:
-  - `63aaf6b5bb302eb4358aae14a41e74ae18ae34d9` — align Flipkart adapter with shared reconciliation method
-  - `0fc57bc96bee7484b5521f37d672702dcbee70bc` — normalize reconciliation contract output
-  - `42c515545d304a4509a20f3cdf500baa02f83403` — expose reconciliation identity input/output
-  - `8bd23136d2a00c6490508e59ddb44a2841f0309d` — add adapter reconciliation contract test
-  - `3474ed6e049bb8dcbf113bf27b57a1c1f2f60d88` — normalize confirmed reconciliation ID
-  - `e73340925bed949a066fa8e05335ad4f155e6` — support SKU/external-ID reconciliation identity
-- Implementation:
-  - Flipkart now conforms to the provider-neutral `reconcilePublish` adapter contract used by the central commerce provider service.
-  - Reconciliation can carry an explicit external ID or lookup key through the shared boundary.
-  - Confirmed external IDs are returned as provider-neutral `externalId` results; unconfirmed responses remain ambiguous.
-  - Live Flipkart mutation remains fail-closed behind `FLIPKART_LIVE_PUBLISH_ENABLED`.
-- Verification:
-  - GitHub source inspection completed.
-  - Adapter test coverage was updated in-repository.
-  - GitHub Actions has not reported a run for the latest commit sequence; no CI pass is claimed.
-  - Local build/lint/type-check/test execution and provider mutation were not run in this environment.
-- Remaining risk:
-  - The exact live Flipkart response shape and approved sandbox mutation remain unverified, so automatic external-ID parsing must not be treated as production-ready.
-- Next action:
-  - Add/route the canonical Flipkart draft/publish/reconcile API entry points through provider service, then harden operation transitions and external-ID persistence without enabling live publishing.
+**Do not start another large feature.**
 
+First establish runtime truth:
+1. obtain the latest CI quality result;
+2. run/fix focused tests and type/lint/build failures;
+3. controlled-verify WooCommerce and Flipkart provider boundaries;
+4. verify marketing review/optimizer end-to-end;
+5. then return to the highest remaining production blocker.
 
-### 2026-10-06 — Flipkart API provider-service cutover
+Amazon catalog/offer work remains important, but it should proceed as part of the same reliability discipline rather than as an isolated feature race.
 
-- Status: Implemented; runtime verification pending
-- Commits:
-  - `947f89b3e5757989db58df2b52ad1c1f924e5349` — add Flipkart draft route
-  - `9e81aad54e501bb5022358bd1ec5efdf4d09be6c` — add Flipkart publish route
-  - `ea597b01cd129daeb138ceeef0f99e7db24f56ef` — add Flipkart reconciliation route
-  - `6332539d9f096c1b78ba9b8c030d436541d4e937` — require provider lookup during reconciliation
-- API boundary:
-  - `POST /api/commerce/flipkart/draft` → central provider service → Flipkart adapter → draft workflow.
-  - `POST /api/commerce/flipkart/publish` → central provider service → Flipkart adapter → guarded publish workflow.
-  - `POST /api/commerce/flipkart/reconcile` → central provider service → Flipkart adapter → provider lookup/reconciliation workflow.
-- Safety:
-  - Authentication remains session-based and tenant context comes from the authenticated user plus channel ID.
-  - Publish requires explicit `confirmLivePublish=true` and remains fail-closed unless `FLIPKART_LIVE_PUBLISH_ENABLED=true`.
-  - Reconciliation cannot declare success from an external ID supplied alone; a provider lookup key/SKU is required.
-- Verification:
-  - Repository/source inspection completed.
-  - Route code follows the existing WooCommerce provider-service dispatch pattern.
-  - GitHub Actions has not reported a run for the latest commit sequence; no CI pass is claimed.
-  - Local tests, type-check, lint, build, database execution, and provider calls were not run in this environment.
-- Next action:
-  - Add focused route/provider integration tests and then harden Flipkart publish-operation state transitions and confirmed external-ID persistence.
+## 12. Persistent documentation rules
 
-## 10. Decision log
+When meaningful implementation changes:
+- update this file;
+- append a dated entry to `docs/IMPLEMENTATION_LOG.md`;
+- keep `docs/DIZITO_CODEX_PROJECT_CONTEXT.md` aligned with durable architecture/current state;
+- never claim verification without evidence.
 
-| Date | Decision | Reason |
-|---|---|---|
-| 2026-09-22 | Maintain this file as the canonical project tracker | Keep project vision, progress, pending work, verification, and launch gates visible to the user and future contributors |
-| 2026-09-22 | Treat WooCommerce publishing as guarded foundation only | Live provider writes require idempotency, durable state, retries, reconciliation, and controlled verification |
-| 2026-09-22 | Preserve Amazon catalog-first direction in parallel | Amazon matching and offer separation remain important to the long-term commerce architecture |
+## 13. Long-term roadmap
 
-## 11. Update template
+1. Canonical catalog.
+2. Provider-neutral channel/listing layer.
+3. Shopify foundation.
+4. Amazon product-content foundation.
+5. Amazon catalog/offer completion.
+6. WooCommerce + Flipkart production-grade provider operations.
+7. Durable publishing/reconciliation across providers.
+8. AI marketing flywheel reliability.
+9. Additional commerce providers, including Meesho when contract/access is available.
+10. Broader commerce operations and AI-assisted commerce workflows.
 
-Use this compact format for future entries:
+## 14. Open architectural questions
 
-```md
-### YYYY-MM-DD — <change>
+1. Exact provider-neutral listing lifecycle states and legal transitions.
+2. Durable mapping strategy for external product/listing/variant identities.
+3. Which provider operations should be synchronous versus queued.
+4. Amazon matched-ASIN vs new-product persistence semantics.
+5. Amazon offer persistence vs canonical derivation.
+6. Representative Amazon schema regression suite.
+7. Meesho integration contract once authoritative access is available.
+8. Operational observability and support tooling for ambiguous provider mutations.
 
-- Status: Implemented / Verified / Production-ready / Blocked / Deferred
-- Commit: `<sha>`
-- Files:
-  - `<path>`
-- Verification:
-  - <exact command, provider check, or reason not run>
-- Remaining risk:
-  - <known limitation>
-- Next action:
-  - <specific follow-up>
-```
+## 15. Latest implementation checkpoint
 
-### 2026-10-06 — Meesho provider architecture hardening
+As of `898317777d5aee193022452da45411648dd926ba`:
+- Flipkart publish confirmation bypass was removed and reconciliation is the intended success-confirmation path.
+- Flipkart live mutation remains fail-closed.
+- Flipkart route/provider/idempotency/reconciliation regression coverage has been added.
+- WooCommerce operations have been moved toward shared provider dispatch.
+- AI Creator grounding/review/fail-closed behavior has been hardened.
+- Optimizer evidence, experiment disposition and provenance are carried into weekly planning.
+- Social reconnect/status/disconnected-target fixes have landed.
 
-- Status: Implemented / Blocked for provider-specific implementation
-- Commits:
-  - `3108264c8a4c90025e7779119b55af7f3ffb1cec` — provider-neutral adapter contracts
-  - `3754711aabba2cffab7d341ca2488b477bba9a35` — project status update
-  - `36fdc48bfbd8bdaa68b0cb7a90ee03e4c84e3be5` — Meesho architecture/security audit refresh
-- Files:
-  - `lib/commerce/providers/contracts.ts`
-  - `docs/MEESHO_PROVIDER_ARCHITECTURE_AUDIT.md`
-  - `docs/IMPLEMENTATION_LOG.md`
-- Implementation:
-  - Added a provider-neutral operation/capability/result contract without assuming Meesho API behavior.
-  - Confirmed shared channel/listing persistence is provider-neutral and tenant-scoped.
-  - Confirmed WooCommerce credential retrieval is owner-scoped before decryption.
-- Verification:
-  - GitHub source inspection and repository writes completed.
-  - Local build, lint, type-check, automated tests, migration execution, database execution, and provider calls were not run.
-- Remaining risk/blocker:
-  - Meesho-specific client/auth/publish code remains blocked pending authoritative Meesho API/partner documentation and authorized test access.
-- Next action:
-  - Migrate WooCommerce workflow to the shared contract with behavior-preserving tests, then establish provider dispatch. Do not implement Meesho endpoints until the external contract is verified.
-
-## 10. Decision log
-
-| Date | Decision | Reason |
-|---|---|---|
-| 2026-09-22 | Maintain this file as the canonical project tracker | Keep project vision, progress, pending work, verification, and launch gates visible to the user and future contributors |
-| 2026-09-22 | Treat WooCommerce publishing as guarded foundation only | Live provider writes require idempotency, durable state, retries, reconciliation, and controlled verification |
-| 2026-09-22 | Preserve Amazon catalog-first direction in parallel | Amazon matching and offer separation remain important to the long-term commerce architecture |
-
-## 11. Update template
-
-Use this compact format for future entries:
-
-```md
-### YYYY-MM-DD — <change>
-
-- Status: Implemented / Verified / Production-ready / Blocked / Deferred
-- Commit: `<sha>`
-- Files:
-  - `<path>`
-- Verification:
-  - <exact command, provider check, or reason not run>
-- Remaining risk:
-  - <known limitation>
-- Next action:
-  - <specific follow-up>
-```
-
-
-### 2026-10-06 — Flipkart route tests and publish-state hardening
-
-- Status: Implemented; runtime verification pending
-- Commits:
-  - `5e9dd809ec0beb8009c5122d0c4c8abd3ec0b91a` — add Flipkart draft route boundary tests
-  - `f638434e2c5e4d492f30ca017d78a045c36a5fcf` — add Flipkart publish route boundary tests
-  - `e0cd0ef753c355364292590ad8f593253bd1aad8` — add Flipkart reconciliation route boundary tests
-  - `04d68fc7744a28c0cb75b0d12ae00db9c7bde344` — persist provider-confirmed external ID during reconciliation
-  - `8252024b781ed12596d309d9848f3b51b974153c` — add reconciliation persistence/safety regression tests
-  - `5552f59c1d5147e4e62c9162ba4f662843c0bf07` — harden publish operation terminal state transitions
-  - `4a29c439633e2d901e0c73c583e487daa1c11ff8` — prevent duplicate provider execution on successful idempotency replay
-  - `a73c0c312444e991ac37c8b3355822c6648cb952` — add publish replay/state-transition regression tests
-- Implementation:
-  - Added focused POST route tests for draft, publish, and reconcile boundaries.
-  - Reconciliation now requires provider lookup evidence and persists the confirmed external ID before returning success.
-  - Caller-supplied external IDs are no longer accepted as standalone confirmation; mismatches are rejected.
-  - Publish operation transitions are guarded so terminal success cannot be overwritten by later failure/unknown transitions.
-  - Reusing a successful idempotency key returns the stored external ID without executing another Flipkart mutation.
-  - In-progress/unknown operations return an explicit reconciliation-required state instead of triggering another provider write.
-- Verification:
-  - Repository source inspection completed.
-  - GitHub Actions workflow is configured to run tests/lint/build on pushes to `main`.
-  - This environment cannot reach GitHub Actions execution results or clone the repository for local npm execution; therefore no test/lint/build pass is claimed.
-  - No live Flipkart mutation or database migration execution was performed.
-- Remaining risk:
-  - Exact live Flipkart response shapes and authorized sandbox mutation behavior remain externally unverified.
-  - The repository still needs an observed CI run before these changes can be marked verified.
-- Next action:
-  - Review the first CI result for the new test suite; fix any TypeScript/lint/test failures, then perform controlled Flipkart sandbox reconciliation/publish verification without enabling unrestricted production mutation.
-
-
-### 2026-10-06 — Flipkart provider dispatch and idempotency conflict hardening
-
-- Status: Implemented; runtime verification pending
-- Commits:
-  - `f613cb6308785908f94851a2269049396724e6ab` — classify idempotency key/payload conflicts as HTTP 409
-  - `5a90761a372d47b621a4529cfe7182344b920535` — add Flipkart dispatch coverage through the shared provider service
-  - `54e465641baf2deaa420bbb0e9a79e5c5a849e69` — add idempotency conflict route regression coverage
-- Implementation:
-  - Verified the Flipkart adapter is registered and reachable through the provider-neutral service for draft, publish, and reconciliation operations.
-  - Added service-level tests that exercise all three Flipkart provider-service dispatch paths.
-  - Publish idempotency-key conflicts and request-payload conflicts now return HTTP 409 rather than generic validation 400.
-- Verification:
-  - Repository source inspection completed.
-  - GitHub Actions remains configured for test/lint/build on `main`, but no workflow run is currently reported for the latest commits.
-  - No CI pass, local npm test/lint/build, database execution, or live provider call is claimed.
-- Remaining risk:
-  - Runtime verification remains the blocking evidence gap; Flipkart sandbox response/behavior is still not verified.
-- Next action:
-  - Once CI is observable, resolve any test/type/lint failures. Then run controlled sandbox reconciliation and publish verification with production mutation still disabled by default.
-
-
-## 2026-10-06 — Flipkart publish confirmation bypass audit
-
-- Audited the Flipkart publish/reconcile state transitions after the idempotency and reconciliation hardening.
-- The canonical reconciliation path is the only intended path that can transition a publish operation to `succeeded`: it must first query Flipkart and extract a concrete provider listing identifier, and an optional caller-supplied external ID must match that provider-confirmed identifier.
-- Removed the unused direct confirmation helpers from the Flipkart publish/reconcile modules. This eliminates an unnecessary exported path that could have allowed a caller to mark an operation successful from a caller-supplied external ID without performing provider reconciliation.
-- Unrestricted Flipkart mutation remains fail-closed behind `FLIPKART_LIVE_PUBLISH_ENABLED`; no sandbox/live execution was enabled by this change.
-- Runtime CI/build/type/lint verification remains pending because no observable GitHub Actions run is currently available through the repository integration.
-- Next gate: controlled Flipkart provider verification with authoritative response-shape evidence before any production mutation flag is enabled.
-
-## 2026-10-06 — Flipkart client/provider verification seam
-
-- Added `lib/platforms/flipkart/client.test.ts` covering the provider transport contract without making external network calls.
-- The test seam verifies:
-  - sandbox seller API base URL and bearer authentication;
-  - SKU normalization/encoding and the 1–10 identifier lookup bound;
-  - empty/expired token fail-closed behavior;
-  - non-2xx provider responses are surfaced as failures rather than successful payloads;
-  - production API selection occurs only when the client environment is explicitly set to production.
-- This is deterministic contract coverage, not live provider verification. No Flipkart credentials or external calls were introduced.
-- Production mutation remains disabled by default.
-- Remaining verification gate: run the repository CI/test suite and, when authorized credentials/test access are available, perform a controlled sandbox request against the authoritative Flipkart contract and record the observed response shape before enabling any mutation path.
+No new provider should be considered production-ready until runtime/provider verification is recorded.
