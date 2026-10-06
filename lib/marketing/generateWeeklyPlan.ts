@@ -88,7 +88,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
     ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null
     : null;
   const strategyProduct = strategyRecommendation?.productIds?.length
-    ? brain.products.find((item) => item.id === Number(strategyRecommendation.productIds[0])) ?? null
+    ? brain.products.find((item) => item.id === Number(strategyRecommendation?.productIds?.[0])) ?? null
     : null;
   const strategyOffer = strategyRecommendation?.offerId != null
     ? activeOffers.find((offer) => offer.id === Number(strategyRecommendation.offerId)) ?? null
