@@ -15,6 +15,9 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const outcomeGuidance = context.impact.observedContentSummary.length || context.impact.observedVariantSummary.length
     ? "Observed outcome data exists at content/variant level. Use it to prioritize measurable recommendations, while explicitly describing it as observed rather than causal."
     : "No completed content/variant-level customer action outcomes are available. Treat content/variant performance as unknown and recommend measurement before claiming improvement.";
+  const experimentGuidance = context.completedExperiments.length
+    ? "Completed experiment evidence is available. Use each experiment's hypothesis, change, metric, observed outcomes, and result summary as historical evidence. Prefer recommendations that build on clearly observed experiment results, but never treat completion or correlation as causal proof."
+    : "No completed experiments are available. Do not imply that a tested change has already been validated; recommend a measurable experiment when evidence is insufficient.";
 
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const response = await client.responses.create({
@@ -24,7 +27,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       { role: "user", content: JSON.stringify({
         task: "Analyze current marketing outcomes and recommend the highest-value improvements for future campaigns and weekly plans. Prefer content-item and variant-level recommendations when observed outcomes support them. Use manual attribution only as explicit attribution, never as causal proof.",
         outputSchema: { summary: "string", opportunities: [{ action: "string", rationale: "string", campaignId: "number|null", contentItemId: "number|null", variantId: "number|null", priority: "high|medium|low" }], experiments: [{ hypothesis: "string", change: "string", metric: "string" }], measurement: [{ metric: "string", reason: "string" }], guardrails: ["string"] },
-        context: { ...context, optimizerOutcomeGuidance: outcomeGuidance },
+        context: { ...context, optimizerOutcomeGuidance: outcomeGuidance, optimizerExperimentGuidance: experimentGuidance },
       }) },
     ],
   });
