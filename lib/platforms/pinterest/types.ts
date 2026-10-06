@@ -30,6 +30,8 @@ export interface PinterestProfile {
   displayName: string;
 
   profileImage?: string;
+
+  accountType?: "BUSINESS" | "PINNER";
 }
 
 /*

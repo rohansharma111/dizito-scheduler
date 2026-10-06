@@ -1,4 +1,5 @@
 import { pool } from "@/lib/db";
+import { refreshPinterestToken } from "@/lib/platforms/pinterest/refreshToken";
 
 async function checkInstagramAccount(account: any) {
   const response = await fetch(
@@ -127,15 +128,50 @@ async function checkLinkedInAccount(account: any) {
 }
 
 async function checkPinterestAccount(account: any) {
+  let accessToken = account.access_token;
+
+  if (
+    account.refresh_token &&
+    account.token_expires_at &&
+    new Date(account.token_expires_at).getTime() <= Date.now() + 5 * 60 * 1000
+  ) {
+    const token = await refreshPinterestToken(account.refresh_token);
+    accessToken = token.accessToken;
+
+    await pool.query(
+      `
+      UPDATE social_accounts
+      SET
+        access_token = $1,
+        refresh_token = COALESCE($2, refresh_token),
+        token_expires_at = CASE
+          WHEN $3 IS NULL THEN token_expires_at
+          ELSE NOW() + ($3 * INTERVAL '1 second')
+        END,
+        status = 'connected',
+        health_status = 'healthy',
+        last_checked_at = NOW(),
+        updated_at = NOW()
+      WHERE id = $4
+      `,
+      [
+        token.accessToken,
+        token.refreshToken ?? null,
+        token.expiresIn ?? null,
+        account.id,
+      ],
+    );
+  }
+
   const response = await fetch("https://api.pinterest.com/v5/user_account", {
     headers: {
-      Authorization: `Bearer ${account.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
   const data = await response.json();
 
-  if (!response.ok || data.code || data.message) {
+  if (!response.ok || data.code || data.message || data.account_type !== "BUSINESS") {
     await pool.query(
       `
       UPDATE social_accounts

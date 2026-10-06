@@ -187,16 +187,23 @@ export async function POST(request: Request) {
           SET
             account_name = $1,
             access_token = $2,
+            refresh_token = COALESCE($3, refresh_token),
+            token_expires_at = CASE
+              WHEN $4 IS NULL THEN token_expires_at
+              ELSE $4
+            END,
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
           WHERE
-            id = $3
-            AND user_id = $4
+            id = $5
+            AND user_id = $6
           `,
           [
             reconnectAccount.account_name,
             accessToken,
+            oauthData.refresh_token ?? null,
+            oauthData.token_expires_at ?? null,
             reconnectAccountId,
             userId,
           ],
@@ -285,9 +292,11 @@ export async function POST(request: Request) {
           INSERT INTO social_accounts
           (
             platform,
-    account_name,
-    access_token,
-    board_id,
+            account_name,
+            access_token,
+            refresh_token,
+            token_expires_at,
+            board_id,
     pinterest_profile_id,
     user_id
           )
@@ -298,11 +307,22 @@ export async function POST(request: Request) {
             $3,
             $4,
             $5,
-            $6
+            $6,
+            $7,
+            $8
           )
           RETURNING id
           `,
-        ["pinterest", board.name, accessToken, board.id, profile?.id, userId],
+        [
+          "pinterest",
+          board.name,
+          accessToken,
+          oauthData.refresh_token ?? null,
+          oauthData.token_expires_at ?? null,
+          board.id,
+          profile?.id,
+          userId,
+        ],
       );
 
       accountCount++;

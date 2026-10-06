@@ -25,5 +25,6 @@ export async function getProfile(
     username: data.username,
     displayName: data.business_name || data.username,
     profileImage: data.profile_image,
+    accountType: data.account_type,
   };
 }

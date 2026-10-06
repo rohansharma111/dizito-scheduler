@@ -108,6 +108,22 @@ export async function DELETE(
   }
 
   /*
+    Remove account-scoped audit events so disconnected Pinterest
+    identifiers are not retained in event payloads.
+  */
+
+  await pool.query(
+    `
+    DELETE FROM system_events
+    WHERE
+      entity_type = 'social_account'
+      AND entity_id = $1
+      AND user_id = $2
+    `,
+    [id, userId],
+  );
+
+  /*
     Safe delete
   */
 
