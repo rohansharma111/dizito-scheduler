@@ -49,7 +49,7 @@ describe("wooCommerceAdapter", () => {
       context: { channelId: "channel-1", userId: 7 },
       payload: { action: "draft", input },
     });
-    expect(mocks.draft).toHaveBeenCalledWith(7, input);
+    expect(mocks.draft).toHaveBeenCalledWith(7, { ...input, channelId: "channel-1" });
     expect(result).toMatchObject({ operation: "draft", status: "succeeded" });
   });
 
@@ -65,7 +65,7 @@ describe("wooCommerceAdapter", () => {
       confirmLivePublish: true, idempotencyKey: "contract-key",
     });
     expect(mocks.publish).toHaveBeenCalledWith(7, {
-      ...input, confirmLivePublish: true, idempotencyKey: "contract-key",
+      ...input, channelId: "channel-1", confirmLivePublish: true, idempotencyKey: "contract-key",
     });
     expect(result).toMatchObject({ operation: "publish", status: "succeeded", externalId: "101" });
   });
