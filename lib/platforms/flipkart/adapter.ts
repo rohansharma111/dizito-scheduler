@@ -119,7 +119,7 @@ export const flipkartAdapter: CommerceProviderAdapter<
           message: result.status === "disabled"
             ? "Flipkart live publishing is disabled"
             : "Flipkart publish operation was not found",
-          retryable: result.status === "disabled",
+          retryable: false,
           ambiguous: false,
         },
       };
