@@ -72,7 +72,7 @@ export type StrategyHint = {  strategySummary?: string;  recommendations?: Array
       topic: template.topic,
       hook: template.hook,
       cta: template.cta,
-      suggestedChannels: strategyRecommendation?.channels?.length ? [...new Set(strategyRecommendation.channels.map(String))] : suggestedChannels,
+      suggestedChannels: strategyRecommendation?.channels?.length        ? [...new Set(strategyRecommendation.channels.map(String).filter((channel) => suggestedChannels.includes(channel)))]        : suggestedChannels,
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
       offerId: selectedOffer?.id ?? null,
