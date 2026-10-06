@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { requireCommerceProviderAdapter } from "@/lib/commerce/providers/service";
+import { reconcileCommerceProvider } from "@/lib/commerce/providers/service";
 import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adapter";
 
 export async function GET(request: Request) {
@@ -53,7 +53,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "channelId, listingId, idempotencyKey, and either externalId or sku are required" }, { status: 400 });
     }
 
-    const adapter = requireCommerceProviderAdapter("woocommerce");
     const payload = {
       action: "reconcile",
       input: {
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
       },
     } satisfies WooCommerceAdapterPayload;
 
-    const result = await adapter.reconcilePublish({
+    const result = await reconcileCommerceProvider("woocommerce", {
       context: { channelId, userId: Number(session.user.id) },
       payload,
       externalId: externalId || undefined,
