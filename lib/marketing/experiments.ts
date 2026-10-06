@@ -85,6 +85,32 @@ export async function getMarketingExperimentOutcomes(userId: number, id: number)
   return result.rows as ExperimentOutcome[];
 }
 
+export async function getMarketingExperimentBaselineOutcomes(userId: number, id: number): Promise<ExperimentOutcome[]> {
+  const result = await pool.query(
+    `SELECT a.action_type AS "actionType",
+            COUNT(*)::int AS count,
+            COALESCE(SUM(a.value), 0)::int AS value
+       FROM marketing_customer_actions a
+       JOIN marketing_experiments e ON e.user_id = a.user_id
+      WHERE e.id = $2
+        AND e.user_id = $1
+        AND a.status = 'completed'
+        AND e.baseline_starts_at IS NOT NULL
+        AND e.baseline_ends_at IS NOT NULL
+        AND a.occurred_at >= e.baseline_starts_at
+        AND a.occurred_at <= e.baseline_ends_at
+        AND (
+          (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
+          OR (e.variant_id IS NULL AND e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+          OR (e.variant_id IS NULL AND e.content_item_id IS NULL AND e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+        )
+      GROUP BY a.action_type
+      ORDER BY count DESC`,
+    [userId, id],
+  );
+  return result.rows as ExperimentOutcome[];
+}
+
 function outcomeSummary(outcomes: ExperimentOutcome[]) {
   if (!outcomes.length) return "No completed customer actions were observed for the linked experiment scope.";
   return outcomes.map((item) => `${item.actionType}: ${item.count} action${item.count === 1 ? "" : "s"}, observed value ${item.value}`).join("; ");
