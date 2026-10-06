@@ -121,28 +121,64 @@ export async function upsertProductListingDraft(
       );
       listing = result.rows[0];
     } else {
-      const result = await client.query(
-        `
-        INSERT INTO product_listings
-          (user_id, channel_id, product_id, status, provider_metadata)
-        VALUES
-          ($1, $2, $3, 'draft', $4::jsonb)
-        RETURNING
-          id,
-          channel_id,
-          product_id,
-          status,
-          sync_status,
-          external_id,
-          last_synced_at,
-          last_error,
-          provider_metadata,
-          created_at,
-          updated_at
-        `,
-        [userId, input.channelId, input.productId, JSON.stringify(metadata)],
-      );
-      listing = result.rows[0];
+      try {
+        const result = await client.query(
+          `
+          INSERT INTO product_listings
+            (user_id, channel_id, product_id, status, provider_metadata)
+          VALUES
+            ($1, $2, $3, 'draft', $4::jsonb)
+          RETURNING
+            id,
+            channel_id,
+            product_id,
+            status,
+            sync_status,
+            external_id,
+            last_synced_at,
+            last_error,
+            provider_metadata,
+            created_at,
+            updated_at
+          `,
+          [userId, input.channelId, input.productId, JSON.stringify(metadata)],
+        );
+        listing = result.rows[0];
+      } catch (error) {
+        if ((error as { code?: string }).code !== "23505") {
+          throw error;
+        }
+
+        const concurrent = await client.query(
+          `
+          SELECT
+            id,
+            channel_id,
+            product_id,
+            status,
+            sync_status,
+            external_id,
+            last_synced_at,
+            last_error,
+            provider_metadata,
+            created_at,
+            updated_at
+          FROM product_listings
+          WHERE product_id = $1
+            AND channel_id = $2
+            AND user_id = $3
+          LIMIT 1
+          FOR UPDATE
+          `,
+          [input.productId, input.channelId, userId],
+        );
+
+        if (!concurrent.rows[0]) {
+          throw error;
+        }
+
+        listing = concurrent.rows[0];
+      }
     }
 
     for (const variant of input.variants) {
