@@ -457,3 +457,8 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - Existing conflicting listing external identities are protected from overwrite.
 - Flipkart reconciliation now returns provider-neutral deterministic failures or retryable ambiguity rather than leaking raw exceptions.
 - WooCommerce reconciliation POST authentication now uses the validated session user ID consistently.
+### Commerce provider-entry audit — 2026-10-06
+- WooCommerce publish route now uses the validated authenticated tenant ID.
+- Shopify credential access is tenant/provider scoped at the credential helper boundary, not only at the caller.
+- Shopify OAuth callback and token-refresh persistence carry authenticated tenant context.
+- Shopify shop lookup requires explicit tenant context.
