@@ -179,6 +179,7 @@ function mapCampaign(row: any): MarketingCampaign {
       completed: Number(row.experiment_completed_count ?? 0),
       planned: Number(row.experiment_planned_count ?? 0),
     },
+    experimentLearning: [],
     observedImpact: {
       actionCount: Number(row.observed_action_count ?? 0),
       actionValue: Number(row.observed_action_value ?? 0),
