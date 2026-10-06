@@ -38,7 +38,7 @@ function isoDate(date: Date) {
 export type StrategyHint = {
   strategySummary?: string;
   recommendations?: Array<{ action?: string; why?: string; channels?: string[]; goalId?: number | null; campaignId?: number | null; productIds?: number[]; offerId?: number | null }>;
-  optimization?: { summary?: string; opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null }> };
+  optimization?: { summary?: string; opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null }> };
 };
 
 export async function generateWeeklyPlan(userId: number, weekStart: string, strategyHint?: StrategyHint): Promise<GeneratedWeek> {
@@ -84,9 +84,11 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
       offerId: selectedOffer?.id ?? null,
-      rationale: primaryGoal
-        ? `Prioritizes the active goal “${primaryGoal.name}” and reuses available business context before creating new assets.`
-        : "Uses available products and media to create a balanced week until a primary marketing goal is configured.",
+      rationale: optimizationOpportunity?.rationale
+        ? `Optimization focus: ${optimizationOpportunity.rationale}${optimizationOpportunity.contentItemId != null ? ` This was informed by content item ${optimizationOpportunity.contentItemId}.` : ""}${optimizationOpportunity.variantId != null ? ` This was informed by variant ${optimizationOpportunity.variantId}.` : ""}`
+        : primaryGoal
+          ? `Prioritizes the active goal “${primaryGoal.name}” and reuses available business context before creating new assets.`
+          : "Uses available products and media to create a balanced week until a primary marketing goal is configured.",
     };
   });
 
