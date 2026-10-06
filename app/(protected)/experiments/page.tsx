@@ -12,6 +12,9 @@ type Experiment = {
   campaignId: number | null;
   contentItemId: number | null;
   variantId: number | null;
+  targetType: "campaign" | "content_item" | "variant" | null;
+  targetField: string | null;
+  targetMetadata: Record<string, unknown>;
   startsAt: string | null;
   endsAt: string | null;
   resultSummary: string | null;
@@ -76,7 +79,7 @@ export default function ExperimentsPage() {
           {item.status !== "completed" && item.status !== "cancelled" && <button disabled={saving === item.id} onClick={() => update(item.id, "cancelled")} className="rounded-lg border px-3 py-2 text-sm">Cancel</button>}
         </div></div>
         <div className="mt-4 grid gap-3 md:grid-cols-3"><div><div className="text-xs uppercase text-gray-400">Hypothesis</div><p className="mt-1 text-sm">{item.hypothesis}</p></div><div><div className="text-xs uppercase text-gray-400">Change</div><p className="mt-1 text-sm">{item.changeDescription}</p></div><div><div className="text-xs uppercase text-gray-400">Metric</div><p className="mt-1 text-sm">{item.metric}</p></div></div>
-        <div className="mt-4 text-xs text-gray-500">{item.campaignId ? `Campaign #${item.campaignId}` : "No campaign"}{item.contentItemId ? ` · Content #${item.contentItemId}` : ""}{item.variantId ? ` · Variant #${item.variantId}` : ""}</div>
+        <div className="mt-4 text-xs text-gray-500">{item.campaignId ? `Campaign #${item.campaignId}` : "No campaign"}{item.contentItemId ? ` · Content #${item.contentItemId}` : ""}{item.variantId ? ` · Variant #${item.variantId}` : ""}{item.targetType ? ` · Target: ${item.targetType.replaceAll("_", " ")}` : ""}</div>
         {(outcomes[item.id] ?? []).length > 0 && <div className="mt-4 rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold uppercase text-gray-400">Observed customer outcomes</div><div className="mt-2 space-y-1 text-sm">{(outcomes[item.id] ?? []).map((outcome) => <div key={outcome.actionType}>{outcome.actionType.replaceAll("_", " ")} · {outcome.count} action{outcome.count === 1 ? "" : "s"} · value {outcome.value}</div>)}</div><div className="mt-2 text-xs text-gray-500">Observed tracking evidence; not causal attribution.</div></div>}
         {item.resultSummary && <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm"><strong>Observed result:</strong> {item.resultSummary}</div>}
       </article>)}
