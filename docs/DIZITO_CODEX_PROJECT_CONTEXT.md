@@ -438,3 +438,7 @@ The publish ledger now reserves idempotency keys atomically and validates listin
 
 ### Shopify tenant boundary hardening — 2026-10-06
 Shopify provider GraphQL calls now require authenticated tenant context and resolve channels through tenant-scoped lookup. Related connect/callback and channel-list routes validate session identity before provider/database operations.
+
+### Commerce tenant-integrity and canonical fingerprint hardening — 2026-10-06
+- Added tenant-integrity constraints for Commerce channel/listing/publish-ledger relationships.
+- Canonicalized publish request fingerprints for deterministic idempotency behavior.
