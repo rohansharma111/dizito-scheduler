@@ -468,3 +468,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 ### Commerce live-publish safety continuation — 2026-10-06
 - The legacy Shopify direct publish path now requires explicit live-publish confirmation at both API and publisher boundaries; missing confirmation fails closed with a conflict response.
 - Shopify remains a legacy direct provider path and is not yet moved into the shared durable publish ledger; its idempotency/durable-operation architecture remains a follow-up hardening item rather than being silently treated as equivalent to Flipkart/WooCommerce.
+
+
+### Shopify publish concurrency hardening — 2026-10-06
+- Legacy Shopify publish now acquires a PostgreSQL advisory lock keyed by tenant, channel, and product for the full remote-create/persistence lifecycle.
+- This prevents concurrent requests for the same listing from both observing a missing external ID and issuing duplicate Shopify productCreate mutations.
+- The lock deliberately does not claim to provide a Shopify-native idempotency contract; crash/retry reconciliation remains a future durability improvement.
