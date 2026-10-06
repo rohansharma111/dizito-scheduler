@@ -137,15 +137,85 @@ export async function markCommercePublishOperationSucceeded(
   const normalizedExternalId = externalId?.trim();
   if (!normalizedExternalId) return null;
 
-  const result = await pool.query(`
-    UPDATE commerce_publish_operations
-    SET status = 'succeeded', external_id = $3,
-        last_error = NULL, completed_at = now(), updated_at = now()
-    WHERE id = $1 AND user_id = $2 AND listing_id = $4 AND provider = $5
-      AND status IN ('prepared', 'in_progress', 'unknown')
-    RETURNING *
-  `, [operationId, userId, normalizedExternalId, listingId, provider]);
-  return result.rows[0] ?? null;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const operationResult = await client.query(`
+      SELECT *
+      FROM commerce_publish_operations
+      WHERE id = $1
+        AND user_id = $2
+        AND listing_id = $3
+        AND provider = $4
+      LIMIT 1
+      FOR UPDATE
+    `, [operationId, userId, listingId, provider]);
+
+    const operation = operationResult.rows[0];
+    if (!operation || !["prepared", "in_progress", "unknown"].includes(operation.status)) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const listingResult = await client.query(`
+      SELECT id, external_id
+      FROM product_listings
+      WHERE id = $1
+        AND user_id = $2
+      LIMIT 1
+      FOR UPDATE
+    `, [listingId, userId]);
+
+    const listing = listingResult.rows[0];
+    if (!listing) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    if (listing.external_id && listing.external_id !== normalizedExternalId) {
+      await client.query("ROLLBACK");
+      throw new Error("LISTING_EXTERNAL_ID_MISMATCH");
+    }
+
+    const updatedOperationResult = await client.query(`
+      UPDATE commerce_publish_operations
+      SET status = 'succeeded',
+          external_id = $3,
+          last_error = NULL,
+          completed_at = now(),
+          updated_at = now()
+      WHERE id = $1
+        AND user_id = $2
+        AND status IN ('prepared', 'in_progress', 'unknown')
+      RETURNING *
+    `, [operationId, userId, normalizedExternalId]);
+
+    if (!updatedOperationResult.rows[0]) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    await client.query(`
+      UPDATE product_listings
+      SET status = 'active',
+          sync_status = 'synced',
+          external_id = $1,
+          last_synced_at = now(),
+          last_error = NULL,
+          updated_at = now()
+      WHERE id = $2
+        AND user_id = $3
+    `, [normalizedExternalId, listingId, userId]);
+
+    await client.query("COMMIT");
+    return updatedOperationResult.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function markCommercePublishOperationFailed(userId: number, operationId: string, errorMessage: string) {
