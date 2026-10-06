@@ -60,10 +60,10 @@ export async function POST(request: Request) {
       sku: sku || undefined,
     });
     if ("error" in result) {
-      const status = result.error === "RECONCILIATION_IDENTIFIER_REQUIRED" ? 400
+      const status = result.error === "RECONCILIATION_IDENTIFIER_REQUIRED" || result.error === "RECONCILIATION_IDENTITY_REQUIRED" ? 400
         : result.error === "CHANNEL_NOT_FOUND" || result.error === "LISTING_NOT_FOUND" || result.error === "PUBLISH_ATTEMPT_NOT_FOUND" ? 404
         : result.error === "PUBLISH_ATTEMPT_ALREADY_RECONCILED" || result.error === "PUBLISH_ATTEMPT_NOT_RECONCILABLE" || result.error === "LISTING_IDEMPOTENCY_KEY_MISMATCH" ? 409
-        : result.error === "PROVIDER_PRODUCT_NOT_FOUND" || result.error === "PROVIDER_SKU_MISMATCH" || result.error === "MULTIPLE_PROVIDER_PRODUCTS_FOUND" ? 422
+        : result.error === "RECONCILIATION_SKU_MISMATCH" || result.error === "PROVIDER_PRODUCT_NOT_FOUND" || result.error === "PROVIDER_SKU_MISMATCH" || result.error === "MULTIPLE_PROVIDER_PRODUCTS_FOUND" ? 422
         : 502;
       return NextResponse.json(result, { status });
     }
