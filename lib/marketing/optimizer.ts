@@ -158,7 +158,21 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
         );
         const metricHistorical = completedExperiments.some((experiment) => normalized(experiment.metric) === normalized(metric));
         const metricEvidenceAvailable = completedExperiments.some((experiment) => normalized(experiment.metric) === normalized(metric) && experiment.metricEvidence.length > 0);
-        const score = (duplicate ? -40 : 0) + (metricEvidenceAvailable ? 30 : metricHistorical ? 20 : 5);
+        const metricExperiments = completedExperiments.filter((experiment) => normalized(experiment.metric) === normalized(metric));
+        const directionalEvidence = metricExperiments.reduce((best, experiment) => {
+          const comparison = experimentComparisons.get(experiment.id);
+          const strongest = comparison?.valuePercent ?? comparison?.countPercent ?? null;
+          if (strongest == null) return best;
+          return best == null || Math.abs(strongest) > Math.abs(best) ? strongest : best;
+        }, null as number | null);
+        const resultEvidenceScore = directionalEvidence == null
+          ? 0
+          : directionalEvidence > 0 ? 15
+          : directionalEvidence < 0 ? -5
+          : 0;
+        const score = (duplicate ? -40 : 0)
+          + (metricEvidenceAvailable ? 30 : metricHistorical ? 20 : 5)
+          + resultEvidenceScore;
         return { item: { hypothesis, change, metric }, index, score };
       })
       .sort((a, b) => b.score - a.score || a.index - b.index)
