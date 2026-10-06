@@ -420,3 +420,16 @@ Use this compact format for future entries:
 - Unrestricted Flipkart mutation remains fail-closed behind `FLIPKART_LIVE_PUBLISH_ENABLED`; no sandbox/live execution was enabled by this change.
 - Runtime CI/build/type/lint verification remains pending because no observable GitHub Actions run is currently available through the repository integration.
 - Next gate: controlled Flipkart provider verification with authoritative response-shape evidence before any production mutation flag is enabled.
+
+## 2026-10-06 — Flipkart client/provider verification seam
+
+- Added `lib/platforms/flipkart/client.test.ts` covering the provider transport contract without making external network calls.
+- The test seam verifies:
+  - sandbox seller API base URL and bearer authentication;
+  - SKU normalization/encoding and the 1–10 identifier lookup bound;
+  - empty/expired token fail-closed behavior;
+  - non-2xx provider responses are surfaced as failures rather than successful payloads;
+  - production API selection occurs only when the client environment is explicitly set to production.
+- This is deterministic contract coverage, not live provider verification. No Flipkart credentials or external calls were introduced.
+- Production mutation remains disabled by default.
+- Remaining verification gate: run the repository CI/test suite and, when authorized credentials/test access are available, perform a controlled sandbox request against the authoritative Flipkart contract and record the observed response shape before enabling any mutation path.
