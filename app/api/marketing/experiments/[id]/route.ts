@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { EXPERIMENT_STATUSES, getMarketingExperiment, updateMarketingExperiment } from "@/lib/marketing/experiments";
+import { EXPERIMENT_STATUSES, getMarketingExperiment, getMarketingExperimentOutcomes, updateMarketingExperiment } from "@/lib/marketing/experiments";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -11,7 +11,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     const experiment = await getMarketingExperiment(userId, id);
     if (!experiment) return Response.json({ error: "Experiment not found" }, { status: 404 });
-    return Response.json({ experiment });
+    return Response.json({ experiment, outcomes: await getMarketingExperimentOutcomes(userId, id) });
   } catch (error) {
     console.error(error);
     return Response.json({ error: "Failed to load experiment" }, { status: 500 });
@@ -35,10 +35,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       endsAt: body.endsAt,
     });
     if (!experiment) return Response.json({ error: "Experiment not found" }, { status: 404 });
-    return Response.json({ experiment });
+    return Response.json({ experiment, outcomes: await getMarketingExperimentOutcomes(userId, id) });
   } catch (error) {
     if (error instanceof Error && error.message === "Cancelled experiments cannot be reopened") return Response.json({ error: error.message }, { status: 409 });
-    if (error instanceof Error && error.message === "Completed experiments require a result summary") return Response.json({ error: error.message }, { status: 400 });
+    if (error instanceof Error && error.message === "Completed experiments require observed outcomes or a result summary") return Response.json({ error: error.message }, { status: 400 });
     console.error(error);
     return Response.json({ error: "Failed to update experiment" }, { status: 500 });
   }
