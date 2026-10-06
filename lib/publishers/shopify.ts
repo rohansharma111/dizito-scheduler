@@ -1,6 +1,7 @@
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
 import { pool } from "@/lib/db";
 import {
+  claimProductListingSync,
   createProductListing,
   getProductListings,
   updateProductListingSyncState,
@@ -233,6 +234,17 @@ export async function publishShopifyProduct(
     throw new Error("Shopify product already exists for this listing; use the Shopify sync/update flow instead of publishing again");
   }
 
+  const claim = await claimProductListingSync(listing.id, userId);
+  if (claim.error) {
+    throw new Error(
+      claim.error === "LISTING_NOT_FOUND"
+        ? "Product listing not found"
+        : "Product listing sync is already in progress",
+    );
+  }
+  const claimToken = claim.claimToken;
+  if (!claimToken) throw new Error("Product listing sync claim token was not issued");
+
   const recoveredExternalId = await findShopifyProductByListingMarker(
     channelId,
     userId,
@@ -240,7 +252,8 @@ export async function publishShopifyProduct(
   );
   if (recoveredExternalId) {
     const recovered = await updateProductListingSyncState(listing.id, userId, {
-      syncStatus: "syncing",
+      syncStatus: "pending",
+      claimToken,
       externalId: recoveredExternalId,
       lastError: null,
       providerMetadata: {
@@ -265,6 +278,8 @@ export async function publishShopifyProduct(
     const shopifyProduct = createResult.productCreate.product;
     const updatedListing = await updateProductListingSyncState(listing.id, userId, {
       syncStatus: "syncing",
+      claimToken,
+      releaseClaim: false,
       externalId: shopifyProduct.id,
       lastError: null,
     });
@@ -304,6 +319,7 @@ export async function publishShopifyProduct(
 
     const completed = await updateProductListingSyncState(listing.id, userId, {
       syncStatus: "synced",
+      claimToken,
       externalId: shopifyProduct.id,
       lastError: null,
       providerMetadata: {
@@ -317,7 +333,11 @@ export async function publishShopifyProduct(
     return completed.listing;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Shopify publishing failed";
-    await updateProductListingSyncState(listing.id, userId, { syncStatus: "error", lastError: message });
+    await updateProductListingSyncState(listing.id, userId, {
+      syncStatus: "error",
+      claimToken,
+      lastError: message,
+    });
     throw error;
   }
   });
