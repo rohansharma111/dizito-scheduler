@@ -26,6 +26,7 @@ export default function MarketingContentClient() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [variantBusy, setVariantBusy] = useState<string | null>(null);
+  const [copyBusy, setCopyBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [schedule, setSchedule] = useState<Record<number, string>>({});
@@ -51,6 +52,38 @@ export default function MarketingContentClient() {
   }
   useEffect(() => { load(); }, []);
   function toggleAccount(id: number) { setSelectedAccounts((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]); }
+
+  async function generateBody(item: ContentItem) {
+    setCopyBusy(item.id); setError(null);
+    try {
+      const response = await fetch("/api/marketing/generate-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contentType: item.contentType,
+          format: item.format || "post",
+          topic: item.topic || "",
+          angle: item.angle || undefined,
+          hook: item.hook || undefined,
+          cta: item.cta || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to generate copy");
+      const save = await fetch(`/api/marketing/content-items/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: data.copy.body, status: item.status === "draft" ? "ready" : item.status }),
+      });
+      const saved = await save.json();
+      if (!save.ok) throw new Error(saved.error || "Failed to save generated copy");
+      setItems((current) => current.map((value) => value.id === item.id ? { ...value, body: saved.contentItem.body, status: saved.contentItem.status } : value));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate copy");
+    } finally {
+      setCopyBusy(null);
+    }
+  }
 
   async function generateVariant(item: ContentItem, platform: Platform) {
     const key = `${item.id}:${platform}`; setVariantBusy(key); setError(null);
@@ -98,7 +131,7 @@ export default function MarketingContentClient() {
         <div className="mt-5 rounded-xl border bg-gray-50 p-4"><div className="mb-2 text-sm font-semibold text-gray-700">Connected accounts</div><div className="flex flex-wrap gap-2">{accounts.map((account) => { const selected = selectedAccounts.includes(account.id); return <button key={account.id} onClick={() => toggleAccount(account.id)} className={`rounded-full border px-3 py-1.5 text-sm ${selected ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-600"}`}>{platformLabel(account.platform)} · {account.account_name}</button>; })}{accounts.length === 0 && <span className="text-sm text-gray-500">No connected social accounts.</span>}</div></div>
       </header>
       {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {loading ? <div className="py-16 text-center text-gray-500">Loading marketing content...</div> : items.length === 0 ? <div className="rounded-2xl border border-dashed bg-white p-12 text-center text-gray-500">No content items yet. Generate and approve a weekly plan first.</div> : <div className="space-y-4">{items.map((item) => <article key={item.id} className="rounded-2xl border bg-white p-5 shadow-sm"><div className="flex flex-col gap-4"><div><div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span>{item.contentType}</span><span>·</span><span>{item.format || "content"}</span>{item.status === "converted" && <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700 normal-case tracking-normal"><CheckCircle2 size={13} /> Converted</span>}</div><h2 className="mt-2 text-lg font-semibold text-gray-900">{item.topic || item.hook || "Untitled content item"}</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-600">{displayCopy(item) || "No generic copy yet."}</p></div>
+      {loading ? <div className="py-16 text-center text-gray-500">Loading marketing content...</div> : items.length === 0 ? <div className="rounded-2xl border border-dashed bg-white p-12 text-center text-gray-500">No content items yet. Generate and approve a weekly plan first.</div> : <div className="space-y-4">{items.map((item) => <article key={item.id} className="rounded-2xl border bg-white p-5 shadow-sm"><div className="flex flex-col gap-4"><div><div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span>{item.contentType}</span><span>·</span><span>{item.format || "content"}</span>{item.status === "converted" && <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700 normal-case tracking-normal"><CheckCircle2 size={13} /> Converted</span>}</div><h2 className="mt-2 text-lg font-semibold text-gray-900">{item.topic || item.hook || "Untitled content item"}</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-600">{displayCopy(item) || "No generic copy yet."}</p><div className="flex flex-wrap gap-2"><button onClick={() => generateBody(item)} disabled={copyBusy === item.id || item.status === "converted"} className="inline-flex items-center gap-1 rounded-lg border border-blue-200 px-3 py-2 text-xs font-medium text-blue-700 disabled:opacity-50">{copyBusy === item.id ? <Loader2 className="animate-spin" size={13} /> : <Sparkles size={13} />}{item.body ? "Rewrite AI copy" : "Generate AI copy"}</button></div></div>
         <div className="rounded-xl border bg-gray-50 p-4"><div className="mb-3 flex items-center justify-between"><div><h3 className="font-semibold text-gray-900">Channel variants</h3><p className="text-xs text-gray-500">Each variant is reviewed independently and can only publish to its own platform.</p></div><Sparkles size={17} className="text-blue-600" /></div><div className="grid gap-3 lg:grid-cols-2">{PLATFORMS.map((platform) => { const variant = (item.variants || []).find((v) => v.platform === platform); const key = `${item.id}:${platform}`; const platformAccounts = accounts.filter((a) => selectedAccounts.includes(a.id) && a.platform === platform); return <div key={platform} className="rounded-xl border bg-white p-4"><div className="flex items-center justify-between gap-2"><div className="text-sm font-semibold text-gray-800">{platformLabel(platform)}</div>{variant?.status === "converted" && <span className="text-xs text-green-700">Published as Post</span>}</div>{variant ? <><textarea value={variant.body || ""} onChange={(event) => setItems((current) => current.map((value) => value.id === item.id ? { ...value, variants: (value.variants || []).map((v) => v.id === variant.id ? { ...v, body: event.target.value } : v) } : value))} rows={5} className="mt-2 w-full rounded-lg border border-gray-300 p-2 text-sm" disabled={variant.status === "converted"} /><div className="mt-2 flex gap-2"><button onClick={() => generateVariant(item, platform)} disabled={variantBusy === key || variant.status === "converted"} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium text-blue-700 disabled:opacity-50">{variantBusy === key ? <Loader2 className="animate-spin" size={13} /> : <Sparkles size={13} />}{variant.body ? "Rewrite" : "Generate"}</button><button onClick={() => createPost(item, variant)} disabled={variant.status === "converted" || busyId === item.id || platformAccounts.length === 0} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><Send size={13} />{platformAccounts.length ? "Schedule" : "Connect account"}</button></div></> : <button onClick={() => generateVariant(item, platform)} disabled={variantBusy === key} className="mt-2 inline-flex items-center gap-1 rounded-lg border border-blue-200 px-3 py-2 text-xs font-medium text-blue-700 disabled:opacity-50">{variantBusy === key ? <Loader2 className="animate-spin" size={13} /> : <Sparkles size={13} />} Generate {platformLabel(platform)} version</button>}</div>; })}</div></div>
         <div className="grid max-w-md gap-2"><label className="text-sm font-medium text-gray-700">Schedule time</label><input type="datetime-local" value={schedule[item.id] || ""} onChange={(event) => setSchedule((current) => ({ ...current, [item.id]: event.target.value }))} className="w-full rounded-xl border border-gray-300 p-3" disabled={item.status === "converted"} /></div>
       </div></article>)}</div>}
