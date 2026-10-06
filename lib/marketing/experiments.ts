@@ -264,8 +264,8 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
   });
 }
 
-export async function listMarketingExperiments(userId: number, status?: MarketingExperimentStatus) {
-  const result = await pool.query("SELECT id, user_id AS \"userId\", campaign_id AS \"campaignId\", content_item_id AS \"contentItemId\", variant_id AS \"variantId\", target_type AS \"targetType\", target_field AS \"targetField\", target_metadata AS \"targetMetadata\", name, hypothesis, change_description AS \"changeDescription\", metric, status, starts_at AS \"startsAt\", ends_at AS \"endsAt\", result_summary AS \"resultSummary\", created_at AS \"createdAt\", updated_at AS \"updatedAt\", baseline_starts_at AS \"baselineStartsAt\", baseline_ends_at AS \"baselineEndsAt\" FROM marketing_experiments WHERE user_id = $1 AND ($2::text IS NULL OR status = $2) ORDER BY starts_at DESC NULLS LAST, id DESC LIMIT 200", [userId, status ?? null]);
+export async function listMarketingExperiments(userId: number, status?: MarketingExperimentStatus, campaignId?: number) {
+  const result = await pool.query("SELECT id, user_id AS \"userId\", campaign_id AS \"campaignId\", content_item_id AS \"contentItemId\", variant_id AS \"variantId\", target_type AS \"targetType\", target_field AS \"targetField\", target_metadata AS \"targetMetadata\", name, hypothesis, change_description AS \"changeDescription\", metric, status, starts_at AS \"startsAt\", ends_at AS \"endsAt\", result_summary AS \"resultSummary\", created_at AS \"createdAt\", updated_at AS \"updatedAt\", baseline_starts_at AS \"baselineStartsAt\", baseline_ends_at AS \"baselineEndsAt\" FROM marketing_experiments WHERE user_id = $1 AND ($2::text IS NULL OR status = $2) AND ($3::bigint IS NULL OR campaign_id = $3) ORDER BY starts_at DESC NULLS LAST, id DESC LIMIT 200", [userId, status ?? null, campaignId ?? null]);
   return result.rows as MarketingExperiment[];
 }
 
