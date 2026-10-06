@@ -171,7 +171,7 @@ async function checkPinterestAccount(account: any) {
 
   const data = await response.json();
 
-  if (!response.ok || data.code || data.message) {
+  if (!response.ok || data.code || data.message || data.account_type !== "BUSINESS") {
     await pool.query(
       `
       UPDATE social_accounts
