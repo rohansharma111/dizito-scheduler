@@ -1,5 +1,6 @@
 import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getFlipkartCredentials } from "@/lib/platforms/flipkart/credentials";
+import { refreshFlipkartCredentials } from "@/lib/platforms/flipkart/refresh-service";
 
 export type FlipkartEnvironment = "sandbox" | "production";
 
@@ -138,9 +139,19 @@ export async function assertFlipkartChannel(channelId: string, userId: number) {
 
 export async function getFlipkartChannelConfig(channelId: string, userId: number) {
   const channel = await assertFlipkartChannel(channelId, userId);
-  const credentials = await getFlipkartCredentials(channelId, userId);
+  let credentials = await getFlipkartCredentials(channelId, userId);
   if (!credentials) {
     throw new Error("Flipkart credentials not found");
+  }
+
+  if (credentials.accessTokenExpiresAt) {
+    const expiry = new Date(credentials.accessTokenExpiresAt).getTime();
+    if (!Number.isFinite(expiry)) {
+      throw new Error("Flipkart access token expiry is invalid");
+    }
+    if (expiry <= Date.now() + EXPIRY_SKEW_MS) {
+      credentials = await refreshFlipkartCredentials(channelId, userId);
+    }
   }
 
   assertAccessTokenUsable(credentials.accessTokenExpiresAt);
