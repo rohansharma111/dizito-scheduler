@@ -124,10 +124,6 @@ export const wooCommerceAdapter: CommerceProviderAdapter<
       idempotencyKey: input.idempotencyKey ?? input.payload.input.idempotencyKey,
     });
 
-    if (publishResult && typeof publishResult === "object" && "error" in publishResult) {
-      return result("publish", publishResult);
-    }
-
     if (
       publishResult &&
       typeof publishResult === "object" &&
