@@ -61,20 +61,6 @@ export async function getCommerceChannelByExternalAccount(
   return result.rows[0] ?? null;
 }
 
-/** Internal provider lookup. Callers must already have authenticated/authorized the channel. */
-export async function getCommerceChannelByIdInternal(channelId: string) {
-  const result = await pool.query(
-    `
-    SELECT id, user_id, provider, name, external_account_id, status, metadata, created_at, updated_at
-    FROM commerce_channels
-    WHERE id = $1
-    LIMIT 1
-    `,
-    [channelId],
-  );
-  return result.rows[0] ?? null;
-}
-
 export async function createCommerceChannel(
   userId: number,
   input: CreateCommerceChannelInput,
@@ -119,37 +105,61 @@ export async function updateCommerceChannel(
   userId: number,
   input: UpdateCommerceChannelInput,
 ) {
-  const existing = await getCommerceChannelById(channelId, userId);
-  if (!existing) return null;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const metadata =
-    input.metadata === undefined
-      ? existing.metadata ?? {}
-      : {
-          ...(existing.metadata ?? {}),
-          ...input.metadata,
-        };
+    const existingResult = await client.query(
+      `
+      SELECT id, provider, name, external_account_id, status, metadata, created_at, updated_at
+      FROM commerce_channels
+      WHERE id = $1 AND user_id = $2
+      FOR UPDATE
+      `,
+      [channelId, userId],
+    );
+    const existing = existingResult.rows[0];
+    if (!existing) {
+      await client.query("ROLLBACK");
+      return null;
+    }
 
-  const result = await pool.query(
-    `
-    UPDATE commerce_channels
-    SET
-      name = $1,
-      external_account_id = $2,
-      status = $3,
-      metadata = $4::jsonb,
-      updated_at = now()
-    WHERE id = $5 AND user_id = $6
-    RETURNING id, provider, name, external_account_id, status, metadata, created_at, updated_at
-    `,
-    [
-      input.name ?? existing.name,
-      input.externalAccountId !== undefined ? input.externalAccountId : existing.external_account_id,
-      input.status ?? existing.status,
-      JSON.stringify(metadata),
-      channelId,
-      userId,
-    ],
-  );
-  return result.rows[0] ?? null;
+    const metadata =
+      input.metadata === undefined
+        ? existing.metadata ?? {}
+        : {
+            ...(existing.metadata ?? {}),
+            ...input.metadata,
+          };
+
+    const result = await client.query(
+      `
+      UPDATE commerce_channels
+      SET
+        name = $1,
+        external_account_id = $2,
+        status = $3,
+        metadata = $4::jsonb,
+        updated_at = now()
+      WHERE id = $5 AND user_id = $6
+      RETURNING id, provider, name, external_account_id, status, metadata, created_at, updated_at
+      `,
+      [
+        input.name ?? existing.name,
+        input.externalAccountId !== undefined ? input.externalAccountId : existing.external_account_id,
+        input.status ?? existing.status,
+        JSON.stringify(metadata),
+        channelId,
+        userId,
+      ],
+    );
+
+    await client.query("COMMIT");
+    return result.rows[0] ?? null;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
 }
