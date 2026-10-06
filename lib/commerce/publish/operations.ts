@@ -48,6 +48,21 @@ export async function prepareCommercePublishOperation(input: PreparePublishOpera
       return { error: "INVALID_PROVIDER" as const };
     }
 
+    const reservationResult = await client.query(`
+      INSERT INTO commerce_publish_operations
+        (user_id, listing_id, provider, operation, idempotency_key, request_fingerprint)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (user_id, provider, idempotency_key) DO NOTHING
+      RETURNING id, listing_id, provider, operation, idempotency_key,
+                request_fingerprint, status, external_id, attempt_count,
+                last_error, last_attempt_at, completed_at, created_at, updated_at
+    `, [input.userId, input.listingId, input.provider, input.operation, idempotencyKey, requestFingerprint]);
+
+    if (reservationResult.rows[0]) {
+      await client.query("COMMIT");
+      return { operation: reservationResult.rows[0] };
+    }
+
     const existingResult = await client.query(`
       SELECT id, listing_id, provider, operation, idempotency_key,
              request_fingerprint, status, external_id, attempt_count,
@@ -56,23 +71,28 @@ export async function prepareCommercePublishOperation(input: PreparePublishOpera
       WHERE user_id = $1 AND provider = $2 AND idempotency_key = $3
       LIMIT 1 FOR UPDATE
     `, [input.userId, input.provider, idempotencyKey]);
-    if (existingResult.rows[0]) {
-      const existing = existingResult.rows[0];
-      if (String(existing.listing_id) !== String(input.listingId)) { await client.query("ROLLBACK"); return { error: "IDEMPOTENCY_KEY_CONFLICT" as const }; }
-      if (existing.operation !== input.operation) { await client.query("ROLLBACK"); return { error: "IDEMPOTENCY_OPERATION_CONFLICT" as const }; }
-      if (existing.request_fingerprint !== requestFingerprint) { await client.query("ROLLBACK"); return { error: "IDEMPOTENCY_PAYLOAD_CONFLICT" as const }; }
-      await client.query("COMMIT");
-      return { operation: existing };
+
+    const existing = existingResult.rows[0];
+    if (!existing) {
+      await client.query("ROLLBACK");
+      return { error: "PUBLISH_OPERATION_RESERVATION_FAILED" as const };
+    }
+    if (String(existing.listing_id) !== String(input.listingId)) {
+      await client.query("ROLLBACK");
+      return { error: "IDEMPOTENCY_KEY_CONFLICT" as const };
+    }
+    if (existing.operation !== input.operation) {
+      await client.query("ROLLBACK");
+      return { error: "IDEMPOTENCY_OPERATION_CONFLICT" as const };
+    }
+    if (existing.request_fingerprint !== requestFingerprint) {
+      await client.query("ROLLBACK");
+      return { error: "IDEMPOTENCY_PAYLOAD_CONFLICT" as const };
     }
 
-    const result = await client.query(`
-      INSERT INTO commerce_publish_operations
-        (user_id, listing_id, provider, operation, idempotency_key, request_fingerprint)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `, [input.userId, input.listingId, input.provider, input.operation, idempotencyKey, requestFingerprint]);
     await client.query("COMMIT");
-    return { operation: result.rows[0] };
+    return { operation: existing };
+
   } catch (error) { await client.query("ROLLBACK"); throw error; }
   finally { client.release(); }
 }
