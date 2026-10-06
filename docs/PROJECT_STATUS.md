@@ -596,3 +596,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Legacy product-listing variant API user validation now requires a positive safe integer, matching the Commerce route boundary standard.
 - Tests, lint, build, and live provider verification remain intentionally deferred until the implementation pass is complete.
 \n\n### Marketing execution provenance — 2026-10-07\n- Added durable Variant → Post provenance by extending `marketing_content_item_posts` with `variant_id` and a same-Content-Item composite foreign key.\n- Content Item → Post conversion now persists the exact selected channel variant.\n- Manual attribution now validates Variant → Post provenance when a post and variant are both supplied.\n- Legacy Content Item → Post mappings remain compatible with NULL variant provenance.\n- Tests, lint, build, database execution, and provider verification remain intentionally deferred until the code-level implementation pass is complete.\n
+
+### Commerce provider-adapter outcome hardening — 2026-10-07
+- Removed an unreachable duplicate WooCommerce adapter ambiguity branch so publish outcome mapping has one authoritative reconciliation-required path.
+- Flipkart reconciliation now treats deterministic LISTING_EXTERNAL_ID_CONFLICT as a failed reconciliation outcome rather than ambiguous provider uncertainty.
+- Direct Commerce listing/mapping write-path audit found no additional application-level INSERT/UPDATE paths outside the hardened listing services.
+- Tests, lint, build, and live provider verification remain intentionally deferred.
