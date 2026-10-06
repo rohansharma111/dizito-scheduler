@@ -1,113 +1,248 @@
 # Dizito Development Instructions
 
 ## Project identity
-Dizito is an existing commerce and social publishing platform. This is NOT a greenfield project.
 
-The repository is `rohansharma111/dizito-scheduler`. Do not restart, redesign, or replace completed architecture without repository evidence and explicit approval.
+Dizito is an existing Next.js commerce + social publishing platform evolving into an **AI Commerce Operating System**. This is NOT a greenfield project.
+
+Repository: `rohansharma111/dizito-scheduler`
+
+Treat the current repository, schema/migrations, tests, and observed verification as the source of truth. Do not restart, redesign, or replace completed architecture without evidence and explicit approval.
 
 ## Source-of-truth order
-1. Current repository code
+
+1. Current repository code on `main`
 2. Current database schema and migrations
-3. Git history
+3. Git history and current commit
 4. Current project documentation
-5. Historical handover documents
+5. Historical handovers
 6. Conversation context
 7. General framework knowledge
 
-If sources disagree, identify the discrepancy rather than silently choosing one.
+If sources disagree, identify the discrepancy and update the relevant persistent documentation after verification.
 
 ## Mandatory workflow
-DISCOVER → VERIFY → PLAN → IMPLEMENT → TEST → REVIEW → DOCUMENT
 
-Before significant coding, inspect relevant code, migrations, services/helpers, API routes, UI, docs, and recent git history.
+**DISCOVER → VERIFY → PLAN → IMPLEMENT → TEST → REVIEW → DOCUMENT**
 
-## Commerce architecture
-Canonical Dizito Product/Variant data must remain provider-neutral.
+Before significant coding:
+- inspect the relevant code paths, migrations, services/helpers, API routes, UI and recent commits;
+- read `docs/PROJECT_STATUS.md`, `docs/IMPLEMENTATION_LOG.md`, and `docs/DIZITO_CODEX_PROJECT_CONTEXT.md`;
+- check whether the requested feature already exists in another provider or shared service;
+- identify tenant/authorization, persistence, idempotency and failure-state implications.
 
-Established boundary:
-Canonical Product/Variant → Listing → Commerce Channel/Connection → Provider Adapter/API
+Do not claim a feature is production-ready merely because it is implemented.
 
-Do not put Amazon- or Shopify-specific requirements into the canonical Product merely because a provider requires them. Provider-specific requirements should be translated at runtime by provider adapters/workflows.
+## Current architecture
 
-## Current Amazon architecture
-Target: Amazon India / Seller Central through SP-API.
+Canonical commerce boundary:
 
-Current authentication: Amazon LWA OAuth 2.0. Do not add IAM/SigV4 unless an explicit future requirement proves it necessary.
+`Canonical Product / Variant → Commerce Channel / Connection → Provider Adapter → Provider workflow/API → Validate → Publish/Sync → Reconcile`
 
-Current product-content workflow uses `LISTING_PRODUCT_ONLY`.
+Shared provider orchestration lives under `lib/commerce/providers/`.
 
-`LISTING_OFFER_ONLY` is reserved for the future offer layer.
+Provider-specific authentication, payload mapping, API details and provider identifiers remain inside provider adapters/workflows.
 
-Amazon Product Type Definitions JSON Schema is the machine-readable source of truth. Amazon validation remains the final authority.
+Canonical product data must remain provider-neutral.
 
-Never infer Amazon identity from SKU/barcode. Never fabricate ASINs. Require explicit typed identifiers or explicit existing ASINs, or a supported exemption workflow.
+## Current commerce providers
 
-Conditional requirements must be evaluated against the current draft. Do not treat every conditional branch as universally required.
+### Shopify
+Established/closed foundation. Do not redesign unless a concrete dependency or regression requires it.
 
-## Product / offer boundary
-Product content and operational offer data are separate.
+### WooCommerce
+Active hardening target.
 
-Do not place `fulfillment_availability` or similar operational offer fields into the current product-content workflow.
+Current repository includes:
+- connection and encrypted credentials;
+- draft preparation;
+- provider-neutral adapter registration;
+- draft/publish/reconcile dispatch through shared commerce provider services;
+- durable publish-operation/idempotency handling;
+- ambiguous/unknown publish outcomes;
+- reconciliation by provider-confirmed identity;
+- tenant/channel binding;
+- guarded live mutation.
 
-The future offer layer should derive price, condition, fulfillment and inventory from canonical Variant/Inventory data and produce offer-specific Amazon payloads.
+Live WooCommerce production readiness is NOT established until controlled provider verification and CI/runtime evidence are complete.
 
-## Current next direction
-Immediate next task: catalog-first Amazon matching / existing-ASIN discovery.
+### Flipkart
+Active provider integration/hardening target.
 
-Then:
-1. preserve the no-match/new-product workflow
-2. build the separate offer layer
-3. add regression fixtures/tests for conditional schemas and identity/payload safety
-4. test multiple Amazon product types
-5. add local validation where practical
-6. decide durable listing/mapping persistence
-7. implement idempotent production publishing, retries and reconciliation
-8. expand to additional commerce providers
+Current repository includes:
+- provider adapter and shared registry;
+- draft, publish and reconciliation API routes;
+- provider-neutral dispatch;
+- channel/credential lookup and access-token refresh;
+- guarded publish operation ledger;
+- idempotency replay/conflict handling;
+- provider lookup before reconciliation success;
+- provider-confirmed external-ID persistence;
+- terminal publish-state protection;
+- explicit live-publish confirmation plus `FLIPKART_LIVE_PUBLISH_ENABLED` fail-closed guard.
+
+Do not enable unrestricted live mutation. Exact provider response shapes and authorized sandbox behavior remain externally unverified unless a later verification entry says otherwise.
+
+### Amazon India
+Existing product-content foundation remains important:
+- SP-API + LWA OAuth;
+- product-type discovery;
+- linked JSON Schema retrieval;
+- schema-driven editor;
+- explicit identity/ASIN handling;
+- conditional requirements;
+- product-only `VALIDATION_PREVIEW`;
+- catalog matching UI/API;
+- persisted catalog-match identity;
+- separate offer-layer foundation.
+
+Amazon product content and operational offer data must remain separate. Never infer ASIN/identity from SKU or barcode and never fabricate ASINs.
+
+### Meesho
+Provider-specific implementation is currently blocked. Do not invent API/auth/publish behavior. A provider-neutral contract and architecture/security audit exist, but authoritative Meesho partner/API documentation and authorized test access are still required before implementation.
+
+## Provider-neutral contract rules
+
+Use `lib/commerce/providers/contracts.ts` and the registry/service rather than creating provider-specific orchestration in shared layers.
+
+The shared contract currently covers:
+- draft
+- publish
+- reconcile
+- sync operation vocabulary
+- capability flags
+- bounded success/failure/ambiguous results
+- tenant/channel context
+- opaque provider payload/response types
+- explicit live-publish confirmation
+
+Do not weaken the contract by allowing caller-supplied identifiers to bypass provider reconciliation.
+
+## Publish safety
+
+For provider mutations:
+- require authenticated tenant/channel ownership;
+- require explicit idempotency where the provider workflow requires it;
+- persist durable operation state where applicable;
+- distinguish failed from ambiguous/unknown outcomes;
+- never mark publish success solely from caller-supplied external IDs;
+- reconcile ambiguous submissions against provider state;
+- preserve terminal operation state from later accidental overwrite;
+- keep live mutation fail-closed until controlled verification authorizes enabling it.
+
+## Marketing / AI operating system
+
+Marketing is now an active product surface, not merely future scope.
+
+Current areas include:
+- Business Brain/context;
+- goals/offers/products/media;
+- campaigns/content items/content variants;
+- AI Creator;
+- AI Strategist;
+- Generate My Week / weekly plans;
+- customer actions and attribution;
+- Business Impact;
+- optimizer/evidence;
+- experiment selection, dispositions and learning signals.
+
+Recent hardening requires human review before saving AI-generated copy/channel variants and grounds Creator output in selected product/offer/content/campaign context. Malformed AI output must fail closed.
+
+The optimizer must distinguish observed evidence from causality. Weekly planning may carry optimizer evidence, rationale, experiment provenance and deterministic experiment disposition, but approval does not mean automatic publishing.
+
+Do not bypass review gates or fabricate attribution.
+
+## Social account/reconnect rules
+
+Recent fixes hardened account reconnect/status behavior:
+- reconnect flows should not force unrelated Pinterest board selection;
+- Google Business reconnect should not require a location selection when the existing connection already supplies the needed state;
+- account health refresh must be scoped to the current user;
+- disconnected social targets must not appear as publishable post targets.
+
+Preserve these invariants when changing social account flows.
 
 ## Database rules
-Use raw SQL migrations following the repository's migration runner.
 
-Known commerce/catalog tables include:
-- products
-- product_variants
-- product_media
-- media_library
-- commerce_channels
-- product_listings
-- product_listing_variants
-- commerce_channel_credentials
-- product_listing_media
-- amazon_channel_credentials
+Use the repository's raw SQL migration convention and migration runner.
 
-Preserve tenant ownership and existing relationships. Do not create duplicate domain tables without evidence.
+Preserve existing tenant ownership and relationships. Do not create duplicate domain tables without evidence.
+
+Known commerce foundations include:
+- `products`
+- `product_variants`
+- `product_media`
+- `media_library`
+- `commerce_channels`
+- `product_listings`
+- `product_listing_variants`
+- `product_listing_media`
+- `commerce_channel_credentials`
+- provider credential tables
+- durable commerce publish-operation tables
+
+Inspect `db/migrations/*.sql` before changing persistence.
 
 ## Security
-Never expose or commit credentials, refresh tokens, API secrets, encryption keys, or database passwords.
 
-Validate authentication and tenant ownership on commerce mutations.
+Never commit or expose:
+- OAuth refresh/access tokens;
+- API secrets;
+- encryption keys;
+- database passwords;
+- provider credentials.
+
+Credential retrieval must be tenant/channel scoped. Mutations must verify authenticated ownership.
 
 ## UI
-Reuse the existing application shell, navigation, components and visual language. Do not build duplicate architecture when an existing component/service can be extended.
 
-## Testing
-Do not claim completion merely because code compiles. Run relevant build, lint, type checks, tests, migration checks and integration verification. Distinguish local/mocked verification from real provider verification.
+Reuse the existing application shell, components and visual language. Extend existing workflows rather than creating duplicate architectures.
+
+## Testing and verification
+
+Use the repository's Vitest suite and GitHub Actions quality workflow where available.
+
+At minimum for meaningful changes:
+- run relevant unit/integration tests;
+- run type-check/lint/build when practical;
+- inspect migration impact;
+- distinguish source inspection from runtime verification;
+- distinguish mocked tests from real provider verification.
+
+Current repository history contains many focused commerce and marketing regression tests, but the latest quality result must always be checked rather than assumed.
 
 ## Git / PR rules
-Work in an isolated branch. Make focused commits. Run `npm run build` before PR/merge.
 
-Do NOT merge PRs without explicit user authorization.
+- Work in an isolated branch for implementation.
+- Make focused commits.
+- Do not merge PRs without explicit user authorization.
+- Keep documentation synchronized with meaningful implementation and verification changes.
+- Record commit SHA and verification evidence in `docs/IMPLEMENTATION_LOG.md` and update `docs/PROJECT_STATUS.md` when status changes.
 
 ## Scope discipline
-Payment/refund production audit work is explicitly deferred and does not block the current Amazon phase. Do not opportunistically implement later-phase features.
+
+Payment/refund production-hardening work remains intentionally deferred. The core refund retry scenario has historical PASS evidence, but production-hardening edge cases remain open. Do not opportunistically restart that audit while working on current commerce/marketing tasks.
+
+Meesho-specific implementation is blocked until external API/partner evidence exists.
+
+Do not jump to later-phase marketplace operations merely because the architecture can support them.
 
 ## Framework rule
-This project uses Next.js App Router + TypeScript. Before framework-level changes, inspect the installed Next.js documentation and repository conventions.
+
+This project uses Next.js App Router + TypeScript. Before framework-level changes, inspect the installed Next.js documentation under `node_modules/next/dist/docs/` as required by the repository's framework rules.
 
 ## Definition of done
-A task is done only when implementation, security/tenant boundaries, schema/API/UI behavior, verification, regression risk, and required documentation have been addressed.
+
+A task is done only when:
+1. implementation matches the intended architecture;
+2. tenant/security boundaries are preserved;
+3. persistence/state transitions are correct;
+4. relevant tests/checks are run or their absence is explicitly documented;
+5. provider/live verification is not overstated;
+6. regression risks and follow-up work are recorded;
+7. persistent project documentation is updated when the task changes project state.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions and file structure may differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
