@@ -7,7 +7,8 @@ import type { FlipkartAdapterPayload } from "@/lib/platforms/flipkart/adapter";
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = Number(session?.user?.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
     } satisfies FlipkartAdapterPayload;
 
     const result = await prepareCommerceProviderDraft("flipkart", {
-      context: { channelId, userId: Number(session.user.id) },
+      context: { channelId, userId },
       payload,
     });
 
