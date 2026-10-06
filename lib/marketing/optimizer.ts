@@ -12,6 +12,10 @@ export type MarketingOptimization = {
 
 export async function generateMarketingOptimization(userId: number): Promise<MarketingOptimization> {
   const context = await getMarketingStrategyContext(userId);
+  const outcomeGuidance = context.impact.observedContentSummary.length || context.impact.observedVariantSummary.length
+    ? "Observed outcome data exists at content/variant level. Use it to prioritize measurable recommendations, while explicitly describing it as observed rather than causal."
+    : "No completed content/variant-level customer action outcomes are available. Treat content/variant performance as unknown and recommend measurement before claiming improvement.";
+
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const response = await client.responses.create({
     model: process.env.OPENAI_STRATEGY_MODEL || process.env.OPENAI_CREATOR_MODEL || "gpt-5-mini",
@@ -32,9 +36,6 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const contentItemIds = new Set(contentItems.map((item) => item.id));
   const variants = await listContentVariantsForContentItems(userId, contentItems.slice(0, 50).map((item) => item.id));
   const variantById = new Map<number, number>(variants.map((variant) => [variant.id, variant.contentItemId]));
-  const outcomeGuidance = context.impact.observedContentSummary.length || context.impact.observedVariantSummary.length
-    ? "Observed outcome data exists at content/variant level. Use it to prioritize measurable recommendations, while explicitly describing it as observed rather than causal."
-    : "No completed content/variant-level customer action outcomes are available. Treat content/variant performance as unknown and recommend measurement before claiming improvement.";
   const validPriorities = new Set(["high", "medium", "low"]);
   return {
     summary: parsed.summary.trim(),
