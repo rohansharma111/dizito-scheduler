@@ -37,6 +37,7 @@ export async function PATCH(
 
   const userId = Number((session.user as any).id);
   const body = await request.json();
+  if (body.planningMetadata !== undefined) return jsonError("Planning metadata is server-managed");
   const allowedStatuses = ["draft", "planned", "ready", "converted", "archived"];
   if (body.status !== undefined && !allowedStatuses.includes(body.status)) {
     return jsonError("Invalid status");
