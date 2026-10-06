@@ -44,7 +44,6 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
   }
 
   let existingAttempt: { id: string; status: string; external_id: string | null; response_payload: unknown } | null = null;
-  let existingAttempt: { id: string; status: string; external_id: string | null; response_payload: unknown } | null = null;
   const reservationClient = await pool.connect();
   let attemptId: string;
   try {
