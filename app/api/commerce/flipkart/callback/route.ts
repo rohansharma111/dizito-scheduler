@@ -95,6 +95,7 @@ export async function GET(request: Request) {
     try {
       await saveFlipkartCredentials({
         channelId: String(channel.id),
+        userId,
         accessToken: token.access_token,
         refreshToken: token.refresh_token,
         appId: process.env.FLIPKART_CLIENT_ID,
