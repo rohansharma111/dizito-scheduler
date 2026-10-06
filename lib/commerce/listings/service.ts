@@ -21,6 +21,11 @@ export interface UpsertProductListingVariantInput {
   providerMetadata?: Record<string, unknown>;
 }
 
+function normalizeExternalId(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized || null;
+}
+
 async function verifyChannelOwnership(channelId: string, userId: number) {
   const result = await pool.query(
     `
@@ -488,8 +493,9 @@ export async function upsertProductListingVariant(
     );
 
     const current = existing.rows[0];
-    const externalId =
-      input.externalId !== undefined ? input.externalId : current?.external_id ?? null;
+    const externalId = normalizeExternalId(
+      input.externalId !== undefined ? input.externalId : current?.external_id,
+);
 
     if (externalId) {
       const conflict = await client.query(
