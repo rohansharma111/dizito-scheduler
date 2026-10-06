@@ -189,6 +189,7 @@ export const flipkartAdapter: CommerceProviderAdapter<
         "PUBLISH_ATTEMPT_NOT_RECONCILABLE",
         "LISTING_EXTERNAL_ID_MISMATCH",
         "LISTING_EXTERNAL_ID_CONFLICT",
+        "LISTING_EXTERNAL_ID_CONFLICT",
       ]);
 
       if (deterministic.has(code)) {
