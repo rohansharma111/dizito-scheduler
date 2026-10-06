@@ -123,6 +123,21 @@ export type CompletedExperimentEvidence = MarketingExperiment & {
   baselineOutcomes: ExperimentOutcome[];
 };
 
+export type ExperimentLearningSignal = "positive" | "negative" | "insufficient";
+
+export function getExperimentLearningSignal(experiment: Pick<CompletedExperimentEvidence, "metricEvidence" | "baselineOutcomes">): ExperimentLearningSignal {
+  const metricOutcome = experiment.metricEvidence[0] ?? null;
+  const baselineOutcome = metricOutcome ? experiment.baselineOutcomes.find((item) => item.actionType === metricOutcome.actionType) ?? null : null;
+  const countChange = metricOutcome && baselineOutcome ? metricOutcome.count - baselineOutcome.count : null;
+  const valueChange = metricOutcome && baselineOutcome ? metricOutcome.value - baselineOutcome.value : null;
+  const direction = valueChange != null && baselineOutcome && baselineOutcome.value > 0
+    ? valueChange / baselineOutcome.value
+    : countChange != null && baselineOutcome && baselineOutcome.count > 0
+      ? countChange / baselineOutcome.count
+      : null;
+  return direction == null ? "insufficient" : direction > 0 ? "positive" : direction < 0 ? "negative" : "insufficient";
+}
+
 export async function listCompletedExperimentEvidence(userId: number): Promise<CompletedExperimentEvidence[]> {
   const result = await pool.query(
     `SELECT e.id,
