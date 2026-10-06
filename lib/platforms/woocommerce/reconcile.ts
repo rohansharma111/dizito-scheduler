@@ -114,12 +114,45 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
         return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
       }
 
+      const listingResult = await db.query(
+        `SELECT id, channel_id, external_id
+         FROM product_listings
+         WHERE id = $1 AND channel_id = $2 AND user_id = $3
+         FOR UPDATE`,
+        [input.listingId, input.channelId, userId],
+      );
+      const listing = listingResult.rows[0];
+      if (!listing) throw new Error("Listing changed or was removed during reconciliation");
+
+      if (listing.external_id && String(listing.external_id).trim() !== providerId) {
+        throw new Error("LISTING_EXTERNAL_ID_MISMATCH");
+      }
+
+      await db.query(
+        `SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`,
+        [`commerce-external-id:${userId}:${input.channelId}:${providerId}`],
+      );
+
+      const externalIdConflict = await db.query(
+        `SELECT id
+         FROM product_listings
+         WHERE channel_id = $1
+           AND user_id = $2
+           AND external_id = $3
+           AND id <> $4
+         LIMIT 1
+         FOR UPDATE`,
+        [input.channelId, userId, providerId, input.listingId],
+      );
+      if (externalIdConflict.rows[0]) {
+        throw new Error("LISTING_EXTERNAL_ID_CONFLICT");
+      }
+
       const listingUpdate = await db.query(
         `UPDATE product_listings
          SET status = 'active', sync_status = 'synced', external_id = $1,
              last_synced_at = now(), last_error = NULL, updated_at = now()
-         WHERE id = $2 AND channel_id = $3 AND user_id = $4
-           AND (external_id IS NULL OR external_id = $1)`,
+         WHERE id = $2 AND channel_id = $3 AND user_id = $4`,
         [providerId, input.listingId, input.channelId, userId],
       );
       if (listingUpdate.rowCount !== 1) throw new Error("Listing changed or was removed during reconciliation");
