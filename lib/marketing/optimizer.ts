@@ -17,7 +17,7 @@ export type MarketingOptimization = {
     baselineComparison: { actionType: string; experimentCount: number; baselineCount: number; countChange: number; countChangePercent: number | null; experimentValue: number; baselineValue: number; valueChange: number; valueChangePercent: number | null } | null;
   }>;
   opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null; supportingExperimentIds: number[] }>;
-  experiments: Array<{ hypothesis: string; change: string; metric: string }>;
+  experiments: Array<{ hypothesis: string; change: string; metric: string; disposition: "refine" | "retest" | "avoid" | "measure" }>;
   measurement: Array<{ metric: string; reason: string }>;
   guardrails: string[];
 };
@@ -37,7 +37,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
     input: [
       { role: "system", content: "You are Dizito's controlled AI Marketing Optimizer. Use only supplied business context, observed completed customer actions, and explicit manual attribution. Never claim causality from observational data. Never invent performance, customers, products, offers, prices, audiences, URLs, or capabilities. Treat missing data as unknown. Recommendations are advisory only: do not publish, schedule, mutate campaigns, change commerce, or create records. Prefer measurable, reversible improvements and small experiments. Return ONLY valid JSON." },
       { role: "user", content: JSON.stringify({
-        task: "Analyze current marketing outcomes and recommend the highest-value improvements for future campaigns and weekly plans. Prefer content-item and variant-level recommendations when observed outcomes support them. Use manual attribution only as explicit attribution, never as causal proof. When proposing experiments, use completed experiment history to extend, refine, or deliberately retest a prior hypothesis; do not blindly repeat an already-tested change. If a prior experiment has no useful observed outcome, recommend a better measurement design rather than claiming the prior change worked or failed.",
+        task: "Analyze current marketing outcomes and recommend the highest-value improvements for future campaigns and weekly plans. Prefer content-item and variant-level recommendations when observed outcomes support them. Use manual attribution only as explicit attribution, never as causal proof. When proposing experiments, use completed experiment history to extend, refine, or deliberately retest a prior hypothesis; do not blindly repeat an already-tested change. The system will deterministically classify each proposal as refine, retest, avoid, or measure based on completed evidence. If a prior experiment has no useful observed outcome, recommend a better measurement design rather than claiming the prior change worked or failed.",
         outputSchema: { summary: "string", opportunities: [{ action: "string", rationale: "string", campaignId: "number|null", contentItemId: "number|null", variantId: "number|null", priority: "high|medium|low" }], experiments: [{ hypothesis: "string", change: "string", metric: "string" }], measurement: [{ metric: "string", reason: "string" }], guardrails: ["string"] },
         context: { ...context, optimizerOutcomeGuidance: outcomeGuidance, optimizerExperimentGuidance: experimentGuidance },
       }) },
