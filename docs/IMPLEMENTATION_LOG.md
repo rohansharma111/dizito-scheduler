@@ -270,3 +270,7 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Preserved WooCommerce ambiguous state after a provider mutation if database persistence fails, preventing unsafe duplicate retries.
 - Exposed WooCommerce publish ambiguity as HTTP 202 with explicit reconciliation-required state.
 - Hardened WooCommerce route identity and reconciliation-status tenant/provider scoping.
+
+### 2026-10-06 — Shopify tenant boundary hardening
+- Tenant-scoped Shopify GraphQL client and credential access.
+- Tenant-safe Shopify connect/callback and Commerce channel listing route identity validation.
