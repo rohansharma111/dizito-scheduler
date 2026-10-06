@@ -34,6 +34,9 @@ export async function POST(request: Request) {
   if (!Number.isInteger(campaignId) || campaignId <= 0) return jsonError("Invalid campaignId");
   if (!body.contentType || typeof body.contentType !== "string") return jsonError("contentType is required");
 
+  const allowedStatuses = ["draft", "planned", "ready", "archived"];
+  if (body.status !== undefined && !allowedStatuses.includes(body.status)) return jsonError("Invalid status");
+
   const rawProductIds: unknown[] = Array.isArray(body.productIds) ? body.productIds : [];
   const productIds: number[] = [...new Set(rawProductIds.map((value) => Number(value)))];
 
