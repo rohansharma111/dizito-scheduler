@@ -159,6 +159,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       priority: evidenceScore >= 60 ? "high" : evidenceScore >= 30 ? "medium" : (validPriorities.has(String(item.priority)) ? item.priority : "low"),
       supportingExperimentIds,
       observedOutcome,
+      attributedOutcome,
     })),
     experiments: parsed.experiments
       .map((item, index) => {
