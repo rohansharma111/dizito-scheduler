@@ -3,10 +3,18 @@
 **Project:** Dizito — AI Commerce Operating System  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Current default branch:** `main`  
-**Latest observed commit:** `898317777d5aee193022452da45411648dd926ba`  
-**Last refreshed:** 2026-10-06
+**Latest observed commit:** `7305bd93f654a24329040ece77acb8934852678d`  
+**Last refreshed:** 2026-10-07
 
 This document is persistent repository context for Codex and future development sessions. It is a current-state guide, not a substitute for inspecting the actual repository.
+
+## 0. Current validation checkpoint — 2026-10-07
+
+- The latest documentation checkpoint commit is `7305bd93f654a24329040ece77acb8934852678d`; the code checkpoint immediately before documentation refresh was `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`.
+- Sequential TypeScript/build errors from the current repair pass are resolved; Vercel reports success for the code checkpoint.
+- The configured GitHub quality workflow remains **test → lint → build**, but no fresh GitHub Actions run is exposed for the direct push, so do not claim test/lint green without runtime evidence.
+- `merge/meesho-into-main` is fully behind current `main` (635 commits behind, 0 ahead).
+- Shopify publish recovery now uses listing sync claims consistently; do not bypass `claimProductListingSync` / `updateProductListingSyncState` ownership checks.
 
 ## 1. Project identity and vision
 
