@@ -28,6 +28,7 @@ export type MarketingCampaign = {
     readyToSchedule: number;
     converted: number;
   };
+  experimentSummary: { total: number; running: number; completed: number; planned: number };
   observedImpact: {
     actionCount: number;
     actionValue: number;
@@ -55,6 +56,14 @@ export async function listCampaigns(userId: number): Promise<MarketingCampaign[]
             COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'ready')::int AS content_ready_count,
             COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'converted')::int AS content_converted_count,
             COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id) AS experiment_total_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id AND e.status = 'running') AS experiment_running_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id AND e.status = 'completed') AS experiment_completed_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id AND e.status = 'planned') AS experiment_planned_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id) AS experiment_total_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id AND e.status = 'running') AS experiment_running_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id AND e.status = 'completed') AS experiment_completed_count,
+            (SELECT COUNT(*)::int FROM marketing_experiments e WHERE e.user_id = c.user_id AND e.campaign_id = c.id AND e.status = 'planned') AS experiment_planned_count,
             (SELECT COUNT(*)::int FROM marketing_customer_actions ca WHERE ca.user_id = c.user_id AND ca.campaign_id = c.id AND ca.status = 'completed') AS observed_action_count,
             (SELECT COALESCE(SUM(ca.value),0)::int FROM marketing_customer_actions ca WHERE ca.user_id = c.user_id AND ca.campaign_id = c.id AND ca.status = 'completed') AS observed_action_value,
             (SELECT COUNT(DISTINCT ca.order_id)::int FROM marketing_customer_actions ca WHERE ca.user_id = c.user_id AND ca.campaign_id = c.id AND ca.status = 'completed' AND ca.order_id IS NOT NULL) AS linked_order_count,
@@ -154,6 +163,12 @@ function mapCampaign(row: any): MarketingCampaign {
       needsApproval: Number(row.content_needs_approval_count ?? 0),
       readyToSchedule: Number(row.content_ready_count ?? 0),
       converted: Number(row.content_converted_count ?? 0),
+    },
+    experimentSummary: {
+      total: Number(row.experiment_total_count ?? 0),
+      running: Number(row.experiment_running_count ?? 0),
+      completed: Number(row.experiment_completed_count ?? 0),
+      planned: Number(row.experiment_planned_count ?? 0),
     },
     observedImpact: {
       actionCount: Number(row.observed_action_count ?? 0),
