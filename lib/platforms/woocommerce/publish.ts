@@ -145,8 +145,8 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     await pool.query(
       `UPDATE product_listings
        SET sync_status = 'syncing', last_error = NULL, updated_at = now()
-       WHERE id = $2 AND user_id = $3`,
-      [externalId, input.listingId, userId],
+       WHERE id = $1 AND user_id = $2`,
+      [input.listingId, userId],
     );
 
     await pool.query(
