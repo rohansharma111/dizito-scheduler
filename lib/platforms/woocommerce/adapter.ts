@@ -133,29 +133,6 @@ export const wooCommerceAdapter: CommerceProviderAdapter<
       return {
         operation: "publish",
         status: "ambiguous",
-        externalId:
-          typeof publishResult.externalId === "string"
-            ? publishResult.externalId
-            : undefined,
-        data: publishResult,
-        error: {
-          code: "RECONCILIATION_REQUIRED",
-          message: "WooCommerce publish requires provider read-back before success can be confirmed",
-          retryable: false,
-          ambiguous: true,
-        },
-      };
-    }
-
-    if (
-      publishResult &&
-      typeof publishResult === "object" &&
-      "reconciliationRequired" in publishResult &&
-      publishResult.reconciliationRequired === true
-    ) {
-      return {
-        operation: "publish",
-        status: "ambiguous",
         data: publishResult,
         error: {
           code: "RECONCILIATION_REQUIRED",
