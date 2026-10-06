@@ -31,6 +31,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const variantId = body.variantId == null ? null : Number(body.variantId);
   if (selectedAccounts.length === 0) return jsonError("Select at least one social account");
   if (typeof scheduleTime !== "string" || !scheduleTime) return jsonError("Schedule time is required");
+  const parsedScheduleTime = new Date(scheduleTime);
+  if (Number.isNaN(parsedScheduleTime.getTime())) return jsonError("Invalid schedule time");
   if (variantId !== null && (!Number.isInteger(variantId) || variantId <= 0)) return jsonError("Invalid variant id");
 
   const userId = Number((session.user as any).id);
@@ -83,7 +85,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const postResult = await client.query(
       `INSERT INTO posts (post, schedule_time, status, media_id, user_id) VALUES ($1,$2,'scheduled',$3,$4) RETURNING *`,
-      [copy, scheduleTime, copyItem.media_id, userId]);
+      [copy, parsedScheduleTime.toISOString(), copyItem.media_id, userId]);
     const post = postResult.rows[0];
     for (const account of accounts.rows) {
       await client.query(`INSERT INTO post_targets (post_id, social_account_id, platform, status) VALUES ($1,$2,$3,'scheduled')`, [post.id, account.id, account.platform]);
