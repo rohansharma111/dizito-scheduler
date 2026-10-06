@@ -5,6 +5,7 @@ import {
   getWooCommerceChannelConfig,
   markWooCommerceChannelError,
 } from "@/lib/platforms/woocommerce/client";
+import { decideWooCommercePublishAttempt } from "@/lib/platforms/woocommerce/publish-state";
 
 export interface PublishWooCommerceProductInput {
   channelId: string;
@@ -65,18 +66,23 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     );
     existingAttempt = attemptResult.rows[0] ?? null;
 
-    if (existingAttempt?.status === "succeeded" && existingAttempt.external_id) {
+    const attemptDecision = decideWooCommercePublishAttempt(
+      existingAttempt?.status as "started" | "succeeded" | "failed" | "ambiguous" | null,
+      existingAttempt?.external_id ?? null,
+    );
+
+    if (attemptDecision.action === "replay") {
       await reservationClient.query("COMMIT");
       await pool.query(
         `UPDATE product_listings
          SET status = 'active', sync_status = 'synced', external_id = $1,
              last_synced_at = COALESCE(last_synced_at, now()), last_error = NULL, updated_at = now()
          WHERE id = $2 AND user_id = $3`,
-        [existingAttempt.external_id, input.listingId, userId],
+        [attemptDecision.externalId, input.listingId, userId],
       );
-      return { result: existingAttempt.response_payload, externalId: existingAttempt.external_id, idempotentReplay: true };
+      return { result: existingAttempt?.response_payload, externalId: attemptDecision.externalId, idempotentReplay: true };
     }
-    if (existingAttempt && ["started", "ambiguous"].includes(existingAttempt.status)) {
+    if (attemptDecision.action === "reconcile") {
       await reservationClient.query("COMMIT");
       return { error: "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION" as const };
     }
