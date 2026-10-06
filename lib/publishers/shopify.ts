@@ -1,4 +1,5 @@
 import { getCommerceChannelById } from "@/lib/commerce/channels/service";
+import { pool } from "@/lib/db";
 import {
   createProductListing,
   getProductListings,
@@ -73,6 +74,28 @@ function mediaType(media: CatalogMedia) {
 
 function mediaKey(alt: string | null | undefined, type: string) {
   return `${alt?.trim() || ""}\u0000${type}`;
+}
+
+async function withShopifyPublishLock<T>(
+  userId: number,
+  channelId: string,
+  productId: string,
+  operation: () => Promise<T>,
+) {
+  const client = await pool.connect();
+  const lockKey = `shopify:publish:${userId}:${channelId}:${productId}`;
+  try {
+    await client.query(
+      "SELECT pg_advisory_lock(hashtextextended($1, 0))",
+      [lockKey],
+    );
+    return await operation();
+  } finally {
+    await client
+      .query("SELECT pg_advisory_unlock(hashtextextended($1, 0))", [lockKey])
+      .catch((error) => console.error("Unable to release Shopify publish lock:", error));
+    client.release();
+  }
 }
 
 async function ensureListing(userId: number, channelId: string, productId: string) {
@@ -174,6 +197,16 @@ export async function publishShopifyProduct(
   if (channel.provider !== "shopify") throw new Error("Commerce channel is not Shopify");
   if (channel.status !== "active") throw new Error("Shopify channel is not active");
 
+  return withShopifyPublishLock(userId, channelId, productId, async () => {
+  if (confirmLivePublish !== true) {
+    throw new Error("LIVE_PUBLISH_CONFIRMATION_REQUIRED");
+  }
+
+  const channel = await getCommerceChannelById(channelId, userId);
+  if (!channel) throw new Error("Commerce channel not found");
+  if (channel.provider !== "shopify") throw new Error("Commerce channel is not Shopify");
+  if (channel.status !== "active") throw new Error("Shopify channel is not active");
+
   const product = asShopifyCatalogProduct(await getProductDetails(productId, userId));
   if (!product) throw new Error("Product not found");
   if (product.variants.length === 0) throw new Error("Shopify publishing requires at least one product variant");
@@ -250,4 +283,5 @@ export async function publishShopifyProduct(
     await updateProductListingSyncState(listing.id, userId, { syncStatus: "error", lastError: message });
     throw error;
   }
+  });
 }
