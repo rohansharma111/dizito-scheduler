@@ -45,6 +45,16 @@ export async function PATCH(
   const existing = await getContentItem(userId, contentItemId);
   if (!existing) return jsonError("Content item not found", 404);
 
+  if (existing.status === "converted") {
+    const mutableFields = ["contentType", "format", "topic", "angle", "hook", "body", "cta", "channelStrategy", "mediaId", "plannedFor", "productIds"];
+    if (mutableFields.some((field) => body[field] !== undefined)) {
+      return jsonError("Converted content items cannot be edited");
+    }
+    if (body.status !== undefined && body.status !== "converted") {
+      return jsonError("Converted content items cannot change status");
+    }
+  }
+
   if (body.mediaId !== undefined && body.mediaId !== null) {
     const mediaId = Number(body.mediaId);
     if (!Number.isInteger(mediaId) || mediaId <= 0) return jsonError("Invalid mediaId");
