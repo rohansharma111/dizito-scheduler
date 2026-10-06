@@ -17,7 +17,7 @@ export type GeneratedWeek = {
     mediaId: number | null;
     offerId: number | null;
     rationale: string;
-    evidence: { actionType: string; count: number; value: number; platform: string | null } | null;
+    evidence: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
   }>;
   context: {
     goalIds: number[];
@@ -112,7 +112,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
           ? `Prioritizes the active goal “${primaryGoal.name}” and reuses available business context before creating new assets.`
           : "Uses available products and media to create a balanced week until a primary marketing goal is configured.",
       evidence: optimizationOpportunity?.observedOutcome?.actionType && typeof optimizationOpportunity.observedOutcome.count === "number" && typeof optimizationOpportunity.observedOutcome.value === "number"
-        ? { actionType: String(optimizationOpportunity.observedOutcome.actionType), count: Number(optimizationOpportunity.observedOutcome.count), value: Number(optimizationOpportunity.observedOutcome.value), platform: optimizationOpportunity.observedOutcome.platform ?? null }
+        ? { sourceType: optimizationOpportunity.variantId != null ? "variant" : "content_item", sourceId: Number(optimizationOpportunity.variantId ?? optimizationOpportunity.contentItemId), actionType: String(optimizationOpportunity.observedOutcome.actionType), count: Number(optimizationOpportunity.observedOutcome.count), value: Number(optimizationOpportunity.observedOutcome.value), platform: optimizationOpportunity.observedOutcome.platform ?? null }
         : null
     };
   });
