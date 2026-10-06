@@ -1,5 +1,20 @@
 # Dizito Implementation Log
 
+## 2026-10-06 — Bind WooCommerce reconciliation to listing identity
+
+- **Status:** Implemented; automated tests passed in GitHub Actions, while repository lint remains failing.
+- **Commits:**
+  - `4b20471e615b1e4117f29271fb32ec47d47ee820` — harden reconciliation identity and API error mapping.
+  - `b70448f84393da421a6225ef475e7e539ee3d8c5` — add reconciliation identity unit tests.
+- **Files:** `lib/platforms/woocommerce/reconcile.ts`, `app/api/commerce/woocommerce/reconcile/route.ts`, `lib/platforms/woocommerce/reconcile.test.ts`
+- **Implemented behavior:**
+  - Reconciliation reads the expected WooCommerce SKU from the listing's persisted draft payload.
+  - A caller-supplied SKU must match the listing SKU when both are present.
+  - External-ID reconciliation additionally verifies that the provider product SKU matches the listing identity before marking the attempt successful.
+  - SKU-based reconciliation continues to require exactly one provider match.
+  - Added focused tests for missing, inherited, conflicting, and matching SKU identities.
+- **Verification:** GitHub Actions run `37417617314` completed the Vitest test step successfully. The same run failed at repository lint, so the full quality workflow is not green. No provider/live WooCommerce verification is claimed.
+
 ## 2026-10-05 — Enable automated Vitest execution in CI
 
 - **Status:** Implemented; test execution still requires the GitHub Actions run to complete.
@@ -46,7 +61,7 @@
   - `0c490f769b6b376570dce04ca87135c88e150aed` — safely replay completed attempts and block unresolved attempts.
   - `3e2dc77dae5808b4e582b9d6c2cbc1685c14f205` — classify likely network uncertainty as `ambiguous`.
 - **Files:** `db/migrations/009_woocommerce_publish_attempts.sql`, `lib/platforms/woocommerce/publish.ts`
-- **Implemented behavior:** Durable attempt rows, persisted success/failure/ambiguous states, idempotent replay, reconciliation blocking for `started`/`ambiguous`, and preservation of listing `syncing` state for ambiguous outcomes.
+- **Implemented behavior:** Durable attempt rows, persisted success/failure/ambiguous states, idempotent replay, reconciliation blocking for `started`/ambiguous, and preservation of listing `syncing` state for ambiguous outcomes.
 - **Verification:** Repository writes succeeded through GitHub. Migration source inspection confirmed the `ambiguous` status and required unique constraint. Build, lint, type-check, automated tests, migration execution, and provider verification were not run.
 
 ## 2026-09-23 — WooCommerce publish reconciliation endpoint
@@ -59,54 +74,4 @@
 ## 2026-09-23 — WooCommerce reconciliation status lookup
 
 - **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `baf498edc83d7abc65c3f4b4139500108bacc2d8`
-- **File:** `app/api/commerce/woocommerce/reconcile/route.ts`
-- **Implemented behavior:** Authenticated `GET` status lookup with tenant ownership checks, attempt state, provider, external ID, errors, timestamps, and linked listing sync state.
-- **Verification:** Repository write succeeded through GitHub. Runtime behavior and automated tests remain unverified.
-
-## 2026-09-23 — Transactional WooCommerce reconciliation completion
-
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `9a3a2a328d0e44a8875d4c74ed7e281ea7e84301`
-- **File:** `lib/platforms/woocommerce/reconcile.ts`
-- **Implemented behavior:** Locks the attempt row, rechecks state, updates listing and attempt in one transaction, and rolls back/releases the client on failure.
-- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
-
-## 2026-09-23 — Reconciliation transaction row-count guards
-
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `7c1bcc144a9592b07f655d6e0479e4dbb7b4ae2f`
-- **File:** `lib/platforms/woocommerce/reconcile.ts`
-- **Implemented behavior:** Checks exactly one listing and one publish-attempt row are updated; unexpected counts force rollback.
-- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
-
-## 2026-09-23 — Publish migration and repository verification review
-
-- **Status:** Review completed; no code correction required.
-- **Files reviewed:** `db/migrations/009_woocommerce_publish_attempts.sql`, `lib/platforms/woocommerce/publish.ts`, `package.json`.
-- **Findings:** Migration 009 includes `ambiguous` and the unique constraint `(channel_id, listing_id, idempotency_key)` required by the publish upsert. The repository previously had no automated test script.
-- **Verification limits:** Source inspection only; no local command execution, build, lint, type-check, migration execution, database test, or provider test was performed.
-
-## 2026-09-24 — Require idempotency key for live WooCommerce publishing
-
-- **Status:** Implemented; not yet verified in a running environment.
-- **Commit:** `87fe8a6a1804f5ceb50fff803246d3649fdffe54`
-- **File:** `app/api/commerce/woocommerce/publish/route.ts`
-- **Implemented behavior:** Authenticated live-publish requests without a non-empty `idempotencyKey` return HTTP `400` before the publish service is called.
-- **Verification:** Repository write succeeded through GitHub. Build, lint, type-check, automated tests, migration execution, and provider verification remain unrun.
-
-## 2026-09-24 — CI quality workflow
-
-- **Status:** Workflow committed; execution pending.
-- **Commit:** `6301f8d9fbd6c10a8557cc20d0307d08929be949`
-- **File:** `.github/workflows/quality.yml`
-- **Implemented behavior:** Runs on pushes and pull requests targeting `main`, uses Node.js 20/npm caching, and runs `npm ci`, `npm run lint`, and `npm run build`.
-- **Verification:** Workflow file committed successfully; no workflow run was available for the commit, so lint/build success is not claimed.
-
-## 2026-09-24 — WooCommerce test tooling and coverage groundwork
-
-- **Status:** Test files committed; execution pending.
-- **Files:** `lib/platforms/woocommerce/mapper.test.ts`, `lib/platforms/woocommerce/client.test.ts`, `lib/platforms/woocommerce/client.request.test.ts`
-- **Commits:** `3d495cebc6b81d40e69cbbadae56549678d85de6`, `852a0fe2c1ab32799c549061efdb1e2a2b585dab`, `6eb1a4911962031746fec1c18165d9340292c01d`
-- **Coverage:** Mapper normalization/validation, client URL validation, authentication/header construction, request behavior, and provider error propagation.
-- **Verification:** Tests were committed but not previously executed because the test script was missing.
+- **Commit:** `...`
