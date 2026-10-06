@@ -274,3 +274,7 @@ Never convert “implemented” to “verified” or “production-ready” with
 ### 2026-10-06 — Shopify tenant boundary hardening
 - Tenant-scoped Shopify GraphQL client and credential access.
 - Tenant-safe Shopify connect/callback and Commerce channel listing route identity validation.
+
+### Commerce tenant-integrity and canonical fingerprint hardening — 2026-10-06
+- Added tenant-integrity constraints for Commerce channel/listing/publish-ledger relationships.
+- Canonicalized publish request fingerprints for deterministic idempotency behavior.
