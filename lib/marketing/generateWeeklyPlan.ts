@@ -50,16 +50,29 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   const activeOffers = brain.offers.filter((offer) => offer.status === "active" || offer.status === "draft");
   const channels = brain.socialAccounts.filter((account) => account.status === "active").map((account) => account.platform);
   const suggestedChannels = [...new Set(channels)];
-  const primaryGoal = activeGoals[0] ?? null;  const strategyRecommendations = Array.isArray(strategyHint?.recommendations) ? strategyHint.recommendations : [];
+  const primaryGoal = activeGoals[0] ?? null;
+  const strategyRecommendations = Array.isArray(strategyHint?.recommendations) ? strategyHint.recommendations : [];
   const optimizationOpportunities = Array.isArray(strategyHint?.optimization?.opportunities) ? strategyHint.optimization.opportunities : [];
-  const optimizationOpportunity = optimizationOpportunities.find((item) => item.priority === "high") ?? optimizationOpportunities[0];  const strategyRecommendation = strategyRecommendations[0];  const strategyGoal = strategyRecommendation?.goalId != null ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null : null;  const strategyProduct = strategyRecommendation?.productIds?.length ? brain.products.find((item) => item.id === Number(strategyRecommendation.productIds?.[0])) ?? null : null;  const strategyOffer = strategyRecommendation?.offerId != null ? activeOffers.find((offer) => offer.id === Number(strategyRecommendation.offerId)) ?? null : null;
+  const optimizationOpportunity = optimizationOpportunities.find((item) => item.priority === "high") ?? optimizationOpportunities[0];
+  const strategyRecommendation = strategyRecommendations[0];
+  const strategyGoal = strategyRecommendation?.goalId != null
+    ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null
+    : null;
+  const strategyProduct = strategyRecommendation?.productIds?.length
+    ? brain.products.find((item) => item.id === Number(strategyRecommendation.productIds[0])) ?? null
+    : null;
+  const strategyOffer = strategyRecommendation?.offerId != null
+    ? activeOffers.find((offer) => offer.id === Number(strategyRecommendation.offerId)) ?? null
+    : null;
   const product = brain.products[0] ?? null;
   const media = brain.media[0] ?? null;
   const offer = activeOffers[0] ?? null;
 
   const objective = optimizationOpportunity?.action || strategyRecommendation?.action || strategyGoal?.name || primaryGoal?.name || "Build awareness and drive customer action";
-  const goalType = primaryGoal?.goalType ?? "awareness";
-  const selectedProduct = strategyProduct ?? product;  const selectedOffer = strategyOffer ?? offer;  const productName = selectedProduct?.name ?? "your business";
+  const goalType = strategyGoal?.goalType ?? primaryGoal?.goalType ?? "awareness";
+  const selectedProduct = strategyProduct ?? product;
+  const selectedOffer = strategyOffer ?? offer;
+  const productName = selectedProduct?.name ?? "your business";
   const businessName = brain.profile?.businessName ?? "your business";
   const offerText = selectedOffer ? ` with ${selectedOffer.name}` : "";
 
@@ -80,7 +93,9 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
       topic: template.topic,
       hook: template.hook,
       cta: template.cta,
-      suggestedChannels: strategyRecommendation?.channels?.length        ? [...new Set(strategyRecommendation.channels.map(String).filter((channel) => suggestedChannels.includes(channel)))]        : suggestedChannels,
+      suggestedChannels: strategyRecommendation?.channels?.length
+        ? [...new Set(strategyRecommendation.channels.map(String).filter((channel) => suggestedChannels.includes(channel)))]
+        : suggestedChannels,
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
       offerId: selectedOffer?.id ?? null,
@@ -95,7 +110,11 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   return {
     weekStart,
     weekEnd: isoDate(addDays(start, 6)),
-    strategySummary: strategyHint?.optimization?.summary ? strategyHint.optimization.summary + " The weekly plan turns the optimization recommendation into a reviewable execution draft; nothing is published automatically." : strategyHint?.strategySummary ? strategyHint.strategySummary + " The weekly plan turns that recommendation into a reviewable execution draft; nothing is published automatically." : `A five-post draft week focused on ${objective.toLowerCase()}, using existing products, offers, media and connected channels where available. This is a recommendation draft and is not published automatically.`,
+    strategySummary: strategyHint?.optimization?.summary
+      ? strategyHint.optimization.summary + " The weekly plan turns the optimization recommendation into a reviewable execution draft; nothing is published automatically."
+      : strategyHint?.strategySummary
+        ? strategyHint.strategySummary + " The weekly plan turns that recommendation into a reviewable execution draft; nothing is published automatically."
+        : `A five-post draft week focused on ${objective.toLowerCase()}, using existing products, offers, media and connected channels where available. This is a recommendation draft and is not published automatically.`,
     recommendations,
     context: {
       goalIds: activeGoals.map((goal) => goal.id),
