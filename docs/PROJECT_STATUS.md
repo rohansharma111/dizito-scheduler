@@ -517,3 +517,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Fixed Commerce listing/channel route session-ID defects and standardized positive safe-integer validation across Commerce API boundaries, including Amazon, WooCommerce, Shopify, Flipkart, and channel routes.
 - Serialized shared Commerce publish external-ID adoption with a tenant/channel/external-ID advisory lock before reconciliation commits the remote identity.
 - No tests, lint, build, or live provider verification have been run; verification remains intentionally deferred until the code-level implementation pass is complete.
+
+
+### Commerce sync lease hardening — 2026-10-06
+- Added durable product_listings.sync_claim_token leases so a worker that loses/relinquishes a stale 10-minute sync claim cannot later overwrite the newer worker's result.
+- Shopify sync now carries the claim token through both success and failure persistence; stale workers fail closed instead of mutating listing state.
+- Migration 019_product_listing_sync_claims.sql adds the claim-token column and supporting index.
+- Tests, lint, build, and provider verification remain intentionally deferred.
