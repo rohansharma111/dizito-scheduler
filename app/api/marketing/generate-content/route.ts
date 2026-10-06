@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       angle: body.angle ? String(body.angle) : undefined, hook: body.hook ? String(body.hook) : undefined,
       cta: body.cta ? String(body.cta) : undefined, campaignName: body.campaignName ? String(body.campaignName) : undefined,
       campaignObjective: body.campaignObjective ? String(body.campaignObjective) : undefined, audience: body.audience ? String(body.audience) : undefined,
-      productIds: Array.isArray(body.productIds) ? body.productIds.map(Number) : [], offerId: body.offerId == null ? null : Number(body.offerId), platform: platform as any,
+      productIds: Array.isArray(body.productIds) ? body.productIds.map(Number) : [], contentItemId: body.contentItemId == null ? undefined : Number(body.contentItemId), offerId: body.offerId == null ? null : Number(body.offerId), platform: platform as any,
     });
     return Response.json({ copy });
   } catch (error) {
