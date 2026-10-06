@@ -77,6 +77,25 @@ function normalizeAmazonMetadata(value: unknown, marketplaceId: string): unknown
   return normalized;
 }
 
+function pruneEmptyAmazonValues(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const items = value.map((item) => pruneEmptyAmazonValues(item)).filter((item) => item !== undefined && item !== null && item !== "");
+    return items;
+  }
+  if (!value || typeof value !== "object") return value === "" ? undefined : value;
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    const next = pruneEmptyAmazonValues(child);
+    if (next === undefined || next === null || next === "") continue;
+    if (Array.isArray(next) && next.length === 0) continue;
+    if (typeof next === "object" && !Array.isArray(next) && Object.keys(next as Record<string, unknown>).length === 0) continue;
+    cleaned[key] = next;
+  }
+  return cleaned;
+}
+
+const hiddenOperationalFields = new Set(["fulfillment_availability", "fulfillment_channel"]);
+
 function buildMappedAttribute(attributeName: string, mapping: AmazonListingFieldMapping, product: AmazonListingProductInput, variant: AmazonListingVariantInput) {
   const marketplaceId = getAmazonMarketplaceId();
   if (mapping.source === "manual") {
@@ -133,6 +152,7 @@ export function buildAmazonListingDraft(
   if (product.brand?.trim()) attributes.brand = localizedValue(product.brand.trim(), marketplaceId);
   if (product.description?.trim()) attributes.product_description = localizedValue(product.description.trim(), marketplaceId);
   for (const [attributeName, mapping] of Object.entries(fieldMappings)) {
+    if (hiddenOperationalFields.has(attributeName)) continue;
     const mappedValue = buildMappedAttribute(attributeName, mapping, product, variant);
     if (mappedValue !== null) attributes[attributeName] = mappedValue;
     else delete attributes[attributeName];
@@ -146,7 +166,7 @@ export function buildAmazonListingDraft(
     sku: variant.sku,
     productType: productType.trim(),
     requirements,
-    attributes: normalizeAmazonMetadata(attributes, marketplaceId) as Record<string, unknown>,
+    attributes: pruneEmptyAmazonValues(normalizeAmazonMetadata(attributes, marketplaceId)) as Record<string, unknown>,
   };
 }
 
