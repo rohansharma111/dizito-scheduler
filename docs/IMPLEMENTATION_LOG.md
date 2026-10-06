@@ -286,3 +286,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 ### Provider adapter outcome normalization — 2026-10-06
 - WooCommerce adapter now checks reconciliation-required outcomes before generic error normalization, preserving ambiguous publish state and preventing accidental retry classification.
 - Flipkart publish adapter outcomes are normalized so disabled/not-found/failed states cannot be mistaken for reconciliation success.
+
+### 2026-10-06 — Flipkart reconciliation state consistency
+- Validated the Flipkart publish operation against authenticated tenant, listing, provider, and reconciliable status before provider read-back.
+- Changed shared publish-success persistence to transactionally lock/update the operation and listing together, requiring matching or empty existing external identity.
+- Normalized deterministic Flipkart reconciliation errors as failed and provider/read-back uncertainty as ambiguous/retryable.
+- Fixed the WooCommerce reconciliation POST route's authenticated user ID handling; the previous self-reference was invalid and the POST path now validates the same safe positive tenant identity as the GET path.
