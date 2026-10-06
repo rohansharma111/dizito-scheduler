@@ -84,11 +84,44 @@ export default function PrivacyPage() {
         </section>
 
         <section>
+          <h2 className="text-2xl font-semibold mb-2">
+            Pinterest API Data and Disconnects
+          </h2>
+
+          <p>
+            Dizito uses the Pinterest API only after a user explicitly
+            authorizes the connection through Pinterest OAuth. We use
+            Pinterest-derived account and board information only to identify
+            the user's connected Pinterest Business account, schedule or
+            publish content requested by the user, and maintain connection
+            status and publishing history.
+          </p>
+
+          <p>
+            Dizito is an independent service and is not endorsed by,
+            sponsored by, or affiliated with Pinterest.
+          </p>
+
+          <p>
+            When a user disconnects a Pinterest account from Dizito, we remove
+            the stored Pinterest access credentials and Pinterest account and
+            board identifiers associated with that connection, and remove the
+            associated pending OAuth session data. We do not retain Pinterest
+            passwords. Content that the user created in Dizito may remain as
+            part of the user's Dizito content history unless the user also
+            requests deletion of that Dizito content or account.
+          </p>
+        </section>
+
+        <section>
           <h2 className="text-2xl font-semibold mb-2">Data Deletion</h2>
 
           <p>
-            Users may disconnect their social accounts or request deletion of
-            their account and associated data by contacting us.
+            Users may disconnect connected social accounts at any time from
+            Dizito. Users may also request deletion of their Dizito account
+            and associated personal data by contacting us. We process
+            Pinterest-related data in accordance with the disconnect and
+            deletion process described above.
           </p>
         </section>
 
