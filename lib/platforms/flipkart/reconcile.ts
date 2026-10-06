@@ -12,6 +12,27 @@ export interface ReconcileFlipkartOperationInput {
   operationId: string;
   listingId: string;
   skuIds: string[];
+  externalId?: string;
+  lookupKey?: string;
+}
+
+function extractConfirmedExternalId(providerResult: unknown): string | null {
+  if (!providerResult || typeof providerResult !== "object") return null;
+  const candidate = providerResult as Record<string, unknown>;
+  const direct = candidate.externalId;
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+
+  const response = candidate.response ?? candidate.data ?? candidate.result;
+  if (!response || typeof response !== "object") return null;
+  const nested = response as Record<string, unknown>;
+  for (const key of ["listingId", "listing_id", "id", "listingID"]) {
+    const value = nested[key];
+    if (typeof value === "string" || typeof value === "number") {
+      const normalized = String(value).trim();
+      if (normalized) return normalized;
+    }
+  }
+  return null;
 }
 
 export interface FlipkartReconciliationResult {
@@ -21,6 +42,7 @@ export interface FlipkartReconciliationResult {
   status: CommercePublishOperationStatus;
   providerResult: unknown;
   externalIdConfirmed: boolean;
+  externalId?: string;
 }
 
 export async function reconcileFlipkartPublishOperation(
@@ -32,18 +54,29 @@ export async function reconcileFlipkartPublishOperation(
   }
 
   const { config } = await getFlipkartChannelConfig(input.channelId, userId);
-  const providerResult = await getFlipkartListings(config, input.skuIds);
+  const providerResult = await getFlipkartListings(
+    config,
+    input.skuIds.length > 0
+      ? input.skuIds
+      : input.lookupKey
+        ? [input.lookupKey]
+        : [],
+  );
 
   // Flipkart's API response shape can vary by listing state/account data.
-  // Do not infer success from an HTTP 200 alone. A caller must explicitly
-  // identify the created/updated external listing ID before marking success.
+  // Do not infer success from an HTTP 200 alone. Only a concrete provider
+  // identifier is eligible to transition a publish operation to succeeded.
+  const confirmedExternalId =
+    input.externalId?.trim() || extractConfirmedExternalId(providerResult);
+
   return {
     operationId: input.operationId,
     listingId: input.listingId,
     provider: "flipkart",
-    status: "unknown",
+    status: confirmedExternalId ? "succeeded" : "unknown",
     providerResult,
-    externalIdConfirmed: false,
+    externalIdConfirmed: Boolean(confirmedExternalId),
+    ...(confirmedExternalId ? { externalId: confirmedExternalId } : {}),
   };
 }
 
