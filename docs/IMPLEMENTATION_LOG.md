@@ -488,3 +488,5 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Legacy Content Item → Post links remain compatible with nullable variant provenance for historical records.
 - Implementation is source-level only; tests/lint/build/database verification remain pending.
 
+
+- The legacy link upsert now backfills a missing variant ID on an existing Content Item → Post row without overwriting established provenance.
