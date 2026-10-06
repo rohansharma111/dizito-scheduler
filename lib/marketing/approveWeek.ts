@@ -193,7 +193,8 @@ export async function persistApprovedWeek(
       if (campaignId === null) throw new Error("Unable to scope weekly experiment to approved campaign");
       if (contentItemId === null) throw new Error("Unable to scope weekly experiment to approved content item");
 
-      const supportingExperimentIds = [...new Set(strategy.campaigns.flatMap((campaign) => (campaign.contentItems ?? []).flatMap((item) => item.supportingExperimentIds ?? []).map(Number).filter(Number.isFinite)))];
+      const selectedContentItem = strategy.campaigns.flatMap((campaign) => campaign.contentItems ?? [])[0] ?? null;
+      const supportingExperimentIds = [...new Set((selectedContentItem?.supportingExperimentIds ?? []).map(Number).filter(Number.isFinite))];
       if (supportingExperimentIds.length) {
         const supportingExperiments = await client.query(
           `SELECT id FROM marketing_experiments WHERE id=ANY($1::bigint[]) AND user_id=$2 AND status='completed'`,
