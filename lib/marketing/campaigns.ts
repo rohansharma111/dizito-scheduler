@@ -34,6 +34,10 @@ export type MarketingCampaign = {
     linkedOrderCount: number;
     linkedOrderValue: number;
     actionBreakdown: Array<{ actionType: string; count: number; value: number }>;
+    attributedActionCount: number;
+    attributedValue: number;
+    attributedOrderCount: number;
+    attributedActionBreakdown: Array<{ actionType: string; count: number; value: number }>;
   };
   createdAt: string;
   updatedAt: string;
@@ -66,7 +70,10 @@ export async function listCampaigns(userId: number): Promise<MarketingCampaign[]
             (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status IN ('draft','planned')) AS content_needs_approval_count,
             (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status = 'ready') AS content_ready_count,
             (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status = 'converted') AS content_converted_count,
-
+            (SELECT COUNT(*)::int FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed') AS attributed_action_count,
+            (SELECT COALESCE(SUM(a.attributed_value),0)::int FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed') AS attributed_value,
+            (SELECT COUNT(DISTINCT a.order_id)::int FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed' AND a.order_id IS NOT NULL) AS attributed_order_count,
+            (SELECT COALESCE(json_agg(json_build_object('actionType', x.action_type, 'count', x.action_count, 'value', x.attributed_value) ORDER BY x.action_count DESC), '[]'::json) FROM (SELECT ca.action_type, COUNT(*)::int AS action_count, COALESCE(SUM(a.attributed_value),0)::int AS attributed_value FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed' GROUP BY ca.action_type) x) AS attributed_action_breakdown
        FROM marketing_campaigns c
        LEFT JOIN marketing_campaign_products cp ON cp.campaign_id = c.id
        LEFT JOIN marketing_campaign_posts cpo ON cpo.campaign_id = c.id
@@ -102,7 +109,11 @@ export async function getCampaign(userId: number, campaignId: number): Promise<M
                    FROM marketing_customer_actions ca
                   WHERE ca.user_id = c.user_id AND ca.campaign_id = c.id AND ca.status = 'completed'
                   GROUP BY ca.action_type
-               ) x) AS observed_action_breakdown
+               ) x) AS observed_action_breakdown,
+            (SELECT COUNT(*)::int FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed') AS attributed_action_count,
+            (SELECT COALESCE(SUM(a.attributed_value),0)::int FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed') AS attributed_value,
+            (SELECT COUNT(DISTINCT a.order_id)::int FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed' AND a.order_id IS NOT NULL) AS attributed_order_count,
+            (SELECT COALESCE(json_agg(json_build_object('actionType', x.action_type, 'count', x.action_count, 'value', x.attributed_value) ORDER BY x.action_count DESC), '[]'::json) FROM (SELECT ca.action_type, COUNT(*)::int AS action_count, COALESCE(SUM(a.attributed_value),0)::int AS attributed_value FROM marketing_attributions a JOIN marketing_customer_actions ca ON ca.id = a.customer_action_id AND ca.user_id = a.user_id WHERE a.user_id = c.user_id AND a.campaign_id = c.id AND ca.status = 'completed' GROUP BY ca.action_type) x) AS attributed_action_breakdown
        FROM marketing_campaigns c
        LEFT JOIN marketing_campaign_products cp ON cp.campaign_id = c.id
        LEFT JOIN marketing_campaign_posts cpo ON cpo.campaign_id = c.id
@@ -150,6 +161,10 @@ function mapCampaign(row: any): MarketingCampaign {
       linkedOrderCount: Number(row.linked_order_count ?? 0),
       linkedOrderValue: Number(row.linked_order_value ?? 0),
       actionBreakdown: Array.isArray(row.observed_action_breakdown) ? row.observed_action_breakdown.map((item: any) => ({ actionType: item.actionType, count: Number(item.count), value: Number(item.value) })) : [],
+      attributedActionCount: Number(row.attributed_action_count ?? 0),
+      attributedValue: Number(row.attributed_value ?? 0),
+      attributedOrderCount: Number(row.attributed_order_count ?? 0),
+      attributedActionBreakdown: Array.isArray(row.attributed_action_breakdown) ? row.attributed_action_breakdown.map((item: any) => ({ actionType: item.actionType, count: Number(item.count), value: Number(item.value) })) : [],
     },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
