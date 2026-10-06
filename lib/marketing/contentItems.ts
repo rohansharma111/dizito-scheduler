@@ -112,6 +112,7 @@ export async function getContentItem(userId: number, contentItemId: number) {
           '{}'
         ) AS post_ids
       FROM marketing_content_items ci
+      JOIN marketing_campaigns c ON c.id = ci.campaign_id AND c.user_id = ci.user_id
       LEFT JOIN marketing_content_item_products cip
         ON cip.content_item_id = ci.id
       LEFT JOIN marketing_content_item_posts cipost
