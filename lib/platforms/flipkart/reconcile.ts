@@ -49,19 +49,21 @@ export async function reconcileFlipkartPublishOperation(
   userId: number,
   input: ReconcileFlipkartOperationInput,
 ): Promise<FlipkartReconciliationResult> {
-  if (input.skuIds.length === 0) {
-    throw new Error("Flipkart reconciliation requires at least one SKU");
+  const identifiers =
+    input.skuIds.length > 0
+      ? input.skuIds
+      : input.lookupKey?.trim()
+        ? [input.lookupKey.trim()]
+        : [];
+
+  if (identifiers.length === 0 && !input.externalId?.trim()) {
+    throw new Error("Flipkart reconciliation requires a SKU or external ID");
   }
 
   const { config } = await getFlipkartChannelConfig(input.channelId, userId);
-  const providerResult = await getFlipkartListings(
-    config,
-    input.skuIds.length > 0
-      ? input.skuIds
-      : input.lookupKey
-        ? [input.lookupKey]
-        : [],
-  );
+  const providerResult = identifiers.length > 0
+    ? await getFlipkartListings(config, identifiers)
+    : { externalId: input.externalId!.trim() };
 
   // Flipkart's API response shape can vary by listing state/account data.
   // Do not infer success from an HTTP 200 alone. Only a concrete provider
