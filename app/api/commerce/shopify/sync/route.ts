@@ -20,7 +20,6 @@ export async function POST(request: Request) {
     if (!Number.isSafeInteger(userId) || userId <= 0) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
-    if (!Number.isInteger(userId) || userId <= 0) return NextResponse.json({ success: false, error: "Invalid authenticated user" }, { status: 401 });
 
     const listings = await getProductListings(userId);
     const listing = listings.find((row) => String(row.channel_id) === channelId && String(row.product_id) === productId);
