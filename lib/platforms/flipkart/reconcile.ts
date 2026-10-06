@@ -2,6 +2,7 @@ import {
   getFlipkartChannelConfig,
   getFlipkartListings,
 } from "@/lib/platforms/flipkart/client";
+import { pool } from "@/lib/db";
 import {
   markCommercePublishOperationSucceeded,
   type CommercePublishOperationStatus,
@@ -71,6 +72,29 @@ export async function reconcileFlipkartPublishOperation(
   }
 
   const { config } = await getFlipkartChannelConfig(input.channelId, userId);
+
+  // The publish ledger is the source of truth for whether this reconciliation
+  // belongs to the authenticated tenant/listing/provider. Do not perform a
+  // provider read until that binding has been validated.
+  const operationLookup = await pool.query(`
+    SELECT id, listing_id, provider, status
+    FROM commerce_publish_operations
+    WHERE id = $1
+      AND user_id = $2
+      AND listing_id = $3
+      AND provider = 'flipkart'
+    LIMIT 1
+  `, [input.operationId, userId, input.listingId]);
+
+  const operationRecord = operationLookup.rows[0];
+  if (!operationRecord) {
+    throw new Error("PUBLISH_ATTEMPT_NOT_FOUND");
+  }
+
+  if (!["in_progress", "unknown"].includes(operationRecord.status)) {
+    throw new Error("PUBLISH_ATTEMPT_NOT_RECONCILABLE");
+  }
+
   const providerResult = await getFlipkartListings(config, identifiers);
 
   const confirmedExternalId = extractConfirmedExternalId(providerResult);
