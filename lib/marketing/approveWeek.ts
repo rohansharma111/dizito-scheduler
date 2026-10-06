@@ -155,25 +155,22 @@ export async function persistApprovedWeek(
     }
 
     if (strategy.experiment?.hypothesis && strategy.experiment.change && strategy.experiment.metric) {
-      const campaignId = strategy.experiment.campaignId ?? null;
-      const contentItemId = strategy.experiment.contentItemId ?? null;
-      const variantId = strategy.experiment.variantId ?? null;
-      if (campaignId !== null) {
-        const campaign = await client.query(
-          `SELECT id FROM marketing_campaigns WHERE id=$1 AND user_id=$2`,
-          [campaignId, userId],
-        );
-        if (campaign.rowCount !== 1) throw new Error("Invalid experiment campaign reference");
-      }
+      const campaignId = strategy.campaigns[0] ? Number((await client.query(
+        `SELECT id FROM marketing_campaigns
+         WHERE user_id=$1
+         ORDER BY id DESC
+         LIMIT 1`,
+        [userId],
+      )).rows[0]?.id) : null;
+      if (!campaignId) throw new Error("Unable to scope weekly experiment to approved campaign");
+
       await client.query(
         `INSERT INTO marketing_experiments
          (user_id, campaign_id, content_item_id, variant_id, name, hypothesis, change_description, metric, status, starts_at, ends_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'planned',$9,$10)`,
+         VALUES ($1,$2,NULL,NULL,$3,$4,$5,$6,'planned',$7,$8)`,
         [
           userId,
           campaignId,
-          contentItemId,
-          variantId,
           "Weekly experiment " + weekStart,
           strategy.experiment.hypothesis,
           strategy.experiment.change,
