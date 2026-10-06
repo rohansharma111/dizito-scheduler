@@ -64,12 +64,27 @@ export default function MarketingContentClient() {
     finally { setVariantBusy(null); }
   }
 
+  async function saveVariant(item: ContentItem, variant: Variant) {
+    const response = await fetch(`/api/marketing/content-items/${item.id}/variants`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variantId: variant.id, hook: variant.hook, body: variant.body, cta: variant.cta, mediaId: variant.mediaId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to save variant");
+    setItems((current) => current.map((value) => value.id === item.id
+      ? { ...value, variants: (value.variants || []).map((v) => v.id === variant.id ? data.variant : v) }
+      : value));
+    return data.variant as Variant;
+  }
+
   async function createPost(item: ContentItem, variant: Variant) {
     const platformAccounts = selectedAccounts.filter((id) => accounts.find((a) => a.id === id)?.platform === variant.platform);
     if (platformAccounts.length === 0) { setError(`Select a connected ${platformLabel(variant.platform)} account to publish this variant.`); return; }
     setBusyId(item.id); setError(null);
     try {
-      const response = await fetch(`/api/marketing/content-items/${item.id}/create-post`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ selectedAccounts: platformAccounts, scheduleTime: new Date(schedule[item.id]).toISOString(), variantId: variant.id }) });
+      const savedVariant = await saveVariant(item, variant);
+      const response = await fetch(`/api/marketing/content-items/${item.id}/create-post`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ selectedAccounts: platformAccounts, scheduleTime: new Date(schedule[item.id]).toISOString(), variantId: savedVariant.id }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || "Failed to create post");
       setItems((current) => current.map((value) => value.id === item.id ? { ...value, status: "converted", postIds: [...value.postIds, Number(data.post.id)], variants: (value.variants || []).map((v) => v.id === variant.id ? { ...v, status: "converted" } : v) } : value));
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to create post"); }
