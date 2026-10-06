@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { EXPERIMENT_STATUSES, getMarketingExperiment, getMarketingExperimentOutcomes, updateMarketingExperiment } from "@/lib/marketing/experiments";
+import { EXPERIMENT_STATUSES, getMarketingExperiment, getMarketingExperimentBaselineOutcomes, getMarketingExperimentOutcomes, updateMarketingExperiment } from "@/lib/marketing/experiments";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -11,7 +11,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     const experiment = await getMarketingExperiment(userId, id);
     if (!experiment) return Response.json({ error: "Experiment not found" }, { status: 404 });
-    return Response.json({ experiment, outcomes: await getMarketingExperimentOutcomes(userId, id) });
+    return Response.json({ experiment, outcomes: await getMarketingExperimentOutcomes(userId, id), baselineOutcomes: await getMarketingExperimentBaselineOutcomes(userId, id) });
   } catch (error) {
     console.error(error);
     return Response.json({ error: "Failed to load experiment" }, { status: 500 });
