@@ -23,6 +23,14 @@ function fingerprint(payload: unknown) {
 }
 
 export async function prepareCommercePublishOperation(input: PreparePublishOperationInput) {
+  const idempotencyKey = input.idempotencyKey.trim();
+  if (!idempotencyKey || idempotencyKey.length > 255) {
+    return { error: "IDEMPOTENCY_KEY_INVALID" as const };
+  }
+  if (!input.listingId.trim() || !input.provider.trim()) {
+    return { error: "PUBLISH_OPERATION_INPUT_INVALID" as const };
+  }
+
   const requestFingerprint = fingerprint(input.requestPayload);
   const client = await pool.connect();
   try {
@@ -47,10 +55,11 @@ export async function prepareCommercePublishOperation(input: PreparePublishOpera
       FROM commerce_publish_operations
       WHERE user_id = $1 AND provider = $2 AND idempotency_key = $3
       LIMIT 1 FOR UPDATE
-    `, [input.userId, input.provider, input.idempotencyKey]);
+    `, [input.userId, input.provider, idempotencyKey]);
     if (existingResult.rows[0]) {
       const existing = existingResult.rows[0];
       if (String(existing.listing_id) !== String(input.listingId)) { await client.query("ROLLBACK"); return { error: "IDEMPOTENCY_KEY_CONFLICT" as const }; }
+      if (existing.operation !== input.operation) { await client.query("ROLLBACK"); return { error: "IDEMPOTENCY_OPERATION_CONFLICT" as const }; }
       if (existing.request_fingerprint !== requestFingerprint) { await client.query("ROLLBACK"); return { error: "IDEMPOTENCY_PAYLOAD_CONFLICT" as const }; }
       await client.query("COMMIT");
       return { operation: existing };
@@ -61,7 +70,7 @@ export async function prepareCommercePublishOperation(input: PreparePublishOpera
         (user_id, listing_id, provider, operation, idempotency_key, request_fingerprint)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
-    `, [input.userId, input.listingId, input.provider, input.operation, input.idempotencyKey, requestFingerprint]);
+    `, [input.userId, input.listingId, input.provider, input.operation, idempotencyKey, requestFingerprint]);
     await client.query("COMMIT");
     return { operation: result.rows[0] };
   } catch (error) { await client.query("ROLLBACK"); throw error; }
