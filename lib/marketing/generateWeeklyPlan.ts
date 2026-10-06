@@ -4,7 +4,7 @@ export type GeneratedWeek = {
   weekStart: string;
   weekEnd: string;
   strategySummary: string;
-  experiment: { hypothesis: string; change: string; metric: string } | null;
+  experiment: { hypothesis: string; change: string; metric: string; disposition: "refine" | "retest" | "avoid" | "measure" } | null;
   recommendations: Array<{
     day: string;
     objective: string;
@@ -43,7 +43,7 @@ export type StrategyHint = {
   optimization?: {
     summary?: string;
     opportunities?: Array<{ action?: string; rationale?: string; priority?: string; campaignId?: number | null; contentItemId?: number | null; variantId?: number | null; supportingExperimentIds?: number[]; observedOutcome?: { actionType?: string; count?: number; value?: number; platform?: string | null } | null }>;
-    experiments?: Array<{ hypothesis?: string; change?: string; metric?: string }>;
+    experiments?: Array<{ hypothesis?: string; change?: string; metric?: string; disposition?: "refine" | "retest" | "avoid" | "measure" }>;
   };
 };
 
@@ -126,7 +126,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
     weekStart,
     weekEnd: isoDate(addDays(start, 6)),
     experiment: optimizationExperiment
-      ? { hypothesis: String(optimizationExperiment.hypothesis), change: String(optimizationExperiment.change), metric: String(optimizationExperiment.metric) }
+      ? { hypothesis: String(optimizationExperiment.hypothesis), change: String(optimizationExperiment.change), metric: String(optimizationExperiment.metric), disposition: optimizationExperiment.disposition ?? "measure" }
       : null,
     strategySummary: strategyHint?.optimization?.summary
       ? strategyHint.optimization.summary + " The weekly plan turns the optimization recommendation into a reviewable execution draft; nothing is published automatically."
