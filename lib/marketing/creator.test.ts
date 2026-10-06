@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const queryMock = vi.fn();
 const createMock = vi.fn();
@@ -31,6 +31,9 @@ vi.mock("@/lib/marketing/generateWeek", () => ({
 }));
 
 describe("marketing Creator grounding", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it("rejects a content item that is not owned by the user", async () => {
     queryMock.mockResolvedValueOnce({ rowCount: 0, rows: [] });
     const { generateMarketingCopy } = await import("@/lib/marketing/creator");
