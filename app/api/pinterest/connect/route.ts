@@ -190,20 +190,20 @@ export async function POST(request: Request) {
             refresh_token = COALESCE($3, refresh_token),
             token_expires_at = CASE
               WHEN $4 IS NULL THEN token_expires_at
-              ELSE NOW() + ($4 * INTERVAL '1 second')
+              ELSE $4
             END,
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
           WHERE
-            id = $3
-            AND user_id = $4
+            id = $5
+            AND user_id = $6
           `,
           [
             reconnectAccount.account_name,
             accessToken,
             oauthData.refresh_token ?? null,
-            oauthData.expires_in ?? null,
+            oauthData.token_expires_at ?? null,
             reconnectAccountId,
             userId,
           ],
@@ -318,9 +318,7 @@ export async function POST(request: Request) {
           board.name,
           accessToken,
           oauthData.refresh_token ?? null,
-          oauthData.expires_in
-            ? new Date(Date.now() + Number(oauthData.expires_in) * 1000)
-            : null,
+          oauthData.token_expires_at ?? null,
           board.id,
           profile?.id,
           userId,
