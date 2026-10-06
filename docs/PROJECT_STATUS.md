@@ -495,3 +495,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Hardened `createCommerceChannel` to treat a uniqueness race as an existing channel rather than creating a duplicate.
 - This closes the OAuth reconnect “find then create” race for Shopify, Amazon, and Flipkart channel identities.
 - Tests/lint/build remain deferred until the complete code-level implementation pass is finished.
+
+
+### WooCommerce ambiguous publish/reconciliation contract — 2026-10-06
+- Preserved ambiguous outcomes from remote mutation failures and post-provider persistence failures instead of surfacing them as generic provider failures.
+- WooCommerce adapter normalization now maps reconciliation-required publish results to `status=ambiguous`.
+- WooCommerce reconciliation provider-read/persistence uncertainty is also exposed as `status=ambiguous` and the API returns HTTP 202 for that state.
+- Existing deterministic validation/not-found outcomes remain failed with their prior error semantics.
