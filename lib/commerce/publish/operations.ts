@@ -28,11 +28,17 @@ export async function prepareCommercePublishOperation(input: PreparePublishOpera
   try {
     await client.query("BEGIN");
     const listingResult = await client.query(`
-      SELECT id FROM product_listings
-      WHERE id = $1 AND user_id = $2
-      LIMIT 1 FOR UPDATE
+      SELECT pl.id, cc.provider
+      FROM product_listings pl
+      JOIN commerce_channels cc ON cc.id = pl.channel_id AND cc.user_id = pl.user_id
+      WHERE pl.id = $1 AND pl.user_id = $2
+      LIMIT 1 FOR UPDATE OF pl
     `, [input.listingId, input.userId]);
     if (!listingResult.rows[0]) { await client.query("ROLLBACK"); return { error: "LISTING_NOT_FOUND" as const }; }
+    if (listingResult.rows[0].provider !== input.provider) {
+      await client.query("ROLLBACK");
+      return { error: "INVALID_PROVIDER" as const };
+    }
 
     const existingResult = await client.query(`
       SELECT id, listing_id, provider, operation, idempotency_key,
