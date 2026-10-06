@@ -53,7 +53,7 @@ export async function saveWooCommerceCredentials(input: WooCommerceCredentials) 
       INSERT INTO commerce_channel_credentials (channel_id, access_token_encrypted, scopes)
       SELECT c.id, $2, $3
       FROM commerce_channels c
-      WHERE c.id = $1 AND c.user_id = $4
+      WHERE c.id = $1 AND c.user_id = $4 AND c.provider = 'woocommerce'
       ON CONFLICT (channel_id)
       DO UPDATE SET
         access_token_encrypted = EXCLUDED.access_token_encrypted,
@@ -73,7 +73,7 @@ export async function getWooCommerceCredentials(channelId: string, userId: numbe
       SELECT credentials.access_token_encrypted
       FROM commerce_channel_credentials credentials
       INNER JOIN commerce_channels channels ON channels.id = credentials.channel_id
-      WHERE credentials.channel_id = $1 AND channels.user_id = $2
+      WHERE credentials.channel_id = $1 AND channels.user_id = $2 AND channels.provider = 'woocommerce'
       LIMIT 1
     `,
     [channelId, userId],
