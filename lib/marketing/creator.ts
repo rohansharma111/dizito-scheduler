@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { pool } from "@/lib/db";
 import { buildGenerateWeekContext } from "@/lib/marketing/generateWeek";
 import { MARKETING_PLATFORMS, type MarketingPlatform } from "@/lib/marketing/contentVariants";
 
@@ -14,6 +15,7 @@ export type CreateMarketingCopyInput = {
   audience?: string;
   productIds?: number[];
   offerId?: number | null;
+  contentItemId?: number;
   platform?: MarketingPlatform;
 };
 
@@ -21,8 +23,25 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
   const context = await buildGenerateWeekContext(userId);
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const platform = input.platform;
-  const selectedProductIds = [...new Set((input.productIds ?? []).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
-  const selectedOfferId = input.offerId == null ? null : Number(input.offerId);
+  let selectedProductIds = [...new Set((input.productIds ?? []).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+  let selectedOfferId = input.offerId == null ? null : Number(input.offerId);
+  if (input.contentItemId !== undefined) {
+    if (!Number.isInteger(input.contentItemId) || input.contentItemId <= 0) throw new Error("Invalid content item reference");
+    const item = await pool.query(
+      `SELECT ci.id,
+              COALESCE(ARRAY_AGG(DISTINCT cip.product_id) FILTER (WHERE cip.product_id IS NOT NULL), '{}') AS product_ids,
+              mc.offer_id
+         FROM marketing_content_items ci
+         LEFT JOIN marketing_content_item_products cip ON cip.content_item_id = ci.id
+         LEFT JOIN marketing_campaigns mc ON mc.id = ci.campaign_id AND mc.user_id = ci.user_id
+        WHERE ci.id = $1 AND ci.user_id = $2
+        GROUP BY ci.id, mc.offer_id`,
+      [input.contentItemId, userId],
+    );
+    if (item.rowCount === 0) throw new Error("Content item not found");
+    selectedProductIds = (item.rows[0].product_ids ?? []).map(Number);
+    selectedOfferId = item.rows[0].offer_id == null ? null : Number(item.rows[0].offer_id);
+  }
   if (selectedOfferId !== null && (!Number.isInteger(selectedOfferId) || selectedOfferId <= 0)) throw new Error("Invalid offer reference");
   const availableProductIds = new Set(context.businessBrain.products.map((product) => product.id));
   const invalidProductId = selectedProductIds.find((id) => !availableProductIds.has(id));
