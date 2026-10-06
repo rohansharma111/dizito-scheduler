@@ -146,7 +146,26 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       supportingExperimentIds,
       observedOutcome,
     })),
-    experiments: parsed.experiments.slice(0, 6).map((item) => ({ hypothesis: String(item.hypothesis), change: String(item.change), metric: String(item.metric) })),
+    experiments: parsed.experiments
+      .map((item, index) => {
+        const hypothesis = String(item.hypothesis).trim();
+        const change = String(item.change).trim();
+        const metric = String(item.metric).trim();
+        const normalized = (value: string) => value.toLowerCase().replace(/\\s+/g, " ").trim();
+        const duplicate = completedExperiments.some((experiment) =>
+          normalized(experiment.hypothesis) === normalized(hypothesis)
+          && normalized(experiment.changeDescription) === normalized(change),
+        );
+        const metricObserved = completedExperiments.some((experiment) =>
+          experiment.metricEvidence.some((outcome) => normalized(outcome.actionType) === normalized(metric)),
+        );
+        const metricHistorical = completedExperiments.some((experiment) => normalized(experiment.metric) === normalized(metric));
+        const score = (duplicate ? -40 : 0) + (metricObserved ? 30 : metricHistorical ? 20 : 5);
+        return { item: { hypothesis, change, metric }, index, score };
+      })
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .slice(0, 6)
+      .map(({ item }) => item),
     measurement: parsed.measurement.slice(0, 8).map((item) => ({ metric: String(item.metric), reason: String(item.reason) })),
     guardrails: parsed.guardrails.slice(0, 8).map(String),
   };
