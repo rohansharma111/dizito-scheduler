@@ -13,7 +13,7 @@ interface RouteContext {
 async function getUserId() {
   const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
-  return Number.isInteger(userId) ? userId : null;
+  return Number.isSafeInteger(userId) && userId > 0 ? userId : null;
 }
 
 export async function GET(_request: Request, context: RouteContext) {
