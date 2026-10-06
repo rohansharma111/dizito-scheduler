@@ -15,6 +15,7 @@ import {
   mapVariantToShopifyVariant,
   type ShopifyCatalogProduct,
 } from "@/lib/platforms/shopify/mapper";
+import { syncShopifyProduct } from "@/lib/publishers/shopify-sync";
 
 interface ShopifyUserError {
   field?: string[] | null;
@@ -96,6 +97,31 @@ async function withShopifyPublishLock<T>(
       .catch((error) => console.error("Unable to release Shopify publish lock:", error));
     client.release();
   }
+}
+
+async function findShopifyProductByListingMarker(
+  channelId: string,
+  userId: number,
+  listingId: string,
+) {
+  const result = await shopifyGraphQL<{
+    products: { nodes: Array<{ id: string }> };
+  }>(
+    channelId,
+    userId,
+    `query FindDizitoProductByListingMarker($query: String!) {
+      products(first: 2, query: $query) {
+        nodes { id }
+      }
+    }`,
+    { query: `metafields.dizito.listing_id:"${listingId}"` },
+  );
+
+  const matches = result.products.nodes;
+  if (matches.length > 1) {
+    throw new Error("Multiple Shopify products match the Dizito listing marker");
+  }
+  return matches[0]?.id ?? null;
 }
 
 async function ensureListing(userId: number, channelId: string, productId: string) {
@@ -207,9 +233,29 @@ export async function publishShopifyProduct(
     throw new Error("Shopify product already exists for this listing; use the Shopify sync/update flow instead of publishing again");
   }
 
+  const recoveredExternalId = await findShopifyProductByListingMarker(
+    channelId,
+    userId,
+    String(listing.id),
+  );
+  if (recoveredExternalId) {
+    const recovered = await updateProductListingSyncState(listing.id, userId, {
+      syncStatus: "syncing",
+      externalId: recoveredExternalId,
+      lastError: null,
+      providerMetadata: {
+        provider: "shopify",
+        publishMode: "recovered_create",
+        recoveryMarker: "dizito.listing_id",
+      },
+    });
+    if (recovered.error) throw new Error(recovered.error);
+    return syncShopifyProduct(userId, channelId, String(listing.id), recoveredExternalId);
+  }
+
   try {
     const createResult = await shopifyGraphQL<ProductCreatePayload>(channelId, userId, `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id variants(first: 1) { nodes { id } } media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, {
-      product: mapProductToShopifyProduct(product),
+      product: mapProductToShopifyProduct(product, { listingId: String(listing.id) }),
       media: mapProductToShopifyMedia(product),
     });
 
