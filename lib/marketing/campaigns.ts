@@ -1,4 +1,5 @@
 import { pool } from "@/lib/db";
+import { getExperimentLearningSignal, listCompletedExperimentEvidence } from "@/lib/marketing/experiments";
 
 export type MarketingCampaign = {
   id: number;
@@ -29,6 +30,7 @@ export type MarketingCampaign = {
     converted: number;
   };
   experimentSummary: { total: number; running: number; completed: number; planned: number };
+  experimentLearning: Array<{ id: number; name: string; metric: string; learningSignal: "positive" | "negative" | "insufficient"; resultSummary: string | null }>;
   observedImpact: {
     actionCount: number;
     actionValue: number;
@@ -89,7 +91,16 @@ export async function listCampaigns(userId: number): Promise<MarketingCampaign[]
     [userId],
   );
 
-  return result.rows.map(mapCampaign);
+  const campaigns = result.rows.map(mapCampaign);
+  const evidence = await listCompletedExperimentEvidence(userId);
+  const byCampaign = new Map<number, MarketingCampaign["experimentLearning"]>();
+  for (const experiment of evidence) {
+    if (experiment.campaignId == null) continue;
+    const list = byCampaign.get(experiment.campaignId) ?? [];
+    list.push({ id: experiment.id, name: experiment.name, metric: experiment.metric, learningSignal: getExperimentLearningSignal(experiment), resultSummary: experiment.resultSummary });
+    byCampaign.set(experiment.campaignId, list);
+  }
+  return campaigns.map((campaign) => ({ ...campaign, experimentLearning: byCampaign.get(campaign.id) ?? [] }));
 }
 
 export async function getCampaign(userId: number, campaignId: number): Promise<MarketingCampaign | null> {
@@ -231,7 +242,10 @@ export async function getCampaign(userId: number, campaignId: number): Promise<M
     [userId, campaignId],
   );
 
-  return result.rows[0] ? mapCampaign(result.rows[0]) : null;
+  if (!result.rows[0]) return null;
+  const campaign = mapCampaign(result.rows[0]);
+  const evidence = await listCompletedExperimentEvidence(userId);
+  return { ...campaign, experimentLearning: evidence.filter((experiment) => experiment.campaignId === campaign.id).map((experiment) => ({ id: experiment.id, name: experiment.name, metric: experiment.metric, learningSignal: getExperimentLearningSignal(experiment), resultSummary: experiment.resultSummary })) };
 }
 
 function mapCampaign(row: any): MarketingCampaign {
