@@ -96,6 +96,15 @@ export async function persistApprovedWeek(
         if (offer.rowCount !== 1) throw new Error("Invalid offer reference");
       }
 
+      const sourceCampaignIds = [...new Set((campaign.contentItems ?? []).map((item) => item.sourceCampaignId).filter((id): id is number => id != null).map(Number))];
+      if (sourceCampaignIds.length) {
+        const sourceCampaigns = await client.query(
+          `SELECT id FROM marketing_campaigns WHERE id=ANY($1::bigint[]) AND user_id=$2`,
+          [sourceCampaignIds, userId],
+        );
+        if (sourceCampaigns.rowCount !== sourceCampaignIds.length) throw new Error("Invalid source campaign reference");
+      }
+
       const productIds = [...new Set((campaign.productIds ?? []).map(Number))];
       if (productIds.length) {
         const products = await client.query(
