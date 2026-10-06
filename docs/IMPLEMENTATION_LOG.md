@@ -256,3 +256,11 @@ Never convert “implemented” to “verified” or “production-ready” with
   - non-2xx responses as failures;
   - production URL selection only when explicitly configured.
 - These are deterministic transport-contract tests, not live provider verification.
+
+### 2026-10-06 — Commerce code-level hardening checkpoint
+- Flipkart API routes now validate session user identity before provider dispatch.
+- Publish success persistence is bound to user + listing + provider and requires a confirmed external ID.
+- Shared provider service enforces runtime draft/publish capabilities and explicit live-publish confirmation.
+- WooCommerce channel configuration/credentials are tenant-scoped by user context.
+- WooCommerce publish now records provider submission as ambiguous and requires provider read-back reconciliation before terminal success.
+- Full tests/lint/build are intentionally deferred until the remaining code-level implementation pass is complete.
