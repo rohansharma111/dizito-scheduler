@@ -48,14 +48,14 @@ export async function POST(request: Request) {
 
     // Amazon rejects parentageLevel when requirements=LISTING_PRODUCT_ONLY.
     // Let the product-type schema retain its conditional variation logic.
-    const definition = await getAmazonProductTypeDefinition(body.channelId, body.productType.trim(), {
+    const definition = await getAmazonProductTypeDefinition(body.channelId, userId, body.productType.trim(), {
       sellerId,
       requirements: "LISTING_PRODUCT_ONLY",
     });
     const schemaDocument = await fetchAmazonProductTypeSchema(definition.data);
     const schemaSummary = summarizeAmazonListingSchema(schemaDocument, draft.attributes);
 
-    const result = await previewAmazonListing(body.channelId, sellerId, draft);
+    const result = await previewAmazonListing(body.channelId, userId, sellerId, draft);
     return NextResponse.json({
       success: true,
       product: { id: product.id, name: product.name },
