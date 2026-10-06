@@ -462,3 +462,11 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - Shopify credential access is tenant/provider scoped at the credential helper boundary, not only at the caller.
 - Shopify OAuth callback and token-refresh persistence carry authenticated tenant context.
 - Shopify shop lookup requires explicit tenant context.
+
+
+### Commerce credential/provider-client hardening checkpoint — 2026-10-06
+- Flipkart credential save, OAuth callback, and token-refresh persistence are tenant-bound; provider and channel ownership are verified at the credential helper boundary.
+- Flipkart publish API now exposes ambiguous/reconciliation-required submissions as HTTP 202 and keeps confirmed/idempotent outcomes distinct.
+- Amazon credential save/read and SP-API provider access now require explicit authenticated tenant context; unscoped internal channel resolution was removed from the Amazon client path.
+- Amazon product-type discovery and connection verification propagate tenant identity to provider access.
+- Testing remains intentionally deferred until the code-level implementation pass is complete; these changes are implemented but not yet repository-verified.
