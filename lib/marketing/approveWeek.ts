@@ -52,6 +52,11 @@ export async function persistApprovedWeek(
       throw new Error("Weekly plan is already approved");
     }
 
+    if (!Number.isInteger(userId) || userId <= 0) throw new Error("Invalid user");
+    const startTime = new Date(weekStart + "T00:00:00Z").getTime();
+    const endTime = new Date(weekEnd + "T00:00:00Z").getTime();
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || startTime > endTime) throw new Error("Invalid week range");
+
     const planResult = await client.query(
       `INSERT INTO marketing_weekly_plans
        (user_id, week_start, week_end, status, strategy_summary, plan_payload)
