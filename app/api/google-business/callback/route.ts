@@ -8,6 +8,7 @@ import { createEvent } from "@/lib/events";
 import { exchangeToken } from "@/lib/platforms/google-business/exchangeToken";
 import { getProfile } from "@/lib/platforms/google-business/getProfile";
 import { getLocations } from "@/lib/platforms/google-business/getLocations";
+import type { GoogleBusinessLocation } from "@/lib/platforms/google-business/types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -98,7 +99,7 @@ export async function GET(request: Request) {
       }
 
       const location = locations.find(
-        (item: any) => item.id === account.google_location_id,
+        (item: GoogleBusinessLocation) => item.id === account.google_location_id,
       );
 
       if (!location) {
