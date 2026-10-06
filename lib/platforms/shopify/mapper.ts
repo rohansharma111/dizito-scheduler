@@ -24,6 +24,7 @@ export interface ShopifyProductCreateInput {
   vendor?: string | null;
   productType?: string | null;
   status?: "ACTIVE" | "DRAFT" | "ARCHIVED";
+  metafields?: Array<{ namespace: string; key: string; type: string; value: string }>;
 }
 
 export interface ShopifyCatalogProduct {
@@ -60,13 +61,19 @@ function mapStatus(status: string): ShopifyProductCreateInput["status"] {
   return "DRAFT";
 }
 
-export function mapProductToShopifyProduct(product: ShopifyCatalogProduct): ShopifyProductCreateInput {
+export function mapProductToShopifyProduct(
+  product: ShopifyCatalogProduct,
+  options?: { listingId?: string },
+): ShopifyProductCreateInput {
   return {
     title: product.name,
     descriptionHtml: product.description || null,
     vendor: product.brand || null,
     productType: product.category || null,
     status: mapStatus(product.status),
+    metafields: options?.listingId
+      ? [{ namespace: "dizito", key: "listing_id", type: "single_line_text_field", value: options.listingId }]
+      : undefined,
   };
 }
 
