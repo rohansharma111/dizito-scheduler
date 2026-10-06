@@ -488,3 +488,9 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - The publisher searches by the marker before creating; one match is reconciled, multiple matches fail closed.
 - Partial-create variant recovery recognizes the sole existing provider variant as the canonical first variant when no local mapping exists.
 - Legacy orphan products without the marker are not automatically claimed by heuristic matching.
+
+
+### Amazon tenant-boundary completion checkpoint — 2026-10-06
+- Amazon SP-API helpers for catalog, listing, offers, product types, and verification now require explicit authenticated tenant context.
+- OAuth credential persistence is tenant-scoped at the callback boundary.
+- No Amazon provider helper intentionally accepts channel-only access after this checkpoint.
