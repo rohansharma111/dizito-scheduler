@@ -8,6 +8,8 @@ import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adap
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  const userId = userId;
+  if (!Number.isSafeInteger(userId) || userId <= 0) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
   try {
     const url = new URL(request.url);
@@ -27,7 +29,7 @@ export async function GET(request: Request) {
        WHERE a.channel_id = $1 AND a.listing_id = $2 AND a.idempotency_key = $3
          AND a.user_id = $4 AND l.user_id = $4
        LIMIT 1`,
-      [channelId, listingId, idempotencyKey, Number(session.user.id)],
+      [channelId, listingId, idempotencyKey, userId],
     );
     if (!result.rows[0]) return NextResponse.json({ error: "PUBLISH_ATTEMPT_NOT_FOUND" }, { status: 404 });
     return NextResponse.json({ attempt: result.rows[0] });
@@ -65,7 +67,7 @@ export async function POST(request: Request) {
     } satisfies WooCommerceAdapterPayload;
 
     const result = await reconcileCommerceProvider("woocommerce", {
-      context: { channelId, userId: Number(session.user.id) },
+      context: { channelId, userId: userId },
       payload,
       externalId: externalId || undefined,
       lookupKey: sku || undefined,
