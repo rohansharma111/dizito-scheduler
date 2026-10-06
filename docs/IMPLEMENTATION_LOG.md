@@ -444,3 +444,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Locks the current mapping and performs external-ID conflict detection within the transaction.
 - Preserves existing external IDs and provider metadata merge behavior.
 - Tests/lint/build remain deferred.
+
+
+## 2026-10-06 — Commerce sync external-ID race hardening
+
+- Added the same PostgreSQL transaction advisory-lock pattern used by publish reconciliation to listing sync-state external-ID assignment.
+- Conflict detection and assignment are now serialized per tenant/channel/external ID.
+- Tests/lint/build remain deferred.
