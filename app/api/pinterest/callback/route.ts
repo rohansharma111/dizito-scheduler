@@ -100,6 +100,12 @@ export async function GET(request: Request) {
     /*
       Get Pinterest boards
     */
+    if (profile.accountType !== "BUSINESS") {
+      throw new Error(
+        "Dizito supports Pinterest Business accounts only. Please switch to or connect a Pinterest Business account.",
+      );
+    }
+
     const boards = await getBoards(token.accessToken);
 
     if (isReconnect) {
@@ -129,13 +135,24 @@ export async function GET(request: Request) {
         UPDATE social_accounts
         SET
           access_token = $1,
+          refresh_token = COALESCE($2, refresh_token),
+          token_expires_at = CASE
+            WHEN $3 IS NULL THEN token_expires_at
+            ELSE NOW() + ($3 * INTERVAL '1 second')
+          END,
           status = 'connected',
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
         WHERE id = $2 AND user_id = $3
         `,
-        [token.accessToken, account.id, userId],
+        [
+          token.accessToken,
+          token.refreshToken ?? null,
+          token.expiresIn ?? null,
+          account.id,
+          userId,
+        ],
       );
 
       await createEvent(
