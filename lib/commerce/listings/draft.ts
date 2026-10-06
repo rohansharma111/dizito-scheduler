@@ -13,6 +13,11 @@ export interface UpsertProductListingDraftInput {
   variants: ProductListingDraftVariantInput[];
 }
 
+function normalizeExternalId(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized || null;
+}
+
 export async function upsertProductListingDraft(
   userId: number,
   input: UpsertProductListingDraftInput,
