@@ -8,7 +8,7 @@ import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adap
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-  const userId = userId;
+  const userId = Number(session.user.id);
   if (!Number.isSafeInteger(userId) || userId <= 0) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
   try {
@@ -42,7 +42,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  const userId = Number(session?.user?.id);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
 
   try {
     const body = await request.json().catch(() => null);
@@ -68,7 +71,7 @@ export async function POST(request: Request) {
     } satisfies WooCommerceAdapterPayload;
 
     const result = await reconcileCommerceProvider("woocommerce", {
-      context: { channelId, userId: userId },
+      context: { channelId, userId },
       payload,
       externalId: externalId || undefined,
       lookupKey: sku || undefined,
