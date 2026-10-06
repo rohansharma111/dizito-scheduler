@@ -101,13 +101,19 @@ export const flipkartAdapter: CommerceProviderAdapter<
     }};
   },
 
-  async reconcile({ context, payload }) {
+  async reconcilePublish({ context, payload, externalId, lookupKey }) {
     if (payload.action !== "reconcile") {
-      return failed("reconcile", "INVALID_OPERATION_PAYLOAD", "Flipkart reconciliation payload is required");
+      return failed(
+        "reconcile",
+        "INVALID_OPERATION_PAYLOAD",
+        "Flipkart reconciliation payload is required",
+      );
     }
     const result = await reconcileFlipkartPublishOperation(context.userId, {
       ...payload.input,
       channelId: context.channelId,
+      ...(externalId ? { externalId } : {}),
+      ...(lookupKey ? { lookupKey } : {}),
     });
     return {
       operation: "reconcile",
@@ -116,7 +122,8 @@ export const flipkartAdapter: CommerceProviderAdapter<
       error: {
         code: "EXTERNAL_ID_CONFIRMATION_REQUIRED",
         message: "Flipkart reconciliation did not confirm an external listing ID",
-        retryable: false, ambiguous: true,
+        retryable: false,
+        ambiguous: true,
       },
     };
   },
