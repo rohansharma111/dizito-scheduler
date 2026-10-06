@@ -561,3 +561,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - If the database unique constraint wins a creation race, the transaction now resolves and locks the authoritative existing listing rather than surfacing a raw `23505` error.
 - Existing-listing draft updates continue to use row locking and provider metadata merging.
 - Validation remains deferred.
+
+
+### Commerce draft race transaction correction — 2026-10-06
+- Corrected the concurrent draft-creation recovery to use a PostgreSQL savepoint around the attempted insert.
+- A `23505` no longer leaves the outer transaction aborted before resolving the authoritative listing row.
+- Non-unique insertion failures are rolled back to the savepoint and rethrown; successful inserts release the savepoint normally.
+- Validation remains deferred.
