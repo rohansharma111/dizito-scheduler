@@ -101,7 +101,12 @@ export const flipkartAdapter: CommerceProviderAdapter<
     }};
   },
 
-  async reconcilePublish({ context, payload, externalId, lookupKey }) {
+  async reconcilePublish({
+    context,
+    payload,
+    externalId,
+    lookupKey,
+  }) {
     if (payload.action !== "reconcile") {
       return failed(
         "reconcile",
@@ -109,12 +114,33 @@ export const flipkartAdapter: CommerceProviderAdapter<
         "Flipkart reconciliation payload is required",
       );
     }
+
     const result = await reconcileFlipkartPublishOperation(context.userId, {
       ...payload.input,
       channelId: context.channelId,
       ...(externalId ? { externalId } : {}),
       ...(lookupKey ? { lookupKey } : {}),
     });
+
+    if (result.externalIdConfirmed && result.providerResult) {
+      const confirmedId =
+        typeof result.providerResult === "object" &&
+        result.providerResult !== null &&
+        "externalId" in result.providerResult &&
+        typeof (result.providerResult as { externalId?: unknown }).externalId === "string"
+          ? (result.providerResult as { externalId: string }).externalId
+          : undefined;
+
+      if (confirmedId) {
+        return {
+          operation: "reconcile",
+          status: "succeeded",
+          externalId: confirmedId,
+          data: result,
+        };
+      }
+    }
+
     return {
       operation: "reconcile",
       status: "ambiguous",
