@@ -30,7 +30,9 @@ import {
 
 describe("commerce provider service", () => {
   it("resolves registered providers", () => {
+    expect(commerceProviderAdapters.flipkart.provider).toBe("flipkart");
     expect(commerceProviderAdapters.woocommerce.provider).toBe("woocommerce");
+    expect(getRegisteredAdapter("flipkart")).toBe(commerceProviderAdapters.flipkart);
     expect(getRegisteredAdapter("woocommerce")).toBe(commerceProviderAdapters.woocommerce);
     expect(getCommerceProviderAdapter("woocommerce")).toBe(commerceProviderAdapters.woocommerce);
   });
