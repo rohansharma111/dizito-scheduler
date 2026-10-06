@@ -490,3 +490,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 
 
 - The legacy link upsert now backfills a missing variant ID on an existing Content Item → Post row without overwriting established provenance.
+
+
+## 2026-10-07 — WooCommerce channel-client boundary hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Added the missing tenant-scoped `getWooCommerceChannelConfig` implementation used by WooCommerce publish/reconcile.
+- The boundary validates authenticated tenant ownership, provider identity, active channel status, configured store URL, and tenant-scoped encrypted credentials before remote access.
+- No tests/lint/build/live provider verification executed; implementation-first sequencing remains in effect.
