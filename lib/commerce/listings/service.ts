@@ -389,6 +389,9 @@ export async function getProductListingVariants(
     INNER JOIN product_listings pl
       ON pl.id = plv.listing_id
      AND pl.user_id = $2
+    INNER JOIN products p
+      ON p.id = pl.product_id
+     AND p.user_id = $2
     INNER JOIN product_variants pv
       ON pv.id = plv.variant_id
      AND pv.product_id = pl.product_id
