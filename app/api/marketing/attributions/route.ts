@@ -111,6 +111,16 @@ export async function POST(request: Request) {
         );
         if (linked.rowCount === 0) return errorResponse("Post is not linked to campaign");
       }
+      if (variantId != null) {
+        const linked = await pool.query(
+          `SELECT 1
+             FROM marketing_content_item_posts
+            WHERE post_id=$1 AND variant_id=$2
+              AND content_item_id=$3`,
+          [postId, variantId, resolvedVariantContentItemId],
+        );
+        if (linked.rowCount === 0) return errorResponse("Post is not linked to variant");
+      }
     }
     if (orderId != null) {
       const result = await pool.query(`SELECT id, total, currency FROM orders WHERE id=$1 AND user_id=$2`, [orderId, userId]);
