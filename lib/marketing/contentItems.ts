@@ -4,6 +4,10 @@ export type MarketingContentItem = {
   id: number;
   userId: number;
   campaignId: number;
+  campaignName: string | null;
+  campaignObjective: string | null;
+  campaignAudience: string | null;
+  campaignCta: string | null;
   contentType: string;
   format: string | null;
   topic: string | null;
@@ -26,6 +30,10 @@ function mapContentItem(row: any): MarketingContentItem {
     id: Number(row.id),
     userId: Number(row.user_id),
     campaignId: Number(row.campaign_id),
+    campaignName: row.campaign_name ?? null,
+    campaignObjective: row.campaign_objective ?? null,
+    campaignAudience: row.campaign_audience ?? null,
+    campaignCta: row.campaign_cta ?? null,
     contentType: row.content_type,
     format: row.format,
     topic: row.topic,
@@ -57,6 +65,10 @@ export async function listContentItems(userId: number, campaignId?: number) {
     `
       SELECT
         ci.*,
+        c.name AS campaign_name,
+        c.objective AS campaign_objective,
+        c.audience AS campaign_audience,
+        c.cta AS campaign_cta,
         COALESCE(
           ARRAY_AGG(DISTINCT cip.product_id) FILTER (WHERE cip.product_id IS NOT NULL),
           '{}'
@@ -66,6 +78,7 @@ export async function listContentItems(userId: number, campaignId?: number) {
           '{}'
         ) AS post_ids
       FROM marketing_content_items ci
+      JOIN marketing_campaigns c ON c.id = ci.campaign_id AND c.user_id = ci.user_id
       LEFT JOIN marketing_content_item_products cip
         ON cip.content_item_id = ci.id
       LEFT JOIN marketing_content_item_posts cipost
@@ -86,6 +99,10 @@ export async function getContentItem(userId: number, contentItemId: number) {
     `
       SELECT
         ci.*,
+        c.name AS campaign_name,
+        c.objective AS campaign_objective,
+        c.audience AS campaign_audience,
+        c.cta AS campaign_cta,
         COALESCE(
           ARRAY_AGG(DISTINCT cip.product_id) FILTER (WHERE cip.product_id IS NOT NULL),
           '{}'
