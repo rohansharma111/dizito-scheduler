@@ -35,6 +35,11 @@ export async function GET(request: Request) {
     return redirectWithError(request, "Unauthorized");
   }
 
+  const userId = Number(session.user.id);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return redirectWithError(request, "Unauthorized");
+  }
+
   try {
     const url = new URL(request.url);
     const shopParam = url.searchParams.get("shop");
@@ -58,7 +63,6 @@ export async function GET(request: Request) {
 
     const shop = normalizeShopDomain(shopParam);
     const token = await exchangeShopifyAuthorizationCode(shop, code);
-    const userId = Number(session.user.id);
 
     const existingChannel = await getCommerceChannelByExternalAccount(
       userId,
