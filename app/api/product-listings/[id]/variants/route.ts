@@ -14,7 +14,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
 
-  if (!Number.isInteger(userId)) {
+  if (!Number.isSafeInteger(userId) && userId > 0) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
