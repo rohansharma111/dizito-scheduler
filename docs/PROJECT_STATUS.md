@@ -532,3 +532,13 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Added deterministic duplicate media external-ID conflict detection within a listing.
 - Legacy variant API now preserves omitted external IDs and exposes deterministic conflict responses.
 - Tests, lint, build, and provider verification remain intentionally deferred.
+
+
+### Commerce route-entry audit — 2026-10-06
+- Audited remaining Commerce publish/draft/reconcile/connect/sync route entry points against the tenant-bound provider architecture.
+- Confirmed Flipkart and WooCommerce publish/reconcile routes dispatch through the shared provider service with safe positive user IDs.
+- Confirmed Flipkart OAuth state is bound to the authenticated tenant and credentials are saved with tenant context.
+- Confirmed WooCommerce connect verifies the store before channel creation and persists credentials tenant-scoped.
+- Confirmed Shopify remains on its separate durable publish/recovery path rather than being forced into the provider-neutral ledger.
+- Removed redundant duplicate authenticated-user validation from Shopify publish/sync routes.
+- Tests, lint, build, and live provider verification remain intentionally deferred.
