@@ -20,6 +20,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = userId;
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const channelId = typeof body.channelId === "string" ? body.channelId.trim() : "";
     const listingId = typeof body.listingId === "string" ? body.listingId.trim() : "";
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
     const result = await publishCommerceProvider("woocommerce", {
       context: {
         channelId,
-        userId: Number(session.user.id),
+        userId: userId,
       },
       payload: {
         action: "publish",
