@@ -152,8 +152,8 @@ export function buildAmazonListingDraft(
 
 interface AmazonListingsItemResponse { sku?: string; status?: string; submissionId?: string; issues?: unknown[]; }
 
-export async function previewAmazonListing(channelId: string, sellerId: string, draft: AmazonListingDraft) {
-  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
+export async function previewAmazonListing(channelId: string, userId: number, sellerId: string, draft: AmazonListingDraft) {
+  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, userId, {
     method: "PUT",
     path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
     query: { marketplaceIds: getAmazonMarketplaceId(), issueLocale: "en_IN", mode: "VALIDATION_PREVIEW" },
@@ -161,8 +161,8 @@ export async function previewAmazonListing(channelId: string, sellerId: string, 
   });
 }
 
-export async function publishAmazonListing(channelId: string, sellerId: string, draft: AmazonListingDraft) {
-  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, {
+export async function publishAmazonListing(channelId: string, userId: number, sellerId: string, draft: AmazonListingDraft) {
+  return amazonSpApiRequest<AmazonListingsItemResponse>(channelId, userId, {
     method: "PUT",
     path: `/listings/2021-08-01/items/${encodeURIComponent(sellerId)}/${encodeURIComponent(draft.sku)}`,
     query: { marketplaceIds: getAmazonMarketplaceId(), issueLocale: "en_IN" },
