@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import {
-  requireCommerceProviderAdapter,
-} from "@/lib/commerce/providers/service";
-import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adapter";
+import { requireCommerceProviderAdapter } from "@/lib/commerce/providers/service";
 
 export function getWooCommercePublishErrorStatus(error: string) {
   if (error === "CHANNEL_NOT_FOUND" || error === "LISTING_NOT_FOUND") return 404;
@@ -34,6 +31,7 @@ export async function POST(request: Request) {
       !channelId ||
       !listingId ||
       !idempotencyKey ||
+      body.confirmLivePublish !== true ||
       !payload ||
       typeof payload !== "object" ||
       Array.isArray(payload)
@@ -41,7 +39,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "channelId, listingId, idempotencyKey, and an object payload are required",
+          error:
+            "channelId, listingId, idempotencyKey, confirmLivePublish=true, and an object payload are required",
         },
         { status: 400 },
       );
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
           confirmLivePublish: true,
           idempotencyKey,
         },
-      } satisfies WooCommerceAdapterPayload extends infer P ? P : never,
+      },
       confirmLivePublish: true,
       idempotencyKey,
     });
@@ -74,26 +73,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const data =
+      result.data && typeof result.data === "object"
+        ? (result.data as { idempotentReplay?: unknown; result?: unknown })
+        : null;
+    const idempotentReplay = Boolean(data?.idempotentReplay);
+
     return NextResponse.json(
       {
         success: true,
-        result: result.data,
+        result: data?.result ?? result.data,
         externalId: result.externalId,
-        idempotentReplay:
-          Boolean(result.data) &&
-          typeof result.data === "object" &&
-          "idempotentReplay" in result.data &&
-          Boolean((result.data as { idempotentReplay?: unknown }).idempotentReplay),
+        idempotentReplay,
       },
-      {
-        status:
-          result.data &&
-          typeof result.data === "object" &&
-          "idempotentReplay" in result.data &&
-          Boolean((result.data as { idempotentReplay?: unknown }).idempotentReplay)
-            ? 200
-            : 201,
-      },
+      { status: idempotentReplay ? 200 : 201 },
     );
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/publish error:", error);
