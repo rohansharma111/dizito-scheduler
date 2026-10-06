@@ -372,3 +372,5 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Fixed self-referential session user-ID defects in Commerce listing/channel routes and standardized safe positive user-ID validation across Amazon, WooCommerce, Shopify, Flipkart, and channel API boundaries.
 - Shared Commerce publish reconciliation now serializes external-ID adoption by tenant/channel/external-ID before committing the listing identity, preventing concurrent claims of the same remote object.
 - Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
+
+- Listing-variant reads now explicitly join the tenant-owned canonical product before returning mappings, closing a legacy-row tenant-boundary gap.
