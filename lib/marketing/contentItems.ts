@@ -24,6 +24,7 @@ export type MarketingContentItem = {
   plannedFor: string | null;
   productIds: number[];
   postIds: number[];
+  planningMetadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 };
@@ -53,6 +54,7 @@ function mapContentItem(row: any): MarketingContentItem {
     plannedFor: row.planned_for,
     productIds: (row.product_ids ?? []).map(Number),
     postIds: (row.post_ids ?? []).map(Number),
+    planningMetadata: row.planning_metadata ?? {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
