@@ -18,7 +18,9 @@ export type MarketingOptimization = {
     baselineComparison: { actionType: string; experimentCount: number; baselineCount: number; countChange: number; countChangePercent: number | null; experimentValue: number; baselineValue: number; valueChange: number; valueChangePercent: number | null } | null;
     learningSignal: "positive" | "negative" | "insufficient";
   }>;
-  opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null; supportingExperimentIds: number[] }>;
+  opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null;
+    attributedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null;
+    supportingExperimentIds: number[] }>;
   experiments: Array<{ hypothesis: string; change: string; metric: string; disposition: "refine" | "retest" | "avoid" | "measure" }>;
   measurement: Array<{ metric: string; reason: string }>;
   guardrails: string[];
@@ -83,18 +85,26 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       const outcome = variantOutcome || contentOutcome;
       return outcome ? { actionType: outcome.actionType, count: outcome.count, value: outcome.value, platform: "platform" in outcome ? outcome.platform : null } : null;
     })();
+    const attributedOutcome = (() => {
+      const variantOutcome = variantId != null ? context.impact.attributedVariantSummary.find((outcome) => outcome.variantId === variantId) : null;
+      const contentOutcome = contentItemId != null ? context.impact.attributedContentSummary.find((outcome) => outcome.contentItemId === contentItemId) : null;
+      const outcome = variantOutcome || contentOutcome;
+      return outcome ? { actionType: outcome.actionType, count: outcome.count, value: outcome.attributedValue, platform: "platform" in outcome ? outcome.platform : null } : null;
+    })();
     const comparisons = supportingExperimentIds.map((id) => experimentComparisons.get(id)).filter(Boolean);
     const strongestComparison = comparisons.find((comparison) => comparison?.valuePercent != null) ?? comparisons.find((comparison) => comparison?.countPercent != null) ?? null;
     const evidenceScore = Math.round(
       Math.max(0, Math.min(100,
         (observedOutcome ? Math.min(35, observedOutcome.count * 5) : 0)
         + (observedOutcome && observedOutcome.value > 0 ? 15 : 0)
+        + (attributedOutcome ? Math.min(15, attributedOutcome.count * 3) : 0)
+        + (attributedOutcome && attributedOutcome.value > 0 ? 10 : 0)
         + (strongestComparison?.countPercent != null ? Math.min(25, Math.max(-10, strongestComparison.countPercent) / 4) : 0)
         + (strongestComparison?.valuePercent != null ? Math.min(25, Math.max(-10, strongestComparison.valuePercent) / 4) : 0)
         + (supportingExperimentIds.length ? 10 : 0),
       )),
     );
-    return { item, index, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, evidenceScore };
+    return { item, index, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, attributedOutcome, evidenceScore };
   }).sort((a, b) => b.evidenceScore - a.evidenceScore || a.index - b.index);
   return {
     summary: parsed.summary.trim(),
@@ -140,7 +150,7 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       learningSignal,
       };
     }),
-    opportunities: rankedOpportunities.slice(0, 8).map(({ item, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, evidenceScore }) => ({
+    opportunities: rankedOpportunities.slice(0, 8).map(({ item, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, attributedOutcome, evidenceScore }) => ({
       action: String(item.action),
       rationale: String(item.rationale),
       campaignId: campaignId != null && campaignIds.has(campaignId) ? campaignId : null,
