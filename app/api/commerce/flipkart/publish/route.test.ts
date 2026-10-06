@@ -116,7 +116,7 @@ describe("POST /api/commerce/flipkart/publish", () => {
     });
   });
 
-  it("keeps resource and reconciliation conflicts bounded", () => {
+  it("maps idempotency conflicts to 409", () => {\n    expect(getFlipkartPublishErrorStatus("IDEMPOTENCY_KEY_CONFLICT")).toBe(409);\n    expect(getFlipkartPublishErrorStatus("IDEMPOTENCY_PAYLOAD_CONFLICT")).toBe(409);\n  });\n\n  it("keeps resource and reconciliation conflicts bounded", () => {
     expect(getFlipkartPublishErrorStatus("CHANNEL_NOT_FOUND")).toBe(404);
     expect(getFlipkartPublishErrorStatus("LISTING_NOT_FOUND")).toBe(404);
     expect(getFlipkartPublishErrorStatus("PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION")).toBe(409);
