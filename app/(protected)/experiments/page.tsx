@@ -31,10 +31,12 @@ export default function ExperimentsPage() {
   const [saving, setSaving] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<Record<number, Outcome[]>>({});
   const [baselines, setBaselines] = useState<Record<number, Outcome[]>>({});
+  const [campaignId, setCampaignId] = useState<number | null>(null);
 
-  async function load() {
+  async function load(selectedCampaignId = campaignId) {
     try {
-      const response = await fetch("/api/marketing/experiments");
+      const query = selectedCampaignId ? `?campaignId=${selectedCampaignId}` : "";
+      const response = await fetch(`/api/marketing/experiments${query}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load experiments");
       setExperiments(data.experiments ?? []);
@@ -48,7 +50,12 @@ export default function ExperimentsPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get("campaignId");
+    const parsed = value ? Number(value) : null;
+    if (parsed && Number.isInteger(parsed) && parsed > 0) setCampaignId(parsed);
+    load(parsed && Number.isInteger(parsed) && parsed > 0 ? parsed : null);
+  }, []);
 
   useEffect(() => {
     const focusId = new URLSearchParams(window.location.search).get("focus");
@@ -83,7 +90,7 @@ export default function ExperimentsPage() {
   if (loading) return <main className="mx-auto max-w-5xl p-6">Loading experiments...</main>;
 
   return <main className="mx-auto max-w-5xl space-y-6 p-6">
-    <header><p className="text-xs font-bold uppercase tracking-widest text-gray-500">AI Marketing Operator</p><h1 className="mt-1 text-3xl font-bold">Experiments</h1><p className="mt-2 text-sm text-gray-500">Track approved marketing experiments from planned execution through observed results. Results are observational and do not imply causality.</p></header>
+    <header><p className="text-xs font-bold uppercase tracking-widest text-gray-500">AI Marketing Operator</p><h1 className="mt-1 text-3xl font-bold">Experiments</h1><p className="mt-2 text-sm text-gray-500">Track approved marketing experiments from planned execution through observed results. Results are observational and do not imply causality.</p>{campaignId && <div className="mt-3 flex flex-wrap items-center gap-3"><span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold">Campaign #{campaignId} experiments</span><a href="/campaigns" className="text-sm font-semibold underline">Back to campaigns</a></div>}</header>
     {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
     {experiments.length === 0 && <div className="rounded-2xl border border-dashed p-8 text-sm text-gray-500">No experiments have been planned yet.</div>}
     <div className="space-y-4">
