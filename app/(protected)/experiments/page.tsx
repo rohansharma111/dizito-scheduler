@@ -17,11 +17,14 @@ type Experiment = {
   resultSummary: string | null;
 };
 
+type Outcome = { actionType: string; count: number; value: number };
+
 export default function ExperimentsPage() {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState<number | null>(null);
+  const [outcomes, setOutcomes] = useState<Record<number, Outcome[]>>({});
 
   async function load() {
     try {
@@ -29,6 +32,8 @@ export default function ExperimentsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load experiments");
       setExperiments(data.experiments ?? []);
+      const loaded = await Promise.all((data.experiments ?? []).map(async (item: Experiment) => { const response = await fetch(`/api/marketing/experiments/${item.id}`); const detail = await response.json(); return [item.id, detail.outcomes ?? []] as const; }));
+      setOutcomes(Object.fromEntries(loaded));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load experiments");
     } finally {
@@ -49,6 +54,7 @@ export default function ExperimentsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to update experiment");
       setExperiments((current) => current.map((item) => item.id === id ? data.experiment : item));
+      setOutcomes((current) => ({ ...current, [id]: data.outcomes ?? [] }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update experiment");
     } finally {
@@ -71,6 +77,7 @@ export default function ExperimentsPage() {
         </div></div>
         <div className="mt-4 grid gap-3 md:grid-cols-3"><div><div className="text-xs uppercase text-gray-400">Hypothesis</div><p className="mt-1 text-sm">{item.hypothesis}</p></div><div><div className="text-xs uppercase text-gray-400">Change</div><p className="mt-1 text-sm">{item.changeDescription}</p></div><div><div className="text-xs uppercase text-gray-400">Metric</div><p className="mt-1 text-sm">{item.metric}</p></div></div>
         <div className="mt-4 text-xs text-gray-500">{item.campaignId ? `Campaign #${item.campaignId}` : "No campaign"}{item.contentItemId ? ` · Content #${item.contentItemId}` : ""}{item.variantId ? ` · Variant #${item.variantId}` : ""}</div>
+        {(outcomes[item.id] ?? []).length > 0 && <div className="mt-4 rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold uppercase text-gray-400">Observed customer outcomes</div><div className="mt-2 space-y-1 text-sm">{(outcomes[item.id] ?? []).map((outcome) => <div key={outcome.actionType}>{outcome.actionType.replaceAll("_", " ")} · {outcome.count} action{outcome.count === 1 ? "" : "s"} · value {outcome.value}</div>)}</div><div className="mt-2 text-xs text-gray-500">Observed tracking evidence; not causal attribution.</div></div>}
         {item.resultSummary && <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm"><strong>Observed result:</strong> {item.resultSummary}</div>}
       </article>)}
     </div>
