@@ -113,19 +113,3 @@ export async function reconcileFlipkartPublishOperation(
   };
 }
 
-export async function confirmFlipkartPublishOperation(
-  userId: number,
-  operationId: string,
-  externalId: string,
-) {
-  const normalizedExternalId = externalId.trim();
-  if (!normalizedExternalId) {
-    throw new Error("Flipkart external ID is required");
-  }
-
-  return markCommercePublishOperationSucceeded(
-    userId,
-    operationId,
-    normalizedExternalId,
-  );
-}
