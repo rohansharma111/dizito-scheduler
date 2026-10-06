@@ -278,3 +278,7 @@ Never convert “implemented” to “verified” or “production-ready” with
 ### Commerce tenant-integrity and canonical fingerprint hardening — 2026-10-06
 - Added tenant-integrity constraints for Commerce channel/listing/publish-ledger relationships.
 - Canonicalized publish request fingerprints for deterministic idempotency behavior.
+
+### WooCommerce lifecycle state-machine hardening — 2026-10-06
+- Corrected the WooCommerce post-provider listing persistence parameter binding so a successful remote mutation cannot be recorded against the wrong database row.
+- Reconciliation now rejects conflicting existing external IDs and provider-mismatched durable attempts, and the final listing update only succeeds when the existing external ID is null or matches the provider-confirmed ID.
