@@ -29,14 +29,12 @@ This audit identifies reusable patterns for a future Meesho adapter without impl
 
 ## Credential isolation review
 
-The shared credential retrieval implementation currently looks up encrypted credentials by `channel_id` without independently checking the owning `user_id` before decryption. This does not prove an exploitable path by itself, because callers may enforce ownership elsewhere, but it creates a security-sensitive boundary that must be made explicit before introducing Meesho credential flows.
+Credential isolation was re-reviewed after the WooCommerce hardening work. The current WooCommerce credential read path requires both `channelId` and the owning `userId`, joins credentials to the channel before decrypting, and the client derives that owner ID from the validated channel record.
 
-Required follow-up:
+Remaining follow-up:
 
-- Verify channel ownership before credential retrieval and decryption.
-- Prefer a credential API that requires both `channelId` and `userId`, or accepts an already tenant-validated channel record.
-- Add negative tests for cross-tenant channel, credential, listing, and reconciliation access.
-- Treat shared credential hardening as a separate cross-provider security change; do not silently alter it as part of Meesho-specific implementation.
+- Add negative tests for cross-tenant channel, credential, listing, and reconciliation access when the test harness is available.
+- Treat any future shared credential changes as cross-provider security work rather than Meesho-specific behavior.
 
 ## Not yet verified
 
@@ -50,7 +48,7 @@ Required follow-up:
 
 ## Implementation gate
 
-The first Meesho code change should be limited to verified contract elements, likely beginning with a provider-neutral type boundary and local validation/mapping tests. Live client methods, connection routes, publishing routes, and migrations must wait until official access documentation and test authorization are available.
+The first Meesho-scoped architecture change has now been limited to a provider-neutral type boundary. No Meesho client methods, connection routes, publishing routes, provider endpoints, or migrations have been added. Those remain blocked until official access documentation and test authorization are available.
 
 ## Verification record
 
