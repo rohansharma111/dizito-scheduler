@@ -75,8 +75,13 @@ export async function POST(request: Request) {
       },
     } satisfies WooCommerceAdapterPayload;
 
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const result = await prepareCommerceProviderDraft("woocommerce", {
-      context: { channelId, userId: Number(session.user.id) },
+      context: { channelId, userId },
       payload,
     });
 
