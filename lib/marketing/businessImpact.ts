@@ -3,6 +3,8 @@ import { pool } from "@/lib/db";
 export type BusinessImpact = {
   actionSummary: Array<{ actionType: string; count: number; value: number }>;
   observedCampaignSummary: Array<{ campaignId: number | null; campaignName: string | null; actionType: string; count: number; value: number }>;
+  observedContentSummary: Array<{ contentItemId: number | null; contentTopic: string | null; actionType: string; count: number; value: number }>;
+  observedVariantSummary: Array<{ variantId: number | null; contentItemId: number | null; platform: string | null; actionType: string; count: number; value: number }>;
   attributionSummary: Array<{ campaignId: number | null; campaignName: string | null; actionType: string; count: number; attributedValue: number }>;
   revenueSummary: {
     observedLinkedOrderCount: number;
@@ -13,7 +15,7 @@ export type BusinessImpact = {
 };
 
 export async function getBusinessImpact(userId: number): Promise<BusinessImpact> {
-  const [actions, observedCampaigns, observedRevenue, attributions, attributedRevenue] = await Promise.all([
+  const [actions, observedCampaigns, observedContent, observedVariants, observedRevenue, attributions, attributedRevenue] = await Promise.all([
     pool.query(
       `SELECT action_type AS "actionType", COUNT(*)::int AS count, COALESCE(SUM(value),0)::int AS value
          FROM marketing_customer_actions
@@ -30,6 +32,28 @@ export async function getBusinessImpact(userId: number): Promise<BusinessImpact>
         WHERE a.user_id=$1 AND a.status='completed' AND a.campaign_id IS NOT NULL
         GROUP BY a.campaign_id,c.name,a.action_type
         ORDER BY count DESC`,
+      [userId],
+    ),
+    pool.query(
+      `SELECT a.content_item_id AS "contentItemId", ci.topic AS "contentTopic", a.action_type AS "actionType",
+              COUNT(*)::int AS count, COALESCE(SUM(a.value),0)::int AS value
+         FROM marketing_customer_actions a
+         LEFT JOIN marketing_content_items ci ON ci.id=a.content_item_id AND ci.user_id=a.user_id
+        WHERE a.user_id=$1 AND a.status='completed' AND a.content_item_id IS NOT NULL
+        GROUP BY a.content_item_id,ci.topic,a.action_type
+        ORDER BY count DESC
+        LIMIT 100`,
+      [userId],
+    ),
+    pool.query(
+      `SELECT a.variant_id AS "variantId", a.content_item_id AS "contentItemId", v.platform,
+              a.action_type AS "actionType", COUNT(*)::int AS count, COALESCE(SUM(a.value),0)::int AS value
+         FROM marketing_customer_actions a
+         LEFT JOIN marketing_content_item_variants v ON v.id=a.variant_id AND v.user_id=a.user_id
+        WHERE a.user_id=$1 AND a.status='completed' AND a.variant_id IS NOT NULL
+        GROUP BY a.variant_id,a.content_item_id,v.platform,a.action_type
+        ORDER BY count DESC
+        LIMIT 100`,
       [userId],
     ),
     pool.query(
@@ -63,6 +87,8 @@ export async function getBusinessImpact(userId: number): Promise<BusinessImpact>
   return {
     actionSummary: actions.rows,
     observedCampaignSummary: observedCampaigns.rows,
+    observedContentSummary: observedContent.rows,
+    observedVariantSummary: observedVariants.rows,
     attributionSummary: attributions.rows,
     revenueSummary: { ...observedRevenue.rows[0], ...attributedRevenue.rows[0] },
   };
