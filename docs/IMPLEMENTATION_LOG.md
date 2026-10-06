@@ -451,3 +451,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added the same PostgreSQL transaction advisory-lock pattern used by publish reconciliation to listing sync-state external-ID assignment.
 - Conflict detection and assignment are now serialized per tenant/channel/external ID.
 - Tests/lint/build remain deferred.
+
+
+## 2026-10-07 — Commerce mapping external-ID normalization
+
+- Added normalization of blank/whitespace-only external IDs in listing variant and draft mapping paths.
+- Existing omitted IDs continue to be preserved, while explicitly blank IDs no longer become meaningful provider identifiers.
+- Media mapping still requires the same normalization patch; validation remains deferred.
