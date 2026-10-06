@@ -121,6 +121,7 @@ export async function upsertProductListingDraft(
       );
       listing = result.rows[0];
     } else {
+      await client.query("SAVEPOINT listing_creation");
       try {
         const result = await client.query(
           `
@@ -144,10 +145,15 @@ export async function upsertProductListingDraft(
           [userId, input.channelId, input.productId, JSON.stringify(metadata)],
         );
         listing = result.rows[0];
+        await client.query("RELEASE SAVEPOINT listing_creation");
       } catch (error) {
         if ((error as { code?: string }).code !== "23505") {
+          await client.query("ROLLBACK TO SAVEPOINT listing_creation");
+          await client.query("RELEASE SAVEPOINT listing_creation");
           throw error;
         }
+
+        await client.query("ROLLBACK TO SAVEPOINT listing_creation");
 
         const concurrent = await client.query(
           `
@@ -178,6 +184,7 @@ export async function upsertProductListingDraft(
         }
 
         listing = concurrent.rows[0];
+        await client.query("RELEASE SAVEPOINT listing_creation");
       }
     }
 
