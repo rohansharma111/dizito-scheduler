@@ -1,9 +1,20 @@
 # Dizito Implementation Log
 
+## 2026-10-07 — Build/type repair and validation checkpoint
+
+- Current `main`: `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`.
+- Sequential TypeScript/build repair pass completed across Marketing, Flipkart and Shopify paths.
+- Flipkart repairs covered adapter error-code narrowing, prepared-payload narrowing/validation, and restoration of `FlipkartEnvironment`.
+- Shopify listing-sync claim handling now carries an explicit claim through the publish workflow and releases it only at the appropriate terminal state; recovery records the recovered external ID under an owned claim before normal sync.
+- Latest commit reports successful Vercel status. No fresh GitHub Actions quality run is exposed for the direct push, so repository-wide test/lint success is not claimed.
+- `merge/meesho-into-main` is 635 commits behind `main` and 0 ahead; no changes are pending from that branch.
+
+
+
 **Purpose:** chronological durable record of meaningful implementation, architecture, verification and scope decisions.  
 **Repository:** `rohansharma111/dizito-scheduler`  
-**Latest observed main:** `898317777d5aee193022452da45411648dd926ba`  
-**Last refreshed:** 2026-10-06
+**Latest observed main:** `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`  
+**Last refreshed:** 2026-10-07
 
 ## 2026-10-06 — Current-state consolidation
 
