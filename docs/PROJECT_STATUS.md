@@ -435,3 +435,7 @@ These strengthen the safety boundary but do not constitute live provider verific
 ### Commerce tenant-integrity and canonical fingerprint hardening — 2026-10-06
 - Added PostgreSQL tenant-integrity constraints linking commerce listings and publish ledgers back to their owning channel/listing tenant. Legacy rows remain reviewable because the new composite foreign keys are NOT VALID, while new writes are enforced.
 - Publish idempotency fingerprints now use canonical object-key ordering, preventing semantically identical JSON payloads with different key order from producing different fingerprints.
+
+### WooCommerce lifecycle state-machine hardening — 2026-10-06
+- Corrected the WooCommerce post-provider listing persistence parameter binding so a successful remote mutation cannot be recorded against the wrong database row.
+- Reconciliation now rejects conflicting existing external IDs and provider-mismatched durable attempts, and the final listing update only succeeds when the existing external ID is null or matches the provider-confirmed ID.
