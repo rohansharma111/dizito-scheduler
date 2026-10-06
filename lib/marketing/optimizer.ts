@@ -53,6 +53,47 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
   const variantById = new Map<number, number>(variants.map((variant) => [variant.id, variant.contentItemId]));
   const validPriorities = new Set(["high", "medium", "low"]);
   const completedExperiments = context.completedExperiments;
+  const experimentComparisons = new Map(completedExperiments.map((experiment) => {
+    const metricOutcome = experiment.metricEvidence[0] ?? null;
+    const baselineOutcome = metricOutcome ? experiment.baselineOutcomes.find((item) => item.actionType === metricOutcome.actionType) ?? null : null;
+    const countPercent = metricOutcome && baselineOutcome && baselineOutcome.count > 0
+      ? ((metricOutcome.count - baselineOutcome.count) / baselineOutcome.count) * 100
+      : null;
+    const valuePercent = metricOutcome && baselineOutcome && baselineOutcome.value > 0
+      ? ((metricOutcome.value - baselineOutcome.value) / baselineOutcome.value) * 100
+      : null;
+    return [experiment.id, { countPercent, valuePercent }] as const;
+  }));
+  const rankedOpportunities = parsed.opportunities.slice(0, 20).map((item, index) => {
+    const variantId = item.variantId != null ? Number(item.variantId) : null;
+    const contentItemId = item.contentItemId != null ? Number(item.contentItemId) : null;
+    const campaignId = item.campaignId != null ? Number(item.campaignId) : null;
+    const supportingExperimentIds = completedExperiments
+      .filter((experiment) =>
+        (experiment.variantId != null && variantId != null && experiment.variantId === variantId)
+        || (experiment.variantId == null && experiment.contentItemId != null && contentItemId != null && experiment.contentItemId === contentItemId)
+        || (experiment.variantId == null && experiment.contentItemId == null && experiment.campaignId != null && campaignId != null && experiment.campaignId === campaignId),
+      )
+      .map((experiment) => experiment.id);
+    const observedOutcome = (() => {
+      const variantOutcome = variantId != null ? context.impact.observedVariantSummary.find((outcome) => outcome.variantId === variantId) : null;
+      const contentOutcome = contentItemId != null ? context.impact.observedContentSummary.find((outcome) => outcome.contentItemId === contentItemId) : null;
+      const outcome = variantOutcome || contentOutcome;
+      return outcome ? { actionType: outcome.actionType, count: outcome.count, value: outcome.value, platform: "platform" in outcome ? outcome.platform : null } : null;
+    })();
+    const comparisons = supportingExperimentIds.map((id) => experimentComparisons.get(id)).filter(Boolean);
+    const strongestComparison = comparisons.find((comparison) => comparison?.valuePercent != null) ?? comparisons.find((comparison) => comparison?.countPercent != null) ?? null;
+    const evidenceScore = Math.round(
+      Math.max(0, Math.min(100,
+        (observedOutcome ? Math.min(35, observedOutcome.count * 5) : 0)
+        + (observedOutcome && observedOutcome.value > 0 ? 15 : 0)
+        + (strongestComparison?.countPercent != null ? Math.min(25, Math.max(-10, strongestComparison.countPercent) / 4) : 0)
+        + (strongestComparison?.valuePercent != null ? Math.min(25, Math.max(-10, strongestComparison.valuePercent) / 4) : 0)
+        + (supportingExperimentIds.length ? 10 : 0),
+      )),
+    );
+    return { item, index, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, evidenceScore };
+  }).sort((a, b) => b.evidenceScore - a.evidenceScore || a.index - b.index);
   return {
     summary: parsed.summary.trim(),
     completedExperimentEvidence: context.completedExperiments.map((experiment) => {
@@ -95,14 +136,16 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       } : null,
       };
     }),
-    opportunities: parsed.opportunities.slice(0, 8).map((item) => ({ action: String(item.action), rationale: String(item.rationale), campaignId: item.campaignId != null && campaignIds.has(Number(item.campaignId)) ? Number(item.campaignId) : null, contentItemId: item.contentItemId != null && contentItemIds.has(Number(item.contentItemId)) ? Number(item.contentItemId) : null, variantId: item.variantId != null && variantById.has(Number(item.variantId)) && (item.contentItemId == null || variantById.get(Number(item.variantId)) === Number(item.contentItemId)) ? Number(item.variantId) : null, priority: validPriorities.has(String(item.priority)) ? item.priority : "medium", supportingExperimentIds: completedExperiments
-        .filter((experiment) => (
-          (experiment.variantId != null && item.variantId != null && experiment.variantId === Number(item.variantId))
-          || (experiment.variantId == null && experiment.contentItemId != null && item.contentItemId != null && experiment.contentItemId === Number(item.contentItemId))
-          || (experiment.variantId == null && experiment.contentItemId == null && experiment.campaignId != null && item.campaignId != null && experiment.campaignId === Number(item.campaignId))
-        ))
-        .map((experiment) => experiment.id),
-      observedOutcome: (() => { const variantId = item.variantId != null ? Number(item.variantId) : null; const contentItemId = item.contentItemId != null ? Number(item.contentItemId) : null; const variantOutcome = variantId != null ? context.impact.observedVariantSummary.find((outcome) => outcome.variantId === variantId) : null; const contentOutcome = contentItemId != null ? context.impact.observedContentSummary.find((outcome) => outcome.contentItemId === contentItemId) : null; const outcome = variantOutcome || contentOutcome; return outcome ? { actionType: outcome.actionType, count: outcome.count, value: outcome.value, platform: "platform" in outcome ? outcome.platform : null } : null; })() })),
+    opportunities: rankedOpportunities.slice(0, 8).map(({ item, campaignId, contentItemId, variantId, supportingExperimentIds, observedOutcome, evidenceScore }) => ({
+      action: String(item.action),
+      rationale: String(item.rationale),
+      campaignId: campaignId != null && campaignIds.has(campaignId) ? campaignId : null,
+      contentItemId: contentItemId != null && contentItemIds.has(contentItemId) ? contentItemId : null,
+      variantId: variantId != null && variantById.has(variantId) && (contentItemId == null || variantById.get(variantId) === contentItemId) ? variantId : null,
+      priority: evidenceScore >= 60 ? "high" : evidenceScore >= 30 ? "medium" : (validPriorities.has(String(item.priority)) ? item.priority : "low"),
+      supportingExperimentIds,
+      observedOutcome,
+    })),
     experiments: parsed.experiments.slice(0, 6).map((item) => ({ hypothesis: String(item.hypothesis), change: String(item.change), metric: String(item.metric) })),
     measurement: parsed.measurement.slice(0, 8).map((item) => ({ metric: String(item.metric), reason: String(item.reason) })),
     guardrails: parsed.guardrails.slice(0, 8).map(String),
