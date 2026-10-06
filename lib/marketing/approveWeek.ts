@@ -7,9 +7,6 @@ export type ApprovedWeeklyStrategy = {
     hypothesis: string;
     change: string;
     metric: string;
-    campaignId?: number | null;
-    contentItemId?: number | null;
-    variantId?: number | null;
   } | null;
   campaigns: Array<{
     name: string;
