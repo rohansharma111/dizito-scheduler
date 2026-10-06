@@ -508,3 +508,12 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Removed the unused unscoped `getCommerceChannelByIdInternal` helper so provider code cannot accidentally bypass tenant-scoped channel lookup.
 - `updateCommerceChannel` now locks the tenant-owned channel row inside a transaction before merging metadata, preventing concurrent reconnect/update operations from losing metadata fields.
 - Shopify and Amazon credential tables already use channel foreign keys and one-to-one channel uniqueness; application reads/writes remain tenant/provider scoped.
+
+
+### Commerce listing + route boundary hardening — 2026-10-06
+- Hardened product-listing sync-state writes with a tenant-scoped transaction and row lock so concurrent updates merge provider metadata instead of replacing it.
+- Added deterministic listing external-ID conflict detection during sync-state persistence.
+- Hardened listing-variant upserts and draft saves to preserve omitted external IDs, merge provider metadata, and reject duplicate external IDs within a listing.
+- Fixed Commerce listing/channel route session-ID defects and standardized positive safe-integer validation across Commerce API boundaries, including Amazon, WooCommerce, Shopify, Flipkart, and channel routes.
+- Serialized shared Commerce publish external-ID adoption with a tenant/channel/external-ID advisory lock before reconciliation commits the remote identity.
+- No tests, lint, build, or live provider verification have been run; verification remains intentionally deferred until the code-level implementation pass is complete.
