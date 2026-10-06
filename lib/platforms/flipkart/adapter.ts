@@ -81,6 +81,15 @@ export const flipkartAdapter: CommerceProviderAdapter<
       }};
     }
 
+    const publishPayload = prepared.payload;
+    if (!publishPayload) {
+      return failed(
+        "publish",
+        "PUBLISH_PAYLOAD_MISSING",
+        "Flipkart publish preparation did not produce a provider payload",
+      );
+    }
+
     const existing = prepared.operation;
     if (existing.status === "succeeded") {
       return {
@@ -109,7 +118,7 @@ export const flipkartAdapter: CommerceProviderAdapter<
       channelId: context.channelId,
       operationId: existing.id,
       operation: existing.operation,
-      payload: prepared.payload,
+      payload: publishPayload,
     });
     if (result.status === "disabled" || result.status === "OPERATION_NOT_FOUND") {
       return {
