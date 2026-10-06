@@ -8,6 +8,7 @@ import { createEvent } from "@/lib/events";
 import { exchangeToken } from "@/lib/platforms/pinterest/exchangeToken";
 import { getProfile } from "@/lib/platforms/pinterest/getProfile";
 import { getBoards } from "@/lib/platforms/pinterest/getBoards";
+import type { PinterestBoard } from "@/lib/platforms/pinterest/types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
         throw new Error("Pinterest reconnect account not found");
       }
 
-      const board = boards.find((item: any) => item.id === account.board_id);
+      const board = boards.find((item: PinterestBoard) => item.id === account.board_id);
 
       if (!board) {
         throw new Error("Pinterest reconnect board is no longer available");
