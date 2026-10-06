@@ -187,6 +187,11 @@ export async function POST(request: Request) {
           SET
             account_name = $1,
             access_token = $2,
+            refresh_token = COALESCE($3, refresh_token),
+            token_expires_at = CASE
+              WHEN $4 IS NULL THEN token_expires_at
+              ELSE NOW() + ($4 * INTERVAL '1 second')
+            END,
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
@@ -197,6 +202,8 @@ export async function POST(request: Request) {
           [
             reconnectAccount.account_name,
             accessToken,
+            oauthData.refresh_token ?? null,
+            oauthData.expires_in ?? null,
             reconnectAccountId,
             userId,
           ],
@@ -298,11 +305,24 @@ export async function POST(request: Request) {
             $3,
             $4,
             $5,
-            $6
+            $6,
+            $7,
+            $8
           )
           RETURNING id
           `,
-        ["pinterest", board.name, accessToken, board.id, profile?.id, userId],
+        [
+          "pinterest",
+          board.name,
+          accessToken,
+          oauthData.refresh_token ?? null,
+          oauthData.expires_in
+            ? new Date(Date.now() + Number(oauthData.expires_in) * 1000)
+            : null,
+          board.id,
+          profile?.id,
+          userId,
+        ],
       );
 
       accountCount++;
