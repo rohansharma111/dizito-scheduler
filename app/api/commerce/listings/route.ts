@@ -12,7 +12,12 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const listings = await getProductListings(Number(session.user.id));
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const listings = await getProductListings(userId);
 
     return NextResponse.json({ success: true, listings });
   } catch (error) {
@@ -67,7 +72,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await upsertProductListingDraft(Number(session.user.id), {
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const result = await upsertProductListingDraft(userId, {
       channelId,
       productId,
       providerMetadata,
@@ -91,6 +101,13 @@ export async function POST(request: Request) {
 
     if (result.error === "VARIANTS_REQUIRED" || result.error === "VARIANT_NOT_FOUND") {
       return NextResponse.json({ success: false, error: "Invalid product variants" }, { status: 400 });
+    }
+
+    if (result.error === "LISTING_VARIANT_EXTERNAL_ID_CONFLICT") {
+      return NextResponse.json(
+        { success: false, error: "Listing variant external ID conflict" },
+        { status: 409 },
+      );
     }
 
     return NextResponse.json({ success: true, listing: result.listing });
