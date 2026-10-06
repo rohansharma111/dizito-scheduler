@@ -29,6 +29,22 @@ describe("POST /api/commerce/flipkart/reconcile", () => {
     mocks.getServerSession.mockResolvedValue({ user: { id: "7" } });
   });
 
+  it("rejects an invalid session user id", async () => {
+    mocks.getServerSession.mockResolvedValue({ user: { id: "NaN" } });
+
+    const response = await POST(
+      request({
+        channelId: "channel-1",
+        operationId: "operation-1",
+        listingId: "listing-1",
+        skuIds: ["SKU-1"],
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(mocks.reconcile).not.toHaveBeenCalled();
+  });
+
   it("requires a lookup key or SKU identifiers before provider dispatch", async () => {
     const response = await POST(
       request({
