@@ -15,6 +15,7 @@ export type GeneratedWeek = {
     suggestedChannels: string[];
     productId: number | null;
     mediaId: number | null;
+    sourceCampaignId: number | null;
     offerId: number | null;
     rationale: string;
     evidence: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
@@ -121,6 +122,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
         : suggestedChannels,
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
+      sourceCampaignId: strategyRecommendation?.campaignId != null ? Number(strategyRecommendation.campaignId) : null,
       offerId: selectedOffer?.id ?? null,
       supportingExperimentIds,
       rationale: optimizationOpportunity?.rationale
