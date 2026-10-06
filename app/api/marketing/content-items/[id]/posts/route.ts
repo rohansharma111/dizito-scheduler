@@ -19,7 +19,9 @@ export async function POST(
 
   const body = await request.json();
   const postId = Number(body.postId);
+  const variantId = body.variantId == null ? null : Number(body.variantId);
   if (!Number.isInteger(postId) || postId <= 0) return jsonError("Invalid postId");
+  if (variantId !== null && (!Number.isInteger(variantId) || variantId <= 0)) return jsonError("Invalid variantId");
 
   const userId = Number((session.user as any).id);
   const client = await pool.connect();
@@ -44,13 +46,38 @@ export async function POST(
       return jsonError("Post not found", 404);
     }
 
+    if (variantId !== null) {
+      const variant = await client.query(
+        `SELECT id, platform
+           FROM marketing_content_item_variants
+          WHERE id = $1 AND content_item_id = $2 AND user_id = $3`,
+        [variantId, contentItemId, userId],
+      );
+      if (variant.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return jsonError("Content variant not found", 404);
+      }
+
+      const target = await client.query(
+        `SELECT 1
+           FROM post_targets
+          WHERE post_id = $1 AND platform = $2
+          LIMIT 1`,
+        [postId, variant.rows[0].platform],
+      );
+      if (target.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return jsonError("Post is not targeted to the variant platform");
+      }
+    }
+
     await client.query(
       `
-        INSERT INTO marketing_content_item_posts (content_item_id, post_id)
-        VALUES ($1, $2)
+        INSERT INTO marketing_content_item_posts (content_item_id, post_id, variant_id)
+        VALUES ($1, $2, $3)
         ON CONFLICT DO NOTHING
       `,
-      [contentItemId, postId],
+      [contentItemId, postId, variantId],
     );
 
     await client.query(
@@ -59,7 +86,7 @@ export async function POST(
     );
 
     await client.query("COMMIT");
-    return Response.json({ success: true, contentItemId, postId });
+    return Response.json({ success: true, contentItemId, postId, variantId });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error(error);
