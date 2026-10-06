@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { publishWooCommerceProduct } from "@/lib/platforms/woocommerce/publish";
+export function getWooCommercePublishErrorStatus(error: string) {
+  if (error === "CHANNEL_NOT_FOUND" || error === "LISTING_NOT_FOUND") return 404;
+  if (
+    error === "LISTING_ALREADY_PUBLISHED" ||
+    error === "LISTING_IDEMPOTENCY_KEY_MISMATCH" ||
+    error === "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION"
+  ) return 409;
+  return 400;
+}
+
 
 export async function POST(request: Request) {
   try {
@@ -27,13 +37,7 @@ export async function POST(request: Request) {
     });
 
     if ("error" in result) {
-      const status = result.error === "CHANNEL_NOT_FOUND" || result.error === "LISTING_NOT_FOUND"
-        ? 404
-        : result.error === "LISTING_ALREADY_PUBLISHED"
-          || result.error === "LISTING_IDEMPOTENCY_KEY_MISMATCH"
-          || result.error === "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION"
-          ? 409
-          : 400;
+      const status = getWooCommercePublishErrorStatus(result.error);
       return NextResponse.json({ success: false, error: result.error }, { status });
     }
 
