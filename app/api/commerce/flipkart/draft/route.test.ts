@@ -38,6 +38,15 @@ describe("POST /api/commerce/flipkart/draft", () => {
     expect(mocks.prepareDraft).not.toHaveBeenCalled();
   });
 
+  it("rejects an invalid session user id", async () => {
+    mocks.getServerSession.mockResolvedValue({ user: { id: "not-a-user-id" } });
+
+    const response = await POST(request({ channelId: "channel-1", product: {}, variants: [{ variantId: "v1" }] }));
+
+    expect(response.status).toBe(401);
+    expect(mocks.prepareDraft).not.toHaveBeenCalled();
+  });
+
   it("validates channel and variants before provider dispatch", async () => {
     const response = await POST(request({ channelId: "channel-1", product: {}, variants: [] }));
 
