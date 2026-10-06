@@ -31,6 +31,42 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
   return body as T;
 }
 
+export async function getWooCommerceChannelConfig(channelId: string, userId: number) {
+  const channel = await getCommerceChannelById(channelId, userId);
+  if (!channel) {
+    throw new Error("WooCommerce channel not found");
+  }
+  if (channel.provider !== "woocommerce") {
+    throw new Error("Invalid WooCommerce channel provider");
+  }
+  if (channel.status !== "active") {
+    throw new Error(`WooCommerce channel is not active (status: ${channel.status})`);
+  }
+
+  const metadata =
+    channel.metadata && typeof channel.metadata === "object"
+      ? (channel.metadata as Record<string, unknown>)
+      : {};
+  const storeUrlValue = metadata.storeUrl;
+  if (typeof storeUrlValue !== "string" || !storeUrlValue.trim()) {
+    throw new Error("WooCommerce store URL is not configured");
+  }
+
+  const credentials = await getWooCommerceCredentials(channelId, userId);
+  if (!credentials) {
+    throw new Error("WooCommerce credentials not found");
+  }
+
+  return {
+    channel,
+    config: {
+      storeUrl: normalizeWooCommerceStoreUrl(storeUrlValue),
+      consumerKey: credentials.consumerKey,
+      consumerSecret: credentials.consumerSecret,
+    } satisfies WooCommerceClientConfig,
+  };
+}
+
 export async function getWooCommerceSystemStatus(config: WooCommerceClientConfig) { return wooCommerceRequest<unknown>(config, "system_status"); }
 export async function createWooCommerceProduct(config: WooCommerceClientConfig, payload: Record<string, unknown>) { return wooCommerceRequest<unknown>(config, "products", { method: "POST", body: JSON.stringify(payload) }); }
 export async function getWooCommerceProduct(config: WooCommerceClientConfig, externalId: string) { return wooCommerceRequest<Record<string, unknown>>(config, `products/${encodeURIComponent(externalId)}`); }
