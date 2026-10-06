@@ -123,7 +123,8 @@ describe("reconcileWooCommercePublish", () => {
     const query = vi.fn()
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
-      .mockRejectedValueOnce(new Error("listing update failed"));
+      .mockRejectedValueOnce(new Error("listing update failed"))
+      .mockResolvedValueOnce({});
     const client = { query, release: vi.fn() };
     mocks.pool.connect.mockResolvedValue(client);
 
@@ -148,7 +149,8 @@ describe("reconcileWooCommercePublish", () => {
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
       .mockResolvedValueOnce({ rowCount: 1 })
-      .mockRejectedValueOnce(new Error("attempt update failed"));
+      .mockRejectedValueOnce(new Error("attempt update failed"))
+      .mockResolvedValueOnce({});
     const client = { query, release: vi.fn() };
     mocks.pool.connect.mockResolvedValue(client);
 
