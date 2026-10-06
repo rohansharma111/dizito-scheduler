@@ -229,3 +229,30 @@ Never convert “implemented” to “verified” or “production-ready” with
 - **Files:** `lib/commerce/publish/operations.ts`, `lib/commerce/publish/operations.test.ts`
 - **Implemented behavior:** Success transitions now fail closed without a non-empty external ID, trim the confirmed provider ID before persistence, and continue to allow success only from `prepared`, `in_progress`, or `unknown`. Focused tests cover the success invariant and lifecycle eligibility for start, failed, and unknown states.
 - **Verification:** GitHub repository writes succeeded. Local test/lint/type-check/build and DB execution remain unverified; no provider mutation was executed.
+
+
+## 2026-10-06 — Publish lifecycle success-transition hardening and tests
+
+- Commits:
+  - `ee24383a78bfda2c3e03f65d60eb84849b65bb42` — harden publish success transition.
+  - `c0e6b8ed4c760208adb6b537480e31549e8d8b34` — add publish operation lifecycle tests.
+- Implemented:
+  - success now requires a non-empty confirmed external ID;
+  - confirmed external ID is normalized and persisted explicitly;
+  - success is restricted to prepared/in-progress/unknown operations;
+  - focused tests cover success preconditions and legal state transitions.
+- Verification limitation:
+  - tests are present in the repository; no fresh overall CI pass is claimed here.
+  
+## 2026-10-06 — Flipkart client contract verification seam
+
+- Commits:
+  - `f3bda849a663a5dde97ec076051cf6daa0e3e2f2` — add Flipkart client contract tests.
+  - `bb01a2701ebf5df54d67386e2f8a371216b2d74c` — document verification seam.
+- Tests cover:
+  - sandbox seller API URL and bearer auth;
+  - SKU normalization/encoding and 1–10 lookup bounds;
+  - empty/expired token fail-closed behavior;
+  - non-2xx responses as failures;
+  - production URL selection only when explicitly configured.
+- These are deterministic transport-contract tests, not live provider verification.
