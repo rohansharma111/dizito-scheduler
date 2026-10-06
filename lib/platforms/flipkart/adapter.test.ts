@@ -111,7 +111,7 @@ describe("flipkartAdapter", () => {
       externalId: "FK-123",
     });
     expect(mocks.reconcile).toHaveBeenCalledWith(7, {
-      channelId: "context-channel",
+      channelId: "channel-1",
       operationId: "operation-1",
       listingId: "listing-1",
       skuIds: ["SKU-1"],
