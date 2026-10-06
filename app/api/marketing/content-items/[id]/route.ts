@@ -41,6 +41,10 @@ export async function PATCH(
   if (body.status !== undefined && !allowedStatuses.includes(body.status)) {
     return jsonError("Invalid status");
   }
+  if (body.contentType !== undefined && (typeof body.contentType !== "string" || body.contentType.length === 0 || body.contentType.length > 30)) return jsonError("Invalid contentType");
+  if (body.format !== undefined && body.format !== null && (typeof body.format !== "string" || body.format.length > 30)) return jsonError("Invalid format");
+  if (body.plannedFor !== undefined && body.plannedFor !== null && (typeof body.plannedFor !== "string" || Number.isNaN(new Date(body.plannedFor).getTime()))) return jsonError("Invalid plannedFor");
+  if (body.channelStrategy !== undefined && (typeof body.channelStrategy !== "object" || Array.isArray(body.channelStrategy) || body.channelStrategy === null)) return jsonError("Invalid channelStrategy");
 
   const existing = await getContentItem(userId, contentItemId);
   if (!existing) return jsonError("Content item not found", 404);
