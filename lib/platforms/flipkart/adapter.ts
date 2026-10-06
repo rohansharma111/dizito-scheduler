@@ -74,7 +74,7 @@ export const flipkartAdapter: CommerceProviderAdapter<
       ...payload.input,
       channelId: context.channelId,
     });
-    if ("error" in prepared) {
+    if (!("payload" in prepared)) {
       const errorCode = prepared.error ?? "PUBLISH_PREPARATION_FAILED";
       return { operation: "publish", status: "failed", error: {
         code: errorCode, message: errorCode, retryable: false, ambiguous: false,
