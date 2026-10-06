@@ -292,3 +292,8 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Changed shared publish-success persistence to transactionally lock/update the operation and listing together, requiring matching or empty existing external identity.
 - Normalized deterministic Flipkart reconciliation errors as failed and provider/read-back uncertainty as ambiguous/retryable.
 - Fixed the WooCommerce reconciliation POST route's authenticated user ID handling; the previous self-reference was invalid and the POST path now validates the same safe positive tenant identity as the GET path.
+### 2026-10-06 — Commerce provider-entry audit
+- Fixed the WooCommerce publish route to derive the authenticated user ID from the session before provider dispatch.
+- Hardened Shopify credential read/write helpers with tenant/provider ownership checks.
+- Updated Shopify callback and refresh paths to pass user context into credential persistence.
+- Removed an invalid unscoped Shopify `getShop` call signature by requiring explicit tenant context.
