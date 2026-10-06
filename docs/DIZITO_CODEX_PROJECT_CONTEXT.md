@@ -432,3 +432,6 @@ These tests are deterministic repository tests. They do not replace live/sandbox
 
 ### Commerce code-level hardening — 2026-10-06
 The active Commerce provider boundary now treats provider mutations as tenant-scoped state machines: runtime capability/confirmation checks are enforced centrally; publish success is bound to the requested listing/provider and confirmed external identity; WooCommerce channel credential lookup is tenant-scoped; WooCommerce publish requires provider read-back reconciliation before terminal success. Testing is intentionally deferred until the code-level implementation pass is complete.
+
+### Commerce hardening continuation — 2026-10-06
+The publish ledger now reserves idempotency keys atomically and validates listing/provider/operation identity, preventing concurrent duplicate mutations and cross-operation key reuse. WooCommerce provider mutation state remains ambiguous until read-back reconciliation, including when post-mutation persistence fails; its API exposes that state as HTTP 202 rather than a false publish success.
