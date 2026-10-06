@@ -126,6 +126,16 @@ export async function POST(
     );
     if (item.rowCount === 0) return errorResponse("Content item not found", 404);
 
+    const existingVariant = await pool.query(
+      `SELECT id, status
+         FROM marketing_content_item_variants
+        WHERE content_item_id = $1 AND user_id = $2 AND platform = $3`,
+      [contentItemId, userId, platform],
+    );
+    if (existingVariant.rows[0]?.status === "converted") {
+      return errorResponse("Converted variants cannot be edited", 409);
+    }
+
     const mediaId = body.mediaId == null ? null : Number(body.mediaId);
     if (mediaId !== null) {
       const media = await pool.query(
