@@ -1,6 +1,6 @@
 # Dizito Project Status & Roadmap
 
-**Last updated:** 2026-09-22  
+**Last updated:** 2026-10-06  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Branch:** `main`  
 **Project:** Dizito — AI Commerce Operating System
@@ -410,3 +410,13 @@ Use this compact format for future entries:
   - Runtime verification remains the blocking evidence gap; Flipkart sandbox response/behavior is still not verified.
 - Next action:
   - Once CI is observable, resolve any test/type/lint failures. Then run controlled sandbox reconciliation and publish verification with production mutation still disabled by default.
+
+
+## 2026-10-06 — Flipkart publish confirmation bypass audit
+
+- Audited the Flipkart publish/reconcile state transitions after the idempotency and reconciliation hardening.
+- The canonical reconciliation path is the only intended path that can transition a publish operation to `succeeded`: it must first query Flipkart and extract a concrete provider listing identifier, and an optional caller-supplied external ID must match that provider-confirmed identifier.
+- Removed the unused direct confirmation helpers from the Flipkart publish/reconcile modules. This eliminates an unnecessary exported path that could have allowed a caller to mark an operation successful from a caller-supplied external ID without performing provider reconciliation.
+- Unrestricted Flipkart mutation remains fail-closed behind `FLIPKART_LIVE_PUBLISH_ENABLED`; no sandbox/live execution was enabled by this change.
+- Runtime CI/build/type/lint verification remains pending because no observable GitHub Actions run is currently available through the repository integration.
+- Next gate: controlled Flipkart provider verification with authoritative response-shape evidence before any production mutation flag is enabled.
