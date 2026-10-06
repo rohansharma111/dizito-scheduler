@@ -56,6 +56,13 @@ export async function POST(request: Request) {
       const row = await pool.query(`SELECT id FROM customers WHERE id=$1 AND user_id=$2`, [customerId, userId]);
       if (row.rowCount === 0) return errorResponse("Customer not found", 404);
     }
+    if (orderId !== null) {
+      const row = await pool.query(
+        `SELECT id FROM orders WHERE id=$1 AND user_id=$2`,
+        [orderId, userId],
+      );
+      if (row.rowCount === 0) return errorResponse("Order not found", 404);
+    }
 
     const value = body.value == null ? null : Number(body.value);
     if (value !== null && (!Number.isInteger(value) || value < 0)) return errorResponse("Invalid value");
