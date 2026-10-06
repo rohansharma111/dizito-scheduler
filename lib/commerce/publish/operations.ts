@@ -159,7 +159,7 @@ export async function markCommercePublishOperationSucceeded(
     }
 
     const listingResult = await client.query(`
-      SELECT id, external_id
+      SELECT id, channel_id, external_id
       FROM product_listings
       WHERE id = $1
         AND user_id = $2
@@ -174,6 +174,30 @@ export async function markCommercePublishOperationSucceeded(
     }
 
     if (listing.external_id && listing.external_id !== normalizedExternalId) {
+      await client.query("ROLLBACK");
+      throw new Error("LISTING_EXTERNAL_ID_MISMATCH");
+    }
+
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`,
+      [`commerce-external-id:${userId}:${listing.channel_id}:${normalizedExternalId}`],
+    );
+
+    const externalIdConflict = await client.query(
+      `
+      SELECT id
+      FROM product_listings
+      WHERE channel_id = $1
+        AND user_id = $2
+        AND external_id = $3
+        AND id <> $4
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [listing.channel_id, userId, normalizedExternalId, listingId],
+    );
+
+    if (externalIdConflict.rows[0]) {
       await client.query("ROLLBACK");
       throw new Error("LISTING_EXTERNAL_ID_MISMATCH");
     }
