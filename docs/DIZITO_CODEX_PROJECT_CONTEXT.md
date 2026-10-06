@@ -404,10 +404,11 @@ After implementation:
 
 ## 18. Current snapshot
 
-At the latest observed main head (`898317777d5aee193022452da45411648dd926ba`):
+At the latest observed main head (`2ceb7fbeaf6828e4b18e936e753d65a48cffdc1e`):
 - shared commerce provider dispatch is established for WooCommerce/Flipkart;
 - Flipkart draft/publish/reconcile boundaries are hardened;
 - Flipkart success requires provider-confirmed reconciliation;
+- commerce publish success transitions fail closed without a non-empty external ID, with focused lifecycle regression coverage;
 - WooCommerce publish/reconcile uses durable/idempotent operation handling;
 - Amazon catalog matching and separate offer foundation exist;
 - AI Creator is grounded, review-gated and fail-closed on malformed output;
