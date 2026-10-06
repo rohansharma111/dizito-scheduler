@@ -77,7 +77,7 @@ export default function CampaignsPage() {
       if (!response.ok) throw new Error(data.error || "Failed to create content item");
       setContentForm({ contentType: "social_post", format: "social_post", topic: "", cta: "" });
       setMessage("Content Item added as planned. It must be approved before scheduling.");
-      await loadContent(selectedId);
+      await Promise.all([loadContent(selectedId), load()]);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Failed to create content item"); }
     finally { setSaving(false); }
   }
