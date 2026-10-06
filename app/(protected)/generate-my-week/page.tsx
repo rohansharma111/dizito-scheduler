@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
@@ -18,6 +18,7 @@ export default function GenerateMyWeekPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [plan, setPlan] = useState<any>(null);
+  const [approved, setApproved] = useState(false);
 
   const weekEnd = useMemo(() => {
     const d = new Date(`${weekStart}T00:00:00`);
@@ -28,6 +29,7 @@ export default function GenerateMyWeekPage() {
   async function generate() {
     setLoading(true);
     setMessage("");
+    setApproved(false);
     try {
       const response = await fetch("/api/marketing/weekly-plans/generate", {
         method: "POST",
@@ -36,7 +38,7 @@ export default function GenerateMyWeekPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to generate week");
-      setPlan(data.weeklyPlan ?? data.plan ?? data);
+      setPlan(data.generatedWeek);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to generate week");
     } finally {
@@ -48,29 +50,53 @@ export default function GenerateMyWeekPage() {
     if (!plan) return;
     setSaving(true);
     setMessage("");
+
+    const recommendations = Array.isArray(plan.recommendations) ? plan.recommendations : [];
+    const first = recommendations[0];
+    const strategy = {
+      strategySummary: plan.strategySummary,
+      campaigns: [
+        {
+          name: `Weekly ${plan.weekStart} marketing campaign`,
+          objective: first?.objective ?? "Drive consistent marketing activity",
+          audience: "Existing and prospective customers",
+          offerId: first?.offerId ?? null,
+          productIds: [...new Set(recommendations.map((item: any) => item.productId).filter((id: unknown): id is number => typeof id === "number"))],
+          cta: first?.cta ?? "Get started",
+          channelStrategy: { platforms: [...new Set(recommendations.flatMap((item: any) => item.suggestedChannels ?? []))] },
+          contentItems: recommendations.map((item: any) => ({
+            contentType: item.contentType,
+            format: "social_post",
+            topic: item.topic,
+            angle: item.objective,
+            hook: item.hook,
+            body: null,
+            cta: item.cta,
+            mediaId: item.mediaId ?? null,
+            plannedFor: item.day,
+          })),
+        },
+      ],
+    };
+
     try {
-      const response = await fetch("/api/marketing/weekly-plans", {
+      const response = await fetch("/api/marketing/weekly-plans/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          weekStart,
-          weekEnd,
-          status: "approved",
-          strategySummary: plan.strategySummary ?? plan.strategy_summary ?? plan.objective ?? "Weekly marketing plan",
-          planPayload: plan.planPayload ?? plan.plan_payload ?? plan,
-          campaignIds: Array.isArray(plan.campaignIds) ? plan.campaignIds : [],
-        }),
+        body: JSON.stringify({ weekStart, weekEnd, strategy }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to approve week");
-      setPlan(data.weeklyPlan ?? data);
-      setMessage("Week approved.");
+      setApproved(true);
+      setMessage("Week approved. Campaign and Content Items are ready for review; nothing has been published.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to approve week");
     } finally {
       setSaving(false);
     }
   }
+
+  const recommendations = plan?.recommendations ?? [];
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
@@ -87,10 +113,10 @@ export default function GenerateMyWeekPage() {
       </div>
 
       <section style={{ display: "flex", gap: 12, marginBottom: 28 }}>
-        <button onClick={generate} disabled={loading} style={{ padding: "12px 18px", borderRadius: 9, border: 0, cursor: loading ? "wait" : "pointer", fontWeight: 700 }}>
+        <button onClick={generate} disabled={loading || saving} style={{ padding: "12px 18px", borderRadius: 9, border: 0, cursor: loading ? "wait" : "pointer", fontWeight: 700 }}>
           {loading ? "Generating…" : "Generate My Week"}
         </button>
-        {plan && <button onClick={approve} disabled={saving} style={{ padding: "12px 18px", borderRadius: 9, border: "1px solid #bbb", cursor: saving ? "wait" : "pointer", fontWeight: 700 }}>
+        {plan && !approved && <button onClick={approve} disabled={saving || recommendations.length === 0} style={{ padding: "12px 18px", borderRadius: 9, border: "1px solid #bbb", cursor: saving ? "wait" : "pointer", fontWeight: 700 }}>
           {saving ? "Approving…" : "Approve Week"}
         </button>}
       </section>
@@ -101,21 +127,21 @@ export default function GenerateMyWeekPage() {
 
       {plan && <section style={{ display: "grid", gap: 16 }}>
         <div style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
-          <h2 style={{ marginTop: 0 }}>{plan.objective ?? plan.strategySummary ?? "Your weekly marketing plan"}</h2>
-          {plan.rationale && <p style={{ opacity: 0.75 }}>{plan.rationale}</p>}
+          <h2 style={{ marginTop: 0 }}>{plan.strategySummary}</h2>
+          <p style={{ marginBottom: 0, opacity: 0.7 }}>Review the recommendations below before approving. Approval creates a planned campaign and Content Items; it does not schedule or publish posts.</p>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
-          {(plan.items ?? plan.recommendations ?? plan.contentItems ?? []).map((item: any, index: number) => (
-            <article key={item.id ?? index} style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
+          {recommendations.map((item: any, index: number) => (
+            <article key={`${item.day}-${index}`} style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <strong>{dayNames[index] ?? `Day ${index + 1}`}</strong>
-                <span style={{ opacity: 0.6 }}>{item.contentType ?? item.content_type ?? "Content"}</span>
+                <strong>{dayNames[index] ?? item.day}</strong>
+                <span style={{ opacity: 0.6 }}>{item.contentType}</span>
               </div>
-              <h3 style={{ marginBottom: 8 }}>{item.topic ?? item.title ?? item.hook ?? "Marketing content"}</h3>
-              {item.hook && <p><strong>Hook:</strong> {item.hook}</p>}
-              {item.cta && <p><strong>CTA:</strong> {item.cta}</p>}
-              {item.rationale && <p style={{ opacity: 0.7 }}>{item.rationale}</p>}
-              {(item.channels ?? item.suggestedChannels ?? []).length > 0 && <p style={{ fontSize: 13, opacity: 0.65 }}>Channels: {(item.channels ?? item.suggestedChannels).join(", ")}</p>}
+              <h3 style={{ marginBottom: 8 }}>{item.topic}</h3>
+              <p><strong>Hook:</strong> {item.hook}</p>
+              <p><strong>CTA:</strong> {item.cta}</p>
+              <p style={{ opacity: 0.7 }}>{item.rationale}</p>
+              {item.suggestedChannels?.length > 0 && <p style={{ fontSize: 13, opacity: 0.65 }}>Channels: {item.suggestedChannels.join(", ")}</p>}
             </article>
           ))}
         </div>
