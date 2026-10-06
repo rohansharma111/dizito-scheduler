@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       providerMetadata,
       variants: variants.map((variant: { variantId: string; externalId?: unknown; providerMetadata?: unknown }) => ({
         variantId: variant.variantId.trim(),
-        externalId: typeof variant.externalId === "string" ? variant.externalId : null,
+        ...(typeof variant.externalId === "string" ? { externalId: variant.externalId } : {}),
         providerMetadata:
           variant.providerMetadata && typeof variant.providerMetadata === "object" && !Array.isArray(variant.providerMetadata)
             ? variant.providerMetadata as Record<string, unknown>
