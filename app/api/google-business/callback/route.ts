@@ -3,10 +3,12 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { createEvent } from "@/lib/events";
 
 import { exchangeToken } from "@/lib/platforms/google-business/exchangeToken";
 import { getProfile } from "@/lib/platforms/google-business/getProfile";
 import { getLocations } from "@/lib/platforms/google-business/getLocations";
+import type { GoogleBusinessLocation } from "@/lib/platforms/google-business/types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -53,6 +55,12 @@ export async function GET(request: Request) {
 
   const userId = (session.user as any).id;
 
+  const reconnectAccountId =
+    cookieStore.get("google_business_oauth_reconnect")?.value || null;
+  const reconnectType =
+    cookieStore.get("google_business_oauth_reconnect_type")?.value || "account";
+  const isReconnect = Boolean(reconnectAccountId);
+
   try {
     /*
       Exchange authorization code
@@ -74,6 +82,84 @@ export async function GET(request: Request) {
       );
     }
 
+    if (isReconnect) {
+      const accountResult = await pool.query(
+        `
+        SELECT id, account_name, google_location_id
+        FROM social_accounts
+        WHERE id = $1 AND user_id = $2 AND platform = 'google_business'
+        `,
+        [reconnectAccountId, userId],
+      );
+
+      const account = accountResult.rows[0];
+
+      if (!account) {
+        throw new Error("Google Business reconnect account not found");
+      }
+
+      const location = locations.find(
+        (item: GoogleBusinessLocation) => item.id === account.google_location_id,
+      );
+
+      if (!location) {
+        throw new Error("Google Business reconnect location is no longer available");
+      }
+
+      await pool.query(
+        `
+        UPDATE social_accounts
+        SET
+          access_token = $1,
+          refresh_token = $2,
+          status = 'connected',
+          health_status = 'healthy',
+          last_checked_at = NOW(),
+          updated_at = NOW()
+        WHERE id = $3 AND user_id = $4
+        `,
+        [token.accessToken, token.refreshToken ?? null, account.id, userId],
+      );
+
+      await createEvent(
+        "ACCOUNT_RECONNECTED",
+        "social_account",
+        account.id,
+        userId,
+        {
+          platform: "google_business",
+          reconnectType,
+          locationId: account.google_location_id,
+        },
+      );
+
+      if (reconnectType === "recover") {
+        try {
+          await fetch(
+            process.env.NEXTAUTH_URL + "/api/post-targets/recover-auth",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                socialAccountId: account.id,
+              }),
+            },
+          );
+        } catch (error) {
+          console.error("Google Business recover auth failed", error);
+        }
+      }
+
+      cookieStore.delete("google_business_oauth_state");
+      cookieStore.delete("google_business_oauth_reconnect");
+      cookieStore.delete("google_business_oauth_reconnect_type");
+
+      return Response.redirect(
+        process.env.NEXTAUTH_URL + "/accounts?reconnected=true",
+      );
+    }
     /*
       Remove previous temporary OAuth session
     */
@@ -127,6 +213,8 @@ export async function GET(request: Request) {
       Cleanup state cookie
     */
     cookieStore.delete("google_business_oauth_state");
+    cookieStore.delete("google_business_oauth_reconnect");
+    cookieStore.delete("google_business_oauth_reconnect_type");
 
     /*
       Redirect to location selection

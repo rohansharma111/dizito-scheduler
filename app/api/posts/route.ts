@@ -41,6 +41,7 @@ export async function GET() {
         )
       ) FILTER (
         WHERE pt.id IS NOT NULL
+          AND sa.id IS NOT NULL
       ),
       '[]'
     ) AS targets
@@ -49,6 +50,10 @@ export async function GET() {
 
   LEFT JOIN post_targets pt
     ON pt.post_id = p.id
+
+  LEFT JOIN social_accounts sa
+    ON sa.id = pt.social_account_id
+    AND sa.user_id = p.user_id
 
   WHERE p.user_id = $1
 

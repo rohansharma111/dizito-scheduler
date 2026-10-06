@@ -1,7 +1,11 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const reconnect = searchParams.get("reconnect");
+  const reconnectType = searchParams.get("type") ?? "account";
+
   const clientId = process.env.GOOGLE_BUSINESS_CLIENT_ID;
 
   const redirectUri = process.env.GOOGLE_BUSINESS_REDIRECT_URI;
@@ -22,6 +26,22 @@ export async function GET() {
   const cookieStore = await cookies();
 
   cookieStore.set("google_business_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
+
+  cookieStore.set("google_business_oauth_reconnect", reconnect ?? "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
+
+  cookieStore.set("google_business_oauth_reconnect_type", reconnectType, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
