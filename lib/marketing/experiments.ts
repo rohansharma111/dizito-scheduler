@@ -54,6 +54,67 @@ function outcomeSummary(outcomes: ExperimentOutcome[]) {
   return outcomes.map((item) => `${item.actionType}: ${item.count} action${item.count === 1 ? "" : "s"}, observed value ${item.value}`).join("; ");
 }
 
+
+export type CompletedExperimentEvidence = MarketingExperiment & {
+  outcomes: ExperimentOutcome[];
+};
+
+export async function listCompletedExperimentEvidence(userId: number): Promise<CompletedExperimentEvidence[]> {
+  const result = await pool.query(
+    `SELECT e.id,
+            e.user_id AS "userId",
+            e.campaign_id AS "campaignId",
+            e.content_item_id AS "contentItemId",
+            e.variant_id AS "variantId",
+            e.name,
+            e.hypothesis,
+            e.change_description AS "changeDescription",
+            e.metric,
+            e.status,
+            e.starts_at AS "startsAt",
+            e.ends_at AS "endsAt",
+            e.result_summary AS "resultSummary",
+            e.created_at AS "createdAt",
+            e.updated_at AS "updatedAt",
+            COALESCE(
+              json_agg(
+                json_build_object(
+                  'actionType', a.action_type,
+                  'count', action_stats.count,
+                  'value', action_stats.value
+                )
+                ORDER BY action_stats.count DESC, a.action_type
+              ) FILTER (WHERE a.action_type IS NOT NULL),
+              '[]'::json
+            ) AS outcomes
+       FROM marketing_experiments e
+       LEFT JOIN LATERAL (
+         SELECT a.action_type,
+                COUNT(*)::int AS count,
+                COALESCE(SUM(a.value), 0)::int AS value
+           FROM marketing_customer_actions a
+          WHERE a.user_id = e.user_id
+            AND a.status = 'completed'
+            AND (
+              (e.variant_id IS NOT NULL AND a.variant_id = e.variant_id)
+              OR (e.content_item_id IS NOT NULL AND a.content_item_id = e.content_item_id)
+              OR (e.campaign_id IS NOT NULL AND a.campaign_id = e.campaign_id)
+            )
+          GROUP BY a.action_type
+       ) action_stats ON true
+      WHERE e.user_id = $1
+        AND e.status = 'completed'
+      GROUP BY e.id
+      ORDER BY e.ends_at DESC NULLS LAST, e.id DESC
+      LIMIT 50`,
+    [userId],
+  );
+  return result.rows.map((row) => ({
+    ...(row as Omit<CompletedExperimentEvidence, "outcomes">),
+    outcomes: row.outcomes as ExperimentOutcome[],
+  }));
+}
+
 export async function listMarketingExperiments(userId: number, status?: MarketingExperimentStatus) {
   const result = await pool.query("SELECT id, user_id AS \"userId\", campaign_id AS \"campaignId\", content_item_id AS \"contentItemId\", variant_id AS \"variantId\", name, hypothesis, change_description AS \"changeDescription\", metric, status, starts_at AS \"startsAt\", ends_at AS \"endsAt\", result_summary AS \"resultSummary\", created_at AS \"createdAt\", updated_at AS \"updatedAt\" FROM marketing_experiments WHERE user_id = $1 AND ($2::text IS NULL OR status = $2) ORDER BY starts_at DESC NULLS LAST, id DESC LIMIT 200", [userId, status ?? null]);
   return result.rows as MarketingExperiment[];
