@@ -499,3 +499,8 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 ### Commerce channel identity race hardening — 2026-10-06
 - OAuth-backed Commerce channels now have a database-enforced unique identity per tenant/provider/external account.
 - Application channel creation handles a concurrent uniqueness conflict by resolving the existing channel, making reconnect creation race-safe.
+
+
+### WooCommerce ambiguity propagation checkpoint — 2026-10-06
+- Remote publish uncertainty and local persistence uncertainty are now preserved as an explicit ambiguous provider outcome throughout publish, adapter, reconciliation, and HTTP response layers.
+- HTTP 202 is used when reconciliation is required; deterministic validation and ownership failures remain non-ambiguous.
