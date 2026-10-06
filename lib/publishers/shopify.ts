@@ -175,7 +175,7 @@ export async function publishShopifyProduct(userId: number, channelId: string, p
   }
 
   try {
-    const createResult = await shopifyGraphQL<ProductCreatePayload>(channelId, `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id variants(first: 1) { nodes { id } } media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, {
+    const createResult = await shopifyGraphQL<ProductCreatePayload>(channelId, userId, userId, `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id variants(first: 1) { nodes { id } } media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, {
       product: mapProductToShopifyProduct(product),
       media: mapProductToShopifyMedia(product),
     });
@@ -195,7 +195,7 @@ export async function publishShopifyProduct(userId: number, channelId: string, p
     if (!initialVariant) throw new Error("Shopify did not return the initial product variant");
     const firstVariant = product.variants[0];
     if (!firstVariant) throw new Error("Product variant was unexpectedly missing");
-    const updatedFirstVariant = await shopifyGraphQL<ProductVariantsBulkUpdatePayload>(channelId, `mutation UpdateInitialVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, {
+    const updatedFirstVariant = await shopifyGraphQL<ProductVariantsBulkUpdatePayload>(channelId, userId, userId, `mutation UpdateInitialVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, {
       productId: shopifyProduct.id,
       variants: [{ id: initialVariant.id, ...mapVariantToShopifyVariant(firstVariant) }],
     });
@@ -206,7 +206,7 @@ export async function publishShopifyProduct(userId: number, channelId: string, p
 
     const remainingVariants = product.variants.slice(1);
     if (remainingVariants.length) {
-      const createdVariants = await shopifyGraphQL<ProductVariantsBulkCreatePayload>(channelId, `mutation CreateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkCreate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, {
+      const createdVariants = await shopifyGraphQL<ProductVariantsBulkCreatePayload>(channelId, userId, userId, `mutation CreateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkCreate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, {
         productId: shopifyProduct.id,
         variants: remainingVariants.map(mapVariantToShopifyVariant),
       });
