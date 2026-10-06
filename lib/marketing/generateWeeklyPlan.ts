@@ -1,4 +1,5 @@
 import { getBusinessBrain } from "@/lib/marketing/businessBrain";
+import { listCampaigns } from "@/lib/marketing/campaigns";
 
 export type GeneratedWeek = {
   weekStart: string;
@@ -49,7 +50,7 @@ export type StrategyHint = {
 };
 
 export async function generateWeeklyPlan(userId: number, weekStart: string, strategyHint?: StrategyHint): Promise<GeneratedWeek> {
-  const brain = await getBusinessBrain(userId);
+  const [brain, campaigns] = await Promise.all([getBusinessBrain(userId), listCampaigns(userId)]);
   const start = new Date(`${weekStart}T00:00:00.000Z`);
   if (Number.isNaN(start.getTime())) throw new Error("Invalid weekStart");
 
@@ -79,6 +80,9 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
     ? optimizationOpportunity.supportingExperimentIds.map(Number).filter(Number.isFinite)
     : [];
   const strategyRecommendation = strategyRecommendations[0];
+  const sourceCampaign = strategyRecommendation?.campaignId != null
+    ? campaigns.find((campaign) => campaign.id === Number(strategyRecommendation.campaignId)) ?? null
+    : null;
   const strategyGoal = strategyRecommendation?.goalId != null
     ? activeGoals.find((goal) => goal.id === Number(strategyRecommendation.goalId)) ?? null
     : null;
@@ -122,7 +126,7 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
         : suggestedChannels,
       productId: selectedProduct?.id ?? null,
       mediaId: media?.id ?? null,
-      sourceCampaignId: strategyRecommendation?.campaignId != null ? Number(strategyRecommendation.campaignId) : null,
+      sourceCampaignId: sourceCampaign?.id ?? null,
       offerId: selectedOffer?.id ?? null,
       supportingExperimentIds,
       rationale: optimizationOpportunity?.rationale
