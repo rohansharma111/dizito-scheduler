@@ -158,8 +158,8 @@ export async function persistApprovedWeek(
 
         const contentResult = await client.query(
           `INSERT INTO marketing_content_items
-           (user_id, campaign_id, content_type, format, topic, angle, hook, body, cta, channel_strategy, media_id, status, planned_for)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'planned',$12)
+           (user_id, campaign_id, content_type, format, topic, angle, hook, body, cta, channel_strategy, media_id, planning_metadata, status, planned_for)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'planned',$13)
            RETURNING id`,
           [
             userId,
@@ -173,6 +173,12 @@ export async function persistApprovedWeek(
             item.cta,
             campaign.channelStrategy ?? {},
             mediaId,
+            {
+              sourceCampaignId: item.sourceCampaignId ?? null,
+              evidence: item.evidence ?? null,
+              supportingExperimentIds: item.supportingExperimentIds ?? [],
+              planningSource: "generate_my_week",
+            },
             item.plannedFor ?? null,
           ],
         );
