@@ -41,21 +41,26 @@ function result<T>(
   value: unknown,
 ): CommerceProviderOperationResult<T> {
   if (value && typeof value === "object" && "error" in value) {
+    const errorValue = value as { error: unknown; message?: unknown };
     return {
       operation,
       status: "failed",
       error: {
-        code: String((value as { error: unknown }).error),
-        message: String((value as { message?: unknown }).message ?? (value as { error: unknown }).error),
+        code: String(errorValue.error),
+        message: String(errorValue.message ?? errorValue.error),
         retryable: false,
         ambiguous: false,
       },
     };
   }
 
-  const externalId =
+  const rawExternalId =
     value && typeof value === "object" && "externalId" in value
-      ? String((value as { externalId: unknown }).externalId)
+      ? (value as { externalId?: unknown }).externalId
+      : undefined;
+  const externalId =
+    typeof rawExternalId === "string" || typeof rawExternalId === "number"
+      ? String(rawExternalId)
       : null;
 
   return {
@@ -63,6 +68,22 @@ function result<T>(
     status: "succeeded",
     externalId,
     data: value as T,
+  };
+}
+
+function invalidOperation(
+  operation: "draft" | "publish" | "reconcile",
+  expected: string,
+) {
+  return {
+    operation,
+    status: "failed" as const,
+    error: {
+      code: "INVALID_ADAPTER_OPERATION",
+      message: `WooCommerce ${operation} adapter received a non-${expected} payload`,
+      retryable: false,
+      ambiguous: false,
+    },
   };
 }
 
@@ -75,69 +96,53 @@ export const wooCommerceAdapter: CommerceProviderAdapter<
 
   async prepareDraft(input: CommerceProviderOperationInput<WooCommerceAdapterPayload>) {
     if (input.payload.action !== "draft") {
-      return {
-        operation: "draft",
-        status: "failed",
-        error: {
-          code: "INVALID_ADAPTER_OPERATION",
-          message: "WooCommerce draft adapter received a non-draft payload",
-          retryable: false,
-          ambiguous: false,
-        },
-      };
+      return invalidOperation("draft", "draft");
     }
 
     return result(
       "draft",
-      await prepareWooCommerceListingDraft(input.context.userId, input.payload.input),
+      await prepareWooCommerceListingDraft(input.context.userId, {
+        ...input.payload.input,
+        channelId: input.context.channelId,
+      }),
     );
   },
 
-  async publish(input: CommerceProviderOperationInput<WooCommerceAdapterPayload> & { confirmLivePublish: true }) {
+  async publish(
+    input: CommerceProviderOperationInput<WooCommerceAdapterPayload> & {
+      confirmLivePublish: true;
+    },
+  ) {
     if (input.payload.action !== "publish") {
-      return {
-        operation: "publish",
-        status: "failed",
-        error: {
-          code: "INVALID_ADAPTER_OPERATION",
-          message: "WooCommerce publish adapter received a non-publish payload",
-          retryable: false,
-          ambiguous: false,
-        },
-      };
+      return invalidOperation("publish", "publish");
     }
 
     return result(
       "publish",
       await publishWooCommerceProduct(input.context.userId, {
         ...input.payload.input,
+        channelId: input.context.channelId,
         confirmLivePublish: true,
         idempotencyKey: input.idempotencyKey ?? input.payload.input.idempotencyKey,
       }),
     );
   },
 
-  async reconcilePublish(input: CommerceProviderOperationInput<WooCommerceAdapterPayload> & {
-    externalId?: string;
-    lookupKey?: string;
-  }) {
+  async reconcilePublish(
+    input: CommerceProviderOperationInput<WooCommerceAdapterPayload> & {
+      externalId?: string;
+      lookupKey?: string;
+    },
+  ) {
     if (input.payload.action !== "reconcile") {
-      return {
-        operation: "reconcile",
-        status: "failed",
-        error: {
-          code: "INVALID_ADAPTER_OPERATION",
-          message: "WooCommerce reconciliation adapter received a non-reconcile payload",
-          retryable: false,
-          ambiguous: false,
-        },
-      };
+      return invalidOperation("reconcile", "reconcile");
     }
 
     return result(
       "reconcile",
       await reconcileWooCommercePublish(input.context.userId, {
         ...input.payload.input,
+        channelId: input.context.channelId,
         externalId: input.externalId ?? input.payload.input.externalId,
         sku: input.lookupKey ?? input.payload.input.sku,
       }),
