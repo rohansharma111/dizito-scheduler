@@ -61,7 +61,19 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   const optimizationOpportunities = Array.isArray(strategyHint?.optimization?.opportunities) ? strategyHint.optimization.opportunities : [];
   // The optimizer returns opportunities in deterministic evidence-score order. Preserve that order here so the weekly planner uses the highest-evidence recommendation rather than re-ranking by LLM priority labels.
   const optimizationOpportunity = optimizationOpportunities[0] ?? null;
-  const optimizationExperiment = strategyHint?.optimization?.experiments?.find((item) => item.hypothesis && item.change && item.metric) ?? null;
+  const optimizationExperiments = Array.isArray(strategyHint?.optimization?.experiments) ? strategyHint.optimization.experiments : [];
+  // Dispositions are deterministic optimizer output. Never carry an avoid experiment into a new weekly plan.
+  // Prefer historically directional refinements/retests, then measurement when evidence is insufficient.
+  const dispositionRank: Record<"refine" | "retest" | "measure" | "avoid", number> = {
+    refine: 0,
+    retest: 1,
+    measure: 2,
+    avoid: 3,
+  };
+  const optimizationExperiment = optimizationExperiments
+    .filter((item) => item.hypothesis && item.change && item.metric && (item.disposition ?? "measure") !== "avoid")
+    .slice()
+    .sort((a, b) => (dispositionRank[a.disposition ?? "measure"] ?? 2) - (dispositionRank[b.disposition ?? "measure"] ?? 2))[0] ?? null;
   const supportingExperimentIds = Array.isArray(optimizationOpportunity?.supportingExperimentIds)
     ? optimizationOpportunity.supportingExperimentIds.map(Number).filter(Number.isFinite)
     : [];
