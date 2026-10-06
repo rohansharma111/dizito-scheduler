@@ -618,3 +618,5 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Optimizer API/UI now carry and distinguish explicit attributed evidence from observed evidence.
 - Runtime/test/build/database verification remains intentionally deferred until the code-level implementation pass is complete.
 
+
+- Legacy Content Item → Post links can now be enriched with Variant provenance without overwriting an already-established Variant → Post relationship.
