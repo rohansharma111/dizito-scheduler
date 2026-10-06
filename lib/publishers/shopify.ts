@@ -159,7 +159,16 @@ async function persistInitialMediaMappings(
   }
 }
 
-export async function publishShopifyProduct(userId: number, channelId: string, productId: string) {
+export async function publishShopifyProduct(
+  userId: number,
+  channelId: string,
+  productId: string,
+  confirmLivePublish: boolean,
+) {
+  if (confirmLivePublish !== true) {
+    throw new Error("LIVE_PUBLISH_CONFIRMATION_REQUIRED");
+  }
+
   const channel = await getCommerceChannelById(channelId, userId);
   if (!channel) throw new Error("Commerce channel not found");
   if (channel.provider !== "shopify") throw new Error("Commerce channel is not Shopify");
