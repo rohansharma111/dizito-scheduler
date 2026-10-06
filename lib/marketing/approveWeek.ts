@@ -19,6 +19,7 @@ export type ApprovedWeeklyStrategy = {
       hook?: string;
       body?: string;
       cta: string;
+      mediaId?: number | null;
       plannedFor?: string | null;
     }>;
   }>;
@@ -57,14 +58,20 @@ export async function persistApprovedWeek(
     for (let i = 0; i < strategy.campaigns.length; i++) {
       const campaign = strategy.campaigns[i];
       const offerId = campaign.offerId ?? null;
-      const offer = offerId
-        ? await client.query(`SELECT id FROM marketing_offers WHERE id=$1 AND user_id=$2`, [offerId, userId])
-        : { rowCount: 0 } as any;
-      if (offerId && offer.rowCount !== 1) throw new Error("Invalid offer reference");
+      if (offerId) {
+        const offer = await client.query(
+          `SELECT id FROM marketing_offers WHERE id=$1 AND user_id=$2`,
+          [offerId, userId],
+        );
+        if (offer.rowCount !== 1) throw new Error("Invalid offer reference");
+      }
 
       const productIds = [...new Set((campaign.productIds ?? []).map(Number))];
       if (productIds.length) {
-        const products = await client.query(`SELECT id FROM products WHERE id=ANY($1) AND user_id=$2`, [productIds, userId]);
+        const products = await client.query(
+          `SELECT id FROM products WHERE id=ANY($1) AND user_id=$2`,
+          [productIds, userId],
+        );
         if (products.rowCount !== productIds.length) throw new Error("Invalid product reference");
       }
 
@@ -73,13 +80,25 @@ export async function persistApprovedWeek(
          (user_id, offer_id, name, objective, audience, cta, channel_strategy, status, starts_at, ends_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,'planned',$8,$9)
          RETURNING id`,
-        [userId, offerId, campaign.name, campaign.objective, campaign.audience, campaign.cta,
-         campaign.channelStrategy ?? {}, weekStart, weekEnd],
+        [
+          userId,
+          offerId,
+          campaign.name,
+          campaign.objective,
+          campaign.audience,
+          campaign.cta,
+          campaign.channelStrategy ?? {},
+          weekStart,
+          weekEnd,
+        ],
       );
       const campaignId = campaignResult.rows[0].id;
 
       for (const productId of productIds) {
-        await client.query(`INSERT INTO marketing_campaign_products (campaign_id, product_id) VALUES ($1,$2)`, [campaignId, productId]);
+        await client.query(
+          `INSERT INTO marketing_campaign_products (campaign_id, product_id) VALUES ($1,$2)`,
+          [campaignId, productId],
+        );
       }
       await client.query(
         `INSERT INTO marketing_weekly_plan_campaigns (weekly_plan_id, campaign_id, position) VALUES ($1,$2,$3)`,
@@ -87,13 +106,34 @@ export async function persistApprovedWeek(
       );
 
       for (const item of campaign.contentItems ?? []) {
+        const mediaId = item.mediaId ?? null;
+        if (mediaId !== null) {
+          const media = await client.query(
+            `SELECT id FROM media_library WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`,
+            [mediaId, userId],
+          );
+          if (media.rowCount !== 1) throw new Error("Invalid media reference");
+        }
+
         const contentResult = await client.query(
           `INSERT INTO marketing_content_items
-           (user_id, campaign_id, content_type, format, topic, angle, hook, body, cta, channel_strategy, status, planned_for)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'planned',$11)
+           (user_id, campaign_id, content_type, format, topic, angle, hook, body, cta, channel_strategy, media_id, status, planned_for)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'planned',$12)
            RETURNING id`,
-          [userId, campaignId, item.contentType, item.format, item.topic, item.angle ?? null,
-           item.hook ?? null, item.body ?? null, item.cta, campaign.channelStrategy ?? {}, item.plannedFor ?? null],
+          [
+            userId,
+            campaignId,
+            item.contentType,
+            item.format,
+            item.topic,
+            item.angle ?? null,
+            item.hook ?? null,
+            item.body ?? null,
+            item.cta,
+            campaign.channelStrategy ?? {},
+            mediaId,
+            item.plannedFor ?? null,
+          ],
         );
         const contentItemId = contentResult.rows[0].id;
         for (const productId of productIds) {
