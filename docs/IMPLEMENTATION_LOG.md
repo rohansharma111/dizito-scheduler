@@ -338,3 +338,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Propagated authenticated `userId` through Amazon catalog, listing, offer, product-type, and verification helpers and routes.
 - Fixed the Amazon OAuth callback credential write to pass `userId` into the tenant-scoped credential persistence function.
 - Completed the final catalog helper call so every `amazonSpApiRequest` invocation supplies tenant context.
+
+
+## 2026-10-06 — Commerce channel identity race hardening
+
+- Added migration `017_commerce_channel_identity_uniqueness.sql` with a tenant/provider/external-account unique index.
+- Updated `createCommerceChannel` to catch PostgreSQL unique-constraint races and return the authoritative existing channel for concrete external account identities.
+- This protects OAuth reconnect flows from duplicate channel creation under concurrent callbacks.
