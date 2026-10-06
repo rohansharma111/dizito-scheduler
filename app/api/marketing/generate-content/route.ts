@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    if (!body.contentType || !body.format || !body.topic) return Response.json({ error: "contentType, format and topic are required" }, { status: 400 });
+    if (!body.contentType || !body.format || (body.contentItemId == null && !body.topic)) return Response.json({ error: "contentType, format and topic are required" }, { status: 400 });
     const platform = body.platform == null ? undefined : String(body.platform);
     if (platform && !(MARKETING_PLATFORMS as readonly string[]).includes(platform)) return Response.json({ error: "Unsupported platform" }, { status: 400 });
 
