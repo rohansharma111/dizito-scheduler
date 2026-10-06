@@ -68,8 +68,6 @@ The implementation intentionally exposes only read-only listing operations. No l
 ## Not yet implemented
 
 - Flipkart OAuth authorization routes and callback handling.
-- Connecting the refresh protocol to persisted channel credentials and atomic credential rotation.
-- Concurrent refresh coordination per channel.
 - Provider-specific product/category/attribute mapping.
 - Draft listing persistence and validation workflow.
 - Live listing creation or update.
@@ -79,6 +77,6 @@ The implementation intentionally exposes only read-only listing operations. No l
 
 ## Verification limitations
 
-The refresh protocol was implemented from the current official Flipkart Seller API documentation, which documents `grant_type=refresh_token`, Basic application authentication, returned `expires_in` and `refresh_token_expires_in`, and a 21-day refresh-token safe window for authorization-code flows.
+The refresh protocol and automatic rotation were implemented from the current official Flipkart Seller API documentation, which documents `grant_type=refresh_token`, Basic application authentication, returned `expires_in` and `refresh_token_expires_in`, and a 21-day refresh-token safe window for authorization-code flows. The persisted rotation path is tenant-scoped and serialized with a PostgreSQL advisory transaction lock.
 
 The code was committed through GitHub repository operations. Local build, lint, type-check, automated tests, migration execution, and live/sandbox provider requests have not been run in this session. No credentials or live merchant data were used.
