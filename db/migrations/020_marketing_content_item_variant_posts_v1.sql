@@ -12,7 +12,7 @@ ALTER TABLE marketing_content_item_posts
   ADD CONSTRAINT marketing_content_item_posts_variant_content_item_fk
   FOREIGN KEY (variant_id, content_item_id)
   REFERENCES marketing_content_item_variants(id, content_item_id)
-  ON DELETE SET NULL;
+  ON DELETE CASCADE;
 
 CREATE INDEX idx_marketing_content_item_posts_variant
   ON marketing_content_item_posts(variant_id);
