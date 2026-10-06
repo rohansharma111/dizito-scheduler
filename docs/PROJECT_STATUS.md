@@ -575,3 +575,8 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Existing media mappings are locked before merge; external-ID conflict checks now execute under the same transaction.
 - This prevents concurrent media workers from both passing the conflict check and creating conflicting mappings.
 - Validation remains deferred until the implementation pass is complete.
+
+
+### Commerce sync external-ID race hardening — 2026-10-06
+- `updateProductListingSyncState` now acquires the tenant/channel/external-ID advisory lock before checking for conflicting listings.
+- This closes the cross-listing race where two concurrent sync workers could otherwise assign the same provider external ID to different listings.
