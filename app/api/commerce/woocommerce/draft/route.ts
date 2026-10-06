@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { requireCommerceProviderAdapter } from "@/lib/commerce/providers/service";
+import { prepareCommerceProviderDraft } from "@/lib/commerce/providers/service";
 import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adapter";
 
 export async function POST(request: Request) {
@@ -49,7 +49,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const adapter = requireCommerceProviderAdapter("woocommerce");
     const payload = {
       action: "draft",
       input: {
@@ -76,7 +75,7 @@ export async function POST(request: Request) {
       },
     } satisfies WooCommerceAdapterPayload;
 
-    const result = await adapter.prepareDraft({
+    const result = await prepareCommerceProviderDraft("woocommerce", {
       context: { channelId, userId: Number(session.user.id) },
       payload,
     });
