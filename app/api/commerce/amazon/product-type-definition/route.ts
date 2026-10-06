@@ -25,6 +25,9 @@ export async function POST(request: Request) {
     }
 
     const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
     const channel = await getCommerceChannelById(body.channelId, userId);
     if (!channel || channel.provider !== "amazon") {
       return NextResponse.json({ success: false, error: "Amazon channel not found" }, { status: 404 });
