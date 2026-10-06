@@ -257,6 +257,31 @@ After changing code:
 - Next action:
   - Add/route the canonical Flipkart draft/publish/reconcile API entry points through provider service, then harden operation transitions and external-ID persistence without enabling live publishing.
 
+
+### 2026-10-06 — Flipkart API provider-service cutover
+
+- Status: Implemented; runtime verification pending
+- Commits:
+  - `947f89b3e5757989db58df2b52ad1c1f924e5349` — add Flipkart draft route
+  - `9e81aad54e501bb5022358bd1ec5efdf4d09be6c` — add Flipkart publish route
+  - `ea597b01cd129daeb138ceeef0f99e7db24f56ef` — add Flipkart reconciliation route
+  - `6332539d9f096c1b78ba9b8c030d436541d4e937` — require provider lookup during reconciliation
+- API boundary:
+  - `POST /api/commerce/flipkart/draft` → central provider service → Flipkart adapter → draft workflow.
+  - `POST /api/commerce/flipkart/publish` → central provider service → Flipkart adapter → guarded publish workflow.
+  - `POST /api/commerce/flipkart/reconcile` → central provider service → Flipkart adapter → provider lookup/reconciliation workflow.
+- Safety:
+  - Authentication remains session-based and tenant context comes from the authenticated user plus channel ID.
+  - Publish requires explicit `confirmLivePublish=true` and remains fail-closed unless `FLIPKART_LIVE_PUBLISH_ENABLED=true`.
+  - Reconciliation cannot declare success from an external ID supplied alone; a provider lookup key/SKU is required.
+- Verification:
+  - Repository/source inspection completed.
+  - Route code follows the existing WooCommerce provider-service dispatch pattern.
+  - GitHub Actions has not reported a run for the latest commit sequence; no CI pass is claimed.
+  - Local tests, type-check, lint, build, database execution, and provider calls were not run in this environment.
+- Next action:
+  - Add focused route/provider integration tests and then harden Flipkart publish-operation state transitions and confirmed external-ID persistence.
+
 ## 10. Decision log
 
 | Date | Decision | Reason |
