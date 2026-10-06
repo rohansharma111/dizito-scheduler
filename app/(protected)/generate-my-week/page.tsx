@@ -18,7 +18,20 @@ export default function GenerateMyWeekPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [plan, setPlan] = useState<any>(null);
-  const [approved, setApproved] = useState(false);  const [strategyHandoff, setStrategyHandoff] = useState<any>(null);  useEffect(() => {    const raw = sessionStorage.getItem("dizito-strategy-handoff");    if (!raw) return;    try { setStrategyHandoff(JSON.parse(raw)); } catch { sessionStorage.removeItem("dizito-strategy-handoff"); }  }, []);
+  const [approved, setApproved] = useState(false);
+  const [strategyHandoff, setStrategyHandoff] = useState<any>(null);
+  const [optimizerHandoff, setOptimizerHandoff] = useState<any>(null);
+  useEffect(() => {
+    const strategyRaw = sessionStorage.getItem("dizito-strategy-handoff");
+    const optimizerRaw = sessionStorage.getItem("dizito-optimizer-handoff");
+    try {
+      if (strategyRaw) setStrategyHandoff(JSON.parse(strategyRaw));
+      if (optimizerRaw) setOptimizerHandoff(JSON.parse(optimizerRaw));
+    } catch {
+      sessionStorage.removeItem("dizito-strategy-handoff");
+      sessionStorage.removeItem("dizito-optimizer-handoff");
+    }
+  }, []);
 
   const weekEnd = useMemo(() => {
     const d = new Date(`${weekStart}T00:00:00`);
@@ -34,11 +47,12 @@ export default function GenerateMyWeekPage() {
       const response = await fetch("/api/marketing/weekly-plans/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weekStart, strategy: strategyHandoff ?? undefined }),
+        body: JSON.stringify({ weekStart, strategy: strategyHandoff ? { ...strategyHandoff, optimization: optimizerHandoff ?? undefined } : optimizerHandoff ? { optimization: optimizerHandoff } : undefined }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to generate week");
       setPlan(data.generatedWeek);      if (strategyHandoff) sessionStorage.removeItem("dizito-strategy-handoff");
+      if (optimizerHandoff) sessionStorage.removeItem("dizito-optimizer-handoff");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to generate week");
     } finally {
@@ -104,7 +118,7 @@ export default function GenerateMyWeekPage() {
         <div>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>AI Marketing Operator</p>
           <h1 style={{ margin: "8px 0", fontSize: 36 }}>Generate My Week</h1>
-          <p style={{ margin: 0, maxWidth: 680, opacity: 0.7 }}>Use your Business Brain, goals, products, offers, media and recent marketing activity to create a reviewable weekly plan.</p>{strategyHandoff && <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 700 }}>Using the latest AI Strategist recommendation.</p>}
+          <p style={{ margin: 0, maxWidth: 680, opacity: 0.7 }}>Use your Business Brain, goals, products, offers, media and recent marketing activity to create a reviewable weekly plan.</p>{strategyHandoff && <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 700 }}>Using the latest AI Strategist recommendation.</p>}{optimizerHandoff && <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 700 }}>Applying the latest AI Optimizer recommendation.</p>}
         </div>
         <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
           Week starts
