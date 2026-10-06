@@ -321,3 +321,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added a PostgreSQL advisory lock around the legacy Shopify create lifecycle, keyed by authenticated tenant + channel + product.
 - The lock covers listing resolution, remote product creation, variant/media persistence, and final listing state, preventing concurrent duplicate productCreate calls for the same logical listing.
 - This is concurrency protection, not provider-native idempotency; crash-after-remote-create recovery remains a separate durability concern.
+
+
+## 2026-10-06 — Shopify deterministic crash recovery
+
+- **Status:** Implemented; not runtime-verified.
+- Added `dizito.listing_id` as a Shopify product metafield at product creation time.
+- Added exact provider-side lookup by that marker before a new create. A unique match is adopted and reconciled through the existing sync flow; ambiguous matches fail closed.
+- Hardened variant reconciliation for partial creates: when exactly one provider variant exists and no listing-variant mappings exist, that provider variant is deterministically associated with the canonical first variant.
+- This closes the principal crash-after-remote-create recovery path for newly created Shopify products without relying on title/SKU heuristics.
