@@ -297,3 +297,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Hardened Shopify credential read/write helpers with tenant/provider ownership checks.
 - Updated Shopify callback and refresh paths to pass user context into credential persistence.
 - Removed an invalid unscoped Shopify `getShop` call signature by requiring explicit tenant context.
+
+
+## 2026-10-06 — Commerce credential boundary and provider-client hardening
+
+- **Status:** Implemented; not runtime-verified.
+- **Flipkart:** credential writes now require userId and verify tenant/provider ownership; OAuth callback and locked refresh rotation pass authenticated tenant identity. Publish responses now distinguish ambiguous reconciliation-required submission with HTTP 202 from normal creation (201) and idempotent replay (200).
+- **Amazon:** credential persistence and lookup now require authenticated tenant context; the SP-API client no longer uses an unscoped internal channel lookup and requires userId for provider calls. Product-type discovery and connection verification pass the tenant context through.
+- **Verification limitation:** no tests/lint/build or provider mutation was executed during this implementation pass, per the current development sequence. Repository code remains pending the later verification pass.
