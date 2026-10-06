@@ -19,6 +19,7 @@ export type GeneratedWeek = {
     sourceCampaignId: number | null;
     offerId: number | null;
     rationale: string;
+    supportingExperimentIds: number[];
     evidence: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
   }>;
   context: {
