@@ -75,12 +75,18 @@ export async function upsertProductListingDraft(
 
     const existingResult = await client.query(
       `
-      SELECT id, status, provider_metadata
+      SELECT
+        id,
+        status,
+        provider_metadata
       FROM product_listings
-      WHERE product_id = $1 AND channel_id = $2
+      WHERE product_id = $1
+        AND channel_id = $2
+        AND user_id = $3
       LIMIT 1
+      FOR UPDATE
       `,
-      [input.productId, input.channelId],
+      [input.productId, input.channelId, userId],
     );
 
     let listing;
@@ -140,7 +146,51 @@ export async function upsertProductListingDraft(
     }
 
     for (const variant of input.variants) {
-      const providerMetadata = variant.providerMetadata ?? {};
+      const existingVariant = await client.query(
+        `
+        SELECT
+          external_id,
+          provider_metadata
+        FROM product_listing_variants
+        WHERE listing_id = $1
+          AND variant_id = $2
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [listing.id, variant.variantId],
+      );
+
+      const current = existingVariant.rows[0];
+      const externalId =
+        variant.externalId !== undefined
+          ? variant.externalId
+          : current?.external_id ?? null;
+
+      if (externalId) {
+        const conflict = await client.query(
+          `
+          SELECT id
+          FROM product_listing_variants
+          WHERE listing_id = $1
+            AND external_id = $2
+            AND variant_id <> $3
+          LIMIT 1
+          FOR UPDATE
+          `,
+          [listing.id, externalId, variant.variantId],
+        );
+
+        if (conflict.rows[0]) {
+          await client.query("ROLLBACK");
+          return { error: "LISTING_VARIANT_EXTERNAL_ID_CONFLICT" as const };
+        }
+      }
+
+      const providerMetadata = {
+        ...(current?.provider_metadata ?? {}),
+        ...(variant.providerMetadata ?? {}),
+      };
+
       await client.query(
         `
         INSERT INTO product_listing_variants
@@ -153,14 +203,23 @@ export async function upsertProductListingDraft(
           provider_metadata = EXCLUDED.provider_metadata,
           updated_at = now()
         `,
-        [listing.id, variant.variantId, variant.externalId ?? null, JSON.stringify(providerMetadata)],
+        [
+          listing.id,
+          variant.variantId,
+          externalId,
+          JSON.stringify(providerMetadata),
+        ],
       );
     }
 
     await client.query("COMMIT");
     return { listing };
   } catch (error) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // Preserve the original failure.
+    }
     throw error;
   } finally {
     client.release();
