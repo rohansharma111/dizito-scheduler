@@ -504,3 +504,9 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 ### WooCommerce ambiguity propagation checkpoint — 2026-10-06
 - Remote publish uncertainty and local persistence uncertainty are now preserved as an explicit ambiguous provider outcome throughout publish, adapter, reconciliation, and HTTP response layers.
 - HTTP 202 is used when reconciliation is required; deterministic validation and ownership failures remain non-ambiguous.
+
+
+### Commerce channel boundary checkpoint — 2026-10-06
+- No repository caller remains for the previously available unscoped channel lookup helper.
+- Channel metadata updates now use row locking to avoid lost concurrent updates during reconnect/status/metadata changes.
+- Credential tables remain one-to-one with commerce channels through database foreign keys and unique channel IDs.
