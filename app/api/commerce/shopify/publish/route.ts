@@ -15,6 +15,12 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    if (body?.confirmLivePublish !== true) {
+      return NextResponse.json(
+        { success: false, error: "LIVE_PUBLISH_CONFIRMATION_REQUIRED" },
+        { status: 409 },
+      );
+    }
     const productId = typeof body.productId === "string" ? body.productId.trim() : "";
     const channelId = typeof body.channelId === "string" ? body.channelId.trim() : "";
 
@@ -36,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const listing = await publishShopifyProduct(userId, channelId, productId);
+    const listing = await publishShopifyProduct(userId, channelId, productId, true);
 
     return NextResponse.json({
       success: true,
