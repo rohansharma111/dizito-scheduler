@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { requireCommerceProviderAdapter } from "@/lib/commerce/providers/service";
+import { publishCommerceProvider } from "@/lib/commerce/providers/service";
 
 export function getWooCommercePublishErrorStatus(error: string) {
   if (error === "CHANNEL_NOT_FOUND" || error === "LISTING_NOT_FOUND") return 404;
@@ -46,8 +46,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const adapter = requireCommerceProviderAdapter("woocommerce");
-    const result = await adapter.publish({
+    const result = await publishCommerceProvider("woocommerce", {
       context: {
         channelId,
         userId: Number(session.user.id),
