@@ -1,3 +1,10 @@
+## 2026-10-07 — Pinterest Standard Access granted
+
+- External provider status: Pinterest Standard Access has been granted for Dizito.
+- The Pinterest integration is now authorized to publish Pins publicly through the approved API access level.
+- This removes the previous Pinterest Standard Access/pending-approval blocker.
+- Verification boundary: this is provider-access authorization confirmed by the user; it does not claim a live end-to-end Pin publication has been executed from the current application build.
+
 # Dizito Implementation Log
 
 ## 2026-10-07 — Build/type repair and validation checkpoint
