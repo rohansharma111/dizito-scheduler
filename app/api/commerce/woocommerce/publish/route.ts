@@ -82,15 +82,21 @@ export async function POST(request: Request) {
         ? (result.data as { idempotentReplay?: unknown; result?: unknown })
         : null;
     const idempotentReplay = Boolean(data?.idempotentReplay);
+    const reconciliationRequired = result.status === "ambiguous";
 
     return NextResponse.json(
       {
         success: true,
+        status: result.status,
         result: data?.result ?? result.data,
         externalId: result.externalId,
         idempotentReplay,
+        reconciliationRequired,
+        error: result.error?.code,
       },
-      { status: idempotentReplay ? 200 : 201 },
+      {
+        status: reconciliationRequired ? 202 : idempotentReplay ? 200 : 201,
+      },
     );
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/publish error:", error);
