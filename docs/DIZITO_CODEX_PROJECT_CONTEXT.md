@@ -429,3 +429,6 @@ The latest repository state also includes:
 - `bb01a2701ebf5df54d67386e2f8a371216b2d74c`: provider verification seam documented.
 
 These tests are deterministic repository tests. They do not replace live/sandbox provider verification.
+
+### Commerce code-level hardening — 2026-10-06
+The active Commerce provider boundary now treats provider mutations as tenant-scoped state machines: runtime capability/confirmation checks are enforced centrally; publish success is bound to the requested listing/provider and confirmed external identity; WooCommerce channel credential lookup is tenant-scoped; WooCommerce publish requires provider read-back reconciliation before terminal success. Testing is intentionally deferred until the code-level implementation pass is complete.
