@@ -159,6 +159,8 @@ CREATE TABLE "oauth_page_selections" (
 	"id" serial PRIMARY KEY,
 	"user_id" integer,
 	"access_token" text NOT NULL,
+	"refresh_token" text,
+	"token_expires_at" timestamp,
 	"pages" json NOT NULL,
 	"created_at" date DEFAULT '2026-06-13',
 	"reconnect_account_id" integer,
