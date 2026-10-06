@@ -92,7 +92,7 @@ export default function PrivacyPage() {
             Dizito uses the Pinterest API only after a user explicitly
             authorizes the connection through Pinterest OAuth. We use
             Pinterest-derived account and board information only to identify
-            the user's connected Pinterest Business account, schedule or
+            the user&apos;s connected Pinterest Business account, schedule or
             publish content requested by the user, and maintain connection
             status and publishing history.
           </p>
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
             board identifiers associated with that connection, and remove the
             associated pending OAuth session data. We do not retain Pinterest
             passwords. Content that the user created in Dizito may remain as
-            part of the user's Dizito content history unless the user also
+            part of the user&apos;s Dizito content history unless the user also
             requests deletion of that Dizito content or account.
           </p>
         </section>
