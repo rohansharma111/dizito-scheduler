@@ -39,7 +39,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   if (channel.provider !== "woocommerce") return { error: "INVALID_PROVIDER" as const };
 
   const attemptResult = await pool.query(
-    `SELECT id, status
+    `SELECT id, status, provider
      FROM commerce_publish_attempts
      WHERE channel_id = $1 AND listing_id = $2 AND idempotency_key = $3
        AND user_id = $4
@@ -48,6 +48,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   );
   const attempt = attemptResult.rows[0];
   if (!attempt) return { error: "PUBLISH_ATTEMPT_NOT_FOUND" as const };
+  if (attempt.provider !== "woocommerce") return { error: "INVALID_PROVIDER" as const };
   if (attempt.status === "succeeded") return { error: "PUBLISH_ATTEMPT_ALREADY_RECONCILED" as const };
   if (!["started", "ambiguous"].includes(attempt.status)) return { error: "PUBLISH_ATTEMPT_NOT_RECONCILABLE" as const };
 
@@ -89,7 +90,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
     try {
       await db.query("BEGIN");
       const lockedAttempt = await db.query(
-        `SELECT id, status
+        `SELECT id, status, provider
          FROM commerce_publish_attempts
          WHERE id = $1 AND user_id = $2
          FOR UPDATE`,
@@ -99,6 +100,10 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
       if (!currentAttempt) {
         await db.query("ROLLBACK");
         return { error: "PUBLISH_ATTEMPT_NOT_FOUND" as const };
+      }
+      if (currentAttempt.provider !== "woocommerce") {
+        await db.query("ROLLBACK");
+        return { error: "INVALID_PROVIDER" as const };
       }
       if (currentAttempt.status === "succeeded") {
         await db.query("ROLLBACK");
