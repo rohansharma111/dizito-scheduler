@@ -135,6 +135,8 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
   if (String(channel.status).toLowerCase() !== "active") throw new Error("Selected Shopify channel is not active");
   const claim = await claimProductListingSync(listingId, userId);
   if (claim.error) { if (claim.error === "LISTING_NOT_FOUND") throw new Error("Product listing not found"); throw new Error("Product listing sync is already in progress"); }
+  const claimToken = claim.claimToken;
+  if (!claimToken) throw new Error("Product listing sync claim token was not issued");
   try {
     const product = await getProductDetailsForSync(userId, listingId);
     if (!product) throw new Error("Product not found");
@@ -160,12 +162,12 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
       if (result.productVariantsBulkCreate.productVariants.length !== newVariants.length) throw new Error("Shopify returned an unexpected number of created variants");
       for (let i = 0; i < newVariants.length; i += 1) { const returned = result.productVariantsBulkCreate.productVariants[i]; if (!returned) throw new Error("Shopify new variant response was incomplete"); const saved = await upsertProductListingVariant(listingId, userId, { variantId: newVariants[i].id, externalId: returned.id, syncStatus: "synced" }); if (saved.error) throw new Error(saved.error); }
     }
-    const completed = await updateProductListingSyncState(listingId, userId, { syncStatus: "synced", externalId: shopifyProductId, lastError: null, providerMetadata: { provider: "shopify", syncMode: "update", updatedVariantCount: existing.length, createdVariantCount: newVariants.length, canonicalVariantCount: product.variants.length, canonicalMediaCount: product.media.length } });
+    const completed = await updateProductListingSyncState(listingId, userId, { syncStatus: "synced", claimToken, externalId: shopifyProductId, lastError: null, providerMetadata: { provider: "shopify", syncMode: "update", updatedVariantCount: existing.length, createdVariantCount: newVariants.length, canonicalVariantCount: product.variants.length, canonicalMediaCount: product.media.length } });
     if (completed.error) throw new Error(completed.error);
     return completed.listing;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Shopify sync failed";
-    await updateProductListingSyncState(listingId, userId, { syncStatus: "error", lastError: message });
+    await updateProductListingSyncState(listingId, userId, { syncStatus: "error", claimToken, lastError: message });
     throw error;
   }
 }
