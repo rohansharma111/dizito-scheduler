@@ -33,11 +33,11 @@ export async function listCampaigns(userId: number): Promise<MarketingCampaign[]
             c.created_at, c.updated_at,
             COALESCE(array_agg(DISTINCT cp.product_id) FILTER (WHERE cp.product_id IS NOT NULL), '{}') AS product_ids,
             COALESCE(array_agg(DISTINCT cpo.post_id) FILTER (WHERE cpo.post_id IS NOT NULL), '{}') AS post_ids,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'draft')::int AS content_draft_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'planned')::int AS content_planned_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'ready')::int AS content_ready_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'converted')::int AS content_converted_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'draft')::int AS content_draft_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'planned')::int AS content_planned_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'ready')::int AS content_ready_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'converted')::int AS content_converted_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count
        FROM marketing_campaigns c
        LEFT JOIN marketing_campaign_products cp ON cp.campaign_id = c.id
        LEFT JOIN marketing_campaign_posts cpo ON cpo.campaign_id = c.id
@@ -58,11 +58,11 @@ export async function getCampaign(userId: number, campaignId: number): Promise<M
             c.created_at, c.updated_at,
             COALESCE(array_agg(DISTINCT cp.product_id) FILTER (WHERE cp.product_id IS NOT NULL), '{}') AS product_ids,
             COALESCE(array_agg(DISTINCT cpo.post_id) FILTER (WHERE cpo.post_id IS NOT NULL), '{}') AS post_ids,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'draft')::int AS content_draft_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'planned')::int AS content_planned_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'ready')::int AS content_ready_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'converted')::int AS content_converted_count,
-            COUNT(ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'draft')::int AS content_draft_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'planned')::int AS content_planned_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'ready')::int AS content_ready_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'converted')::int AS content_converted_count,
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count
        FROM marketing_campaigns c
        LEFT JOIN marketing_campaign_products cp ON cp.campaign_id = c.id
        LEFT JOIN marketing_campaign_posts cpo ON cpo.campaign_id = c.id
