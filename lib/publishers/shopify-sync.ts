@@ -33,7 +33,7 @@ function mediaType(media: CatalogMedia) { return media.resource_type === "video"
 function mediaKey(alt: string | null | undefined, type: string) { return `${alt?.trim() || ""}\u0000${type}`; }
 
 async function reconcileVariantMappings(channelId: string, listingId: string, userId: number, productId: string, variants: CatalogVariant[], mappings: ListingVariantMapping[]) {
-  const result = await shopifyGraphQL<ShopifyProductVariantsPayload>(channelId, userId, userId, `query GetProductVariants($id: ID!) { product(id: $id) { variants(first: 250) { nodes { id sku } } } }`, { id: productId });
+  const result = await shopifyGraphQL<ShopifyProductVariantsPayload>(channelId, userId, `query GetProductVariants($id: ID!) { product(id: $id) { variants(first: 250) { nodes { id sku } } } }`, { id: productId });
   if (!result.product) throw new Error("Shopify product was not found while reconciling variants");
   const shopifyVariants = result.product.variants.nodes;
   const byId = new Set(shopifyVariants.map((variant) => String(variant.id)));
@@ -57,7 +57,7 @@ async function reconcileVariantMappings(channelId: string, listingId: string, us
 }
 
 async function reconcileMediaMappings(channelId: string, listingId: string, userId: number, productId: string, media: CatalogMedia[], mappings: ListingMediaMapping[]) {
-  const result = await shopifyGraphQL<ShopifyProductMediaPayload>(channelId, userId, userId, `query GetProductMedia($id: ID!) { product(id: $id) { media(first: 250) { nodes { id alt mediaContentType } } } }`, { id: productId });
+  const result = await shopifyGraphQL<ShopifyProductMediaPayload>(channelId, userId, `query GetProductMedia($id: ID!) { product(id: $id) { media(first: 250) { nodes { id alt mediaContentType } } } }`, { id: productId });
   if (!result.product) throw new Error("Shopify product was not found while reconciling media");
   const shopifyMedia = result.product.media.nodes;
   const byId = new Set(shopifyMedia.map((item) => String(item.id)));
@@ -80,7 +80,7 @@ async function reconcileMediaMappings(channelId: string, listingId: string, user
     } else unmatched.push(canonical);
   }
   if (unmatched.length === 0) return mapped;
-  const created = await shopifyGraphQL<ProductUpdatePayload>(channelId, userId, userId, `mutation AddProductMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!]) { productUpdate(product: $product, media: $media) { product { id media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, {
+  const created = await shopifyGraphQL<ProductUpdatePayload>(channelId, userId, `mutation AddProductMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!]) { productUpdate(product: $product, media: $media) { product { id media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, {
     product: { id: productId },
     media: mapProductToShopifyMedia({ id: productId, name: "", description: null, brand: null, category: null, status: "draft", variants: [], media: unmatched }),
   });
@@ -117,7 +117,7 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
     const product = await getProductDetailsForSync(userId, listingId);
     if (!product) throw new Error("Product not found");
     if (product.variants.length === 0) throw new Error("Shopify sync requires at least one product variant");
-    const updated = await shopifyGraphQL<ProductUpdatePayload>(channelId, userId, userId, `mutation UpdateProduct($product: ProductUpdateInput!) { productUpdate(product: $product) { product { id media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, { product: { id: shopifyProductId, title: product.name, descriptionHtml: product.description, vendor: product.brand, productType: product.category, status: product.status === "active" ? "ACTIVE" : product.status === "archived" ? "ARCHIVED" : "DRAFT" } });
+    const updated = await shopifyGraphQL<ProductUpdatePayload>(channelId, userId, `mutation UpdateProduct($product: ProductUpdateInput!) { productUpdate(product: $product) { product { id media(first: 250) { nodes { id alt mediaContentType } } } userErrors { field message } } }`, { product: { id: shopifyProductId, title: product.name, descriptionHtml: product.description, vendor: product.brand, productType: product.category, status: product.status === "active" ? "ACTIVE" : product.status === "archived" ? "ARCHIVED" : "DRAFT" } });
     throwIfErrors(updated.productUpdate.userErrors, "Shopify product update failed");
     if (!updated.productUpdate.product) throw new Error("Shopify did not return the updated product");
     const mediaMappings = await getProductListingMedia(listingId, userId);
@@ -126,14 +126,14 @@ export async function syncShopifyProduct(userId: number, channelId: string, list
     const mapped = await reconcileVariantMappings(channelId, listingId, userId, shopifyProductId, product.variants, mappings);
     const existing: Array<{ variant: CatalogVariant; mapping: ListingVariantMapping }> = product.variants.map((variant: CatalogVariant): ExistingVariantEntry => ({ variant, mapping: mapped.get(String(variant.id)) })).filter((entry: ExistingVariantEntry): entry is { variant: CatalogVariant; mapping: ListingVariantMapping } => Boolean(entry.mapping?.external_id));
     if (existing.length) {
-      const result = await shopifyGraphQL<VariantUpdatePayload>(channelId, userId, userId, `mutation UpdateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, { productId: shopifyProductId, variants: existing.map(({ variant, mapping }) => ({ id: String(mapping.external_id), ...mapVariantToShopifyVariant(variant) })) });
+      const result = await shopifyGraphQL<VariantUpdatePayload>(channelId, userId, `mutation UpdateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, { productId: shopifyProductId, variants: existing.map(({ variant, mapping }) => ({ id: String(mapping.external_id), ...mapVariantToShopifyVariant(variant) })) });
       throwIfErrors(result.productVariantsBulkUpdate.userErrors, "Shopify variant update failed");
       if (result.productVariantsBulkUpdate.productVariants.length !== existing.length) throw new Error("Shopify returned an unexpected number of updated variants");
       for (let i = 0; i < existing.length; i += 1) { const returned = result.productVariantsBulkUpdate.productVariants[i]; if (!returned) throw new Error("Shopify variant update response was incomplete"); const saved = await upsertProductListingVariant(listingId, userId, { variantId: existing[i].variant.id, externalId: returned.id, syncStatus: "synced" }); if (saved.error) throw new Error(saved.error); }
     }
     const newVariants = product.variants.filter((variant: CatalogVariant) => !mapped.get(String(variant.id))?.external_id);
     if (newVariants.length) {
-      const result = await shopifyGraphQL<VariantCreatePayload>(channelId, userId, userId, `mutation CreateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkCreate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, { productId: shopifyProductId, variants: newVariants.map(mapVariantToShopifyVariant) });
+      const result = await shopifyGraphQL<VariantCreatePayload>(channelId, userId, `mutation CreateVariants($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkCreate(productId: $productId, variants: $variants) { productVariants { id } userErrors { field message } } }`, { productId: shopifyProductId, variants: newVariants.map(mapVariantToShopifyVariant) });
       throwIfErrors(result.productVariantsBulkCreate.userErrors, "Shopify new variant creation failed");
       if (result.productVariantsBulkCreate.productVariants.length !== newVariants.length) throw new Error("Shopify returned an unexpected number of created variants");
       for (let i = 0; i < newVariants.length; i += 1) { const returned = result.productVariantsBulkCreate.productVariants[i]; if (!returned) throw new Error("Shopify new variant response was incomplete"); const saved = await upsertProductListingVariant(listingId, userId, { variantId: newVariants[i].id, externalId: returned.id, syncStatus: "synced" }); if (saved.error) throw new Error(saved.error); }
