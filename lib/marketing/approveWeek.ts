@@ -21,6 +21,7 @@ export type ApprovedWeeklyStrategy = {
       cta: string;
       mediaId?: number | null;
       plannedFor?: string | null;
+      evidence?: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
     }>;
   }>;
 };
