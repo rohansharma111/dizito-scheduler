@@ -130,9 +130,9 @@ export async function upsertProductListingMedia(
     [
       listingId,
       input.productMediaId,
-      input.externalId ?? null,
+      externalId,
       input.syncStatus ?? "pending",
-      JSON.stringify(input.providerMetadata ?? {}),
+      JSON.stringify(providerMetadata),
     ],
   );
 
