@@ -542,3 +542,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Confirmed Shopify remains on its separate durable publish/recovery path rather than being forced into the provider-neutral ledger.
 - Removed redundant duplicate authenticated-user validation from Shopify publish/sync routes.
 - Tests, lint, build, and live provider verification remain intentionally deferred.
+
+
+### Commerce credential provider-boundary hardening — 2026-10-06
+- Hardened WooCommerce credential persistence and reads to require both tenant ownership and `provider='woocommerce'`.
+- Re-audited all Commerce credential modules: Shopify, Amazon, Flipkart, and WooCommerce now require tenant context; provider identity is explicitly checked at each provider-specific credential boundary.
+- No tests/lint/build/live provider verification performed yet.
