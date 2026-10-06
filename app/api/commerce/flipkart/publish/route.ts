@@ -9,7 +9,9 @@ export function getFlipkartPublishErrorStatus(error: string) {
   if (
     error === "LISTING_ALREADY_PUBLISHED" ||
     error === "LISTING_IDEMPOTENCY_KEY_MISMATCH" ||
-    error === "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION"
+    error === "PUBLISH_ATTEMPT_REQUIRES_RECONCILIATION" ||
+    error === "IDEMPOTENCY_KEY_CONFLICT" ||
+    error === "IDEMPOTENCY_PAYLOAD_CONFLICT"
   ) return 409;
   if (error === "LIVE_PUBLISH_DISABLED") return 409;
   return 400;
