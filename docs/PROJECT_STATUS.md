@@ -580,3 +580,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 ### Commerce sync external-ID race hardening — 2026-10-06
 - `updateProductListingSyncState` now acquires the tenant/channel/external-ID advisory lock before checking for conflicting listings.
 - This closes the cross-listing race where two concurrent sync workers could otherwise assign the same provider external ID to different listings.
+
+
+### Commerce mapping external-ID normalization — 2026-10-07
+- Variant and draft mapping paths now normalize blank/whitespace-only provider external IDs to `NULL`.
+- This aligns mapping persistence with publish reconciliation semantics, where blank external IDs are treated as absent.
+- Media mapping normalization remains the next small consistency patch before validation.
