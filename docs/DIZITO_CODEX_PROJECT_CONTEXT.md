@@ -494,3 +494,8 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 - Amazon SP-API helpers for catalog, listing, offers, product types, and verification now require explicit authenticated tenant context.
 - OAuth credential persistence is tenant-scoped at the callback boundary.
 - No Amazon provider helper intentionally accepts channel-only access after this checkpoint.
+
+
+### Commerce channel identity race hardening — 2026-10-06
+- OAuth-backed Commerce channels now have a database-enforced unique identity per tenant/provider/external account.
+- Application channel creation handles a concurrent uniqueness conflict by resolving the existing channel, making reconnect creation race-safe.

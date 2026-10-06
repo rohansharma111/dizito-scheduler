@@ -142,6 +142,11 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
 
     return { product, externalId: providerId, reconciled: true };
   } catch (error) {
-    return { error: "RECONCILIATION_FAILED" as const, message: error instanceof Error ? error.message : "WooCommerce reconciliation failed" };
+    return {
+      error: "RECONCILIATION_FAILED" as const,
+      message: error instanceof Error ? error.message : "WooCommerce reconciliation failed",
+      reconciliationRequired: true as const,
+      ambiguous: true as const,
+    };
   }
 }

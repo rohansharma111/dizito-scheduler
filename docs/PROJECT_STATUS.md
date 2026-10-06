@@ -488,3 +488,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Amazon credential persistence in the OAuth callback now explicitly binds the credential write to the authenticated user.
 - All Commerce-facing Amazon SP-API helper paths now require and forward authenticated `userId`; provider access no longer relies on channel ID alone.
 - Runtime tests remain intentionally deferred until the implementation pass is complete.
+
+
+### Commerce channel identity concurrency — 2026-10-06
+- Added a database-level unique identity for `(user_id, provider, external_account_id)` when an external account ID exists.
+- Hardened `createCommerceChannel` to treat a uniqueness race as an existing channel rather than creating a duplicate.
+- This closes the OAuth reconnect “find then create” race for Shopify, Amazon, and Flipkart channel identities.
+- Tests/lint/build remain deferred until the complete code-level implementation pass is finished.
