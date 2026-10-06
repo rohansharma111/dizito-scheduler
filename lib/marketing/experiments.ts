@@ -79,12 +79,12 @@ export async function listCompletedExperimentEvidence(userId: number): Promise<C
             COALESCE(
               json_agg(
                 json_build_object(
-                  'actionType', a.action_type,
+                  'actionType', action_stats.action_type,
                   'count', action_stats.count,
                   'value', action_stats.value
                 )
                 ORDER BY action_stats.count DESC, a.action_type
-              ) FILTER (WHERE a.action_type IS NOT NULL),
+              ) FILTER (WHERE action_stats.action_type IS NOT NULL),
               '[]'::json
             ) AS outcomes
        FROM marketing_experiments e
