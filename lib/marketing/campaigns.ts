@@ -22,6 +22,12 @@ export type MarketingCampaign = {
     converted: number;
     archived: number;
   };
+  observedImpact: {
+    actionCount: number;
+    actionValue: number;
+    linkedOrderCount: number;
+    linkedOrderValue: number;
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -37,11 +43,16 @@ export async function listCampaigns(userId: number): Promise<MarketingCampaign[]
             COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'planned')::int AS content_planned_count,
             COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'ready')::int AS content_ready_count,
             COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'converted')::int AS content_converted_count,
-            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count
+            COUNT(DISTINCT ci.id) FILTER (WHERE ci.status = 'archived')::int AS content_archived_count,
+            COUNT(DISTINCT ca.id) FILTER (WHERE ca.status = 'completed')::int AS observed_action_count,
+            COALESCE(SUM(ca.value) FILTER (WHERE ca.status = 'completed'),0)::int AS observed_action_value,
+            COUNT(DISTINCT ca.order_id) FILTER (WHERE ca.status = 'completed' AND ca.order_id IS NOT NULL)::int AS linked_order_count,
+            COALESCE(SUM(ca.value) FILTER (WHERE ca.status = 'completed' AND ca.order_id IS NOT NULL),0)::int AS linked_order_value
        FROM marketing_campaigns c
        LEFT JOIN marketing_campaign_products cp ON cp.campaign_id = c.id
        LEFT JOIN marketing_campaign_posts cpo ON cpo.campaign_id = c.id
        LEFT JOIN marketing_content_items ci ON ci.campaign_id = c.id
+       LEFT JOIN marketing_customer_actions ca ON ca.campaign_id = c.id AND ca.user_id = c.user_id
       WHERE c.user_id = $1
       GROUP BY c.id
       ORDER BY c.created_at DESC, c.id DESC`,
@@ -97,6 +108,12 @@ function mapCampaign(row: any): MarketingCampaign {
       ready: Number(row.content_ready_count ?? 0),
       converted: Number(row.content_converted_count ?? 0),
       archived: Number(row.content_archived_count ?? 0),
+    },
+    observedImpact: {
+      actionCount: Number(row.observed_action_count ?? 0),
+      actionValue: Number(row.observed_action_value ?? 0),
+      linkedOrderCount: Number(row.linked_order_count ?? 0),
+      linkedOrderValue: Number(row.linked_order_value ?? 0),
     },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
