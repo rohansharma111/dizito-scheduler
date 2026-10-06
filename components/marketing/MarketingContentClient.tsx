@@ -8,7 +8,7 @@ type Platform = typeof PLATFORMS[number];
 type Variant = { id: number; platform: Platform; hook: string | null; body: string | null; cta: string | null; mediaId: number | null; status: string };
 type ContentItem = {
   id: number; campaignId: number; contentType: string; format: string | null; topic: string | null;
-  angle: string | null; hook: string | null; body: string | null; cta: string | null; mediaId: number | null;
+  angle: string | null; hook: string | null; body: string | null; cta: string | null; mediaId: number | null; productIds: number[];
   status: string; plannedFor: string | null; postIds: number[]; variants?: Variant[];
 };
 type Account = { id: number; account_name: string; platform: string; status: string };
@@ -68,18 +68,12 @@ export default function MarketingContentClient() {
           angle: item.angle || undefined,
           hook: item.hook || undefined,
           cta: item.cta || undefined,
+          productIds: item.productIds,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to generate copy");
-      const save = await fetch(`/api/marketing/content-items/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: data.copy.body, status: item.status === "draft" ? "ready" : item.status }),
-      });
-      const saved = await save.json();
-      if (!save.ok) throw new Error(saved.error || "Failed to save generated copy");
-      setCopyDrafts((current) => ({ ...current, [item.id]: saved.contentItem.body || data.copy.body }));
+      setCopyDrafts((current) => ({ ...current, [item.id]: data.copy.body }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate copy");
     } finally {
@@ -90,7 +84,7 @@ export default function MarketingContentClient() {
   async function generateVariant(item: ContentItem, platform: Platform) {
     const key = `${item.id}:${platform}`; setVariantBusy(key); setError(null);
     try {
-      const response = await fetch("/api/marketing/generate-content", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contentType: item.contentType, format: item.format || "post", topic: item.topic || "", angle: item.angle || undefined, hook: item.hook || undefined, cta: item.cta || undefined, platform }) });
+      const response = await fetch("/api/marketing/generate-content", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contentType: item.contentType, format: item.format || "post", topic: item.topic || "", angle: item.angle || undefined, hook: item.hook || undefined, cta: item.cta || undefined, productIds: item.productIds, platform }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || "Failed to generate variant");
       setVariantDrafts((current) => ({ ...current, [key]: data.copy.body }));
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to generate variant"); }
