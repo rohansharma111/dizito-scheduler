@@ -144,6 +144,16 @@ export default function GenerateMyWeekPage() {
       {plan && <section style={{ display: "grid", gap: 16 }}>
         <div style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
           <h2 style={{ marginTop: 0 }}>{plan.strategySummary}</h2>
+          {recommendations[0] && <div style={{ marginTop: 16, padding: 14, borderRadius: 8, border: "1px solid #ccc" }}>
+            <strong>Highest-evidence optimization focus</strong>
+            <p style={{ margin: "8px 0" }}>{recommendations[0].rationale}</p>
+            {Array.isArray(recommendations[0].supportingExperimentIds) && recommendations[0].supportingExperimentIds.length > 0
+              ? <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>Supporting completed experiments: {recommendations[0].supportingExperimentIds.map((id: number) => `#${id}`).join(", ")}.</p>
+              : <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>No completed experiment history is attached to this recommendation.</p>}
+            {recommendations[0].evidence && <p style={{ margin: "8px 0 0", fontSize: 13, opacity: 0.7 }}>
+              Observed evidence: {recommendations[0].evidence.sourceType === "variant" ? `Variant #${recommendations[0].evidence.sourceId}` : `Content Item #${recommendations[0].evidence.sourceId}`} · {recommendations[0].evidence.count} {String(recommendations[0].evidence.actionType).replaceAll("_", " ")} action{recommendations[0].evidence.count === 1 ? "" : "s"} · value {recommendations[0].evidence.value}{recommendations[0].evidence.platform ? ` · ${recommendations[0].evidence.platform}` : ""}. This is observational evidence, not causal proof.
+            </p>}
+          </div>}
           <p style={{ marginBottom: 0, opacity: 0.7 }}>Review the recommendations below before approving. Approval creates a planned campaign and Content Items; it does not schedule or publish posts.</p>
           {plan.experiment && <div style={{ marginTop: 16, padding: 14, borderRadius: 8, background: "#f7f7f7" }}>
             <strong>Experiment to review</strong>
