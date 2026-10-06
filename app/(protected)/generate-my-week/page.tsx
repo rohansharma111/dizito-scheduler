@@ -88,6 +88,7 @@ export default function GenerateMyWeekPage() {
             cta: item.cta,
             mediaId: item.mediaId ?? null,
             plannedFor: item.day,
+            evidence: item.evidence ?? null,
           })),
         },
       ],
