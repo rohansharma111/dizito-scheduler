@@ -292,9 +292,11 @@ export async function POST(request: Request) {
           INSERT INTO social_accounts
           (
             platform,
-    account_name,
-    access_token,
-    board_id,
+            account_name,
+            access_token,
+            refresh_token,
+            token_expires_at,
+            board_id,
     pinterest_profile_id,
     user_id
           )
