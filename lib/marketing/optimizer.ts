@@ -12,6 +12,7 @@ export type MarketingOptimization = {
     metric: string;
     resultSummary: string | null;
     outcomes: Array<{ actionType: string; count: number; value: number }>;
+    metricEvidence: Array<{ actionType: string; count: number; value: number }>;
   }>;
   opportunities: Array<{ action: string; rationale: string; campaignId: number | null; contentItemId: number | null; variantId: number | null; priority: "high" | "medium" | "low"; observedOutcome: { actionType: string; count: number; value: number; platform: string | null } | null; supportingExperimentIds: number[] }>;
   experiments: Array<{ hypothesis: string; change: string; metric: string }>;
@@ -60,6 +61,11 @@ export async function generateMarketingOptimization(userId: number): Promise<Mar
       metric: experiment.metric,
       resultSummary: experiment.resultSummary,
       outcomes: experiment.outcomes.map((outcome) => ({
+        actionType: outcome.actionType,
+        count: outcome.count,
+        value: outcome.value,
+      })),
+      metricEvidence: experiment.metricEvidence.map((outcome) => ({
         actionType: outcome.actionType,
         count: outcome.count,
         value: outcome.value,
