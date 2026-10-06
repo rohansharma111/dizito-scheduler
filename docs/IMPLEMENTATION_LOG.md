@@ -75,3 +75,28 @@
 
 - **Status:** Implemented; not yet verified in a running environment.
 - **Commit:** `...`
+
+## 2026-10-06 — Provider-neutral commerce adapter contract
+
+- **Status:** Implemented; not yet runtime-verified.
+- **Commit:** `3108264c8a4c90025e7779119b55af7f3ffb1cec`
+- **File:** `lib/commerce/providers/contracts.ts`
+- **Implemented behavior:**
+  - Defines provider-neutral operation names for draft, publish, reconcile, and sync.
+  - Defines a capability surface for draft, publish, reconciliation, synchronization, inventory, pricing, orders, returns, and webhooks.
+  - Defines bounded success, confirmed-failure, and ambiguous operation results with retryability/error metadata.
+  - Carries tenant/channel context without embedding provider-specific authentication assumptions.
+  - Keeps provider payload and response types opaque so provider mappers remain responsible for external schemas.
+  - Requires explicit live-publish confirmation in the adapter publish contract.
+- **Architecture review:** Shared channel and listing services were inspected and found to be provider-neutral; no WooCommerce-specific logic was introduced into the shared persistence layer.
+- **Verification limits:** Repository writes and source inspection succeeded through GitHub. Local TypeScript compilation, lint, automated tests, migration execution, and provider calls were not run in this environment.
+- **Next step:** Once the contract is reviewed, migrate the WooCommerce workflow to use the shared result types without changing behavior, then add contract-focused tests before introducing any Meesho client code.
+
+
+## 2026-10-06 — Meesho architecture status update
+
+- **Status:** Documentation updated; Meesho provider implementation remains blocked.
+- **Commit:** `65f0b6ab7743dc3a568a4fd694db4ea8ebb6b97f`
+- **Canonical status:** `docs/PROJECT_STATUS.md` now records the provider-neutral contract work, exact commits, verification limits, Meesho blocker, and next action.
+- **Current blocker:** No authoritative Meesho API/partner contract or authorized test access has been established, so no Meesho-specific client, authentication flow, endpoint, publish route, or migration is being claimed or added.
+- **Next action:** Migrate WooCommerce to the provider-neutral contract with behavior-preserving tests, then establish provider dispatch before returning to Meesho implementation.
