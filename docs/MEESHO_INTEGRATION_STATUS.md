@@ -2,7 +2,7 @@
 
 **Project:** Dizito — AI Commerce Operating System  
 **Repository:** `rohansharma111/dizito-scheduler`  
-**Branch:** `feature/commerce-meesho`  
+**Branch:** `main`  
 **Last reviewed:** 2026-09-24  
 **Status:** Discovery / verification in progress; implementation blocked on authoritative provider access
 
