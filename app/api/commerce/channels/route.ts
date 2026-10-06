@@ -11,7 +11,12 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const channels = await getCommerceChannels(Number(session.user.id));
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const channels = await getCommerceChannels(userId);
 
     return NextResponse.json({ success: true, channels });
   } catch (error) {
