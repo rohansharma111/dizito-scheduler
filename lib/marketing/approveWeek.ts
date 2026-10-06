@@ -34,12 +34,25 @@ export type ApprovedWeeklyStrategy = {
   }>;
 };
 
+function isValidDateOnly(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export async function persistApprovedWeek(
   userId: number,
   weekStart: string,
   weekEnd: string,
   strategy: ApprovedWeeklyStrategy,
 ) {
+  if (!Number.isInteger(userId) || userId <= 0) throw new Error("Invalid user");
+  if (!isValidDateOnly(weekStart) || !isValidDateOnly(weekEnd)) throw new Error("Invalid week range");
+  if (weekStart > weekEnd) throw new Error("Invalid week range");
+  if (!strategy || typeof strategy.strategySummary !== "string" || !Array.isArray(strategy.campaigns) || strategy.campaigns.length === 0) {
+    throw new Error("Invalid strategy");
+  }
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -51,11 +64,6 @@ export async function persistApprovedWeek(
     if (existing.rows[0]?.status === "approved") {
       throw new Error("Weekly plan is already approved");
     }
-
-    if (!Number.isInteger(userId) || userId <= 0) throw new Error("Invalid user");
-    const startTime = new Date(weekStart + "T00:00:00Z").getTime();
-    const endTime = new Date(weekEnd + "T00:00:00Z").getTime();
-    if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || startTime > endTime) throw new Error("Invalid week range");
 
     const planResult = await client.query(
       `INSERT INTO marketing_weekly_plans
@@ -75,7 +83,10 @@ export async function persistApprovedWeek(
     for (let i = 0; i < strategy.campaigns.length; i++) {
       const campaign = strategy.campaigns[i];
       const offerId = campaign.offerId ?? null;
-      if (offerId) {
+      if (offerId !== null && (!Number.isInteger(offerId) || offerId <= 0)) {
+        throw new Error("Invalid offer reference");
+      }
+      if (offerId !== null) {
         const offer = await client.query(
           `SELECT id FROM marketing_offers WHERE id=$1 AND user_id=$2`,
           [offerId, userId],
