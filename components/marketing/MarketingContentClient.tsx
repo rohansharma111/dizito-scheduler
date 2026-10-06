@@ -33,11 +33,14 @@ export default function MarketingContentClient() {
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [schedule, setSchedule] = useState<Record<number, string>>({});
   const [campaignFilter, setCampaignFilter] = useState<number | null>(null);
+  const [contentFocus, setContentFocus] = useState<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const value = params.get("campaignId");
     if (value && /^\d+$/.test(value)) setCampaignFilter(Number(value));
+    const contentValue = params.get("contentItemId");
+    if (contentValue && /^\d+$/.test(contentValue)) setContentFocus(Number(contentValue));
   }, []);
 
   async function load() {
@@ -49,6 +52,14 @@ export default function MarketingContentClient() {
       if (!contentResponse.ok) throw new Error(contentData.error || "Failed to load content");
       if (!accountResponse.ok) throw new Error(accountData.error || "Failed to load accounts");
       const rawItems: ContentItem[] = contentData.contentItems || [];
+      if (contentFocus) {
+        const focusedItem = rawItems.find((item) => item.id === contentFocus);
+        if (focusedItem && !campaignFilter && focusedItem.campaignId) {
+          const focusedResponse = await fetch(`/api/marketing/content-items?campaignId=${focusedItem.campaignId}`);
+          const focusedData = await focusedResponse.json();
+          if (focusedResponse.ok) rawItems.splice(0, rawItems.length, ...(focusedData.contentItems || []));
+        }
+      }
       const enriched = await Promise.all(rawItems.map(async (item) => {
         const response = await fetch(`/api/marketing/content-items/${item.id}/variants`);
         if (!response.ok) return item;
