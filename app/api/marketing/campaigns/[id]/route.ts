@@ -47,11 +47,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const goalId = body.goalId === undefined ? existing.goalId : body.goalId === null || body.goalId === "" ? null : Number(body.goalId);
   const offerId = body.offerId === undefined ? existing.offerId : body.offerId === null || body.offerId === "" ? null : Number(body.offerId);
-  const productIds = body.productIds === undefined ? existing.productIds : Array.isArray(body.productIds) ? [...new Set(body.productIds.map(Number))] : null;
+  const productIds: number[] | null = body.productIds === undefined ? existing.productIds : Array.isArray(body.productIds) ? [...new Set(body.productIds.map((value: unknown) => Number(value)))] : null;
   if (goalId !== null && (!Number.isInteger(goalId) || goalId <= 0)) return errorResponse("Invalid goalId");
   if (offerId !== null && (!Number.isInteger(offerId) || offerId <= 0)) return errorResponse("Invalid offerId");
   if (!productIds) return errorResponse("Invalid productIds");
-  if (productIds.some((value: number) => !Number.isInteger(value) || value <= 0)) return errorResponse("Invalid productIds");
+  if (productIds.some((value) => !Number.isInteger(value) || value <= 0)) return errorResponse("Invalid productIds");
 
   const startsAt = body.startsAt === undefined ? existing.startsAt : body.startsAt;
   const endsAt = body.endsAt === undefined ? existing.endsAt : body.endsAt;
@@ -62,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const brain = await getBusinessBrain(userId);
   if (goalId !== null && !brain.goals.some((goal) => goal.id === goalId)) return errorResponse("Invalid goal");
   if (offerId !== null && !brain.offers.some((offer) => offer.id === offerId)) return errorResponse("Invalid offer");
-  if (productIds.some((productId: number) => !brain.products.some((product) => product.id === productId))) return errorResponse("Invalid product selection");
+  if (productIds.some((productId) => !brain.products.some((product) => product.id === productId))) return errorResponse("Invalid product selection");
 
   const client = await pool.connect();
   try {
