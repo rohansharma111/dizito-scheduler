@@ -31,6 +31,79 @@ export async function GET(
   return Response.json({ variants: result.rows });
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return errorResponse("Unauthorized", 401);
+  const userId = Number((session.user as any).id);
+  const { id } = await params;
+  const contentItemId = Number(id);
+  if (!Number.isInteger(contentItemId) || contentItemId <= 0) return errorResponse("Invalid id");
+
+  try {
+    const body = await request.json();
+    const variantId = Number(body.variantId);
+    if (!Number.isInteger(variantId) || variantId <= 0) return errorResponse("Invalid variantId");
+
+    const existing = await pool.query(
+      `SELECT id, platform, status
+         FROM marketing_content_item_variants
+        WHERE id = $1 AND content_item_id = $2 AND user_id = $3`,
+      [variantId, contentItemId, userId],
+    );
+    const variant = existing.rows[0];
+    if (!variant) return errorResponse("Content variant not found", 404);
+    if (variant.status === "converted") return errorResponse("Converted variants cannot be edited", 409);
+
+    const mediaId = body.mediaId === undefined ? undefined : body.mediaId == null ? null : Number(body.mediaId);
+    if (mediaId !== undefined) {
+      if (mediaId !== null && (!Number.isInteger(mediaId) || mediaId <= 0)) return errorResponse("Invalid mediaId");
+      if (mediaId !== null) {
+        const media = await pool.query(
+          `SELECT id FROM media_library WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+          [mediaId, userId],
+        );
+        if (media.rowCount === 0) return errorResponse("Media not found", 400);
+      }
+    }
+
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let index = 1;
+    for (const [column, value] of [
+      ["hook", body.hook],
+      ["body", body.body],
+      ["cta", body.cta],
+      ["media_id", mediaId],
+    ] as Array<[string, unknown]>) {
+      if (value !== undefined) {
+        updates.push(`${column} = ${index++}`);
+        values.push(value === null ? null : String(value));
+      }
+    }
+    if (updates.length === 0) return errorResponse("No variant fields to update");
+
+    updates.push("status = 'ready'", "updated_at = now()");
+    values.push(variantId, contentItemId, userId);
+
+    const result = await pool.query(
+      `UPDATE marketing_content_item_variants
+          SET ${updates.join(", ")}
+        WHERE id = ${index} AND content_item_id = ${index + 1} AND user_id = ${index + 2}
+        RETURNING id, user_id AS "userId", content_item_id AS "contentItemId", platform,
+                  hook, body, cta, media_id AS "mediaId", status,
+                  created_at AS "createdAt", updated_at AS "updatedAt"`,
+      values,
+    );
+    return Response.json({ variant: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    return errorResponse("Failed to update content variant", 500);
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
