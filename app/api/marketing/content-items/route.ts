@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { listContentItems } from "@/lib/marketing/contentItems";
+import { getContentItem, listContentItems } from "@/lib/marketing/contentItems";
 
 function jsonError(error: string, status = 400) {
   return Response.json({ error }, { status });
@@ -109,7 +109,8 @@ export async function POST(request: Request) {
     }
 
     await client.query("COMMIT");
-    return Response.json({ contentItem: result.rows[0] }, { status: 201 });
+    const contentItem = await getContentItem(userId, Number(result.rows[0].id));
+    return Response.json({ contentItem }, { status: 201 });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error(error);
