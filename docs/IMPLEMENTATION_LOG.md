@@ -419,3 +419,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Found during code-only audit that `claimProductListingSync()` wrote `sync_claim_token` but omitted it from `RETURNING`.
 - Fixed the query to return the token and preserve the worker lease handoff contract.
 - No runtime tests executed yet, per implementation-first sequencing.
+
+
+## 2026-10-06 — Commerce draft creation race hardening
+
+- Added deterministic handling for concurrent `product_listings` creation in the draft upsert path.
+- A unique-constraint race now resolves to the existing tenant-owned listing and continues the draft mapping transaction.
+- This complements the existing listing row lock for already-created listings.
+- Tests/lint/build remain deferred until the implementation pass is complete.
