@@ -62,6 +62,7 @@ export async function persistApprovedWeek(
     const plan = planResult.rows[0];
 
     let approvedCampaignId: number | null = null;
+    let approvedContentItemId: number | null = null;
 
     for (let i = 0; i < strategy.campaigns.length; i++) {
       const campaign = strategy.campaigns[i];
@@ -144,7 +145,8 @@ export async function persistApprovedWeek(
             item.plannedFor ?? null,
           ],
         );
-        const contentItemId = contentResult.rows[0].id;
+        const contentItemId = Number(contentResult.rows[0].id);
+        if (approvedContentItemId === null) approvedContentItemId = contentItemId;
         for (const productId of productIds) {
           await client.query(
             `INSERT INTO marketing_content_item_products (content_item_id, product_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
@@ -156,16 +158,19 @@ export async function persistApprovedWeek(
 
     if (strategy.experiment?.hypothesis && strategy.experiment.change && strategy.experiment.metric) {
       const campaignId = approvedCampaignId;
+      const contentItemId = approvedContentItemId;
       if (campaignId === null) throw new Error("Unable to scope weekly experiment to approved campaign");
+      if (contentItemId === null) throw new Error("Unable to scope weekly experiment to approved content item");
 
       await client.query(
         `INSERT INTO marketing_experiments
          (user_id, campaign_id, content_item_id, variant_id, target_type, target_field, target_metadata, name, hypothesis, change_description, metric, status, starts_at, ends_at)
-         VALUES ($1,$2,NULL,NULL,'campaign',NULL,$3,$4,$5,$6,$7,'planned',$8,$9)`,
+         VALUES ($1,$2,$3,NULL,'content_item',NULL,$4,$5,$6,$7,$8,'planned',$9,$10)`,
         [
           userId,
           campaignId,
-          { scope: "approved_weekly_campaign", campaignId, weekStart, weekEnd },
+          contentItemId,
+          { scope: "approved_weekly_content_item", campaignId, contentItemId, weekStart, weekEnd },
           "Weekly experiment " + weekStart,
           strategy.experiment.hypothesis,
           strategy.experiment.change,
