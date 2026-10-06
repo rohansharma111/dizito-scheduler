@@ -524,3 +524,11 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Shopify sync now carries the claim token through both success and failure persistence; stale workers fail closed instead of mutating listing state.
 - Migration 019_product_listing_sync_claims.sql adds the claim-token column and supporting index.
 - Tests, lint, build, and provider verification remain intentionally deferred.
+
+
+### Legacy Commerce listing/media boundary hardening — 2026-10-06
+- Hardened legacy product-listing API session IDs to require positive safe integers.
+- Listing media mappings now preserve omitted external IDs and merge provider metadata instead of clearing/replacing existing mapping state.
+- Added deterministic duplicate media external-ID conflict detection within a listing.
+- Legacy variant API now preserves omitted external IDs and exposes deterministic conflict responses.
+- Tests, lint, build, and provider verification remain intentionally deferred.
