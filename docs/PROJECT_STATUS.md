@@ -603,3 +603,10 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Direct Commerce listing/mapping write-path audit found no additional application-level INSERT/UPDATE paths outside the hardened listing services.
 - Tests, lint, build, and live provider verification remain intentionally deferred.
 \n\n### Marketing attribution detail propagation — 2026-10-07\n- Business Impact now preserves attribution detail at Content Item, Variant, and Post levels instead of exposing only campaign-level attribution.\n- Marketing Optimizer opportunities now carry explicit attributed outcome evidence and include it in deterministic evidence scoring.\n- Existing campaign-level attribution output remains backward compatible.\n- Observed outcomes and manual attribution remain explicitly separated; neither is treated as causal evidence.\n- Tests, lint, build, database execution, and provider verification remain intentionally deferred.\n
+
+### Commerce publish-ledger outcome hardening — 2026-10-07
+- Provider-neutral publish reconciliation now distinguishes a listing's existing external-ID mismatch from a deterministic cross-listing external-ID conflict.
+- Flipkart adapter classification maps the cross-listing conflict to a failed reconciliation outcome instead of ambiguous provider uncertainty.
+- Database schema review found no safe incremental composite tenant FK for listing variants/media because those child tables do not carry user_id; their parent listing ownership plus application-level canonical variant/media ownership checks remain the current design.
+- A redundant migration was deliberately removed rather than adding schema churn without a real tenant key.
+- Tests, lint, build, and live provider verification remain intentionally deferred.
