@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { generateWeeklyPlan } from "@/lib/marketing/generateWeeklyPlan";
+import { generateWeeklyPlan, type StrategyHint } from "@/lib/marketing/generateWeeklyPlan";
 
 function jsonError(error: string, status = 400) {
   return Response.json({ error }, { status });
@@ -21,7 +21,8 @@ export async function POST(request: Request) {
   if (!validDate(body.weekStart)) return jsonError("Invalid weekStart");
 
   try {
-    const generatedWeek = await generateWeeklyPlan(userId, body.weekStart);
+    const strategy = body.strategy && typeof body.strategy === "object" ? body.strategy as StrategyHint : undefined;
+    const generatedWeek = await generateWeeklyPlan(userId, body.weekStart, strategy);
     return Response.json({ generatedWeek });
   } catch (error) {
     console.error(error);
