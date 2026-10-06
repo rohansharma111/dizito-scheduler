@@ -586,3 +586,12 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Variant and draft mapping paths now normalize blank/whitespace-only provider external IDs to `NULL`.
 - This aligns mapping persistence with publish reconciliation semantics, where blank external IDs are treated as absent.
 - Media mapping normalization remains the next small consistency patch before validation.
+
+
+### Commerce reconciliation/race hardening — 2026-10-07
+- Completed external-ID normalization across listing sync-state, draft variant, listing variant, and listing media persistence; blank/whitespace-only IDs are stored as NULL.
+- Hardened WooCommerce reconciliation with a tenant/channel/external-ID advisory lock, locked listing validation, and cross-listing external-ID conflict detection before marking a provider product reconciled.
+- Hardened WooCommerce idempotent replay with the same external-ID serialization/conflict protection before restoring a listing to synced/active.
+- updateCommerceChannel now converts a database uniqueness collision on provider/account identity into the deterministic CHANNEL_IDENTITY_CONFLICT result.
+- Legacy product-listing variant API user validation now requires a positive safe integer, matching the Commerce route boundary standard.
+- Tests, lint, build, and live provider verification remain intentionally deferred until the implementation pass is complete.
