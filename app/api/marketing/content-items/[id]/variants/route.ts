@@ -182,7 +182,6 @@ export async function POST(
     } finally {
       client.release();
     }
-    return Response.json({ variant: result.rows[0] }, { status: 201 });
   } catch (error) {
     console.error(error);
     return errorResponse("Failed to save content variant", 500);
