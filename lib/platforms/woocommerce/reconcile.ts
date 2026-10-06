@@ -70,7 +70,7 @@ export async function reconcileWooCommercePublish(userId: number, input: Reconci
   if ("error" in identity) return identity;
 
   try {
-    const { config } = await getWooCommerceChannelConfig(input.channelId);
+    const { config } = await getWooCommerceChannelConfig(input.channelId, userId);
     let product: Record<string, unknown> | null = null;
     if (externalId) {
       product = await getWooCommerceProduct(config, externalId);
