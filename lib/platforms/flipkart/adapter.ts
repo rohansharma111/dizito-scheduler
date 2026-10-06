@@ -153,32 +153,66 @@ export const flipkartAdapter: CommerceProviderAdapter<
       );
     }
 
-    const result = await reconcileFlipkartPublishOperation(context.userId, {
-      ...payload.input,
-      channelId: context.channelId,
-      ...(externalId ? { externalId } : {}),
-      ...(lookupKey ? { lookupKey } : {}),
-    });
+    try {
+      const result = await reconcileFlipkartPublishOperation(context.userId, {
+        ...payload.input,
+        channelId: context.channelId,
+        ...(externalId ? { externalId } : {}),
+        ...(lookupKey ? { lookupKey } : {}),
+      });
 
-    if (result.externalIdConfirmed && result.externalId) {
+      if (result.externalIdConfirmed && result.externalId) {
+        return {
+          operation: "reconcile",
+          status: "succeeded",
+          externalId: result.externalId,
+          data: result,
+        };
+      }
+
       return {
         operation: "reconcile",
-        status: "succeeded",
-        externalId: result.externalId,
+        status: "ambiguous",
         data: result,
+        error: {
+          code: "EXTERNAL_ID_CONFIRMATION_REQUIRED",
+          message: "Flipkart reconciliation did not confirm an external listing ID",
+          retryable: false,
+          ambiguous: true,
+        },
+      };
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "RECONCILIATION_FAILED";
+      const deterministic = new Set([
+        "CHANNEL_NOT_FOUND",
+        "PUBLISH_ATTEMPT_NOT_FOUND",
+        "PUBLISH_ATTEMPT_NOT_RECONCILABLE",
+        "LISTING_EXTERNAL_ID_MISMATCH",
+      ]);
+
+      if (deterministic.has(code)) {
+        return {
+          operation: "reconcile",
+          status: "failed",
+          error: {
+            code,
+            message: code,
+            retryable: false,
+            ambiguous: false,
+          },
+        };
+      }
+
+      return {
+        operation: "reconcile",
+        status: "ambiguous",
+        error: {
+          code: "RECONCILIATION_FAILED",
+          message: "Flipkart reconciliation could not confirm provider state",
+          retryable: true,
+          ambiguous: true,
+        },
       };
     }
-
-    return {
-      operation: "reconcile",
-      status: "ambiguous",
-      data: result,
-      error: {
-        code: "EXTERNAL_ID_CONFIRMATION_REQUIRED",
-        message: "Flipkart reconciliation did not confirm an external listing ID",
-        retryable: false,
-        ambiguous: true,
-      },
-    };
   },
 };
