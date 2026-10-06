@@ -548,3 +548,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Hardened WooCommerce credential persistence and reads to require both tenant ownership and `provider='woocommerce'`.
 - Re-audited all Commerce credential modules: Shopify, Amazon, Flipkart, and WooCommerce now require tenant context; provider identity is explicitly checked at each provider-specific credential boundary.
 - No tests/lint/build/live provider verification performed yet.
+
+
+### Sync claim-token regression fix — 2026-10-06
+- Corrected `claimProductListingSync()` so the generated `sync_claim_token` is returned from PostgreSQL and handed to the worker.
+- This restores the intended lease protocol: the worker receives the exact token required by `updateProductListingSyncState()` and stale workers remain unable to commit state.
+- Tests/lint/build remain deferred.
