@@ -1,4 +1,4 @@
-import { getCommerceChannelByIdInternal, updateCommerceChannel } from "@/lib/commerce/channels/service";
+import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import {
   getShopifyCredentials,
   saveShopifyCredentials,
@@ -79,8 +79,8 @@ async function markShopifyChannelError(channelId: string, userId: number, messag
   });
 }
 
-async function getAccessToken(channelId: string) {
-  const channel = await getCommerceChannelByIdInternal(channelId);
+async function getAccessToken(channelId: string, userId: number) {
+  const channel = await getCommerceChannelById(channelId, userId);
   if (!channel || channel.provider !== "shopify") {
     throw new Error("Shopify channel not found");
   }
@@ -143,10 +143,11 @@ async function getAccessToken(channelId: string) {
 
 export async function shopifyGraphQL<T>(
   channelId: string,
+  userId: number,
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const { channel, accessToken } = await getAccessToken(channelId);
+  const { channel, accessToken } = await getAccessToken(channelId, userId);
   const shop = String(channel.external_account_id);
   const apiVersion = getShopifyApiVersion();
 
@@ -196,5 +197,5 @@ export async function getShop(channelId: string) {
       name: string;
       myshopifyDomain: string;
     };
-  }>(channelId, `query GetShop { shop { id name myshopifyDomain } }`);
+  }>(channelId, userId, `query GetShop { shop { id name myshopifyDomain } }`);
 }
