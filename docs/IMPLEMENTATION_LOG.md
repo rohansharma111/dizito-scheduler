@@ -458,3 +458,15 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added normalization of blank/whitespace-only external IDs in listing variant and draft mapping paths.
 - Existing omitted IDs continue to be preserved, while explicitly blank IDs no longer become meaningful provider identifiers.
 - Media mapping still requires the same normalization patch; validation remains deferred.
+
+
+## 2026-10-07 — Commerce reconciliation and identity race hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Corrected the remaining external-ID normalization gaps in listing draft and sync-state persistence. Explicit blank/whitespace-only IDs now normalize to NULL; omitted IDs remain preserved.
+- Completed media mapping normalization as well. The earlier status note saying media normalization was pending is superseded by this entry.
+- Hardened WooCommerce reconciliation: the listing is locked, its existing external ID is checked, an advisory lock serializes the tenant/channel/external-ID identity, and another listing cannot claim the same provider product ID.
+- Hardened WooCommerce idempotent replay with the same external-ID advisory lock and cross-listing conflict check before committing the replayed provider identity.
+- updateCommerceChannel now returns deterministic CHANNEL_IDENTITY_CONFLICT on the provider/account uniqueness constraint rather than leaking a raw PostgreSQL 23505.
+- Legacy product-listing variant API session validation now requires a positive safe integer.
+- No tests/lint/build/live provider verification executed; implementation-first sequencing remains in effect.
