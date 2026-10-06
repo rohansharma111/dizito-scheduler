@@ -130,6 +130,8 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     reservationClient.release();
   }
 
+  let providerMutationSucceeded = false;
+
   try {
     const { config } = await getWooCommerceChannelConfig(input.channelId, userId);
     const result = await createWooCommerceProduct(config, { ...input.payload, status: "publish" });
@@ -138,6 +140,7 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
       : null;
 
     if (!externalId) throw new Error("WooCommerce publish response did not include a product id");
+    providerMutationSucceeded = true;
 
     await pool.query(
       `UPDATE product_listings
@@ -169,11 +172,13 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
     );
     await pool.query(
       `UPDATE commerce_publish_attempts
-       SET status = $1, error_message = $2, completed_at = now(), updated_at = now()
-       WHERE id = $3`,
-      [ambiguous ? "ambiguous" : "failed", message, attemptId],
+       SET status = $1, error_message = $2, completed_at = CASE WHEN $1 = 'ambiguous' THEN NULL ELSE now() END, updated_at = now()
+       WHERE id = $3 AND user_id = $4`,
+      [ambiguous || providerMutationSucceeded ? "ambiguous" : "failed", message, attemptId, userId],
     );
-    if (!ambiguous) await markWooCommerceChannelError(input.channelId, userId, message);
+    if (!ambiguous && !providerMutationSucceeded) {
+      await markWooCommerceChannelError(input.channelId, userId, message);
+    }
     throw error;
   }
 }
