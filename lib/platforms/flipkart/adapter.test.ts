@@ -81,7 +81,6 @@ describe("flipkartAdapter", () => {
     expect(result).toMatchObject({ operation: "draft", status: "succeeded" });
   });
 
-
   it("normalizes a confirmed reconciliation external id", async () => {
     mocks.reconcile.mockResolvedValue({
       operationId: "operation-1",
@@ -90,6 +89,7 @@ describe("flipkartAdapter", () => {
       status: "succeeded",
       providerResult: { externalId: "FK-123" },
       externalIdConfirmed: true,
+      externalId: "FK-123",
     });
 
     const result = await flipkartAdapter.reconcilePublish({
@@ -116,6 +116,81 @@ describe("flipkartAdapter", () => {
       listingId: "listing-1",
       skuIds: ["SKU-1"],
     });
+  });
+
+  it("does not execute a publish again for a successful idempotency replay", async () => {
+    mocks.preparePublish.mockResolvedValue({
+      operation: {
+        id: "operation-1",
+        operation: "create",
+        status: "succeeded",
+        external_id: "FK-123",
+      },
+      channelId: "channel-1",
+      listingId: "listing-1",
+      payload: { product_id: "product-1" },
+      livePublishEnabled: false,
+    });
+
+    const result = await flipkartAdapter.publish({
+      context: { channelId: "channel-1", userId: 7 },
+      payload: {
+        action: "publish",
+        input: {
+          channelId: "channel-1",
+          listingId: "listing-1",
+          operation: "create",
+          idempotencyKey: "request-1",
+          listing: { productId: "product-1" },
+        },
+      },
+      confirmLivePublish: true,
+    });
+
+    expect(result).toMatchObject({
+      operation: "publish",
+      status: "succeeded",
+      externalId: "FK-123",
+      data: { idempotentReplay: true },
+    });
+    expect(mocks.executePublish).not.toHaveBeenCalled();
+  });
+
+  it("requires reconciliation instead of executing an in-progress or unknown operation", async () => {
+    for (const status of ["in_progress", "unknown"]) {
+      mocks.preparePublish.mockResolvedValueOnce({
+        operation: {
+          id: "operation-1",
+          operation: "create",
+          status,
+          external_id: null,
+        },
+        payload: { product_id: "product-1" },
+      });
+
+      const result = await flipkartAdapter.publish({
+        context: { channelId: "channel-1", userId: 7 },
+        payload: {
+          action: "publish",
+          input: {
+            channelId: "channel-1",
+            listingId: "listing-1",
+            operation: "create",
+            idempotencyKey: "request-1",
+            listing: { productId: "product-1" },
+          },
+        },
+        confirmLivePublish: true,
+      });
+
+      expect(result).toMatchObject({
+        operation: "publish",
+        status: "ambiguous",
+        error: { code: "RECONCILIATION_REQUIRED", ambiguous: true },
+      });
+    }
+
+    expect(mocks.executePublish).not.toHaveBeenCalled();
   });
 
   it("normalizes a disabled live publish to a provider-neutral failure", async () => {
