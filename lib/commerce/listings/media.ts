@@ -46,95 +46,119 @@ export async function upsertProductListingMedia(
     providerMetadata?: Record<string, unknown>;
   },
 ) {
-  const ownership = await pool.query(
-    `
-    SELECT pl.id
-    FROM product_listings pl
-    INNER JOIN product_media pm
-      ON pm.product_id = pl.product_id
-    INNER JOIN products p
-      ON p.id = pl.product_id
-    WHERE pl.id = $1
-      AND pm.id = $2
-      AND pl.user_id = $3
-      AND p.user_id = $3
-    LIMIT 1
-    `,
-    [listingId, input.productMediaId, userId],
-  );
+  const client = await pool.connect();
 
-  if (ownership.rows.length === 0) {
-    return { error: "LISTING_MEDIA_NOT_FOUND" as const };
-  }
+  try {
+    await client.query("BEGIN");
 
-  const existing = await pool.query(
-    `
-    SELECT external_id, provider_metadata
-    FROM product_listing_media
-    WHERE listing_id = $1
-      AND product_media_id = $2
-    LIMIT 1
-    `,
-    [listingId, input.productMediaId],
-  );
-
-  const current = existing.rows[0];
-  const externalId =
-    input.externalId !== undefined ? input.externalId : current?.external_id ?? null;
-
-  if (externalId) {
-    const conflict = await pool.query(
+    const ownership = await client.query(
       `
-      SELECT id
-      FROM product_listing_media
-      WHERE listing_id = $1
-        AND external_id = $2
-        AND product_media_id <> $3
+      SELECT pl.id, pl.product_id
+      FROM product_listings pl
+      INNER JOIN commerce_channels cc
+        ON cc.id = pl.channel_id
+       AND cc.user_id = pl.user_id
+      INNER JOIN product_media pm
+        ON pm.product_id = pl.product_id
+      INNER JOIN products p
+        ON p.id = pl.product_id
+      WHERE pl.id = $1
+        AND pm.id = $2
+        AND pl.user_id = $3
+        AND p.user_id = $3
       LIMIT 1
+      FOR UPDATE OF pl
       `,
-      [listingId, externalId, input.productMediaId],
+      [listingId, input.productMediaId, userId],
     );
 
-    if (conflict.rows[0]) {
-      return { error: "LISTING_MEDIA_EXTERNAL_ID_CONFLICT" as const };
+    if (ownership.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return { error: "LISTING_MEDIA_NOT_FOUND" as const };
     }
+
+    const existing = await client.query(
+      `
+      SELECT external_id, provider_metadata
+      FROM product_listing_media
+      WHERE listing_id = $1
+        AND product_media_id = $2
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [listingId, input.productMediaId],
+    );
+
+    const current = existing.rows[0];
+    const externalId =
+      input.externalId !== undefined ? input.externalId : current?.external_id ?? null;
+
+    if (externalId) {
+      const conflict = await client.query(
+        `
+        SELECT id
+        FROM product_listing_media
+        WHERE listing_id = $1
+          AND external_id = $2
+          AND product_media_id <> $3
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [listingId, externalId, input.productMediaId],
+      );
+
+      if (conflict.rows[0]) {
+        await client.query("ROLLBACK");
+        return { error: "LISTING_MEDIA_EXTERNAL_ID_CONFLICT" as const };
+      }
+    }
+
+    const providerMetadata = {
+      ...(current?.provider_metadata ?? {}),
+      ...(input.providerMetadata ?? {}),
+    };
+
+    const result = await client.query(
+      `
+      INSERT INTO product_listing_media
+        (listing_id, product_media_id, external_id, sync_status, provider_metadata)
+      VALUES
+        ($1, $2, $3, $4::varchar(20), $5::jsonb)
+      ON CONFLICT (listing_id, product_media_id)
+      DO UPDATE SET
+        external_id = EXCLUDED.external_id,
+        sync_status = EXCLUDED.sync_status,
+        provider_metadata = EXCLUDED.provider_metadata,
+        updated_at = now()
+      RETURNING
+        id,
+        listing_id,
+        product_media_id,
+        external_id,
+        sync_status,
+        provider_metadata,
+        created_at,
+        updated_at
+      `,
+      [
+        listingId,
+        input.productMediaId,
+        externalId,
+        input.syncStatus ?? "pending",
+        JSON.stringify(providerMetadata),
+      ],
+    );
+
+    await client.query("COMMIT");
+    return { listingMedia: result.rows[0] ?? null };
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // Preserve the original failure.
+    }
+    throw error;
+  } finally {
+    client.release();
   }
-
-  const providerMetadata = {
-    ...(current?.provider_metadata ?? {}),
-    ...(input.providerMetadata ?? {}),
-  };
-
-  const result = await pool.query(
-    `
-    INSERT INTO product_listing_media
-      (listing_id, product_media_id, external_id, sync_status, provider_metadata)
-    VALUES
-      ($1, $2, $3, $4::varchar(20), $5::jsonb)
-    ON CONFLICT (listing_id, product_media_id)
-    DO UPDATE SET
-      external_id = EXCLUDED.external_id,
-      sync_status = EXCLUDED.sync_status,
-      provider_metadata = EXCLUDED.provider_metadata,
-      updated_at = now()
-    RETURNING
-      id,
-      listing_id,
-      product_media_id,
-      external_id,
-      sync_status,
-      provider_metadata,
-      created_at,
-      updated_at
-    `,
-    [
-      listingId,
-      input.productMediaId,
-      externalId,
-      input.syncStatus ?? "pending",
-      JSON.stringify(providerMetadata),
-    ],
-  );
-
-  return { listingMedia: result.rows[0] ?? null };
 }
