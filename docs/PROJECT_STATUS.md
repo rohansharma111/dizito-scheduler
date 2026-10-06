@@ -620,3 +620,9 @@ These strengthen the safety boundary but do not constitute live provider verific
 
 
 - Legacy Content Item → Post links can now be enriched with Variant provenance without overwriting an already-established Variant → Post relationship.
+
+
+### WooCommerce channel-client boundary hardening — 2026-10-07
+- Restored the tenant-scoped `getWooCommerceChannelConfig` boundary used by WooCommerce publish/reconcile.
+- The boundary now requires the channel to exist for the authenticated tenant, have provider `woocommerce`, remain `active`, contain a configured store URL, and have tenant-scoped credentials before constructing the remote client config.
+- Tests, lint, build, and live provider verification remain intentionally deferred.
