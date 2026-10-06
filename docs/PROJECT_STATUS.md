@@ -419,3 +419,10 @@ After the main repository checkpoint used for this refresh, the current head als
 - `bb01a2701ebf5df54d67386e2f8a371216b2d74c` — documentation of the Flipkart provider verification seam.
 
 These strengthen the safety boundary but do not constitute live provider verification or a green repository-wide quality result.
+
+### Commerce code-level hardening continuation — 2026-10-06
+- Publish idempotency reservations are now race-safe with atomic conflict handling; duplicate concurrent requests resolve to the existing operation instead of surfacing a unique-constraint failure.
+- Idempotency keys are explicitly bound to listing/provider/operation type and validated against storage bounds.
+- WooCommerce provider mutation success remains reconciliation-safe if post-mutation persistence fails; the attempt is kept ambiguous rather than failed to prevent duplicate creation.
+- WooCommerce publish API now returns HTTP 202 with explicit ambiguous/reconciliation-required state instead of presenting provider submission as a normal 201 success.
+- WooCommerce reconciliation-status reads are scoped to the WooCommerce provider channel and authenticated tenant.
