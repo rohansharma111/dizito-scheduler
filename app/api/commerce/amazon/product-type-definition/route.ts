@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     const requirements = body.requirements ?? "LISTING_PRODUCT_ONLY";
     const result = await getAmazonProductTypeDefinition(
       String(channel.id),
+      userId,
       body.productType.trim(),
       { sellerId, parentageLevel, requirements },
     );
