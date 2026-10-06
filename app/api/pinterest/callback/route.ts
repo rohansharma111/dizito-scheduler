@@ -144,7 +144,7 @@ export async function GET(request: Request) {
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
-        WHERE id = $2 AND user_id = $3
+        WHERE id = $4 AND user_id = $5
         `,
         [
           token.accessToken,
