@@ -450,3 +450,8 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Conflicting existing listing external IDs are rejected instead of overwritten.
 - Flipkart adapter reconciliation errors are normalized into deterministic failed vs retryable ambiguous outcomes.
 - Fixed the WooCommerce reconciliation POST route to derive and validate the authenticated tenant user ID correctly.
+### Commerce provider-entry audit — 2026-10-06
+- Fixed a remaining WooCommerce publish-route tenant identity bug that used a self-referential `userId` assignment.
+- Tenant-scoped Shopify credential reads/writes now require authenticated user context and verify the channel belongs to that tenant/provider.
+- Shopify GraphQL shop lookup now requires explicit tenant context.
+- Shopify callback and token-refresh paths pass authenticated tenant identity into credential persistence.
