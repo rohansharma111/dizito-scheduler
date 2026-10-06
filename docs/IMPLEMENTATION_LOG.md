@@ -330,3 +330,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added exact provider-side lookup by that marker before a new create. A unique match is adopted and reconciled through the existing sync flow; ambiguous matches fail closed.
 - Hardened variant reconciliation for partial creates: when exactly one provider variant exists and no listing-variant mappings exist, that provider variant is deterministically associated with the canonical first variant.
 - This closes the principal crash-after-remote-create recovery path for newly created Shopify products without relying on title/SKU heuristics.
+
+
+## 2026-10-06 — Amazon SP-API tenant-boundary completion
+
+- **Status:** Implemented; not runtime-verified.
+- Propagated authenticated `userId` through Amazon catalog, listing, offer, product-type, and verification helpers and routes.
+- Fixed the Amazon OAuth callback credential write to pass `userId` into the tenant-scoped credential persistence function.
+- Completed the final catalog helper call so every `amazonSpApiRequest` invocation supplies tenant context.
