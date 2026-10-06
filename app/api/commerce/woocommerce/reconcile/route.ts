@@ -99,7 +99,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error.code }, { status });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      status: result.status === "ambiguous" ? 202 : 200,
+    });
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/reconcile error:", error);
     return NextResponse.json({ error: "RECONCILIATION_FAILED" }, { status: 502 });
