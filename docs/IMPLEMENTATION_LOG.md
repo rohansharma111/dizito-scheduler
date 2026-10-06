@@ -360,3 +360,15 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Removed unused unscoped Commerce channel lookup helper.
 - Serialized channel updates with a tenant-scoped `FOR UPDATE` transaction so metadata merges are based on the latest committed row.
 - Reconfirmed Shopify/Amazon credential persistence has channel FK + unique channel identity at the database layer and tenant/provider checks in application code.
+
+
+## 2026-10-06 — Commerce listing concurrency and route-boundary hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Product listing sync-state updates now lock the tenant-owned listing row and merge provider metadata with the latest committed state, avoiding concurrent metadata loss.
+- Listing sync persistence now detects an existing conflicting external ID before adopting a provider identity.
+- Product listing variant upserts now preserve an existing external ID when the field is omitted, merge provider metadata, and reject duplicate external IDs within the listing.
+- Draft listing saves now lock the existing listing, merge metadata, and apply the same variant external-ID conflict protection.
+- Fixed self-referential session user-ID defects in Commerce listing/channel routes and standardized safe positive user-ID validation across Amazon, WooCommerce, Shopify, Flipkart, and channel API boundaries.
+- Shared Commerce publish reconciliation now serializes external-ID adoption by tenant/channel/external-ID before committing the listing identity, preventing concurrent claims of the same remote object.
+- Tests/lint/build and live provider verification remain deferred until the complete implementation pass is finished.
