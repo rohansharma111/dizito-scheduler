@@ -22,6 +22,12 @@ export type MarketingCampaign = {
     converted: number;
     archived: number;
   };
+  contentReadiness: {
+    total: number;
+    needsApproval: number;
+    readyToSchedule: number;
+    converted: number;
+  };
   observedImpact: {
     actionCount: number;
     actionValue: number;
@@ -55,7 +61,12 @@ export async function listCampaigns(userId: number): Promise<MarketingCampaign[]
                    FROM marketing_customer_actions ca
                   WHERE ca.user_id = c.user_id AND ca.campaign_id = c.id AND ca.status = 'completed'
                   GROUP BY ca.action_type
-               ) x) AS observed_action_breakdown
+               ) x) AS observed_action_breakdown,
+            (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status IN ('draft','planned','ready','converted')) AS content_total_count,
+            (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status IN ('draft','planned')) AS content_needs_approval_count,
+            (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status = 'ready') AS content_ready_count,
+            (SELECT COUNT(*)::int FROM marketing_content_items r WHERE r.campaign_id = c.id AND r.user_id = c.user_id AND r.status = 'converted') AS content_converted_count,
+
        FROM marketing_campaigns c
        LEFT JOIN marketing_campaign_products cp ON cp.campaign_id = c.id
        LEFT JOIN marketing_campaign_posts cpo ON cpo.campaign_id = c.id
@@ -126,6 +137,12 @@ function mapCampaign(row: any): MarketingCampaign {
       ready: Number(row.content_ready_count ?? 0),
       converted: Number(row.content_converted_count ?? 0),
       archived: Number(row.content_archived_count ?? 0),
+    },
+    contentReadiness: {
+      total: Number(row.content_total_count ?? 0),
+      needsApproval: Number(row.content_needs_approval_count ?? 0),
+      readyToSchedule: Number(row.content_ready_count ?? 0),
+      converted: Number(row.content_converted_count ?? 0),
     },
     observedImpact: {
       actionCount: Number(row.observed_action_count ?? 0),
