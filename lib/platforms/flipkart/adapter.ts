@@ -58,8 +58,9 @@ export const flipkartAdapter: CommerceProviderAdapter<
       channelId: context.channelId,
     });
     if ("error" in result) {
+      const errorCode = result.error ?? "DRAFT_FAILED";
       return { operation: "draft", status: "failed", error: {
-        code: result.error, message: result.error, retryable: false, ambiguous: false,
+        code: errorCode, message: errorCode, retryable: false, ambiguous: false,
       }};
     }
     return { operation: "draft", status: "succeeded", data: result };
