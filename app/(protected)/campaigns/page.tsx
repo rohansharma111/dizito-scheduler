@@ -170,10 +170,10 @@ export default function CampaignsPage() {
               <div><strong>Observed impact:</strong> {campaign.observedImpact.actionCount} completed actions · value {campaign.observedImpact.actionValue} · {campaign.observedImpact.linkedOrderCount} linked orders · order value {campaign.observedImpact.linkedOrderValue}</div>
               <div><strong>Manual attribution:</strong> {campaign.observedImpact.attributedActionCount} attributed actions · value {campaign.observedImpact.attributedValue} · {campaign.observedImpact.attributedOrderCount} attributed orders</div>
             </div>
-            {campaign.observedImpact.actionBreakdown.length > 0 && (
+            {campaign.observedImpact.attributedActionBreakdown.length > 0 && (
               <div>
                 <strong>Action breakdown:</strong>{" "}
-                {campaign.observedImpact.actionBreakdown.map((action) => (
+                {campaign.observedImpact.attributedActionBreakdown.map((action) => (
                   <span key={action.actionType} style={{ marginRight: 8 }}>
                     {action.actionType} {action.count}{action.value ? ` (value ${action.value})` : ""}
                   </span>
