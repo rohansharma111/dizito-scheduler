@@ -61,6 +61,7 @@ function decrypt(value: string): string {
 
 export interface SaveShopifyCredentialsInput {
   channelId: string;
+  userId: number;
   accessToken: string;
   refreshToken?: string | null;
   accessTokenExpiresAt?: Date | null;
@@ -69,6 +70,19 @@ export interface SaveShopifyCredentialsInput {
 }
 
 export async function saveShopifyCredentials(input: SaveShopifyCredentialsInput) {
+  const channelResult = await pool.query(
+    `
+    SELECT id
+    FROM commerce_channels
+    WHERE id = $1 AND user_id = $2 AND provider = 'shopify'
+    LIMIT 1
+    `,
+    [input.channelId, input.userId],
+  );
+  if (!channelResult.rows[0]) {
+    throw new Error("SHOPIFY_CHANNEL_NOT_FOUND");
+  }
+
   const result = await pool.query(
     `
     INSERT INTO commerce_channel_credentials
@@ -104,21 +118,25 @@ export async function saveShopifyCredentials(input: SaveShopifyCredentialsInput)
   return result.rows[0];
 }
 
-export async function getShopifyCredentials(channelId: string) {
+export async function getShopifyCredentials(channelId: string, userId: number) {
   const result = await pool.query(
     `
     SELECT
-      channel_id,
-      access_token_encrypted,
-      refresh_token_encrypted,
-      access_token_expires_at,
-      refresh_token_expires_at,
-      scopes
-    FROM commerce_channel_credentials
-    WHERE channel_id = $1
+      ccc.channel_id,
+      ccc.access_token_encrypted,
+      ccc.refresh_token_encrypted,
+      ccc.access_token_expires_at,
+      ccc.refresh_token_expires_at,
+      ccc.scopes
+    FROM commerce_channel_credentials ccc
+    INNER JOIN commerce_channels cc
+      ON cc.id = ccc.channel_id
+     AND cc.user_id = $2
+     AND cc.provider = 'shopify'
+    WHERE ccc.channel_id = $1
     LIMIT 1
     `,
-    [channelId],
+    [channelId, userId],
   );
 
   const row = result.rows[0];
