@@ -33,7 +33,7 @@ function mockReadyState() {
     provider: "woocommerce",
   });
   mocks.pool.query
-    .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
+    .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous", provider: "woocommerce" }] })
     .mockResolvedValueOnce({
       rows: [{ id: "listing-1", publish_idempotency_key: "request-1", expected_sku: "SKU-1" }],
     });
@@ -45,7 +45,7 @@ function mockReadyState() {
 function mockDb() {
   const query = vi.fn()
     .mockResolvedValueOnce({})
-    .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
+    .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous", provider: "woocommerce" }] })
     .mockResolvedValueOnce({ rowCount: 1 })
     .mockResolvedValueOnce({ rowCount: 1 })
     .mockResolvedValueOnce({});
@@ -106,7 +106,7 @@ describe("reconcileWooCommercePublish", () => {
 
   it("does not mutate state when the attempt has already been reconciled", async () => {
     mocks.getCommerceChannelById.mockResolvedValue({ id: "channel-1", provider: "woocommerce" });
-    mocks.pool.query.mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "succeeded" }] });
+    mocks.pool.query.mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "succeeded", provider: "woocommerce" }] });
 
     await expect(
       reconcileWooCommercePublish(7, input),
