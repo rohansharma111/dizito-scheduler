@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { reconcileWooCommercePublish } from "@/lib/platforms/woocommerce/reconcile";
+import { requireCommerceProviderAdapter } from "@/lib/commerce/providers/service";
+import type { WooCommerceAdapterPayload } from "@/lib/platforms/woocommerce/adapter";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -52,21 +53,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "channelId, listingId, idempotencyKey, and either externalId or sku are required" }, { status: 400 });
     }
 
-    const result = await reconcileWooCommercePublish(Number(session.user.id), {
-      channelId,
-      listingId,
-      idempotencyKey,
+    const adapter = requireCommerceProviderAdapter("woocommerce");
+    const payload = {
+      action: "reconcile",
+      input: {
+        channelId,
+        listingId,
+        idempotencyKey,
+        externalId: externalId || undefined,
+        sku: sku || undefined,
+      },
+    } satisfies WooCommerceAdapterPayload;
+
+    const result = await adapter.reconcilePublish({
+      context: { channelId, userId: Number(session.user.id) },
+      payload,
       externalId: externalId || undefined,
-      sku: sku || undefined,
+      lookupKey: sku || undefined,
     });
-    if ("error" in result) {
-      const status = result.error === "RECONCILIATION_IDENTIFIER_REQUIRED" || result.error === "RECONCILIATION_IDENTITY_REQUIRED" ? 400
-        : result.error === "CHANNEL_NOT_FOUND" || result.error === "LISTING_NOT_FOUND" || result.error === "PUBLISH_ATTEMPT_NOT_FOUND" ? 404
-        : result.error === "PUBLISH_ATTEMPT_ALREADY_RECONCILED" || result.error === "PUBLISH_ATTEMPT_NOT_RECONCILABLE" || result.error === "LISTING_IDEMPOTENCY_KEY_MISMATCH" ? 409
-        : result.error === "RECONCILIATION_SKU_MISMATCH" || result.error === "PROVIDER_PRODUCT_NOT_FOUND" || result.error === "PROVIDER_SKU_MISMATCH" || result.error === "MULTIPLE_PROVIDER_PRODUCTS_FOUND" ? 422
-        : 502;
-      return NextResponse.json(result, { status });
+
+    if (result.status === "failed" && result.error) {
+      const status =
+        result.error.code === "RECONCILIATION_IDENTIFIER_REQUIRED" ||
+        result.error.code === "RECONCILIATION_IDENTITY_REQUIRED"
+          ? 400
+          : result.error.code === "CHANNEL_NOT_FOUND" ||
+              result.error.code === "LISTING_NOT_FOUND" ||
+              result.error.code === "PUBLISH_ATTEMPT_NOT_FOUND"
+            ? 404
+            : result.error.code === "PUBLISH_ATTEMPT_ALREADY_RECONCILED" ||
+                result.error.code === "PUBLISH_ATTEMPT_NOT_RECONCILABLE" ||
+                result.error.code === "LISTING_IDEMPOTENCY_KEY_MISMATCH"
+              ? 409
+              : result.error.code === "RECONCILIATION_SKU_MISMATCH" ||
+                  result.error.code === "PROVIDER_PRODUCT_NOT_FOUND" ||
+                  result.error.code === "PROVIDER_SKU_MISMATCH" ||
+                  result.error.code === "MULTIPLE_PROVIDER_PRODUCTS_FOUND"
+                ? 422
+                : 502;
+      return NextResponse.json({ error: result.error.code }, { status });
     }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("POST /api/commerce/woocommerce/reconcile error:", error);
