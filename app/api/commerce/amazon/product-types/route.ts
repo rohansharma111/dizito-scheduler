@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
     }
 
-    const result = await searchAmazonProductTypes(String(channel.id), product.name);
+    const result = await searchAmazonProductTypes(String(channel.id), userId, product.name);
 
     return NextResponse.json({
       success: true,
