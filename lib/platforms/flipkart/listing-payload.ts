@@ -32,17 +32,15 @@ export interface FlipkartPackagePayload {
     length: number;
     breadth: number;
     height: number;
-    unit?: string;
   };
   weight?: number;
   notional_value?: {
     amount: number;
-    currency: string;
+    unit: "PERCENTAGE" | "INR";
   };
   description?: string;
   handling?: {
-    time: number;
-    unit?: string;
+    fragile: boolean;
   };
 }
 
@@ -102,6 +100,13 @@ function nonNegativeInteger(value: number, field: string) {
   return value;
 }
 
+function nonNegativeNumber(value: number, field: string) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`Flipkart ${field} must be non-negative`);
+  }
+  return value;
+}
+
 function requiredText(value: string, field: string) {
   const normalized = value.trim();
   if (!normalized) throw new Error(`Flipkart ${field} is required`);
@@ -116,15 +121,24 @@ function validatePrice(price: FlipkartPricePayload) {
   if (price.selling_price > price.mrp) {
     throw new Error("Flipkart selling price cannot exceed MRP");
   }
+
+  for (const [name, value] of Object.entries({
+    mop: price.mop,
+    nlc: price.nlc,
+    dealer_price: price.dealer_price,
+  })) {
+    if (value !== undefined) nonNegativeInteger(value, name);
+  }
 }
 
 function validateTax(tax: FlipkartTaxPayload) {
   requiredText(tax.hsn, "HSN");
-  if (
-    tax.goods_services_rate !== undefined &&
-    (!Number.isFinite(tax.goods_services_rate) || tax.goods_services_rate < 0)
-  ) {
-    throw new Error("Flipkart goods/services tax rate must be non-negative");
+
+  for (const [name, value] of Object.entries({
+    goods_services_rate: tax.goods_services_rate,
+    luxury_cess_percentage: tax.luxury_cess_percentage,
+  })) {
+    if (value !== undefined) nonNegativeNumber(value, name);
   }
 }
 
@@ -151,8 +165,19 @@ function validatePackages(packages: FlipkartPackagePayload[]) {
 
   for (const pkg of packages) {
     requiredText(pkg.name, "package name");
-    if (pkg.weight !== undefined && (!Number.isFinite(pkg.weight) || pkg.weight < 0)) {
-      throw new Error("Flipkart package weight must be non-negative");
+
+    if (pkg.weight !== undefined) {
+      nonNegativeNumber(pkg.weight, "package weight");
+    }
+
+    if (pkg.dimensions) {
+      for (const [name, value] of Object.entries(pkg.dimensions)) {
+        nonNegativeNumber(value, `package dimension ${name}`);
+      }
+    }
+
+    if (pkg.notional_value) {
+      nonNegativeNumber(pkg.notional_value.amount, "package notional value");
     }
   }
 }
