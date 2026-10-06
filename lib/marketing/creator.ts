@@ -39,7 +39,7 @@ export async function generateMarketingCopy(userId: number, input: CreateMarketi
          LEFT JOIN marketing_content_item_products cip ON cip.content_item_id = ci.id
          LEFT JOIN marketing_campaigns mc ON mc.id = ci.campaign_id AND mc.user_id = ci.user_id
         WHERE ci.id = $1 AND ci.user_id = $2
-        GROUP BY ci.id, mc.offer_id`,
+        GROUP BY ci.id, mc.name, mc.objective, mc.audience, mc.cta, mc.offer_id`,
       [input.contentItemId, userId],
     );
     if (item.rowCount === 0) throw new Error("Content item not found");
