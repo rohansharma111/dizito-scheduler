@@ -33,6 +33,8 @@ The implementation intentionally exposes only read-only listing operations. No l
   - Explicit timeout error handling without exposing response bodies or credentials.
   - Expiry-aware channel configuration checks with a 60-second safety skew.
   - Request-boundary expiry enforcement for direct calls to `flipkartRequest`.
+  - Automatic access-token refresh when the stored token reaches the 60-second safety window.
+  - Tenant-scoped, advisory-lock-protected credential rotation.
   - Read-only listing lookup.
   - Read-only listing details lookup.
   - Listing search.
