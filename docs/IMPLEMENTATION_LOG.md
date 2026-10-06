@@ -480,3 +480,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Re-audited application-level direct writes to product_listings, product_listing_variants, and product_listing_media; no additional write paths were found outside the hardened listing services.
 - No tests/lint/build/live provider verification executed; implementation-first sequencing remains in effect.
 \n\n## 2026-10-07 — Marketing attribution detail propagation\n\n- **Status:** Implemented; not runtime-verified.\n- Business Impact now exposes explicit attributed Content Item, Variant, and Post summaries in addition to the existing campaign-level attribution summary.\n- The Marketing Optimizer now receives and returns attributed variant/content evidence with opportunities and incorporates that evidence into deterministic opportunity ranking.\n- Observed customer-action outcomes and manual attribution remain separate evidence types; attribution is never treated as causal proof.\n- Tests/lint/build/database execution/provider verification remain deferred under the implementation-first sequence.\n
+
+### Marketing provenance consumer hardening — 2026-10-07
+- The legacy Content Item → Post linking endpoint now accepts an optional variant ID and validates that the variant belongs to the Content Item and that the Post targets the variant's platform before persisting the provenance.
+- Content Item reads now expose postLinks containing { postId, variantId } while retaining the existing postIds compatibility field.
+- Optimizer opportunities now return the already-computed explicit attributed outcome; the Optimizer UI surfaces it separately from observed outcome evidence.
+- Legacy Content Item → Post links remain compatible with nullable variant provenance for historical records.
+- Implementation is source-level only; tests/lint/build/database verification remain pending.
+
