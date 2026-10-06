@@ -42,6 +42,7 @@ function decrypt(value: string) {
 
 export interface FlipkartCredentials {
   channelId: string;
+  userId: number;
   accessToken: string;
   refreshToken?: string;
   appId?: string;
@@ -70,7 +71,7 @@ export async function saveFlipkartCredentials(
     appSecret: input.appSecret,
   });
 
-  await db.query(
+  const result = await db.query(
     `
       INSERT INTO commerce_channel_credentials (
         channel_id,
@@ -79,7 +80,11 @@ export async function saveFlipkartCredentials(
         refresh_token_expires_at,
         scopes
       )
-      VALUES ($1, $2, $3, $4, $5)
+      SELECT c.id, $2, $3, $4, $5
+      FROM commerce_channels c
+      WHERE c.id = $1
+        AND c.user_id = $6
+        AND c.provider = 'flipkart'
       ON CONFLICT (channel_id)
       DO UPDATE SET
         access_token_encrypted = EXCLUDED.access_token_encrypted,
@@ -87,6 +92,7 @@ export async function saveFlipkartCredentials(
         refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
         scopes = EXCLUDED.scopes,
         updated_at = now()
+      RETURNING channel_id
     `,
     [
       input.channelId,
@@ -94,11 +100,16 @@ export async function saveFlipkartCredentials(
       normalizeExpiry(input.accessTokenExpiresAt),
       normalizeExpiry(input.refreshTokenExpiresAt),
       "flipkart:Seller_Api",
+      input.userId,
     ],
   );
+
+  if (!result.rows[0]) {
+    throw new Error("Flipkart channel not found for this user");
+  }
 }
 
-export async function getFlipkartCredentials(channelId: string, userId?: number) {
+export async function getFlipkartCredentials(channelId: string, userId: number) {
   const result = await pool.query(
     `
       SELECT
@@ -107,13 +118,16 @@ export async function getFlipkartCredentials(channelId: string, userId?: number)
         refresh_token_expires_at
       FROM commerce_channel_credentials
       WHERE channel_id = $1
-        AND ($2::bigint IS NULL OR EXISTS (
-          SELECT 1 FROM commerce_channels c
-          WHERE c.id = $1 AND c.user_id = $2
-        ))
+        AND EXISTS (
+          SELECT 1
+          FROM commerce_channels c
+          WHERE c.id = $1
+            AND c.user_id = $2
+            AND c.provider = 'flipkart'
+        )
       LIMIT 1
     `,
-    [channelId, userId ?? null],
+    [channelId, userId],
   );
 
   const row = result.rows[0];
