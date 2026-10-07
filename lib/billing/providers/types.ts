@@ -1,4 +1,5 @@
 import { BillingPlan } from "../types";
+import { RazorpaySubscriptionEntity } from "./razorpay-types";
 
 export type CreateSubscriptionInput = {
   userId: number;
@@ -15,8 +16,8 @@ export type UpdateSubscriptionInput = {
 };
 
 export type BillingProvider = {
-  createSubscription(input: CreateSubscriptionInput): Promise<any>;
-  updateSubscription(providerSubscriptionId: string, input: UpdateSubscriptionInput): Promise<any>;
-  cancelSubscription(providerSubscriptionId: string, cancelAtCycleEnd: boolean): Promise<any>;
-  fetchSubscription(providerSubscriptionId: string): Promise<any>;
+  createSubscription(input: CreateSubscriptionInput): Promise<RazorpaySubscriptionEntity>;
+  updateSubscription(providerSubscriptionId: string, input: UpdateSubscriptionInput): Promise<RazorpaySubscriptionEntity>;
+  cancelSubscription(providerSubscriptionId: string, cancelAtCycleEnd: boolean): Promise<RazorpaySubscriptionEntity>;
+  fetchSubscription(providerSubscriptionId: string): Promise<RazorpaySubscriptionEntity>;
 };
