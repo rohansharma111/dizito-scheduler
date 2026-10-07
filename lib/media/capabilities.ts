@@ -216,16 +216,22 @@ export const MEDIA_CAPABILITIES: Record<string, PlatformMediaCapability> = {
         maxBytes: null,
         minDurationSeconds: null,
         maxDurationSeconds: null,
-        minWidth: null,
+        minWidth: 250,
         maxWidth: null,
-        minHeight: null,
+        minHeight: 250,
         maxHeight: null,
         requiresProcessing: false,
         requiresPolling: false,
         requiresCover: false,
         uploadProtocol: "cloudinary_signed_direct",
         verification: "verified",
+        notes: "Google Business Profile location media currently exposes PHOTO as the supported MediaFormat in the v4 reference.",
       },
+    },
+  },
+  google_business_location_media_video: {
+    platform: "google_business_location_media_video",
+    mediaTypes: {
       video: {
         mimeTypes: VIDEO_MIME_TYPES,
         maxBytes: null,
@@ -239,12 +245,11 @@ export const MEDIA_CAPABILITIES: Record<string, PlatformMediaCapability> = {
         requiresPolling: false,
         requiresCover: false,
         uploadProtocol: directVideoUpload,
-        verification: "verified",
-        notes: "Google Business Profile location media supports VIDEO; this is distinct from Local Posts.",
+        verification: "fail_closed",
+        notes: "Fail closed: current Google Business Profile v4 location-media reference supports PHOTO only.",
       },
     },
-  },
-};
+  },};
 
 export function getMediaCapability(
   platform: string,
