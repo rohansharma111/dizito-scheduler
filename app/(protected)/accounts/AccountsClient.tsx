@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";\nimport { Link2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link2 } from "lucide-react";
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
