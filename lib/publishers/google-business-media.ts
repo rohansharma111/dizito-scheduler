@@ -10,11 +10,13 @@ export async function publishGoogleBusinessLocationMedia(context: PublisherConte
   if (!account.google_location_id) throw new Error("Google location id missing");
 
   const resolved = await resolvePostMedia(context, "google_business_location_media");
-  if (!resolved) throw new Error("No media selected for this location media item");
+  if (!resolved) throw new Error("No supported media selected for this location media item");
 
-  const mediaFormat = resolved.mediaType === "video" ? "VIDEO" : "PHOTO";
+  if (resolved.mediaType !== "image") {
+    throw new Error("Google Business location media is currently photo-only; video is fail-closed");
+  }
+
   const parent = buildLocationParent(account);
-
   const response = await fetch(
     `https://mybusiness.googleapis.com/v4/${parent}/media`,
     {
@@ -25,11 +27,8 @@ export async function publishGoogleBusinessLocationMedia(context: PublisherConte
         Accept: "application/json",
       },
       body: JSON.stringify({
-        mediaFormat,
+        mediaFormat: "PHOTO",
         sourceUrl: resolved.media.secure_url,
-        ...(mediaFormat === "PHOTO" && {
-          description: context.post.post ?? "",
-        }),
       }),
     },
   );
@@ -42,7 +41,7 @@ export async function publishGoogleBusinessLocationMedia(context: PublisherConte
   return {
     id: data.name ?? null,
     platform: "google_business_location_media",
-    mediaType: resolved.mediaType,
+    mediaType: "image",
     raw: data,
   };
 }
