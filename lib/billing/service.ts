@@ -1,7 +1,7 @@
 import { billingProviders } from "./providers/registry";
 import { BillingRepository } from "./repository";
 import { getProviderPlanMapping } from "./provider-mapping";
-import { BillingPlan } from "./types";
+import { BillingPlan, SubscriptionStatus } from "./types";
 import { updateUserPlan } from "./updateUserPlan";
 
 function legacyMirror(plan: BillingPlan) {
@@ -45,7 +45,7 @@ export async function createSubscription(params: {
     providerCustomerId: razorpaySubscription.customer_id ?? null,
     plan: params.plan,
     billingPlanId: planResult.id,
-    status: razorpaySubscription.status as any,
+    status: razorpaySubscription.status as SubscriptionStatus,
     trialStartAt: razorpaySubscription.start_at
       ? new Date(razorpaySubscription.start_at * 1000)
       : null,
