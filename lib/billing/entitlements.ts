@@ -81,8 +81,8 @@ export async function getEntitlement(
   const result = await pool.query(
     `
       SELECT bpe.value
-      FROM billing_plan_entitlements bpe
-      JOIN billing_entitlements be ON be.id = bpe.entitlement_id
+      FROM billing_plan_entitlement_values bpe
+      JOIN billing_entitlement_definitions be ON be.id = bpe.entitlement_id
       JOIN billing_plans bp ON bp.id = bpe.plan_id
       WHERE bp.code = $1 AND be.key = $2
       LIMIT 1
