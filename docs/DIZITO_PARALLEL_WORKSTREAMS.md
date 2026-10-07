@@ -572,3 +572,24 @@ Run these in parallel:
 Run G — Commerce hardening in parallel only when its file ownership does not overlap with another active migration/provider task.
 
 The user remains the final merge/priority authority.
+
+
+## 13. Suggested branch names
+
+Use one branch per active workstream:
+- A: `v1/marketing-ui-design`
+- B: `v1/subscription-pricing`
+- C: `v1/media-video`
+- D: `v1/security-audit`
+- E: `v1/marketing-qa-ci`
+- F: `v1/provider-verification`
+- G: `v1/commerce-hardening`
+- H: `v1/infrastructure-observability`
+
+If a branch already exists, do not reset or force-push it. Create a continuation branch from the current workstream head only after reconciling the repository.
+
+### Shared-file rule
+
+Workstream A owns visual primitives and `app/globals.css`; Workstream B owns billing UI/backend; Workstream C owns media-specific UI/backend; Workstream D owns security helpers/tests; Workstream E owns tests/CI; Workstream F owns verification evidence; Workstream G owns commerce; Workstream H owns infrastructure/database observability.
+
+If a change genuinely crosses boundaries, make the smallest interface change in the owning workstream and hand the dependent work to the other workstream rather than editing both systems in parallel.
