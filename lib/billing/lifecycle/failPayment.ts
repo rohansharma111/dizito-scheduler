@@ -3,11 +3,13 @@ import { createBillingEvent } from "../events";
 import { billingLogger } from "../logger";
 import { BILLING_GRACE_PERIOD_DAYS } from "../constants";
 import { BillingRepository } from "../repository";
+import { RazorpayWebhookPayload } from "../providers/razorpay-types";
 
-export async function failPayment(payload: Record<string, unknown>) {
-  const payloadBody = payload.payload as { subscription?: { entity?: any }; payment?: { entity?: { subscription_id?: string } } } | undefined;
-  const subscriptionEntity = payloadBody?.subscription?.entity;
-  const paymentEntity = payloadBody?.payment?.entity;
+export async function failPayment(payload: RazorpayWebhookPayload) {
+  const subscriptionEntity = payload.payload?.subscription?.entity;
+  const paymentEntity = payload.payload?.payment?.entity as
+    | { subscription_id?: string }
+    | undefined;
   const providerSubscriptionId =
     subscriptionEntity?.id ?? paymentEntity?.subscription_id;
 
