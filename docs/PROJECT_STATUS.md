@@ -50,6 +50,17 @@ Core principles:
 - AI output must remain grounded, reviewable and fail-closed on malformed output;
 - attribution must be evidence-based rather than fabricated.
 
+
+### Marketing V1 UI + Design System — Workstream A checkpoint (2026-10-07)
+
+- Branch `v1/marketing-ui-design` is 0 commits behind current `main` at workstream start and contains only UI/design-system changes.
+- Reusable Dizito visual primitives now live in `components/dizito/DizitoUI.tsx`; global tokens and responsive visual rules live in `app/globals.css`.
+- Protected navigation now exposes the intended merchant loop: Business Brain → AI Strategist → Generate My Week → Content Review → Optimizer, alongside Media, Channels & Accounts and Business Impact.
+- A dedicated Business Brain read surface was added using the existing tenant-scoped `/api/marketing/business-brain` contract. No business-brain persistence or API behavior was changed.
+- Dashboard, setup, weekly planning, strategist, content review, media, accounts, Business Impact, optimizer and billing presentation were refreshed without changing billing logic, provider adapters, commerce architecture, media provider implementation or database schema.
+- Verification boundary: source/diff inspection completed; no fresh GitHub Actions run exists for the branch, so overall test/lint/build green status remains unclaimed. No external provider/runtime verification was performed.
+- Remaining UI work: detailed product/offer/service editing surfaces, final scheduling edge-state polish, deeper mobile interaction QA and browser-level end-to-end verification.
+
 ## 3. Current implementation snapshot
 
 ### Core application
