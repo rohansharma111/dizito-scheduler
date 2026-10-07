@@ -6,9 +6,29 @@ export type BillingResult =
   | { success: true }
   | { success: false; error: string };
 
+type RazorpayCheckoutOptions = {
+  key: string;
+  subscription_id: string;
+  name: string;
+  description: string;
+  image?: string;
+  handler: (payload: {
+    razorpay_payment_id: string;
+    razorpay_subscription_id: string;
+    razorpay_signature: string;
+  }) => void | Promise<void>;
+  modal?: { ondismiss?: () => void };
+};
+
+type RazorpayCheckout = {
+  open(): void;
+};
+
+type RazorpayConstructor = new (options: RazorpayCheckoutOptions) => RazorpayCheckout;
+
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: RazorpayConstructor;
   }
 }
 
@@ -57,7 +77,7 @@ export async function startSubscription(
         name: "Dizito",
         description: `${options.plan[0].toUpperCase()}${options.plan.slice(1)} Plan`,
         image: "/logo/logo.png",
-        handler: async (payload: any) => {
+        handler: async (payload) => {
           try {
             const verifyResponse = await fetch("/api/billing/verify", {
               method: "POST",
