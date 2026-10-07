@@ -516,3 +516,19 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added the missing tenant-scoped `getWooCommerceChannelConfig` implementation used by WooCommerce publish/reconcile.
 - The boundary validates authenticated tenant ownership, provider identity, active channel status, configured store URL, and tenant-scoped encrypted credentials before remote access.
 - No tests/lint/build/live provider verification executed; implementation-first sequencing remains in effect.
+
+
+## 2026-10-07 — Meta business-scoped Page discovery hardening
+
+- **Status:** Implemented; runtime provider verification pending.
+- Confirmed the active Dizito Meta OAuth path is `/api/meta/connect` using Facebook Login for Business `config_id`; the legacy scope-based `/api/meta/login` route was not the production connection path and has been removed.
+- Added shared Meta Graph helpers with a configurable `META_GRAPH_VERSION` defaulting to `v26.0`.
+- Kept `/me/accounts` as the primary Page discovery endpoint and added a business-scoped `/me/assigned_pages` fallback when `/me/accounts` returns an empty list.
+- Reused the existing page-selection and social-account persistence model; assigned Pages are normalized into the same `pageId/pageName/access_token/instagramBusinessId` flow.
+- Instagram Business Account discovery now uses the shared Meta helper and the discovered Page Access Token when available.
+- Updated the Meta connection, callback, Page connection, Facebook publisher, and Instagram publisher paths to the current Graph API version.
+- Removed obsolete public Meta token/debug endpoints that contained hard-coded access tokens, and removed the unused legacy scope-based Meta login route.
+- Added regression tests covering direct Page discovery, Business Portfolio assigned-Page fallback, and the true no-Pages case.
+- Important verification note: the developer/admin account working previously is consistent with Meta role-based access and does not prove external customer authorization. External customer verification remains a required runtime check.
+- Meta configuration follow-up: if the external Business Portfolio Page still does not appear, the Facebook Login for Business configuration must include the required `business_management` access and Meta must approve it where required. The repository cannot grant this permission itself.
+- No live Meta customer-account test, full build, lint, or complete Vitest run has been executed yet on this branch.
