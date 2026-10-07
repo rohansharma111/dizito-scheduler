@@ -769,3 +769,10 @@ These define the launch gates and the multi-chat ownership model.
 - Standardized Marketing Content, Posts, Drafts and Calendar around shared Dizito page/header/card/state primitives.
 - Added explicit loading, empty and API-error recovery states without changing publishing/scheduling APIs.
 - No database, billing, provider-adapter, commerce or media-provider changes. Verification remains source-level only.
+
+
+### 2026-10-08 — Workstream A UI consistency continuation
+- Merchant-facing Accounts and Activity surfaces received Dizito design-system alignment and mobile interaction polish.
+- Accounts retains existing platform connection/reconnection contracts and plan-limit behavior.
+- Activity retains existing event loading, filtering, grouping, and payload inspection behavior.
+- Analytics and other legacy merchant surfaces remain candidates for later visual consistency passes; this workstream does not claim browser/build verification.
