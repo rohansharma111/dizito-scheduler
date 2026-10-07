@@ -567,3 +567,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Migration was source-reviewed and Neon schema was inspected. A disposable migration validation attempt caught a parser issue before any live/default schema change; the migration was revised to avoid ambiguous table/column names. A second disposable validation was blocked by the tool safety layer, so migration execution remains unverified.
 - No Razorpay provider IDs were hard-coded into product/business logic. Provider mappings must be configured explicitly before paid checkout can operate.
 - No provider publisher or global design-system architecture was modified.
+
+## 2026-10-07 — Workstream B verification pass
+
+- Created draft verification PR #47 (not merged) so repository CI could run against the Workstream B branch.
+- Quality Checks test job failed on 7 existing Commerce/Flipkart/WooCommerce tests; the new billing catalog/state tests passed. The failing stack traces are outside `lib/billing`.
+- Validate lint job initially reported billing `no-explicit-any` violations. Those were corrected in the billing files; the subsequent lint run reported no `lib/billing/*` violations.
+- Repository-wide lint still fails on 226 pre-existing errors across unrelated application areas, so TypeScript validation and production build are gated/skipped by the workflow.
+- Local execution was attempted but the model environment cannot resolve GitHub networking; therefore GitHub Actions is the authoritative execution evidence for this pass.
+- Live Neon schema verification confirmed: `users.id` is integer; `subscriptions.user_id` is bigint with its existing FK; `subscriptions` already contains `grace_period_until` and `payment_failed_at`; `social_accounts.user_id` and `commerce_channels.user_id` are integer. The V1 migration uses integer for the new usage-counter user FK and only adds canonical billing-plan linkage fields to subscriptions.
+- No live/default Neon migration was applied.
