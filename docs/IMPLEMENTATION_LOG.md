@@ -552,3 +552,21 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Recorded the need for a Dizito-specific design system, subscription/pricing redesign, video capability architecture, security audit, scalability/observability work and explicit external provider verification.
 - Current Neon inspection found approximately 12 MB database size, 46 public tables and 156 public indexes; no storage-driven migration is currently justified.
 - Added parallel workstream guidance so UI, billing, media/video, security, QA/CI, external provider verification, commerce hardening and infrastructure can proceed with explicit file ownership and continuation handoffs.
+
+
+## 2026-10-07 — Workstream A: Marketing V1 UI + Dizito design system checkpoint
+
+- **Branch:** `v1/marketing-ui-design`
+- **Scope:** merchant-facing Marketing V1 UI and reusable Dizito visual primitives only.
+- **Implemented:**
+  - established reusable `components/dizito/DizitoUI.tsx` primitives for pages, headers, cards, buttons, badges, metrics, states and AI identity;
+  - established the Dizito visual language in `app/globals.css` with ink/lime/violet/cyan tokens, responsive surfaces and accessible focus states;
+  - redesigned the protected shell/header/sidebar around the AI operating-loop navigation;
+  - added a dedicated Business Brain read surface backed by the existing `/api/marketing/business-brain` endpoint;
+  - redesigned dashboard, Business Setup, Generate My Week, Strategist, Content Review, Media, Channels & Accounts, Business Impact, Optimizer and billing presentation surfaces to use the shared system;
+  - added loading, empty, error, disconnected/reconnect and plan-limit presentation improvements where the existing API state supported them.
+- **Architecture preserved:** no billing business logic, provider adapters, commerce orchestration, media-provider implementation or database migrations were modified.
+- **Database impact:** none.
+- **Provider impact:** none.
+- **Verification:** repository diff/source inspection completed; branch is 0 commits behind `main`. No GitHub Actions run is currently exposed for this branch, so test/lint/build green status is **not claimed**. No provider/runtime verification was performed.
+- **Known follow-up:** the remaining V1 UI pass should audit detailed product/offer/service editors, content scheduling edge states, mobile interaction polish and end-to-end browser behavior once a runnable local/preview environment is available.
