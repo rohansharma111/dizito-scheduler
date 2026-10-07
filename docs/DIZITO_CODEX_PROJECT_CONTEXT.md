@@ -600,3 +600,11 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - Business Brain now has a dedicated read surface using the existing tenant-scoped API; this is presentation-only and does not alter persistence.
 - UI changes are intentionally isolated from billing business logic, provider adapters, commerce architecture, media-provider implementation and database migrations.
 - Current verification boundary: source/diff inspection only. No fresh GitHub Actions run is exposed for the branch; do not claim repository-wide test/lint/build green. Browser/provider runtime verification remains pending.
+
+
+### Workstream A UI continuation — 2026-10-08
+- Merchant-context audit confirmed the current marketing API surface: Goals and Offers are creation/listing endpoints, while a dedicated Services API is not present.
+- UI scope therefore remains presentation/action work against existing contracts; no unsupported CRUD or schema was introduced.
+- Generate My Week now uses shared Dizito visual primitives without changing the weekly-plan generation or approval contracts. Approval remains separate from scheduling/publishing.
+- Product Edit state markup was corrected after source inspection.
+- Runtime verification remains pending; source sanity checks are the current verification boundary.
