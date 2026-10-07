@@ -137,7 +137,7 @@ Code-level implementation now establishes a first-class media capability boundar
 - Facebook has separate image/photo and video paths.
 - Pinterest video Pins use media registration, upload, processing polling and cover/post creation.
 - LinkedIn uses the current Videos API initialize/upload/finalize flow with ranged Cloudinary reads and Posts API publication; current documented feed-video limits are 3 seconds–30 minutes and 75 KB–500 MB.
-- Google Business Local Posts remain image-only in the capability model; Google Business location media is modeled separately and supports VIDEO.
+- Google Business Local Posts remain image-only in the capability model; Google Business location media is modeled separately and is currently PHOTO-only; video is fail-closed because the current Google Business Profile v4 media reference lists PHOTO as the supported MediaFormat.
 - Product media UI now renders video assets as video instead of assuming every media item is an image.
 
 Verification boundary:
