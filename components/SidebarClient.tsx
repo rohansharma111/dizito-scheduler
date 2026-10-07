@@ -16,7 +16,7 @@ export default function SidebarClient({ user, plan, mobileOpen=false, onClose }:
   const sections:SidebarSection[]=[
     {title:"COMMAND",items:[{href:"/dashboard",label:"Dashboard",icon:LayoutDashboard}]},
     {title:"AI WORKSPACE",items:[
-      {href:"/onboarding",label:"Business Setup",icon:Brain},
+      {href:"/business-brain",label:"Business Brain",icon:Brain},\n      {href:"/onboarding",label:"Business Setup",icon:Settings},
       {href:"/ai-strategist",label:"AI Strategist",icon:Sparkles},
       {href:"/generate-week",label:"Generate My Week",icon:Target},
       {href:"/marketing-content",label:"Content Review",icon:Send},
