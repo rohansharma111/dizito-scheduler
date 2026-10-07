@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Brain, Image, Link2, Package, Target, Tag } from "lucide-react";
+import BusinessBrainActions from "@/components/marketing/BusinessBrainActions";
 import { DizitoBadge, DizitoCard, DizitoMetric, DizitoPage, DizitoPageHeader, DizitoState, DizitoButton } from "@/components/dizito/DizitoUI";
 
 type BrainData={profile:any;goals:any[];offers:any[];products:any[];inventory:any[];media:any[];socialAccounts:any[];recentPosts:any[]};
@@ -39,7 +40,7 @@ export default function BusinessBrainPage(){
     ].map(([href,label,desc])=><Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 hover:border-violet-200"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">{label==="Products"?<Package size={15}/>:label==="Media"?<Image size={15}/>:label==="Channels"?<Link2 size={15}/>:<Brain size={15}/>}</span><span className="min-w-0 flex-1"><span className="block text-sm font-bold">{label}</span><span className="block text-xs text-slate-500">{desc}</span></span><ArrowRight size={15} className="text-slate-300 group-hover:text-violet-500"/></Link>)}</div>
    </DizitoCard>
   </div>
-  <div className="mt-5 grid gap-5 lg:grid-cols-2">
+  <div className="mt-5"><BusinessBrainActions onSaved={()=>location.reload()}/></div>\n  <div className="mt-5 grid gap-5 lg:grid-cols-2">
    <DizitoCard><h2 className="text-lg font-black">Goals</h2><p className="mt-1 text-sm text-slate-500">What the business is trying to accomplish.</p><div className="mt-4 space-y-2">{brain.goals.length?brain.goals.map(g=><div key={g.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3"><div><div className="font-semibold text-sm">{g.name}</div><div className="text-xs text-slate-500">{g.description||g.goalType}</div></div><DizitoBadge tone={g.status==="active"?"success":"neutral"}>{g.status}</DizitoBadge></div>):<DizitoState kind="empty" title="No goals captured" description="Goals help the Strategist prioritize what matters."/>}</div></DizitoCard>
    <DizitoCard><h2 className="text-lg font-black">Offers</h2><p className="mt-1 text-sm text-slate-500">Promotions and commercial context available to content.</p><div className="mt-4 space-y-2">{brain.offers.length?brain.offers.slice(0,6).map(o=><div key={o.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><div><div className="font-semibold text-sm">{o.name}</div><div className="text-xs text-slate-500">{o.description||o.offerType}</div></div><DizitoBadge tone={o.status==="active"?"success":"neutral"}>{o.status}</DizitoBadge></div>):<DizitoState kind="empty" title="No offers captured" description="Add an offer when a promotion should influence the weekly plan."/>}</div></DizitoCard>
   </div>
