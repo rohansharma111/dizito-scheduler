@@ -596,3 +596,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added explicit loading, empty and API-error recovery states and responsive shell treatment without changing child publishing/scheduling components or API contracts.
 - Content Review continues to require human approval before scheduling; connected-account selection and existing variant/post creation behavior are unchanged.
 - No database, billing, provider-adapter, commerce or media-provider changes. Verification is source-level only; runtime/build/lint/test evidence remains pending.
+
+
+### 2026-10-08 — Workstream A UI consistency continuation
+- Polished `app/(protected)/accounts/AccountsClient.tsx` with shared Dizito page/card/button/badge/state primitives.
+- Preserved all existing account connection, reconnect, health-check, disconnect, plan-limit, and API contracts.
+- Improved narrow-screen channel connection actions and account status presentation.
+- Polished `app/(protected)/activity/page.tsx` with shared Dizito page/card/state presentation while preserving the existing activity API, filters, grouping, and event details.
+- No provider adapter, billing business logic, commerce backend, media provider, or database schema changes were made.
