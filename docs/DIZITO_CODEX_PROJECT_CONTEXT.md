@@ -591,3 +591,12 @@ No “fully secure” claim is allowed yet. Verify actual credential encryption,
 
 ### Parallel development
 Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats. Every workstream owns specific files/systems, uses its own branch, avoids shared-file conflicts, runs focused verification, and must provide a continuation checkpoint before chat limits are reached.
+
+## 2026-10-07 — Workstream A UI checkpoint
+
+- Branch: `v1/marketing-ui-design`.
+- Marketing V1 UI is being consolidated around a reusable Dizito design system in `components/dizito/DizitoUI.tsx` and `app/globals.css`.
+- The protected shell now treats Business Brain → Strategist → Generate My Week → Content Review → Business Impact → Optimizer as the primary merchant operating loop, with Media and Channels & Accounts as supporting surfaces.
+- Business Brain now has a dedicated read surface using the existing tenant-scoped API; this is presentation-only and does not alter persistence.
+- UI changes are intentionally isolated from billing business logic, provider adapters, commerce architecture, media-provider implementation and database migrations.
+- Current verification boundary: source/diff inspection only. No fresh GitHub Actions run is exposed for the branch; do not claim repository-wide test/lint/build green. Browser/provider runtime verification remains pending.
