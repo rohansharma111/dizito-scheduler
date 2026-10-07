@@ -246,3 +246,43 @@ A task is done only when:
 
 This version has breaking changes — APIs, conventions and file structure may differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
+
+
+## V1 launch and parallel workstream rules — 2026-10-07
+
+Dizito is now in **V1 Beta completion + production hardening**. The immediate objective is not unrestricted feature expansion; it is making the existing AI marketing operating loop reliable, distinctive, secure, billable and externally verifiable.
+
+Canonical launch plan:
+- `docs/DIZITO_V1_LAUNCH_PLAN.md`
+
+Security:
+- `docs/DIZITO_SECURITY_V1_CHECKLIST.md`
+
+Provider verification:
+- `docs/DIZITO_PROVIDER_VERIFICATION.md`
+
+Parallel execution:
+- `docs/DIZITO_PARALLEL_WORKSTREAMS.md`
+
+When multiple chats/workstreams operate simultaneously:
+1. each workstream must use its own branch;
+2. each must inspect current main/head before starting;
+3. each must respect the file/system ownership defined in the parallel-workstream document;
+4. shared files, migrations, global CSS, provider contracts and core docs must not be edited concurrently without coordination;
+5. no workstream may merge another workstream;
+6. every workstream must provide an exact continuation checkpoint when chat limits approach;
+7. a new chat must reconcile that checkpoint against the repository before continuing;
+8. do not redo completed work merely because a handover is historical;
+9. do not claim runtime/provider verification without evidence.
+
+V1 priority order:
+1. Marketing V1 UI + Dizito design system.
+2. Subscription/pricing/entitlements.
+3. Media/video platform capability.
+4. Security/tenant isolation.
+5. CI/QA/runtime verification.
+6. External provider verification.
+7. Commerce hardening/expansion.
+8. Meesho only after authoritative access.
+
+The repository remains the source of truth. Historical chat context is subordinate to current code, schema, git history and observed verification.
