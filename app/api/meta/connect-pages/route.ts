@@ -400,7 +400,7 @@ export async function POST(request: Request) {
       */
       if (connectInstagram) {
         const instagramResponse = await fetch(
-          `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+          `https://graph.facebook.com/v26.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
         );
 
         const instagramData = await instagramResponse.json();
