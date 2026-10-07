@@ -35,6 +35,18 @@ export interface CompleteDirectUploadInput {
   fileName: string;
   mimeType: string;
   uploadProtocol?: MediaUploadProtocol;
+  resource?: {
+    secure_url?: string;
+    public_id?: string;
+    width?: number;
+    height?: number;
+    bytes?: number;
+    format?: string;
+    resource_type?: string;
+    folder?: string;
+    duration?: number;
+    context?: Record<string, unknown>;
+  };
 }
 
 export interface UploadMediaResult {
