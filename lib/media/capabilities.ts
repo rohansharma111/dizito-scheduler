@@ -256,7 +256,7 @@ export function getMediaCapability(
   mediaType: PublishMediaKind,
 ): MediaConstraints | null {
   const capability = MEDIA_CAPABILITIES[platform]?.mediaTypes[mediaType];
-  if (!capability || capability.verification === "fail_closed") {
+  if (!capability || capability.verification !== "verified") {
     return null;
   }
   return capability;
