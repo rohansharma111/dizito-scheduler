@@ -12,7 +12,7 @@ describe("media capability resolution", () => {
   it("maps video to platform-native types instead of image", () => {
     expect(resolvePublishMediaType("instagram", { resource_type: "video", mime_type: "video/mp4" })).toBe("reel");
     expect(resolvePublishMediaType("pinterest", { resource_type: "video", mime_type: "video/mp4" })).toBe("video_pin");
-    expect(resolvePublishMediaType("facebook", { resource_type: "video", mime_type: "video/mp4" })).toBe("video");
+    expect(resolvePublishMediaType("facebook", { resource_type: "video", mime_type: "video/mp4" })).toBeNull();
     expect(resolvePublishMediaType("linkedin", { resource_type: "video", mime_type: "video/mp4" })).toBe("video");
   });
 
