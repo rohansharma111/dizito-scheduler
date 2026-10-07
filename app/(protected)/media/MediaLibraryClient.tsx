@@ -58,12 +58,12 @@ export default function MediaLibraryClient() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="dizito-page space-y-5">
       {/* Header */}
 
-      <div className="flex items-center justify-between">
+      <div className="dizito-page-header">
         <div>
-          <h1 className="text-2xl font-bold">Media Library</h1>
+          <div><div className="dizito-eyebrow"><Images size={13}/>Assets</div><h1 className="dizito-title">Media library</h1>
 
           <p className="text-sm text-gray-500">
             Upload and manage your media files.
@@ -76,7 +76,7 @@ export default function MediaLibraryClient() {
       {/* Content */}
 
       {loading ? (
-        <div className="py-20 text-center">Loading media...</div>
+        <div className="dizito-card animate-pulse py-20 text-center text-slate-400">Loading your content supply…</div>
       ) : media.length === 0 ? (
         <EmptyState />
       ) : (
