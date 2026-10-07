@@ -5,6 +5,7 @@ import { getBillingPlanByProviderPlanId } from "@/lib/billing/provider-mapping";
 import { BillingRepository } from "@/lib/billing/repository";
 import { failPayment } from "@/lib/billing/lifecycle/failPayment";
 import { mapRazorpaySubscriptionStatus } from "@/lib/billing/state";
+import { updateUserPlan } from "@/lib/billing/updateUserPlan";
 
 export async function POST(request: Request) {
   try {
@@ -58,8 +59,10 @@ export async function POST(request: Request) {
             ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             : null;
 
+        const mappedStatus = mapRazorpaySubscriptionStatus(event);
+
         await BillingRepository.updateSubscription(entity.id, {
-          status: mapRazorpaySubscriptionStatus(event),
+          status: mappedStatus,
           providerCustomerId: entity.customer_id,
           currentPeriodStart: entity.current_start ? new Date(entity.current_start * 1000) : null,
           currentPeriodEnd: entity.current_end ? new Date(entity.current_end * 1000) : null,
@@ -72,6 +75,10 @@ export async function POST(request: Request) {
           cancelAtPeriodEnd: event === "subscription.cancelled" ? false : undefined,
           metadata: payload,
         });
+
+        if (mappedStatus === "cancelled" || mappedStatus === "completed") {
+          await updateUserPlan(subscription.user_id, "free");
+        }
       }
 
       await pool.query(
