@@ -620,3 +620,9 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - Shared Dizito visual primitives are now used on the Channels & Accounts and Activity surfaces.
 - UI-only scope remains enforced: no new persistence model, API contract, provider adapter, billing logic, commerce architecture, or media provider implementation was introduced.
 - Source-level verification was performed after the Activity JSX correction; runtime build/browser verification remains unavailable in this session.
+
+
+### 2026-10-08 — Workstream A merchant-surface consistency continuation
+- Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
+- Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
+- No backend/API/provider/database/billing/media architecture changes were introduced.
