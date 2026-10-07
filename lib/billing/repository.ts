@@ -55,7 +55,7 @@ export async function getPlanByCode(code: BillingPlan) {
 
 export async function listPublicPlans() {
   const result = await pool.query(
-    `SELECT id, code, name, description, price_minor, currency, billing_interval, trial_days
+    `SELECT id, code, name, description, price_minor, currency, billing_interval AS interval, trial_days
      FROM billing_plans
      WHERE is_active = true AND is_public = true
      ORDER BY sort_order, id`,
