@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";\nimport { Link2 } from "lucide-react";
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -26,7 +26,7 @@ export default function AccountsPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <div className="dizito-page">Loading...</div>;
   }
 
   const accountLimitReached = limits.used >= limits.allowed;
