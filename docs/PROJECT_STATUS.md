@@ -85,6 +85,18 @@ Core principles:
 
 ### Social account reliability
 
+### Meta / Facebook + Instagram connection status — 2026-10-07
+
+- Meta Facebook Login for Business remains the canonical Dizito connection flow.
+- The developer/admin Meta account was previously able to complete the flow, while an external account exposed the business-scoped Page discovery gap; developer-role success is therefore not treated as proof that external customer authorization is complete.
+- Current implementation keeps `/me/accounts` as the primary Page discovery path and adds a fallback to `/me/assigned_pages` for business-scoped users whose Pages are assigned through a Business Portfolio.
+- Meta Graph/Login URLs are being migrated from the repository's legacy `v19.0` references to current `v26.0`.
+- The Instagram permissions `instagram_basic` and `instagram_content_publish` are approved according to the current Meta App Review state observed during development.
+- Tech Provider / Access Verification remains an external Meta verification prerequisite for customer accounts and must be separately verified before production readiness is claimed.
+- Business Portfolio Page discovery may additionally require `business_management` access in the Facebook Login for Business configuration; this is a Meta configuration/App Review item, not something the repository can grant itself.
+- Hard-coded Meta access-token debug routes were removed from the active application surface.
+- Runtime Meta customer-account verification remains pending.
+
 ### Pinterest current access status — 2026-10-07
 
 - Pinterest **Standard Access has been granted** for Dizito.
