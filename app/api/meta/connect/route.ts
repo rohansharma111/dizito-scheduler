@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     state,
   });
 
-  const url = `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
+  const url = `https://www.facebook.com/v26.0/dialog/oauth?${params.toString()}`;
 
   return Response.redirect(url);
 }
