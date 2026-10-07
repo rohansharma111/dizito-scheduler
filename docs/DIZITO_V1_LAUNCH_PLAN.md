@@ -148,6 +148,21 @@ Current important platform distinctions:
 - LinkedIn video requires its own upload/register workflow.
 - Google Business must distinguish Local Post media from Location media; do not expose unsupported video behavior as a generic Local Post capability until externally verified.
 
+### Phase E.1 — Media/video implementation checkpoint — 2026-10-07
+
+Workstream C has implemented the first capability layer on `v1/media-video`:
+- direct signed Cloudinary video ingress;
+- explicit media type and processing state;
+- Instagram Reel, Facebook video, Pinterest video Pin and LinkedIn video workflows;
+- Google Business Local Post vs location-media distinction;
+- capability/state regression tests.
+
+Remaining launch gate:
+- execute focused tests/type-check/lint/build;
+- apply the additive media migration through the normal migration process;
+- perform controlled provider runtime verification, separately from provider access authorization;
+- keep unsupported/externally unverified workflows fail-closed.
+
 ### Phase F — Security and observability
 Before external beta:
 - verify token/credential encryption at actual write/read boundaries;
