@@ -570,3 +570,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - **Provider impact:** none.
 - **Verification:** repository diff/source inspection completed; branch is 0 commits behind `main`. No GitHub Actions run is currently exposed for this branch, so test/lint/build green status is **not claimed**. No provider/runtime verification was performed.
 - **Known follow-up:** the remaining V1 UI pass should audit detailed product/offer/service editors, content scheduling edge states, mobile interaction polish and end-to-end browser behavior once a runnable local/preview environment is available.
+
+
+## 2026-10-08 — Workstream A continuation: merchant context UI
+
+- Added actionable Goal and Offer creation controls to the Business Brain UI using the existing tenant-scoped `/api/marketing/goals` and `/api/marketing/offers` contracts.
+- Refreshed the existing Product catalog, Product creation and Product editing surfaces to use the Dizito visual system and responsive states.
+- No product, goal, offer, billing, provider or database backend logic was changed.
+- Verification: changed-file source sanity inspection completed; no fresh CI/browser run is available, so runtime green status remains unclaimed.
