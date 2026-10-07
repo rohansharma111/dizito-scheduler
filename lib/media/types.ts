@@ -1,3 +1,5 @@
+import type { MediaProcessingState, MediaUploadProtocol } from "./capabilities";
+
 export interface CreateMediaInput {
   userId: number;
   cloudinaryPublicId: string;
@@ -12,6 +14,12 @@ export interface CreateMediaInput {
   resourceType: string;
   folder: string | null;
   tags: string[];
+  durationSeconds?: number | null;
+  posterUrl?: string | null;
+  processingState?: MediaProcessingState;
+  uploadProtocol?: MediaUploadProtocol;
+  processingError?: string | null;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UploadMediaInput {
@@ -19,6 +27,14 @@ export interface UploadMediaInput {
   fileName: string;
   mimeType: string;
   userId: number;
+}
+
+export interface CompleteDirectUploadInput {
+  userId: number;
+  publicId: string;
+  fileName: string;
+  mimeType: string;
+  uploadProtocol?: MediaUploadProtocol;
 }
 
 export interface UploadMediaResult {
@@ -30,4 +46,7 @@ export interface UploadMediaResult {
   format: string;
   resourceType: string;
   folder: string;
+  durationSeconds?: number | null;
+  posterUrl?: string | null;
+  metadata?: Record<string, unknown>;
 }
