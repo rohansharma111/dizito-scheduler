@@ -1,200 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight, Brain, CheckCircle2, Link2, Package, Sparkles } from "lucide-react";
+import { DizitoBadge, DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
-type Progress = {
-  connectedAccounts: number;
-  postsCreated: number;
-  postsScheduled: number;
-};
-
-export default function OnboardingPage() {
-  const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
-
-  const [progress, setProgress] = useState<Progress>({
-    connectedAccounts: 0,
-    postsCreated: 0,
-    postsScheduled: 0,
-  });
-
-  useEffect(() => {
-    loadProgress();
-  }, []);
-
-  async function loadProgress() {
-    try {
-      const response = await fetch("/api/onboarding");
-
-      const data = await response.json();
-
-      setProgress(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function completeOnboarding() {
-    try {
-      await fetch("/api/onboarding/complete", {
-        method: "POST",
-      });
-
-      router.push("/dashboard");
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  const step1 = progress.connectedAccounts > 0;
-
-  const step2 = progress.postsCreated > 0;
-
-  const step3 = progress.postsScheduled > 0;
-
-  const completed = step1 && step2 && step3;
-
-  if (loading) {
-    return <div className="p-8">Loading...</div>;
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto p-8">
-      {/* HEADER */}
-
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold">Welcome to Dizito 🚀</h1>
-
-        <p className="text-gray-500 mt-2">
-          Complete these steps to get started.
-        </p>
-      </div>
-
-      {/* PROGRESS */}
-
-      <div className="mb-10">
-        <div className="flex justify-between mb-2">
-          <span>Progress</span>
-
-          <span>
-            {[step1, step2, step3].filter(Boolean).length}
-            /3
-          </span>
-        </div>
-
-        <div className="w-full bg-gray-200 rounded h-3">
-          <div
-            className="bg-blue-600 h-3 rounded transition-all"
-            style={{
-              width: `${
-                ([step1, step2, step3].filter(Boolean).length / 3) * 100
-              }%`,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* STEP 1 */}
-
-      <div className="border rounded-lg p-6 mb-6">
-        <div className="flex justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">
-              1. Connect your first account
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-              Connect Instagram, Facebook, LinkedIn, Pinterest or Google Business Profile.
-            </p>
-          </div>
-
-          <div className="text-2xl">{step1 ? "✅" : "⭕"}</div>
-        </div>
-
-        {!step1 && (
-          <button
-            className="mt-4 bg-blue-600 text-white px-5 py-2 rounded"
-            onClick={() => router.push("/accounts")}
-          >
-            Connect Account
-          </button>
-        )}
-      </div>
-
-      {/* STEP 2 */}
-
-      <div className="border rounded-lg p-6 mb-6">
-        <div className="flex justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">2. Create your first post</h2>
-
-            <p className="text-gray-500 mt-2">
-              Create a draft or scheduled post.
-            </p>
-          </div>
-
-          <div className="text-2xl">{step2 ? "✅" : "⭕"}</div>
-        </div>
-
-        {!step2 && (
-          <button
-            className="mt-4 bg-blue-600 text-white px-5 py-2 rounded"
-            onClick={() => router.push("/dashboard")}
-          >
-            Create Post
-          </button>
-        )}
-      </div>
-
-      {/* STEP 3 */}
-
-      <div className="border rounded-lg p-6 mb-6">
-        <div className="flex justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">
-              3. Schedule your first post
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-              Publish your first scheduled post.
-            </p>
-          </div>
-
-          <div className="text-2xl">{step3 ? "✅" : "⭕"}</div>
-        </div>
-
-        {!step3 && (
-          <button
-            className="mt-4 bg-blue-600 text-white px-5 py-2 rounded"
-            onClick={() => router.push("/dashboard")}
-          >
-            Schedule Post
-          </button>
-        )}
-      </div>
-
-      {/* FINISH */}
-
-      {completed && (
-        <div className="border rounded-lg p-8 bg-green-50">
-          <h2 className="text-2xl font-bold mb-3">🎉 Congratulations!</h2>
-
-          <p className="text-gray-700 mb-6">
-            You've completed onboarding and are ready to use Dizito.
-          </p>
-
-          <button
-            className="bg-green-600 text-white px-6 py-3 rounded"
-            onClick={completeOnboarding}
-          >
-            Go To Dashboard
-          </button>
-        </div>
-      )}
-    </div>
-  );
+type Progress={connectedAccounts:number;postsCreated:number;postsScheduled:number};
+export default function OnboardingPage(){
+ const [progress,setProgress]=useState<Progress>({connectedAccounts:0,postsCreated:0,postsScheduled:0}); const [brain,setBrain]=useState<any>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState<string|null>(null);
+ useEffect(()=>{Promise.all([fetch("/api/onboarding").then(r=>r.json()),fetch("/api/marketing/business-brain").then(r=>r.json())]).then(([p,b])=>{setProgress(p);setBrain(b.businessBrain||null)}).catch(e=>setError(e instanceof Error?e.message:"Unable to load setup")).finally(()=>setLoading(false));},[]);
+ const steps=[
+  {done:Boolean(brain?.profile),title:"Define your Business Brain",description:"Give Dizito the business identity and context it should use for every recommendation.",href:"/business-brain",icon:Brain},
+  {done:(brain?.goals?.length||0)>0||Boolean(progress.postsCreated),title:"Add goals, products & offers",description:"Connect the commercial context that makes weekly recommendations concrete.",href:"/products",icon:Package},
+  {done:progress.connectedAccounts>0,title:"Connect a distribution channel",description:"Choose where approved content should be published.",href:"/accounts",icon:Link2},
+  {done:progress.postsCreated>0,title:"Create and review content",description:"Generate a weekly plan and keep human review in the loop.",href:"/generate-week",icon:Sparkles},
+ ];
+ const done=steps.filter(s=>s.done).length;
+ if(loading)return <DizitoPage><DizitoPageHeader eyebrow="Business setup" title="Set up Dizito" description="Loading your setup status."/><DizitoCard><div className="h-64 animate-pulse rounded-2xl bg-slate-100"/></DizitoCard></DizitoPage>;
+ return <DizitoPage>
+  <DizitoPageHeader eyebrow="Business setup" title="Build the context that makes AI useful." description="Dizito gets better when it understands your business, your goals, your assets and where you want to show up." action={<DizitoBadge tone={done===steps.length?"success":"ai"}>{done}/{steps.length} ready</DizitoBadge>}/>
+  {error&&<DizitoState kind="error" title="Setup status unavailable" description={error}/>}
+  <DizitoCard tone="ai" className="mb-5"><div className="flex flex-col gap-4 md:flex-row md:items-center"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-[#c7f36b]"><Sparkles size={21}/></div><div className="min-w-0 flex-1"><h2 className="text-lg font-black">Your setup should end in a useful weekly loop.</h2><p className="mt-1 text-sm leading-6 text-slate-600">Once the basics are ready, let the Strategist turn them into a plan you can review and approve.</p></div><Link href="/generate-week"><DizitoButton>Generate a week <ArrowRight size={15}/></DizitoButton></Link></div></DizitoCard>
+  <div className="grid gap-3">{steps.map((step,index)=>{const Icon=step.icon;return <DizitoCard key={step.title} className="!p-4"><div className="flex items-center gap-4"><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${step.done?"bg-emerald-100 text-emerald-700":"bg-slate-100 text-slate-500"}`}>{step.done?<CheckCircle2 size={20}/>:<Icon size={19}/>}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Step {index+1}</span>{step.done&&<DizitoBadge tone="success">Ready</DizitoBadge>}</div><h2 className="mt-1 text-sm font-black">{step.title}</h2><p className="mt-1 text-xs leading-5 text-slate-500">{step.description}</p></div><Link href={step.href}><DizitoButton variant={step.done?"ghost":"secondary"}>{step.done?"Review":"Open"} <ArrowRight size={14}/></DizitoButton></Link></div></DizitoCard>})}</div>
+  {done===steps.length&&<DizitoCard tone="soft" className="mt-5"><div className="flex items-center gap-3"><CheckCircle2 className="text-emerald-600"/><div><div className="font-black">Dizito is ready for the weekly loop.</div><div className="text-sm text-slate-500">Move into Strategy or generate this week directly.</div></div><Link href="/ai-strategist" className="ml-auto text-sm font-bold text-violet-700">Open Strategist →</Link></div></DizitoCard>}
+ </DizitoPage>;
 }
