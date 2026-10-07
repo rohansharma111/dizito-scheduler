@@ -21,7 +21,7 @@ Implemented:
 External evidence used for implementation:
 - Pinterest official API documents image/video Pins and the register → upload → media-status → create-Pin flow with required cover image.
 - LinkedIn official Videos API documents 3-second–30-minute, 75 KB–500 MB MP4 feed videos and initialize → ranged upload → finalize → status lifecycle.
-- Google official Business Profile docs distinguish Local Posts from location media; the current v4 location-media reference lists PHOTO as the supported MediaFormat, so Dizito fails video closed there.
+- Google official Business Profile docs distinguish Local Posts from location media; the current v4 location-media reference lists PHOTO as the supported MediaFormat, so Dizito fails video closed there. Current verification also confirms Instagram Reels (3 seconds–15 minutes, up to 1 GB), Pinterest video Pins (register/upload/status/cover), and LinkedIn feed video (3 seconds–30 minutes, 75 KB–500 MB MP4).
 - Cloudinary official docs support video-to-JPG thumbnail/poster delivery from the video public ID.
 
 Verification:
