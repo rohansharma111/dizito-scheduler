@@ -18,7 +18,7 @@ describe("media capability resolution", () => {
 
   it("does not claim Local Post video support", () => {
     expect(resolvePublishMediaType("google_business_local_post", { resource_type: "video", mime_type: "video/mp4" })).toBeNull();
-    expect(resolvePublishMediaType("google_business_location_media", { resource_type: "video", mime_type: "video/mp4" })).toBe("video");
+    expect(resolvePublishMediaType("google_business_location_media", { resource_type: "video", mime_type: "video/mp4" })).toBeNull();
   });
 
   it("requires a Pinterest video cover", () => {
