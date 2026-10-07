@@ -22,7 +22,7 @@ export type SubscriptionRecord = {
   ended_at: Date | null;
   payment_failed_at: Date | null;
   grace_period_until: Date | null;
-  metadata: any;
+  metadata: unknown;
   created_at: Date;
   updated_at: Date;
 };
@@ -76,7 +76,7 @@ export async function createSubscription(
     trialEndAt?: Date | null;
     currentPeriodStart?: Date | null;
     currentPeriodEnd?: Date | null;
-    metadata?: any;
+    metadata?: unknown;
   },
   client?: PoolClient,
 ) {
