@@ -589,3 +589,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Reworked `Generate My Week` to use the shared Dizito page/card/button/badge/state primitives while preserving the existing weekly-plan generate/approve contracts and the explicit rule that approval does not publish.
 - Source-level checks passed for brace balance, merge markers and malformed literal import escapes on the touched UI files.
 - No database, billing, provider-adapter, commerce-service or media-provider changes were made. Runtime/browser/build verification remains pending.
+
+
+### Workstream A distribution UI continuation — 2026-10-08
+- Standardized Marketing Content, Posts, Drafts and Calendar around shared Dizito page/header/card/state primitives.
+- Added explicit loading, empty and API-error recovery states and responsive shell treatment without changing child publishing/scheduling components or API contracts.
+- Content Review continues to require human approval before scheduling; connected-account selection and existing variant/post creation behavior are unchanged.
+- No database, billing, provider-adapter, commerce or media-provider changes. Verification is source-level only; runtime/build/lint/test evidence remains pending.
