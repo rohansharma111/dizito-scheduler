@@ -159,7 +159,7 @@ export async function updateSubscription(
     pendingBillingPlanId?: number | null;
     planChangeAt?: Date | null;
     plan?: BillingPlan;
-    metadata?: any;
+    metadata?: unknown;
   },
   client?: PoolClient,
 ) {
