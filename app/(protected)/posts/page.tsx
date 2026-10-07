@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 import ScheduledPosts from "../../../components/ScheduledPosts";
 import PublishDetailsModal from "../../../components/PublishDetailsModal";
 
@@ -8,6 +10,7 @@ export default function PostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [showTargetsModal, setShowTargetsModal] = useState(false);
 
