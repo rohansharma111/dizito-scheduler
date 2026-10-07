@@ -14,14 +14,14 @@ Implemented:
 - separate Facebook image/video publishing paths;
 - Pinterest video Pin registration/upload/status polling/cover publication;
 - LinkedIn Videos API ranged upload/finalize/status polling/Posts publication;
-- Google Business Local Post video rejection and separate location-media video publisher;
+- Google Business Local Post video rejection and separate photo-only location-media publisher;
 - video-aware product media rendering;
 - capability, state-transition and upload-policy regression tests.
 
 External evidence used for implementation:
 - Pinterest official API documents image/video Pins and the register → upload → media-status → create-Pin flow with required cover image.
 - LinkedIn official Videos API documents 3-second–30-minute, 75 KB–500 MB MP4 feed videos and initialize → ranged upload → finalize → status lifecycle.
-- Google official Business Profile docs distinguish Local Posts from location media; location media supports VIDEO while LocalPost media is sourceUrl-only and is not treated as generic video support.
+- Google official Business Profile docs distinguish Local Posts from location media; the current v4 location-media reference lists PHOTO as the supported MediaFormat, so Dizito fails video closed there.
 - Cloudinary official docs support video-to-JPG thumbnail/poster delivery from the video public ID.
 
 Verification:
