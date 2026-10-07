@@ -536,3 +536,46 @@ Shopify provider GraphQL calls now require authenticated tenant context and reso
 
 
 - Content Item → Post upsert semantics preserve established variant provenance and only backfill a missing variant ID, preventing later legacy calls from erasing execution identity.
+
+
+## Latest V1 launch context — 2026-10-07
+
+Dizito is now in **V1 Beta completion + production hardening**, not greenfield feature development.
+
+V1 is defined by the complete merchant marketing loop:
+Business Context → AI Strategy → Weekly Plan → Human Review → Approval → Platform-specific Distribution → Customer Actions → Business Impact → Optimization → Next Week.
+
+### Launch-critical work
+1. Marketing UI completion.
+2. Distinctive Dizito design system.
+3. Subscription/pricing/entitlement redesign.
+4. Video/media capability architecture.
+5. Security and tenant-isolation audit.
+6. Fresh CI/runtime evidence.
+7. Meta/Pinterest/Google/provider external verification.
+8. Beta onboarding/recovery UX.
+
+### External access state
+- Meta `business_management` App Review: in progress.
+- Pinterest Standard Access: granted; live current-build Pin verification still required.
+- Google Business Profile API: application required.
+- Meesho: blocked pending authoritative contract/access.
+
+### Infrastructure finding
+Current Neon database is approximately 12 MB with 46 public tables and 156 public indexes. Current data volume is tiny. No migration is justified by storage. Future scaling concern is event/log growth, query/index behavior and background job throughput.
+
+Current beta stack remains:
+GitHub + Vercel + Neon + Cloudinary + Razorpay + provider APIs.
+
+### Video
+Media storage already has video-aware foundations, but publishing is not uniformly video-capable. Introduce platform capability metadata and platform-specific workflows. Large videos should move to direct/signed Cloudinary upload. Never treat video as an image URL.
+
+### Pricing
+Historical Creator/Agency pricing is no longer an accurate representation of Dizito. Planning hypothesis:
+Free / Growth ~₹799 / Pro ~₹1,999 / Agency ~₹4,999+ with a founding-beta ~₹499 offer. Treat these as hypotheses, not implementation facts.
+
+### Security
+No “fully secure” claim is allowed yet. Verify actual credential encryption, authorization/tenant isolation, OAuth, webhook signatures/replay, upload security, rate limits, secret/log handling and dependency/platform security.
+
+### Parallel development
+Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats. Every workstream owns specific files/systems, uses its own branch, avoids shared-file conflicts, runs focused verification, and must provide a continuation checkpoint before chat limits are reached.
