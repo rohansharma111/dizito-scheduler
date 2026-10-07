@@ -1,3 +1,14 @@
+## 2026-10-07 — Google Business Profile API access request submitted
+
+- **Status:** Pending Google allowlisting/approval; provider runtime verification has not started.
+- Dizito confirmed the Google Business Profile API prerequisites and submitted the current **Basic API Access** application.
+- Google Cloud project number submitted: `250265818721`.
+- Company website submitted: `https://www.dizito.in/`.
+- The application describes Dizito as a customer-authorized SaaS platform that will let customers connect and manage their own Google Business Profiles through Google's OAuth flow.
+- The application answered **No** to whether the organization already had an active, allowlisted Google Cloud Project ID; the project currently shows `0` requests/minute before approval.
+- Google opened support case **`0-3242000041809`** and stated an approximate review time of **7–10 business days**.
+- No duplicate project or duplicate application should be created while this request is pending.
+- Verification boundary: the Google approval request is external provider authorization work. It does not yet verify Dizito's OAuth connection, location discovery, or live Business Profile post publishing.
 ## 2026-10-07 — Pinterest Standard Access granted
 
 - External provider status: Pinterest Standard Access has been granted for Dizito.

@@ -3,7 +3,7 @@
 **Last updated:** 2026-10-07  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Default branch:** `main`  
-**Latest observed commit:** `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`  
+**Latest observed commit:** `84c325f0e0f39e58e8caf8d99c047b6bfe3a5be1`  
 **Project:** Dizito — AI Commerce Operating System
 
 > This is the canonical working status document. Repository code/schema and observed verification are authoritative. “Implemented” does not mean “verified,” and “verified” does not mean “production-ready.”
@@ -103,6 +103,19 @@ Core principles:
 - The Pinterest integration is now authorized to publish Pins publicly through the approved API access level.
 - This replaces the previous Standard Access application/pending-access blocker.
 - This records provider access authorization; it does **not** by itself claim that an end-to-end live Pin publication has been runtime-verified from the current application build.
+
+### Google Business Profile API access — 2026-10-07
+
+- Dizito met the prerequisites for Google Business Profile API access and submitted the current Google **Basic API Access** application.
+- Google Cloud project number submitted: `250265818721`.
+- Company website submitted: `https://www.dizito.in/`.
+- The application was submitted as a customer-authorized SaaS use case: Dizito will allow authorized customers to connect and manage their own Google Business Profiles through Google's OAuth flow.
+- The application reported that the project was **not already allowlisted**, consistent with the Google Cloud quota showing `0` requests/minute before approval.
+- Google opened support case **`0-3242000041809`** and reported an approximate review time of **7–10 business days**.
+- **Current status: pending Google allowlisting/approval.**
+- The current `0` quota is therefore documented as the pre-approval state, not as a failed integration.
+- Do not create a second project or submit a duplicate application while this case is pending.
+- Provider access approval will still be separate from runtime verification of Dizito's OAuth, location discovery, and post-publishing flow.
 
 Recent fixes cover:
 - reconnect routing;

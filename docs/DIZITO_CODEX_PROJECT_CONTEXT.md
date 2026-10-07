@@ -326,6 +326,18 @@ Preserve these invariants.
 - The previous Standard Access/pending-access blocker is cleared.
 - Keep the distinction between provider authorization and application runtime verification: live end-to-end Pin publication from the current build still requires explicit verification evidence.
 
+### Google Business Profile API access — 2026-10-07
+
+- Dizito met the documented prerequisites and submitted the current Basic API Access application.
+- Google Cloud project number: `250265818721`.
+- Company website submitted: `https://www.dizito.in/`.
+- Use case: customer-authorized SaaS access so Dizito users can connect/manage their own Google Business Profiles through Google's OAuth flow.
+- Google reported the project was not already allowlisted; current pre-approval quota is 0 requests/minute.
+- Google support case: `0-3242000041809`.
+- Google stated an approximate review time of 7–10 business days.
+- Current status is pending allowlisting/approval.
+- This external approval does not yet constitute runtime verification of OAuth, location discovery, or live post publishing.
+
 ## 12. Testing / verification model
 
 Distinguish:
