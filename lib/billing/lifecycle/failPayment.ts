@@ -4,9 +4,10 @@ import { billingLogger } from "../logger";
 import { BILLING_GRACE_PERIOD_DAYS } from "../constants";
 import { BillingRepository } from "../repository";
 
-export async function failPayment(payload: any) {
-  const subscriptionEntity = payload.payload?.subscription?.entity;
-  const paymentEntity = payload.payload?.payment?.entity;
+export async function failPayment(payload: Record<string, unknown>) {
+  const payloadBody = payload.payload as { subscription?: { entity?: any }; payment?: { entity?: { subscription_id?: string } } } | undefined;
+  const subscriptionEntity = payloadBody?.subscription?.entity;
+  const paymentEntity = payloadBody?.payment?.entity;
   const providerSubscriptionId =
     subscriptionEntity?.id ?? paymentEntity?.subscription_id;
 
