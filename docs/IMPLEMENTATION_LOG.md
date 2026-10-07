@@ -604,3 +604,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Improved narrow-screen channel connection actions and account status presentation.
 - Polished `app/(protected)/activity/page.tsx` with shared Dizito page/card/state presentation while preserving the existing activity API, filters, grouping, and event details.
 - No provider adapter, billing business logic, commerce backend, media provider, or database schema changes were made.
+
+
+### 2026-10-08 — Workstream A merchant-surface consistency continuation
+- Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
+- Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
+- No backend/API/provider/database/billing/media architecture changes were introduced.
