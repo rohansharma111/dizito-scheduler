@@ -165,7 +165,7 @@ export default function ActivityPage() {
 
           <option value="ACCOUNT">Accounts</option>
         </select>
-      </DizitoCard></DizitoCard>
+      </div></DizitoCard>
 
       {loading && (
         <DizitoCard><div className="animate-pulse text-sm text-gray-500">Loading activity…</div></DizitoCard>
@@ -239,7 +239,7 @@ export default function ActivityPage() {
                         </pre>
                       </details>
                     )}
-                  </div>
+                  </DizitoCard>
                 </div>
               ))}
             </div>
