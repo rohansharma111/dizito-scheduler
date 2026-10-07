@@ -608,3 +608,9 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - Generate My Week now uses shared Dizito visual primitives without changing the weekly-plan generation or approval contracts. Approval remains separate from scheduling/publishing.
 - Product Edit state markup was corrected after source inspection.
 - Runtime verification remains pending; source sanity checks are the current verification boundary.
+
+
+### Workstream A distribution UI continuation — 2026-10-08
+- Marketing Content, Posts, Drafts and Calendar now use shared Dizito shell/state primitives for consistent loading, empty and error/recovery presentation.
+- Existing scheduling, publishing, account-selection and child component behavior is preserved.
+- No backend, schema, provider or commerce changes were introduced; runtime verification remains pending.
