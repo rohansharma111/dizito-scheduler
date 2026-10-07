@@ -5,6 +5,7 @@ import { getEventIcon } from "@/lib/eventIcons";
 import { timeAgo } from "@/lib/timeAgo";
 import { groupEvents } from "@/lib/groupEvents";
 import PlatformBadge from "@/components/PlatformBadge";
+import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 type ActivityEvent = {
   id: number;
@@ -124,16 +125,10 @@ export default function ActivityPage() {
   const grouped = groupEvents(filtered);
 
   return (
-    <div className="px-4 py-6 md:p-8 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Activity Feed</h1>
+    <DizitoPage>
+      <DizitoPageHeader eyebrow="Measure" title="Activity feed" description="Recent publishing and account activity across your Dizito workspace." />
 
-        <p className="text-gray-500 mt-2">
-          Recent activity across all your accounts
-        </p>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      <DizitoCard className="mb-6" tone="soft"><div className="flex flex-col gap-3 sm:flex-row">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -170,22 +165,14 @@ export default function ActivityPage() {
 
           <option value="ACCOUNT">Accounts</option>
         </select>
-      </div>
+      </DizitoCard></DizitoCard>
 
       {loading && (
-        <div className="bg-white border rounded-lg p-8">
-          Loading activity...
-        </div>
+        <DizitoCard><div className="animate-pulse text-sm text-gray-500">Loading activity…</div></DizitoCard>
       )}
 
       {!loading && filtered.length === 0 && (
-        <div className="bg-white border rounded-lg p-12 text-center">
-          <div className="text-5xl">📭</div>
-
-          <h2 className="text-xl font-semibold mt-4">No activity found</h2>
-
-          <p className="text-gray-500 mt-2">Activity will appear here</p>
-        </div>
+        <DizitoState kind="empty" title="No activity found" description="Activity will appear here as your channels publish content and account events occur." />
       )}
 
       {!loading &&
@@ -206,7 +193,7 @@ export default function ActivityPage() {
                     )}
                   </div>
 
-                  <div className="flex-1 bg-white border rounded-xl p-4 md:p-5 shadow-sm">
+                  <DizitoCard className="min-w-0 flex-1 !p-4 md:!p-5">
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                       <div>
                         <div className="flex flex-wrap gap-2 items-center">
@@ -231,7 +218,7 @@ export default function ActivityPage() {
 
                     {event.payload && (
                       <details className="mt-4">
-                        <summary className="cursor-pointer text-sm text-blue-600">
+                        <summary className="cursor-pointer text-sm font-semibold text-[var(--dizito-violet)]">
                           View details
                         </summary>
 
@@ -258,6 +245,6 @@ export default function ActivityPage() {
             </div>
           </div>
         ))}
-    </div>
+    </DizitoPage>
   );
 }
