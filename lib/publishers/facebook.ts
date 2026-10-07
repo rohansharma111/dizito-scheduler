@@ -29,7 +29,7 @@ export async function publishToFacebook(context: PublisherContext) {
   });
 
   const response = await fetch(
-    `https://graph.facebook.com/v19.0/${account.page_id}/photos`,
+    `https://graph.facebook.com/v26.0/${account.page_id}/photos`,
     {
       method: "POST",
 

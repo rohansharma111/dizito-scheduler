@@ -24,7 +24,7 @@ export async function publishToInstagram(context: PublisherContext) {
   }
 
   const containerResponse = await fetch(
-    `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media`,
+    `https://graph.facebook.com/v26.0/${account.instagram_business_id}/media`,
     {
       method: "POST",
 
@@ -52,7 +52,7 @@ export async function publishToInstagram(context: PublisherContext) {
   await new Promise((resolve) => setTimeout(resolve, 10000));
 
   const publishResponse = await fetch(
-    `https://graph.facebook.com/v19.0/${account.instagram_business_id}/media_publish`,
+    `https://graph.facebook.com/v26.0/${account.instagram_business_id}/media_publish`,
     {
       method: "POST",
 

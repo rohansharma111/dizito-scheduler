@@ -3,6 +3,12 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { canConnectAccount } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
+import {
+  discoverMetaPages,
+  getInstagramBusinessAccount,
+  metaGraphGet,
+  metaGraphUrl,
+} from "@/lib/meta/api";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -92,9 +98,17 @@ export async function GET(request: Request) {
     EXCHANGE CODE
   */
   const tokenResponse = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(
-      process.env.META_REDIRECT_URI!,
-    )}&client_secret=${process.env.META_APP_SECRET}&code=${code}`,
+    (() => {
+      const url = new URL(metaGraphUrl("/oauth/access_token"));
+      url.searchParams.set("client_id", process.env.META_APP_ID!);
+      url.searchParams.set(
+        "redirect_uri",
+        process.env.META_REDIRECT_URI!,
+      );
+      url.searchParams.set("client_secret", process.env.META_APP_SECRET!);
+      url.searchParams.set("code", code);
+      return url.toString();
+    })(),
   );
 
   const tokenData = await tokenResponse.json();
@@ -108,7 +122,7 @@ export async function GET(request: Request) {
   }
 
   const permissionsResponse = await fetch(
-    `https://graph.facebook.com/v19.0/me/permissions?access_token=${accessToken}`,
+    metaGraphUrl("/me/permissions"),
   );
 
   const permissionsData = await permissionsResponse.json();
@@ -120,24 +134,22 @@ export async function GET(request: Request) {
 
   /*
     GET PAGES
+
+    /me/accounts remains the primary Page discovery path. Business-scoped
+    users can have Pages assigned to them without those Pages appearing there,
+    so discoverMetaPages() falls back to /me/assigned_pages.
   */
-  const pagesResponse = await fetch(
-    `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`,
-  );
+  let pageDiscovery;
 
-  const pagesData = await pagesResponse.json();
+  try {
+    pageDiscovery = await discoverMetaPages(accessToken);
+  } catch (error) {
+    console.error("META PAGE DISCOVERY FAILED:", error);
 
-  console.log("META /me/accounts STATUS:", pagesResponse.status);
-  console.log(
-    "META /me/accounts RESPONSE:",
-    JSON.stringify(pagesData, null, 2),
-  );
-
-  if (!pagesResponse.ok) {
     return Response.json(
       {
         error: "Meta API error while loading Facebook Pages",
-        meta: pagesData,
+        meta: error instanceof Error ? error.message : error,
       },
       {
         status: 400,
@@ -145,10 +157,20 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!pagesData.data || pagesData.data.length === 0) {
+  const pagesData = {
+    data: pageDiscovery.pages,
+  };
+
+  console.log("META PAGE DISCOVERY SOURCE:", pageDiscovery.source);
+
+  if (pageDiscovery.pages.length === 0) {
     return Response.json(
       {
-        error: "No Facebook Pages found",
+        error:
+          "No Facebook Pages were returned by Meta. If this Page is managed through a Business Portfolio, the Meta app must have the business-management access required for business-scoped Page discovery and the user must authorize that access.",
+        discoverySource: pageDiscovery.source,
+        accounts: pageDiscovery.accountsResponse,
+        assignedPages: pageDiscovery.assignedPagesResponse ?? null,
       },
       {
         status: 400,
@@ -242,13 +264,12 @@ export async function GET(request: Request) {
       let foundInstagram = false;
 
       for (const page of pagesData.data) {
-        const instagramResponse = await fetch(
-          `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`,
+        const instagramResult = await getInstagramBusinessAccount(
+          page.id,
+          page.access_token || accessToken,
         );
 
-        const instagramData = await instagramResponse.json();
-
-        const instagramId = instagramData?.instagram_business_account?.id;
+        const instagramId = instagramResult.instagramBusinessId;
 
         if (
           instagramId &&
@@ -310,11 +331,10 @@ export async function GET(request: Request) {
   const enrichedPages = [];
 
   for (const page of pagesData.data) {
-    const instagramResponse = await fetch(
-      `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`,
+    const instagramResult = await getInstagramBusinessAccount(
+      page.id,
+      page.access_token || accessToken,
     );
-
-    const instagramData = await instagramResponse.json();
 
     enrichedPages.push({
       id: page.id,
@@ -329,10 +349,9 @@ export async function GET(request: Request) {
 
       hasFacebook: true,
 
-      hasInstagram: !!instagramData?.instagram_business_account,
+      hasInstagram: !!instagramResult.instagramBusinessId,
 
-      instagramBusinessId:
-        instagramData?.instagram_business_account?.id || null,
+      instagramBusinessId: instagramResult.instagramBusinessId,
     });
   }
 
