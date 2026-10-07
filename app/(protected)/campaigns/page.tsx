@@ -137,7 +137,7 @@ export default function CampaignsPage() {
           return <button type="button" key={product.id} onClick={() => toggleProduct(product.id)} className={`dizito-badge ${selected ? "dizito-badge-ai" : "dizito-badge-neutral"} cursor-pointer border-0`}>{product.name}</button>;
         })}</div></div>
         <button onClick={createCampaign} disabled={saving} className="dizito-button dizito-button-primary mt-4">{saving ? "Creating…" : "Create draft campaign"}</button>
-      </section>
+      </DizitoCard>
 
       <section style={{ display: "grid", gap: 12 }}>
         <h2 style={{ marginBottom: 0 }}>Campaign workspace</h2>
@@ -190,8 +190,8 @@ export default function CampaignsPage() {
               <button type="button" onClick={createContent} disabled={saving} className="dizito-button dizito-button-primary justify-self-start !min-h-9 !px-3 !text-xs">{saving ? "Saving…" : "Add planned Content Item"}</button>
               {items.length === 0 ? <p style={{ margin: 0, fontSize: 13, opacity: 0.65 }}>No Content Items yet.</p> : items.map((item) => <div key={item.id} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"><div><strong>{item.topic || "Untitled content"}</strong><div style={{ marginTop: 4, fontSize: 13, opacity: 0.65 }}>{item.contentType}{item.format ? " · " + item.format : ""}{item.productNames.length ? " · " + item.productNames.join(", ") : ""}</div></div><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 12, fontWeight: 700 }}>{item.status}</span>{(item.status === "draft" || item.status === "planned") && <a href={`/marketing-content?campaignId=${campaign.id}`} className="dizito-button dizito-button-secondary !min-h-8 !px-2.5 !text-xs no-underline">Review</a>}{item.status === "ready" && <a href={`/marketing-content?campaignId=${campaign.id}`} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb", textDecoration: "none", fontSize: 12, fontWeight: 700 }}>Schedule</a>}{item.status === "converted" && <span style={{ fontSize: 12, opacity: 0.65 }}>Converted</span>}</div></div>)}
             </div>}
-          </article>)}
+          </DizitoCard>)}
       </section>
-    </main>
+    </DizitoPage>
   );
 }
