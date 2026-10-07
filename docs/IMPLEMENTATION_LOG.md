@@ -552,3 +552,18 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Recorded the need for a Dizito-specific design system, subscription/pricing redesign, video capability architecture, security audit, scalability/observability work and explicit external provider verification.
 - Current Neon inspection found approximately 12 MB database size, 46 public tables and 156 public indexes; no storage-driven migration is currently justified.
 - Added parallel workstream guidance so UI, billing, media/video, security, QA/CI, external provider verification, commerce hardening and infrastructure can proceed with explicit file ownership and continuation handoffs.
+
+## 2026-10-07 — Workstream B V1 subscription/pricing implementation
+
+- Branch: `v1/subscription-pricing`.
+- Audit found the historical billing model centered on Creator/Agency, `users.plan`, environment-backed Razorpay plan IDs, and separate legacy usage counters.
+- Implemented canonical V1 billing layers: plan catalog, entitlement definitions/values, subscription linkage, provider mappings, usage counters and idempotent webhook events.
+- V1 pricing hypotheses seeded: Free ₹0, Growth ₹799/month, Pro ₹1,999/month, Agency ₹4,999+ future, Founding Beta ₹499/month. These are explicitly marked as hypotheses in catalog metadata/UI.
+- Added compatibility mapping: Creator → Growth; Agency remains future; legacy `users.plan` remains a mirror until broader migration is intentionally approved.
+- Added lifecycle support for trial, authentication, activation, payment failure/grace period, pause/pending, cancellation, completion and plan changes.
+- Added centralized entitlement enforcement for AI actions, publishing, social channels, commerce channels and product capabilities.
+- Added billing/pricing UI and authenticated plan-change/cancellation routes.
+- Added regression tests for catalog compatibility and subscription state mapping.
+- Migration was source-reviewed and Neon schema was inspected. A disposable migration validation attempt caught a parser issue before any live/default schema change; the migration was revised to avoid ambiguous table/column names. A second disposable validation was blocked by the tool safety layer, so migration execution remains unverified.
+- No Razorpay provider IDs were hard-coded into product/business logic. Provider mappings must be configured explicitly before paid checkout can operate.
+- No provider publisher or global design-system architecture was modified.

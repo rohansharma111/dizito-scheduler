@@ -746,3 +746,31 @@ New canonical planning documents:
 - `docs/DIZITO_PARALLEL_WORKSTREAMS.md`.
 
 These define the launch gates and the multi-chat ownership model.
+
+## 2026-10-07 — Workstream B subscription/pricing implementation checkpoint
+
+On branch `v1/subscription-pricing`, Workstream B has implemented the V1 billing model around:
+
+`Billing Plan → Entitlements → Subscription → Provider Mapping → Usage`
+
+Implemented in the branch:
+- V1 catalog: Free, Growth, Pro, Agency/future and Founding Beta hypotheses;
+- database-backed entitlement definitions and plan values;
+- Razorpay provider-plan mapping without embedding Razorpay plan IDs in product logic;
+- trial metadata, authenticated/active/pending/paused/failed/grace/cancelled/completed lifecycle handling;
+- idempotent Razorpay webhook receipt tracking;
+- authenticated plan changes and scheduled cancellation controls;
+- centralized AI, publishing, social-channel and commerce-channel entitlement enforcement helpers;
+- V1 pricing and billing settings surfaces;
+- billing state/catalog regression tests.
+
+Compatibility:
+- historical `users.plan` and legacy Creator/Agency values remain as compatibility mirrors;
+- existing `subscriptions` rows are mapped to canonical billing plans by migration;
+- no workspace/multi-business migration was introduced.
+
+Important rollout boundary:
+- migration `021_billing_v1_plans_entitlements.sql` has been added to the branch but has **not** been applied to the default/live Neon branch;
+- Razorpay provider mappings intentionally remain unpopulated until real Razorpay plan IDs are configured;
+- Razorpay live checkout/webhook/provider verification remains external and is not claimed complete;
+- branch tests/typecheck/build still require verification before merge.
