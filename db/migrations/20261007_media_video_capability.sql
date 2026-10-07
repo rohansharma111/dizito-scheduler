@@ -29,6 +29,10 @@ ALTER TABLE media_library
   ADD COLUMN IF NOT EXISTS metadata jsonb
     NOT NULL DEFAULT '{}'::jsonb;
 
+UPDATE media_library
+SET media_type = CASE WHEN lower(resource_type) = 'video' THEN 'video' ELSE 'image' END
+WHERE media_type = 'image';
+
 CREATE INDEX IF NOT EXISTS idx_media_user_type
   ON media_library (user_id, media_type);
 
