@@ -578,3 +578,14 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Refreshed the existing Product catalog, Product creation and Product editing surfaces to use the Dizito visual system and responsive states.
 - No product, goal, offer, billing, provider or database backend logic was changed.
 - Verification: changed-file source sanity inspection completed; no fresh CI/browser run is available, so runtime green status remains unclaimed.
+
+
+## 2026-10-08 — Workstream A: weekly planning UI continuation
+
+- Audited the existing marketing API before adding merchant-context controls.
+- Confirmed there is currently no `services` marketing domain/API in `app/api/marketing`; no Services CRUD or schema was invented in the UI pass.
+- Confirmed Goals and Offers currently expose GET/POST only; edit/delete controls are intentionally deferred rather than creating unsupported API behavior.
+- Fixed the Product Edit loading/not-found JSX state introduced during the earlier visual pass.
+- Reworked `Generate My Week` to use the shared Dizito page/card/button/badge/state primitives while preserving the existing weekly-plan generate/approve contracts and the explicit rule that approval does not publish.
+- Source-level checks passed for brace balance, merge markers and malformed literal import escapes on the touched UI files.
+- No database, billing, provider-adapter, commerce-service or media-provider changes were made. Runtime/browser/build verification remains pending.
