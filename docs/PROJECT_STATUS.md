@@ -124,6 +124,30 @@ Recent fixes cover:
 - user-scoped account health refresh;
 - hiding disconnected targets from post listings/details.
 
+## Workstream C — Media + Video Capability — 2026-10-07
+
+Branch: `v1/media-video`
+
+Code-level implementation now establishes a first-class media capability boundary without replacing existing image publishing:
+- `lib/media/capabilities.ts` models image/video plus platform-native reel, video Pin and Google location-media capabilities, including MIME, size/duration/dimension, processing, polling, cover and upload protocol metadata.
+- `media_library` receives additive video lifecycle metadata through `db/migrations/20261007_media_video_capability.sql`.
+- Large video ingress uses signed direct Cloudinary upload; the legacy application upload route explicitly rejects video rather than buffering it.
+- Direct-upload completion verifies the Cloudinary public ID is tenant-owned and reads actual Cloudinary resource metadata before persistence.
+- Instagram Reels use Meta container creation + status polling + publish.
+- Facebook has separate image/photo and video paths.
+- Pinterest video Pins use media registration, upload, processing polling and cover/post creation.
+- LinkedIn uses the current Videos API initialize/upload/finalize flow with ranged Cloudinary reads and Posts API publication; current documented feed-video limits are 3 seconds–30 minutes and 75 KB–500 MB.
+- Google Business Local Posts remain image-only in the capability model; Google Business location media is modeled separately and supports VIDEO.
+- Product media UI now renders video assets as video instead of assuming every media item is an image.
+
+Verification boundary:
+- Capability/state/upload-policy regression tests were added but have not yet been executed in this environment because repository code cannot be cloned locally.
+- No live provider mutation was executed from this workstream.
+- Pinterest Standard Access is granted, but live video-Pin runtime verification remains separate.
+- Meta customer-like runtime verification remains pending.
+- Google Business API allowlisting remains pending.
+- The database migration has been committed but not applied to the production/default Neon branch from this workstream.
+
 ## 4. Commerce provider architecture
 
 Shared files:
