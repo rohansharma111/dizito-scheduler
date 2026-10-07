@@ -5,7 +5,7 @@ export async function createBillingEvent(
   event: string,
   entityId: number,
   userId: number | undefined,
-  payload: any,
+  payload: unknown,
   client?: PoolClient,
 ) {
   return createEvent(
