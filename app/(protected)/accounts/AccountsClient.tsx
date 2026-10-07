@@ -114,7 +114,7 @@ export default function AccountsPage() {
       {/* HEADER */}
 
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold">Connected Accounts</h1>
+        <div><div className="dizito-eyebrow"><Link2 size={13}/>Distribution</div><h1 className="dizito-title">Channels & accounts</h1><p className="dizito-subtitle">Connect the destinations where approved Dizito content will reach customers.</p></div>
 
         <button
           onClick={refreshHealth}
@@ -183,7 +183,7 @@ export default function AccountsPage() {
 
       {/* PLAN CARD */}
 
-      <div className="border rounded-lg p-6 mb-6 bg-white">
+      <div className="dizito-card mb-5">
         <div className="text-sm text-gray-500">Current Plan</div>
 
         <div className="text-2xl font-bold mt-1 capitalize">{plan}</div>
@@ -220,7 +220,7 @@ export default function AccountsPage() {
       {/* EMPTY */}
 
       {accounts.length === 0 && (
-        <div className="border rounded p-6 text-center">
+        <div className="dizito-state">
           No accounts connected yet.
         </div>
       )}
@@ -228,7 +228,7 @@ export default function AccountsPage() {
       {/* ACCOUNTS */}
 
       {accounts.map((account) => (
-        <div key={account.id} className="border p-4 rounded mb-4">
+        <div key={account.id} className="dizito-card !p-4 mb-4">
           <div className="font-bold text-lg">{account.account_name}</div>
 
           <div className="text-gray-600 capitalize">{account.platform}</div>
