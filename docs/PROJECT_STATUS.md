@@ -776,3 +776,9 @@ These define the launch gates and the multi-chat ownership model.
 - Accounts retains existing platform connection/reconnection contracts and plan-limit behavior.
 - Activity retains existing event loading, filtering, grouping, and payload inspection behavior.
 - Analytics and other legacy merchant surfaces remain candidates for later visual consistency passes; this workstream does not claim browser/build verification.
+
+
+### 2026-10-08 — Workstream A merchant-surface consistency continuation
+- Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
+- Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
+- No backend/API/provider/database/billing/media architecture changes were introduced.
