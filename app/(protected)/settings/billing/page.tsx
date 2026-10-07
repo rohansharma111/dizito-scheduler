@@ -128,7 +128,7 @@ export default function BillingPage() {
     <div className="p-8 space-y-8">
       {/* Hero */}
 
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-8 text-white">
+      <div className="dizito-card dizito-card-dark">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold">Billing & Subscription</h1>
 
@@ -171,7 +171,7 @@ export default function BillingPage() {
       {/* Trial Banner */}
 
       {billing.subscription.trialDaysLeft > 0 && (
-        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4">
+        <div className="dizito-card dizito-card-soft">
           🎉 Trial ends in{" "}
           <strong>{billing.subscription.trialDaysLeft} days</strong>
         </div>
@@ -180,7 +180,7 @@ export default function BillingPage() {
       {/* Usage */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded-xl p-6">
+        <div className="dizito-card">
           <h2 className="font-semibold mb-4">Accounts Usage</h2>
 
           <div className="flex justify-between mb-2">
@@ -193,7 +193,7 @@ export default function BillingPage() {
 
           <div className="w-full bg-gray-200 h-3 rounded">
             <div
-              className="bg-blue-600 h-3 rounded"
+              className="bg-[#6d5dfc] h-3 rounded"
               style={{
                 width: `${Math.min(accountPercent, 100)}%`,
               }}
@@ -201,7 +201,7 @@ export default function BillingPage() {
           </div>
         </div>
 
-        <div className="bg-white border rounded-xl p-6">
+        <div className="dizito-card">
           <h2 className="font-semibold mb-4">Posts Usage</h2>
 
           <div className="flex justify-between mb-2">
@@ -219,7 +219,7 @@ export default function BillingPage() {
             </span>
           </div>
 
-          <div className="bg-white border rounded-xl p-6">
+          <div className="dizito-card">
             <h2 className="font-semibold mb-4">AI Images Usage</h2>
 
             <div className="flex justify-between mb-2">
@@ -239,7 +239,7 @@ export default function BillingPage() {
 
             <div className="w-full bg-gray-200 h-3 rounded">
               <div
-                className="bg-purple-600 h-3 rounded"
+                className="bg-[#6d5dfc] h-3 rounded"
                 style={{
                   width: `${Math.min(aiPercent, 100)}%`,
                 }}
@@ -249,7 +249,7 @@ export default function BillingPage() {
 
           <div className="w-full bg-gray-200 h-3 rounded">
             <div
-              className="bg-green-600 h-3 rounded"
+              className="bg-[#9fda35] h-3 rounded"
               style={{
                 width: `${Math.min(postPercent, 100)}%`,
               }}
@@ -260,7 +260,7 @@ export default function BillingPage() {
 
       {/* Subscription */}
 
-      <div className="bg-white border rounded-xl p-6">
+      <div className="dizito-card">
         <h2 className="text-xl font-semibold mb-6">Subscription</h2>
 
         <div className="grid grid-cols-2 gap-6">
@@ -306,7 +306,7 @@ export default function BillingPage() {
 
       {/* Features */}
 
-      <div className="bg-white border rounded-xl p-6">
+      <div className="dizito-card">
         <h2 className="text-xl font-semibold mb-6">Features</h2>
 
         <div className="grid grid-cols-2 gap-4">
@@ -332,7 +332,7 @@ export default function BillingPage() {
 
       {/* Billing History */}
 
-      <div className="bg-white border rounded-xl p-6">
+      <div className="dizito-card">
         <h2 className="text-xl font-semibold mb-6">Billing History</h2>
 
         {billing.billingHistory.length === 0 ? (
@@ -363,14 +363,14 @@ export default function BillingPage() {
           <>
             <Link
               href="/pricing"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+              className="dizito-button dizito-button-primary"
             >
               Upgrade To Creator
             </Link>
 
             <Link
               href="/pricing"
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg"
+              className="dizito-button dizito-button-ai"
             >
               Upgrade To Agency
             </Link>
@@ -381,19 +381,19 @@ export default function BillingPage() {
           <>
             <Link
               href="/pricing"
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg"
+              className="dizito-button dizito-button-ai"
             >
               Upgrade To Agency
             </Link>
 
-            <button className="bg-red-600 text-white px-6 py-3 rounded-lg">
+            <button className="dizito-button dizito-button-danger">
               Cancel Subscription
             </button>
           </>
         )}
 
         {billing.plan === "agency" && (
-          <button className="bg-red-600 text-white px-6 py-3 rounded-lg">
+          <button className="dizito-button dizito-button-danger">
             Cancel Subscription
           </button>
         )}
