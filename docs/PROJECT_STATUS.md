@@ -763,3 +763,9 @@ These define the launch gates and the multi-chat ownership model.
 - No unsupported Services CRUD or Goal/Offer edit/delete UX was added.
 - Fixed the Product Edit loading/not-found state markup and aligned Generate My Week with the reusable Dizito design system while preserving existing generation/approval behavior.
 - Verification remains source-level only; no fresh build/lint/test/browser run is claimed.
+
+
+### Workstream A distribution UI continuation — 2026-10-08
+- Standardized Marketing Content, Posts, Drafts and Calendar around shared Dizito page/header/card/state primitives.
+- Added explicit loading, empty and API-error recovery states without changing publishing/scheduling APIs.
+- No database, billing, provider-adapter, commerce or media-provider changes. Verification remains source-level only.
