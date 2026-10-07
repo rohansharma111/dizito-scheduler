@@ -757,3 +757,9 @@ New canonical planning documents:
 - `docs/DIZITO_PARALLEL_WORKSTREAMS.md`.
 
 These define the launch gates and the multi-chat ownership model.
+
+### Workstream A UI continuation — 2026-10-08
+- Audited the merchant-context APIs before extending the UI: Goals and Offers currently support GET/POST only; no Services API exists under `app/api/marketing`.
+- No unsupported Services CRUD or Goal/Offer edit/delete UX was added.
+- Fixed the Product Edit loading/not-found state markup and aligned Generate My Week with the reusable Dizito design system while preserving existing generation/approval behavior.
+- Verification remains source-level only; no fresh build/lint/test/browser run is claimed.
