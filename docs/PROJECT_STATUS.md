@@ -661,3 +661,75 @@ These strengthen the safety boundary but do not constitute live provider verific
 - Restored the tenant-scoped `getWooCommerceChannelConfig` boundary used by WooCommerce publish/reconcile.
 - The boundary now requires the channel to exist for the authenticated tenant, have provider `woocommerce`, remain `active`, contain a configured store URL, and have tenant-scoped credentials before constructing the remote client config.
 - Tests, lint, build, and live provider verification remain intentionally deferred.
+
+
+## 14. V1 Beta launch checkpoint — 2026-10-07
+
+The project is now explicitly transitioning from feature accumulation to **V1 Beta completion + production hardening + distinctive Dizito product design**.
+
+### V1 definition
+A V1 merchant must be able to complete:
+Business setup → Business Brain → products/services/offers/media → channel connection → Strategist → Generate My Week → review/edit → approval → platform-specific content → schedule/publish → Customer Actions → Business Impact → Optimizer → next week.
+
+V1 does **not** require every marketplace provider to be production-ready.
+
+### New P0 launch priorities
+- complete the marketing merchant journey in UI;
+- create a distinctive Dizito design system and redesign the main V1 surfaces;
+- redesign subscription/pricing around the current AI marketing + commerce product;
+- complete a security/tenant-isolation audit;
+- make video a first-class, platform-capability-driven media type;
+- complete external Meta/Pinterest/Google/provider verification where required;
+- establish fresh CI/test/lint/build evidence;
+- complete beta onboarding and failure/recovery UX.
+
+### External status
+- Meta `business_management` App Review: **in progress**. This is specifically related to Business Portfolio-managed Page discovery for external customers. Approval must not be assumed.
+- Pinterest Standard Access: **granted**. This clears the previous access blocker; live end-to-end publication from the current build remains a separate verification item.
+- Google Business Profile API: **application still required**; implement in parallel and do not claim access before approval.
+- Meesho: remains blocked by authoritative API/partner access.
+
+### Media/video direction
+Current media infrastructure already has video-aware upload/storage foundations, but publisher implementations remain predominantly image-oriented. Do not equate video upload with video publishing.
+
+Future architecture:
+Media asset → platform capability resolver → platform-specific preparation/upload/process/poll → provider publish → confirmed external ID → reconciliation.
+
+Large video uploads should move toward direct/signed Cloudinary upload rather than buffering the entire file through the application API.
+
+### Pricing/subscription direction
+The historical Creator/Agency model is too closely coupled to the old social scheduler. V1 should use:
+Billing Plan → Entitlements → Subscription → Provider Mapping → Usage.
+
+Planning prices:
+- Free;
+- Growth ~₹799/month;
+- Pro ~₹1,999/month;
+- Agency ~₹4,999+/month;
+- founding beta ~₹499/month.
+
+These are product hypotheses and must be validated against costs and willingness to pay.
+
+### Infrastructure/database checkpoint
+Current Neon observation:
+- approximately 12 MB database;
+- 46 public tables;
+- 156 public indexes;
+- current row counts are tiny.
+
+No database or hosting migration is currently justified. Main future scale concern is event/log/query growth, not current storage. Add observability and retention before considering partitioning or a database migration.
+
+Current stack remains appropriate for beta:
+GitHub + Vercel + Neon + Cloudinary + Razorpay + provider APIs.
+
+### Security checkpoint
+Do not claim Dizito is fully secure yet. The credential-bearing schema and provider integrations require verification of the actual encryption/read/write paths, tenant isolation, OAuth/webhook security, rate limiting, upload validation, log sanitization and dependency/platform configuration.
+
+### Documentation
+New canonical planning documents:
+- `docs/DIZITO_V1_LAUNCH_PLAN.md`;
+- `docs/DIZITO_SECURITY_V1_CHECKLIST.md`;
+- `docs/DIZITO_PROVIDER_VERIFICATION.md`;
+- `docs/DIZITO_PARALLEL_WORKSTREAMS.md`.
+
+These define the launch gates and the multi-chat ownership model.
