@@ -532,3 +532,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Important verification note: the developer/admin account working previously is consistent with Meta role-based access and does not prove external customer authorization. External customer verification remains a required runtime check.
 - Meta configuration follow-up: if the external Business Portfolio Page still does not appear, the Facebook Login for Business configuration must include the required `business_management` access and Meta must approve it where required. The repository cannot grant this permission itself.
 - No live Meta customer-account test, full build, lint, or complete Vitest run has been executed yet on this branch.
+
+
+### V1 launch planning + parallel execution model — 2026-10-07
+- Reframed immediate development around V1 Beta completion rather than additional feature accumulation.
+- Added launch definition covering Business Brain → Strategy → Weekly Plan → Review → Approval → Platform Distribution → Customer Actions → Business Impact → Optimizer.
+- Recorded Meta `business_management` App Review as in progress, Pinterest Standard Access as granted with live runtime verification still pending, and Google Business Profile API application as an external dependency.
+- Recorded the need for a Dizito-specific design system, subscription/pricing redesign, video capability architecture, security audit, scalability/observability work and explicit external provider verification.
+- Current Neon inspection found approximately 12 MB database size, 46 public tables and 156 public indexes; no storage-driven migration is currently justified.
+- Added parallel workstream guidance so UI, billing, media/video, security, QA/CI, external provider verification, commerce hardening and infrastructure can proceed with explicit file ownership and continuation handoffs.
