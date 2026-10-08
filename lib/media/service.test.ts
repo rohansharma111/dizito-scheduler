@@ -1,18 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const create = vi.fn();
-const videoPosterUrl = vi.fn(() => "https://res.cloudinary.com/example/video/upload/poster.jpg");
+const { create, videoPosterUrl } = vi.hoisted(() => ({
+  create: vi.fn(),
+  videoPosterUrl: vi.fn(() => "https://res.cloudinary.com/example/video/upload/poster.jpg"),
+}));
 
 vi.mock("./repository", () => ({
-  mediaRepository: {
-    create,
-  },
+  mediaRepository: { create },
 }));
 
 vi.mock("./cloudinary", () => ({
-  mediaCloudinary: {
-    videoPosterUrl,
-  },
+  mediaCloudinary: { videoPosterUrl },
 }));
 
 import { MediaService } from "./service";
@@ -33,103 +31,72 @@ describe("MediaService.completeDirectUpload", () => {
 
   it("persists a Cloudinary resource only when type, format, ownership and size match", async () => {
     const service = new MediaService();
-
-    await expect(
-      service.completeDirectUpload({
-        ...baseInput,
-        resource: {
-          public_id: baseInput.publicId,
-          secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
-          resource_type: "video",
-          format: "mp4",
-          bytes: 1024,
-          duration: 12,
-        },
-      }),
-    ).resolves.toEqual({ id: 1 });
-
-    expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 42,
-        cloudinaryPublicId: baseInput.publicId,
-        mimeType: "video/mp4",
-        resourceType: "video",
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
+        resource_type: "video",
         format: "mp4",
         bytes: 1024,
-        processingState: "ready",
-      }),
-    );
+        duration: 12,
+      },
+    })).resolves.toEqual({ id: 1 });
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 42, cloudinaryPublicId: baseInput.publicId, mimeType: "video/mp4",
+      resourceType: "video", format: "mp4", bytes: 1024, processingState: "ready",
+    }));
   });
 
   it("rejects a resource whose Cloudinary type disagrees with the declared MIME", async () => {
     const service = new MediaService();
-
-    await expect(
-      service.completeDirectUpload({
-        ...baseInput,
-        resource: {
-          public_id: baseInput.publicId,
-          secure_url: "https://res.cloudinary.com/example/image/upload/video-1.png",
-          resource_type: "image",
-          format: "png",
-          bytes: 1024,
-        },
-      }),
-    ).rejects.toThrow("resource type does not match");
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/image/upload/video-1.png",
+        resource_type: "image", format: "png", bytes: 1024,
+      },
+    })).rejects.toThrow("resource type does not match");
     expect(create).not.toHaveBeenCalled();
   });
 
   it("rejects a resource outside the authenticated user's Cloudinary folder", async () => {
     const service = new MediaService();
-
-    await expect(
-      service.completeDirectUpload({
-        ...baseInput,
-        resource: {
-          public_id: "users/43/video-1",
-          secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
-          resource_type: "video",
-          format: "mp4",
-          bytes: 1024,
-        },
-      }),
-    ).rejects.toThrow("ownership verification failed");
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: "users/43/video-1",
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
+        resource_type: "video", format: "mp4", bytes: 1024,
+      },
+    })).rejects.toThrow("ownership verification failed");
     expect(create).not.toHaveBeenCalled();
   });
 
   it("rejects a resource with a format that does not match the declared MIME", async () => {
     const service = new MediaService();
-
-    await expect(
-      service.completeDirectUpload({
-        ...baseInput,
-        resource: {
-          public_id: baseInput.publicId,
-          secure_url: "https://res.cloudinary.com/example/video/upload/video-1.webm",
-          resource_type: "video",
-          format: "webm",
-          bytes: 1024,
-        },
-      }),
-    ).rejects.toThrow("resource format does not match");
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.webm",
+        resource_type: "video", format: "webm", bytes: 1024,
+      },
+    })).rejects.toThrow("resource format does not match");
     expect(create).not.toHaveBeenCalled();
   });
 
   it("rejects a resource with a missing or invalid size", async () => {
     const service = new MediaService();
-
-    await expect(
-      service.completeDirectUpload({
-        ...baseInput,
-        resource: {
-          public_id: baseInput.publicId,
-          secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
-          resource_type: "video",
-          format: "mp4",
-          bytes: 0,
-        },
-      }),
-    ).rejects.toThrow("size verification failed");
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
+        resource_type: "video", format: "mp4", bytes: 0,
+      },
+    })).rejects.toThrow("size verification failed");
     expect(create).not.toHaveBeenCalled();
   });
 });
