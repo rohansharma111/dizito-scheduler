@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,10 @@ export async function GET(request: Request) {
       },
     );
   }
+
+  const userId = String((session.user as any).id);
+  const rateLimit = await consumeRateLimit({ bucket: "oauth:linkedin", identifier: `user:${userId}`, limit: 10, windowSeconds: 600 });
+  if (!rateLimit.allowed) return Response.json({ error: "Too many LinkedIn connection attempts. Please try again later." }, { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } });
 
   const { searchParams } = new URL(request.url);
 
