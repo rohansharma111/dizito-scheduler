@@ -44,9 +44,15 @@ export default function MediaCard({ media, onDelete }: MediaCardProps) {
             sizes="(max-width:768px) 100vw, 25vw"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-gray-500">
-            Video Preview
-          </div>
+          <video
+            src={media.secure_url}
+            poster={media.poster_url ?? undefined}
+            controls
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full object-cover"
+          />
         )}
       </div>
 
