@@ -670,3 +670,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 - The additive media migration remains committed but is not applied to Neon.
 - Provider runtime verification for Pinterest video, Instagram video and LinkedIn video remains pending; provider access is not treated as runtime verification.
 - Repository-wide CI readiness remains subject to the current QA/CI workstream; no new green status is claimed by this reconciliation alone.
+## 2026-10-08 — Project-wide progress tracking rule
+- Established persistent progress tracking as a project-wide Dizito operating rule: each active workstream/chat must keep implementation, verification, migration, external-provider, branch/PR, blockers, dependencies, and continuation handoff status synchronized in the persistent documentation.
+- Completion labels must distinguish implementation-complete, verified, integrated/merged, and production-ready states.
+- Workstream A is implementation-complete and handed off to Workstream E for runtime/browser QA; no unnecessary UI churn should be introduced.
+- Workstream B is implemented and merged into main; current follow-up is build/type correctness and controlled/live billing verification, not a redesign of the billing model.
+
