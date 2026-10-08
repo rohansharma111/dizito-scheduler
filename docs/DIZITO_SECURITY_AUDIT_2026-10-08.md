@@ -270,3 +270,13 @@ Important: this is source-implemented only. No production deployment or live pro
 - Provider-controlled WooCommerce error messages are no longer propagated through the generic client error path; callers receive status-based errors instead.
 - Added regression coverage for private DNS resolution and provider-error redaction.
 - This reduces DNS-based SSRF exposure but is not a complete network-egress guarantee because DNS preflight and the subsequent connection are separate operations. A deployment-level egress policy remains the strongest control against DNS rebinding.
+
+
+## 2026-10-09 — Direct-media completion boundary hardening
+
+- Hardened the direct Cloudinary completion path so persisted media must belong to the authenticated user's Cloudinary folder (users/<userId>/).
+- Cloudinary's returned resource_type must match the declared image/video class, and the returned format must match an explicit allowlist for the declared MIME type.
+- Provider-reported byte size must be finite and positive before media persistence.
+- Added regression tests covering successful completion plus ownership, resource-type, format, and size mismatches.
+- Reviewed the media-processing boundary and confirmed there is currently no server-side FFmpeg/codec execution in Dizito. Video processing remains inside Cloudinary's managed media service. If local media transformation is introduced later, it requires a dedicated isolated worker/container, bounded CPU/memory/duration, temporary storage limits, and deny-by-default network egress.
+- No production migration or destructive operation performed.
