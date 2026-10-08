@@ -569,3 +569,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Corrected the security audit records to reflect the actual dependency state: package.json and package-lock.json are aligned on Next.js 16.3.8 and eslint-config-next 16.3.8, and npm ci succeeds under Node 22.
 - Latest observed PR #49 remains open and unmerged. Validate and Quality Checks are not green because of repository-wide existing lint/test debt; no unrelated cleanup was added to the security branch.
 - Remaining P1 security risks remain explicitly tracked: plaintext legacy social OAuth tokens, distributed rate limiting, DNS-aware SSRF/egress enforcement, and file content/magic-byte validation.
+
+
+## 2026-10-08 — Upload content-signature hardening
+
+- **Status:** Implemented; source-level and regression-test coverage added; runtime execution remains subject to the repository CI state.
+- Added lightweight magic-byte/container-header validation for supported image/video upload MIME types before Cloudinary upload.
+- Added regression tests covering valid signatures and MIME/content mismatches.
+- No dependency or database changes were introduced.
