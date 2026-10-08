@@ -23,10 +23,6 @@ export default function NotificationsPage() {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
   async function loadNotifications() {
     try {
       setLoading(true);
@@ -42,6 +38,12 @@ export default function NotificationsPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+
 
   async function markRead(id: number) {
     try {
