@@ -14,7 +14,7 @@ describe("normalizeWooCommerceStoreUrl", () => {
     expect(normalizeWooCommerceStoreUrl("http://localhost:8080/")).toBe("http://localhost:8080");
   });
 
-  it("rejects URLs without an HTTP scheme", () => {
+  it("rejects credential-bearing URLs", () => {\n    expect(() => normalizeWooCommerceStoreUrl("https://user:pass@store.example.com")).toThrow("invalid");\n  });\n\n  it("rejects URLs without an HTTP scheme", () => {
     expect(() => normalizeWooCommerceStoreUrl("store.example.com")).toThrow(
       "WooCommerce store URL must start with http:// or https://",
     );
