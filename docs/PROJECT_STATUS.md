@@ -786,3 +786,10 @@ These define the launch gates and the multi-chat ownership model.
 - Scheduler target loading now passes media type, duration, poster URL, processing state, upload protocol, processing error and metadata into publisher context.
 - The media join is tenant-scoped and excludes soft-deleted assets, preventing a stale/cross-tenant media row from becoming publishable through scheduler context.
 - Added regression coverage documenting Facebook video's intentionally fail-closed capability state.
+
+## Workstream C — Post edit media lifecycle hardening — 2026-10-08
+
+- Post edits now normalize `mediaId` consistently with post creation: omitted keeps the existing asset, explicit null clears it, and invalid values are rejected.
+- Edited posts may reference only tenant-owned, non-deleted media in `ready` processing state.
+- Post detail reads now tenant-scope the media join and exclude soft-deleted media, and expose the video lifecycle metadata needed by the media/publisher boundary.
+- This closes the remaining edit-path gap where a deleted or still-processing video could otherwise be attached after creation-time validation.
