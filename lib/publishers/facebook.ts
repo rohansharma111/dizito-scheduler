@@ -52,7 +52,7 @@ export async function publishToFacebook(context: PublisherContext) {
   console.log("FACEBOOK RESPONSE STATUS:", response.status);
 
   if (data.error) {
-    throw new Error(JSON.stringify(data.error));
+    throw new Error(`Facebook publish failed: HTTP ${response.status}`);
   }
 
   return data;
