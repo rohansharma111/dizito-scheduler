@@ -167,3 +167,22 @@ Report:
 
 Use OWASP ASVS as the external audit framework.
 
+## 2026-10-08 Audit Addendum
+
+See docs/DIZITO_SECURITY_AUDIT_2026-10-08.md for the source-level audit and finding classifications.
+
+Implemented in v1/security-audit:
+- OAuth state binding/session checks.
+- Tenant authorization on auth recovery.
+- Removal of raw Razorpay webhook logging.
+- WooCommerce URL boundary hardening.
+- Upload MIME allowlist.
+- Baseline security headers.
+- OAuth-state regression tests.
+
+Open before launch:
+- [ ] Upgrade Next.js 16.2.7 to patched 16.3.8 and regenerate package-lock.
+- [ ] Migrate legacy social OAuth tokens from plaintext storage to application-encrypted storage.
+- [ ] Add distributed rate limiting for abuse-sensitive endpoints.
+- [ ] Complete DNS-aware SSRF/egress controls for arbitrary commerce store hosts.
+- [ ] Add file magic-byte/content validation if hostile uploads are in scope.
