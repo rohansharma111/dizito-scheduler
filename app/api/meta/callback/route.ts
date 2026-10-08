@@ -199,8 +199,8 @@ export async function GET(request: Request) {
         error:
           "No Facebook Pages were returned by Meta. If this Page is managed through a Business Portfolio, the Meta app must have the business-management access required for business-scoped Page discovery and the user must authorize that access.",
         discoverySource: pageDiscovery.source,
-        accounts: pageDiscovery.accountsResponse,
-        assignedPages: pageDiscovery.assignedPagesResponse ?? null,
+        accountCount: pageDiscovery.accountsResponse?.data?.length ?? 0,
+        assignedPageCount: pageDiscovery.assignedPagesResponse?.data?.length ?? 0,
       },
       {
         status: 400,
