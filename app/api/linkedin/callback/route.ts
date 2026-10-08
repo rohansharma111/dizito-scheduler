@@ -298,6 +298,7 @@ export async function GET(request: Request) {
     SET
       access_token = NULL,
       access_token_encrypted = $1,
+      credential_encryption_version = 'v1',
       account_name = $2,
       status = 'connected',
       last_checked_at = NOW(),
@@ -413,6 +414,7 @@ export async function GET(request: Request) {
           access_token_encrypted,
           linkedin_member_id,
           user_id,
+          credential_encryption_version,
           status,
           last_checked_at
         )
@@ -424,6 +426,7 @@ export async function GET(request: Request) {
           $3,
           $4,
           $5,
+          'v1',
           $6,
           NOW()
         )
