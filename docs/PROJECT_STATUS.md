@@ -770,3 +770,12 @@ New canonical planning documents:
 - `docs/DIZITO_PARALLEL_WORKSTREAMS.md`.
 
 These define the launch gates and the multi-chat ownership model.
+
+## Workstream C — Media + Video integration hardening — 2026-10-08
+
+- Post creation now normalizes and validates `mediaId` before persistence.
+- A selected media asset must belong to the authenticated tenant, must not be soft-deleted, and must be in `ready` processing state before a post can reference it.
+- `types/media.ts` now exposes the additive video lifecycle fields (`media_type`, duration, poster, processing state, upload protocol, processing error and metadata) used by the media capability layer.
+- Capability formatting was cleaned without changing the fail-closed verification rules.
+- No GitHub Actions workflow run is available for the current workstream commit, so tests/type-check/lint/build remain unclaimed.
+- The Neon media migration remains intentionally unapplied from this workstream.
