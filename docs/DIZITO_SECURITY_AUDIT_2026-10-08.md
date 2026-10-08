@@ -209,3 +209,18 @@ A subsequent Neon production recheck found a newly created Pinterest `social_acc
 This proves the credential migration is not yet effective for the currently active connection path/deployment. The row has not been deleted or modified in this checkpoint because no new destructive authorization was given for this newly created account. The immediate blocker is to identify why the live connection path bypassed the encrypted-write code, then either perform an authorized encrypted backfill or replace the row through a verified encrypted connection flow.
 
 **Important status correction:** the database is no longer at zero social accounts. The earlier cleanup remains valid for IDs 46 and 61, but the current production state is 1 social account, 0 OAuth selection rows, and 0 orphaned social targets.
+
+
+## 2026-10-08 — Pinterest live-write correction
+
+The live connection was traced against the branch implementation after a new Pinterest account (id 62) appeared with plaintext access/refresh credentials. The active path was not bypassing the security branch: the branch itself was intentionally dual-writing plaintext for legacy compatibility.
+
+The Pinterest path has now been advanced to the next migration gate:
+- new Pinterest OAuth temporary-selection writes store credential material only in encrypted columns;
+- Pinterest new-account and reconnect writes store encrypted credential material and clear the legacy plaintext token columns;
+- Pinterest token-refresh writes store encrypted credential material and clear the legacy plaintext token columns;
+- tenant predicates remain intact on reconnect/update operations.
+
+This is source-implemented on `v1/security-audit`. Production database row 62 was **not directly modified or deleted** in this checkpoint. Existing legacy fallback reads remain temporarily available so the account can be migrated through a verified runtime path.
+
+Runtime deployment/provider verification is still required. The next verification is to exercise the deployed Pinterest reconnect/health path and confirm that row 62 has encrypted credentials with no plaintext credential fields, without exposing credential values.
