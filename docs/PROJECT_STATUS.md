@@ -1,3 +1,14 @@
+## 2026-10-09 — Workstream D rate-limiting checkpoint
+
+- Added durable, serverless-safe rate-limit storage as migration `023_security_rate_limits_v1.sql`.
+- Added a tenant-aware Postgres-backed fixed-window limiter in `lib/security/rate-limit.ts`.
+- Protected AI image generation, media uploads/direct-upload completion, post creation, and Meta/LinkedIn/Pinterest/Google Business OAuth initiation.
+- Authenticated requests are keyed by tenant user ID; anonymous identities are HMAC-hashed before persistence.
+- Blocked responses return HTTP 429 with `Retry-After` and rate-limit headers.
+- Focused unit coverage was added for identity hashing and 429 response behavior.
+- Production migration has **not** yet been applied; the branch must be validated and the migration applied before deploying the route changes.
+- This is application-level fair-use/cost-abuse protection. It does not replace edge/WAF controls or bot protection.
+
 ## 2026-10-08 — Workstream H reconciliation onto current main
 
 - Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
