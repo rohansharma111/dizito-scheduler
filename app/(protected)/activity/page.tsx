@@ -24,10 +24,6 @@ export default function ActivityPage() {
 
   const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
-    loadActivity();
-  }, []);
-
   async function loadActivity() {
     try {
       const response = await fetch("/api/activity");
@@ -41,6 +37,12 @@ export default function ActivityPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadActivity();
+  }, []);
+
+
 
   function getTitle(event: ActivityEvent) {
     switch (event.event_type) {

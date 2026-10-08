@@ -65,12 +65,13 @@ describe("MediaService.completeDirectUpload", () => {
     const service = new MediaService();
     await expect(service.completeDirectUpload({
       ...baseInput,
+      publicId: "users/43/video-1",
       resource: {
         public_id: "users/43/video-1",
         secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
         resource_type: "video", format: "mp4", bytes: 1024,
       },
-    })).rejects.toThrow("ownership verification failed");
+    })).rejects.toThrow("Cloudinary resource ownership verification failed");
     expect(create).not.toHaveBeenCalled();
   });
 

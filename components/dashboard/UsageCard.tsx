@@ -43,10 +43,6 @@ export default function UsageCard() {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadUsage();
-  }, []);
-
   async function loadUsage() {
     try {
       const response = await fetch("/api/usage");
@@ -60,6 +56,12 @@ export default function UsageCard() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadUsage();
+  }, []);
+
+
 
   if (loading) {
     return (

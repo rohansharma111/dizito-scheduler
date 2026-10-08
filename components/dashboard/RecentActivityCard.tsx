@@ -18,10 +18,6 @@ export default function RecentActivityCard() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-  }, []);
-
   async function load() {
     try {
       const response = await fetch("/api/activity");
@@ -39,6 +35,12 @@ export default function RecentActivityCard() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+
 
   return (
     <div className="bg-white border rounded-xl shadow-sm">

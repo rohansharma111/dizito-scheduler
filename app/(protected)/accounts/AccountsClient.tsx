@@ -52,7 +52,7 @@ export default function AccountsPage() {
 
   const accountLimitReached = limits.used >= limits.allowed;
   const connect = (url: string) => {
-    if (!accountLimitReached) window.location.href = url;
+    if (!accountLimitReached) window.location.assign(url);
   };
 
   async function refreshHealth() {
