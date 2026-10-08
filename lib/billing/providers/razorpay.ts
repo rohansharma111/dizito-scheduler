@@ -2,23 +2,27 @@ import { razorpay } from "@/lib/razorpay";
 import { BillingProvider, CreateSubscriptionInput, UpdateSubscriptionInput } from "./types";
 import { RazorpaySubscriptionEntity } from "./razorpay-types";
 
-function normalizeSubscription(
-  subscription: Awaited<ReturnType<typeof razorpay.subscriptions.create>>,
-): RazorpaySubscriptionEntity {
+function normalizeSubscription(subscription: unknown): RazorpaySubscriptionEntity {
+  if (!subscription || typeof subscription !== "object") {
+    throw new Error("Razorpay returned an invalid subscription response");
+  }
+
+  const entity = subscription as Partial<RazorpaySubscriptionEntity>;
+
   return {
-    id: subscription.id,
-    customer_id: subscription.customer_id ?? null,
-    plan_id: subscription.plan_id,
-    status: subscription.status,
-    current_start: subscription.current_start ?? null,
-    current_end: subscription.current_end ?? null,
-    charge_at: subscription.charge_at ?? null,
-    start_at: subscription.start_at ?? null,
-    end_at: subscription.end_at ?? null,
-    total_count: subscription.total_count,
-    paid_count: subscription.paid_count,
-    remaining_count: subscription.remaining_count,
-    notes: subscription.notes,
+    id: entity.id,
+    customer_id: entity.customer_id ?? null,
+    plan_id: entity.plan_id,
+    status: entity.status,
+    current_start: entity.current_start ?? null,
+    current_end: entity.current_end ?? null,
+    charge_at: entity.charge_at ?? null,
+    start_at: entity.start_at ?? null,
+    end_at: entity.end_at ?? null,
+    total_count: entity.total_count,
+    paid_count: entity.paid_count,
+    remaining_count: entity.remaining_count,
+    notes: entity.notes,
   };
 }
 
