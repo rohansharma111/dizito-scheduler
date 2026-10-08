@@ -1,3 +1,59 @@
+## 2026-10-09 — Workstream D migration 023 production application
+
+- Migration `023_api_rate_limits.sql` was explicitly authorized and applied to Neon project `purple-wildflower-87394884`, database `neondb`, production branch `br-empty-rice-ayeuugek`.
+- The prepared migration `3afcd733-c0e6-46a7-990d-b794eb03cc79` was completed with `apply_changes: true`; its temporary validation branch was deleted after successful application.
+- Read-only production verification confirms `public.api_rate_limits` exists, `api_rate_limits_updated_at_idx` exists, all 4 expected columns are present and NOT NULL, and the table contains 0 rows immediately after migration.
+- No application data was modified beyond the additive schema objects in migration 023. No destructive SQL or provider mutation was performed.
+- The distributed rate-limit runtime paths still require application deployment/merge and runtime verification; schema application alone does not establish end-to-end limiter enforcement.
+
+## 2026-10-09 — Workstream D deployment-readiness checkpoint
+
+- Production Neon (purple-wildflower-87394884, default branch production) was inspected read-only for the security deployment boundary.
+- Encrypted social-account columns are present. A count-only credential audit found 0 social_accounts rows containing legacy plaintext access/page/refresh tokens, with 2 rows containing encrypted credential material.
+- oauth_page_selections currently has 0 rows and therefore no legacy plaintext selection credentials requiring migration at this checkpoint.
+- The distributed rate-limit table api_rate_limits is not present in production; migration 023_api_rate_limits.sql remains unapplied and must be explicitly applied before deploying code paths that invoke the new limiter.
+- No production write, migration, destructive SQL, credential mutation, or provider mutation was performed.
+- Latest completed PR #55 CI observed on head 1db22d85ea26fb415fc7828992fb703e005043cc: Quality Checks #832 failed at Test; Validate #770 failed at Lint. The security-specific regressions remain absent from the observed failure boundary, but repository-wide CI is not green.
+- Workstream D next action is controlled application/verification of migration 023 and runtime security verification, subject to explicit production authorization; legacy credential migration readiness is currently favorable based on the count-only production audit.
+
+## 2026-10-09 — Workstream D latest CI reconciliation
+
+- Fresh PR #55 CI has now completed for the current security branch head: **Quality Checks #831** and **Validate #769**.
+- Quality Checks #831 failed at the repository Test gate; Lint and Build were skipped. This is consistent with the previously observed Commerce/Flipkart/WooCommerce lifecycle-test drift rather than a newly observed Workstream D security regression.
+- Validate #769 failed at the repository Lint gate; TypeScript validation and production build were skipped. The previously observed repository-wide lint debt remains the blocking validation condition.
+- Workstream D therefore remains implementation-complete at its current security hardening boundary, but is **not CI-green and not production-ready**.
+- PR #55 remains open/unmerged. No merge, production migration, destructive operation, or provider mutation was performed.
+- Next D action remains controlled deployment/runtime verification plus legacy encrypted-credential migration readiness. Migration 023 still requires explicit production application before deployment of distributed rate-limit paths. Broader test/lint cleanup remains a Workstream E/QA responsibility.
+
+## 2026-10-09 — Workstream D CI verification checkpoint
+
+- Fresh CI completed for PR #55 head `7918a99812d657913c89e12e60f66b458d6e51d5`.
+- **Quality Checks #829:** failed at Test with 8 existing Commerce/Flipkart/WooCommerce lifecycle failures. The prior Workstream D-specific rate-limit/media mock-hoisting failures and scheduler plaintext-credential regression are no longer present in the failure set.
+- **Validate #767:** failed at repository-wide lint with **315 problems (237 errors, 78 warnings)**; TypeScript validation and production build were skipped by workflow gating.
+- Workstream D security implementation is therefore not blocked by a currently observed security-specific test failure. Repository-wide CI remains red because of pre-existing QA/test/lint debt outside this security workstream.
+- PR #55 remains open and mergeable but unmerged. No production migration, destructive operation, or provider mutation was performed.
+- Migration 023 still requires explicit production application before code paths using the distributed limiter can be deployed.
+- Workstream D next boundary is controlled deployment/runtime verification and legacy encrypted-credential migration readiness; broader test/lint cleanup belongs with Workstream E rather than introducing unrelated changes here.
+
+## 2026-10-09 — Workstream D encrypted-credential regression fix
+
+- PR #55 CI for head `649e7ac17950d2ccf2efbd679bf70efe52462079` completed with both Quality Checks and Validate red.
+- Quality Checks now reaches the repository test suite; the remaining failures are existing Commerce/Flipkart/WooCommerce lifecycle drift, including WooCommerce reconciliation/publish test expectations. The earlier Workstream D rate-limit/media mock-hoisting collection failures are no longer present.
+- Validate remains blocked by repository-wide lint debt: 315 problems (237 errors, 78 warnings), preventing TypeScript validation and production build from running.
+- One scheduler test was still using a legacy plaintext social credential fixture. Updated `lib/scheduler/processTarget.test.ts` to use an encrypted credential fixture and explicitly verify decrypted credential resolution; production fail-closed behavior remains unchanged.
+- New commit: `0d2e01c79c7fcbe6addc6139a3360b6abeef3a18`.
+- Fresh CI is required after this test-only regression fix. PR #55 remains open/unmerged; no CI-green or production-ready claim is made. No production migration, destructive operation, or provider mutation was performed.
+
+## 2026-10-08 — Workstream D security regression continuation
+
+- Current main HEAD reconciled to `fd57fb359a0d54d94a4dfb9b2ae5dc010ebadd5e`; the historical security branch was stale and was not reused for implementation.
+- New isolated branch: `v1/security-audit-2026-10-09`.
+- Changed `lib/security/social-account-credentials.ts` so credential-bearing application paths never fall back to legacy plaintext social token columns. Encrypted values remain the only accepted credential source; plaintext-only legacy rows now fail closed with an explicit migration-required error.
+- Added regression coverage in `lib/security/social-account-credentials.test.ts` for plaintext fail-closed behavior while preserving encrypted credential resolution and malformed-ciphertext rejection.
+- No destructive migration or production backfill was executed. The existing controlled backfill remains the required migration step before affected legacy rows can be used.
+- PR #55 opened against current main.
+- GitHub Actions `Quality Checks` and `Validate` both executed on the branch and both currently fail at their existing Test/Lint gates; therefore this change is **not** marked CI-green or production-ready. No provider runtime verification was performed.
+
 ## 2026-10-08 — Workstream H reconciliation onto current main
 
 - Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
@@ -935,3 +991,50 @@ Important rollout boundary:
 - HTTP 429 and structured `rateLimitExceeded`/`quotaExceeded` responses are explicitly classified as `QUOTA_EXCEEDED` by the OAuth callback.
 - This does not bypass Google's quota; the current production blocker remains provider-side quota/access. Google documentation notes that some Business Profile APIs can have quota 0 until access is requested. citeturn1search0turn1search1
 - Commit: `716e4d715235583e0443bc42d082a020c02271b8` plus callback classification commit `67e39e73c247a529d36fe4a0e0e94cbae707c5b4`.
+
+## 2026-10-08 — Workstream D distributed rate-limit implementation
+
+- Added additive migration `023_api_rate_limits.sql` and Postgres-backed `consumeRateLimit` using atomic time-window counters and HMAC-hashed bucket/identifier keys.
+- Applied limits to high-cost AI Creator, weekly strategy, strategist, AI image generation, media upload, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation routes.
+- The limiter is intentionally serverless-safe and does not persist raw user identifiers.
+- Verification remains incomplete: repository Test/Lint workflows are still red; no production migration or runtime provider verification has been performed.
+
+
+## 2026-10-09 — Workstream D focused security continuation
+
+- Fixed the distributed rate-limit regression test syntax error in `lib/security/rate-limit.test.ts`.
+- Hardened Amazon product-type schema retrieval against SSRF by restricting schema fetches to HTTPS Amazon SP-API hosts and added regression coverage.
+- Added rate limiting to direct Cloudinary upload initialization/completion endpoints.
+- No production migration or destructive operation executed.
+- Workstream D remains not production-ready: fresh CI evidence is pending; repository-wide lint debt remains; DNS-aware egress/media-processing isolation and runtime/provider verification remain open.
+
+### 2026-10-09 — Workstream D outbound security continuation
+- Hardened WooCommerce outbound requests with DNS preflight against private/local address ranges, 15s timeout, and provider-error redaction.
+- Added regression coverage for private DNS resolution and provider-controlled error leakage.
+- Residual DNS rebinding risk remains because preflight and connection are separate; deployment-level egress policy is still the definitive control.
+- No production migration or destructive operation performed.
+
+## 2026-10-09 — Workstream D media completion boundary hardening
+
+- Hardened MediaService.completeDirectUpload() so a direct-upload completion cannot persist a Cloudinary resource unless its public ID is under the authenticated user's users/<userId>/ folder, its Cloudinary resource_type matches the declared MIME class, its returned format matches an allowlisted MIME/format pair, and its reported byte size is positive.
+- Added lib/media/service.test.ts covering valid completion plus ownership, resource-type, format, and size mismatch rejection.
+- Confirmed the application does not execute server-side video codecs/FFmpeg on uploaded video; video processing remains delegated to Cloudinary's managed media boundary.
+- This is source-level hardening only. No production migration, destructive operation, or live provider mutation was performed. Fresh CI evidence remains required.
+
+
+## 2026-10-09 — Workstream D CI regression follow-up
+
+- Fresh CI runs for PR #55 completed red: Validate stopped at repository-wide lint, while Quality Checks stopped at Test.
+- Validate reported the previously expected repository-wide lint debt (316 problems: 238 errors, 78 warnings) and also showed the rate-limit test parser failure in the merge ref; the branch source now contains the corrected test terminator, so a new CI run is required to confirm the merge-ref state.
+- Quality Checks reported 11 failures. Most are existing Commerce/Flipkart/WooCommerce lifecycle-test drift; one Workstream D-introduced failure was the WooCommerce DNS mock being declared before Vitest mock hoisting. That test has now been corrected with vi.hoisted(...).
+- The WooCommerce generic request path also still surfaced provider-controlled error messages despite the intended redaction contract. It has now been changed to return only the HTTP-status error.
+- No production migration, destructive operation, credential backfill, or provider mutation was performed.
+- PR #55 remains open and unmerged. CI-green and production-ready status remain unclaimed pending a fresh run.
+
+
+## 2026-10-09 — Workstream D latest CI regression fixes
+
+- Latest PR #55 CI rerun completed red, but the WooCommerce security regression tests now pass (4 request tests plus the existing 5 client tests); Amazon schema security tests also pass.
+- Quality Checks still had two Workstream D test-collection failures caused by Vitest mock-hoisting in `lib/security/rate-limit.test.ts` and `lib/media/service.test.ts`. Both mocks have now been converted to `vi.hoisted(...)`.
+- The remaining Quality Checks failures are existing Commerce/Flipkart/WooCommerce lifecycle drift plus the intentional fail-closed legacy credential test mismatch in scheduler coverage; these are not being broadened into Workstream D without evidence that they are regressions from this branch.
+- A fresh CI run is required for the new fixes. PR #55 remains open and unmerged.

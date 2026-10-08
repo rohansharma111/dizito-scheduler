@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import { getUploadPolicy } from "@/lib/media/upload-policy";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,9 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimit = await consumeRateLimit({ bucket: "media:upload-signature", identifier: `user:${session.user.id}`, limit: 30, windowSeconds: 60 });
+    if (!rateLimit.allowed) return NextResponse.json({ success: false, error: "Too many upload initialization requests. Please try again shortly." }, { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } });
 
     const body = (await request.json().catch(() => ({}))) as { mimeType?: string; size?: number };
     const policy = getUploadPolicy(body.mimeType ?? "", body.size ?? 0);

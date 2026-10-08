@@ -1,7 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { lookupMock } = vi.hoisted(() => ({ lookupMock: vi.fn() }));
+vi.mock("node:dns/promises", () => ({ lookup: lookupMock }));
+
 import { wooCommerceRequest } from "@/lib/platforms/woocommerce/client";
 
 describe("wooCommerceRequest", () => {
+  beforeEach(() => {
+    lookupMock.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+  });
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -34,7 +41,7 @@ describe("wooCommerceRequest", () => {
     expect(init.cache).toBe("no-store");
   });
 
-  it("surfaces provider error messages from JSON responses", async () => {
+  it("does not surface provider-controlled error messages", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -51,7 +58,22 @@ describe("wooCommerceRequest", () => {
         },
         "system_status",
       ),
-    ).rejects.toThrow("Invalid API credentials");
+    ).rejects.toThrow("WooCommerce request failed with status 401");
+  });
+
+  it("rejects DNS resolutions into private networks before calling fetch", async () => {
+    lookupMock.mockResolvedValue([{ address: "169.254.169.254", family: 4 }]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      wooCommerceRequest(
+        { storeUrl: "https://store.example.com", consumerKey: "ck_test", consumerSecret: "cs_test" },
+        "system_status",
+      ),
+    ).rejects.toThrow("private or local network address");
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("rejects requests without credentials before calling fetch", async () => {

@@ -25,17 +25,15 @@ describe("social account credential resolver", () => {
     expect(account.refresh_token).toBe("encrypted-refresh");
   });
 
-  it("falls back to legacy credentials before migration", () => {
-    const account = resolveSocialAccountCredentials({
-      id: 1,
-      access_token: "legacy-access",
-      page_access_token: "legacy-page",
-      refresh_token: "legacy-refresh",
-    });
-
-    expect(account.access_token).toBe("legacy-access");
-    expect(account.page_access_token).toBe("legacy-page");
-    expect(account.refresh_token).toBe("legacy-refresh");
+  it("fails closed when only legacy plaintext credentials exist", () => {
+    expect(() =>
+      resolveSocialAccountCredentials({
+        id: 1,
+        access_token: "legacy-access",
+        page_access_token: "legacy-page",
+        refresh_token: "legacy-refresh",
+      }),
+    ).toThrow("Legacy plaintext social credential requires migration before use");
   });
 
   it("rejects malformed encrypted values instead of silently falling back", () => {

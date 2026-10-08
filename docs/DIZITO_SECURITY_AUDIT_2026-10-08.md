@@ -239,3 +239,44 @@ Following the Pinterest live-state finding, the same migration gate was applied 
 - A source-level sweep of these seven credential write paths found no remaining direct parameterized writes to plaintext token columns.
 
 Important: this is source-implemented only. No production deployment or live provider exercise is claimed, and account 62 remains unchanged in Neon. The plaintext schema columns cannot yet be dropped until deployed runtime verification and safe migration of any remaining legacy rows are complete.
+
+
+## 2026-10-08 continuation — credential fail-closed boundary and distributed rate limiting
+
+- **P1 credential read path hardened:** `resolveSocialAccountCredentials` no longer falls back to legacy plaintext `social_accounts` credential columns. Encrypted columns are the only accepted credential source; plaintext-only legacy rows now fail closed with an explicit migration-required error.
+- Added regression coverage for encrypted resolution, malformed ciphertext rejection, and unmigrated plaintext fail-closed behavior.
+- **P1 rate limiting implementation added:** new additive `api_rate_limits` storage and serverless-safe Postgres-backed `consumeRateLimit` helper use HMAC-hashed bucket/identifier keys and atomic window counters.
+- Rate limits are applied to high-cost AI generation, AI image generation, media uploads, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation.
+- No destructive migration or production backfill was executed. The existing social-credential backfill/retirement process remains a deployment prerequisite for legacy rows.
+- PR #55 contains the implementation. CI remains non-green because the repository's Test and Lint workflows still fail; this work is therefore not marked production-ready.
+
+
+## 2026-10-09 — Workstream D focused regression continuation
+
+- Fixed a security-test regression introduced by the distributed rate limiter: lib/security/rate-limit.test.ts was missing the closing ); for its test suite. The correction is committed on the security branch.
+- Added an SSRF boundary around Amazon product-type schema retrieval. Schema URLs are now parsed and accepted only over HTTPS from the known Amazon SP-API hosts: sellingpartnerapi-na.amazon.com, sellingpartnerapi-eu.amazon.com, and sellingpartnerapi-fe.amazon.com. Non-Amazon, plaintext HTTP, and metadata-service-style URLs are rejected before network access.
+- Added regression coverage for the Amazon schema-fetch SSRF boundary.
+- Added distributed rate limiting to the signed direct-media upload initialization and completion endpoints in addition to the existing upload/generation limits.
+- No production database migration or destructive data operation was executed in this continuation.
+- CI remains a repository-wide issue: the previous Validate run exposed 238 lint errors and 78 warnings across unrelated existing files, plus the rate-limit test syntax error fixed above. A fresh post-fix workflow result is required before claiming the branch is CI-green.
+- Remaining security focus: true DNS-aware/network-egress enforcement for any user-influenced outbound HTTP, media codec/container processing isolation, production secret-rotation/incident-response verification, and runtime/provider verification.
+
+
+## 2026-10-09 — WooCommerce outbound boundary hardening
+
+- Hardened the remaining user-supplied outbound commerce URL boundary in lib/platforms/woocommerce/client.ts.
+- WooCommerce requests now perform a DNS preflight and reject hostnames resolving to loopback, private, link-local, carrier-grade NAT, or other local-address ranges before issuing the outbound request.
+- Added a 15-second request timeout when the caller does not provide its own signal.
+- Provider-controlled WooCommerce error messages are no longer propagated through the generic client error path; callers receive status-based errors instead.
+- Added regression coverage for private DNS resolution and provider-error redaction.
+- This reduces DNS-based SSRF exposure but is not a complete network-egress guarantee because DNS preflight and the subsequent connection are separate operations. A deployment-level egress policy remains the strongest control against DNS rebinding.
+
+
+## 2026-10-09 — Direct-media completion boundary hardening
+
+- Hardened the direct Cloudinary completion path so persisted media must belong to the authenticated user's Cloudinary folder (users/<userId>/).
+- Cloudinary's returned resource_type must match the declared image/video class, and the returned format must match an explicit allowlist for the declared MIME type.
+- Provider-reported byte size must be finite and positive before media persistence.
+- Added regression tests covering successful completion plus ownership, resource-type, format, and size mismatches.
+- Reviewed the media-processing boundary and confirmed there is currently no server-side FFmpeg/codec execution in Dizito. Video processing remains inside Cloudinary's managed media service. If local media transformation is introduced later, it requires a dedicated isolated worker/container, bounded CPU/memory/duration, temporary storage limits, and deny-by-default network egress.
+- No production migration or destructive operation performed.

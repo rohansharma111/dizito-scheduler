@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
-const query = vi.fn();
-const publisher = vi.fn();
+const { query, publisher } = vi.hoisted(() => ({
+  query: vi.fn(),
+  publisher: vi.fn(),
+}));
 
 vi.mock("@/lib/db", () => ({
   pool: { query },
@@ -15,6 +18,7 @@ vi.mock("@/lib/publishers", () => ({
 
 describe("processTarget tenant isolation", () => {
   beforeEach(() => {
+    process.env.SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY = "00".repeat(32);
     query.mockReset();
     publisher.mockReset();
   });
@@ -47,7 +51,7 @@ describe("processTarget tenant isolation", () => {
               id: 9001,
               user_id: 42,
               page_id: "page-42",
-              page_access_token: "test-token",
+              page_access_token_encrypted: encryptSocialCredential("test-token"),
             },
           ],
         };
@@ -69,6 +73,7 @@ describe("processTarget tenant isolation", () => {
 
     expect(result.userId).toBe(42);
     expect(result.account.user_id).toBe(42);
+    expect(result.account.page_access_token).toBe("test-token");
     expect(publisher).toHaveBeenCalledOnce();
   });
 
