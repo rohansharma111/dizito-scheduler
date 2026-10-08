@@ -41,9 +41,34 @@ export class MediaService {
       throw new Error("Cloudinary resource verification failed");
     }
 
-    const resourceType = resource.resource_type ?? (input.mimeType.startsWith("video/") ? "video" : "image");
-    if (resourceType !== "video" && resourceType !== "image") {
-      throw new Error("Unsupported Cloudinary resource type");
+    const expectedPrefix = `users/${input.userId}/`;
+    if (!resource.public_id.startsWith(expectedPrefix) || resource.public_id === expectedPrefix) {
+      throw new Error("Cloudinary resource ownership verification failed");
+    }
+
+    const normalizedMimeType = input.mimeType.toLowerCase();
+    const expectedResourceType = normalizedMimeType.startsWith("video/") ? "video" : "image";
+    const resourceType = resource.resource_type;
+    if (resourceType !== expectedResourceType) {
+      throw new Error("Cloudinary resource type does not match the declared media type");
+    }
+
+    const format = String(resource.format ?? "").toLowerCase();
+    const allowedFormats: Record<string, Set<string>> = {
+      "image/jpeg": new Set(["jpg", "jpeg"]),
+      "image/png": new Set(["png"]),
+      "image/webp": new Set(["webp"]),
+      "video/mp4": new Set(["mp4"]),
+      "video/quicktime": new Set(["mov", "mp4"]),
+      "video/x-m4v": new Set(["m4v", "mp4"]),
+    };
+    const formats = allowedFormats[normalizedMimeType];
+    if (!formats || !formats.has(format)) {
+      throw new Error("Cloudinary resource format does not match the declared media type");
+    }
+
+    if (!Number.isFinite(resource.bytes) || Number(resource.bytes) <= 0) {
+      throw new Error("Cloudinary resource size verification failed");
     }
 
     const media: CreateMediaInput = {
@@ -52,7 +77,7 @@ export class MediaService {
       originalName: input.fileName,
       fileName: input.fileName,
       secureUrl: resource.secure_url,
-      format: resource.format ?? "",
+      format: format,
       mimeType: input.mimeType,
       width: resource.width ?? null,
       height: resource.height ?? null,
