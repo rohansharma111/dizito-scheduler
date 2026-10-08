@@ -770,3 +770,9 @@ These define the launch gates and the multi-chat ownership model.
 - Removed the unused unauthenticated LinkedIn token-exchange proxy at `app/api/linkedin/token`, which otherwise exposed a server-side provider token relay using the LinkedIn client secret.
 - Source inspection found no application references to the endpoint. Canonical LinkedIn OAuth remains the authenticated, state-bound callback flow.
 - Remaining security P1s are unchanged: legacy plaintext social OAuth token migration, distributed rate limiting, DNS-aware SSRF/egress enforcement, and deeper media codec/container isolation.
+
+
+## 2026-10-08 — Security OAuth comparison hardening
+
+- Pinterest and Google Business OAuth callback state validation now uses the shared constant-time verifier.
+- No database changes. Legacy social-token encryption migration remains intentionally deferred until a complete dual-read/dual-write consumer inventory is established.
