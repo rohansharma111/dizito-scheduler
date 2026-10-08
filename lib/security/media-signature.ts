@@ -12,9 +12,8 @@ const SIGNATURES = {
     buffer[7] === 0x0a,
   "image/gif": (buffer: Buffer) =>
     buffer.length >= 6 &&
-    buffer.subarray(0, 6).toString("ascii") === "GIF87a" ||
-    buffer.length >= 6 &&
-    buffer.subarray(0, 6).toString("ascii") === "GIF89a",
+    (buffer.subarray(0, 6).toString("ascii") === "GIF87a" ||
+      buffer.subarray(0, 6).toString("ascii") === "GIF89a"),
   "video/webm": (buffer: Buffer) =>
     buffer.length >= 4 &&
     buffer[0] === 0x1a &&
