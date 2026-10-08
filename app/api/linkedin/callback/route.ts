@@ -296,8 +296,8 @@ export async function GET(request: Request) {
         `
     UPDATE social_accounts
     SET
-      access_token = $1,
-      access_token_encrypted = $2,
+      access_token = NULL,
+      access_token_encrypted = $1,
       account_name = $3,
       status = 'connected',
       last_checked_at = NOW(),
@@ -306,7 +306,7 @@ export async function GET(request: Request) {
       id = $4
       AND user_id = $5
     `,
-        [accessToken, encryptSocialCredential(accessToken), accountName, accountId, userId],
+        [encryptSocialCredential(accessToken), accountName, accountId, userId],
       );
 
       await createEvent(
@@ -420,16 +420,16 @@ export async function GET(request: Request) {
         (
           $1,
           $2,
+          NULL,
           $3,
           $4,
           $5,
           $6,
-          $7,
           NOW()
         )
         RETURNING id
         `,
-      ["linkedin", accountName, accessToken, encryptSocialCredential(accessToken), memberId, userId, "connected"],
+      ["linkedin", accountName, encryptSocialCredential(accessToken), memberId, userId, "connected"],
     );
 
     const accountId = result.rows[0].id;
