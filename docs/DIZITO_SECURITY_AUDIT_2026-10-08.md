@@ -200,3 +200,12 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 A further source audit covered the Meta, LinkedIn, Pinterest, and Google Business callback/connect paths plus the scheduled account-health path. All current credential consumers that read `social_accounts` credentials pass through the encrypted-first resolver where credential material is consumed. The repository still contains deliberate plaintext dual-writes for legacy compatibility.
 
 The plaintext write layer is **not retired in this checkpoint**. Although the production database currently contains zero social-account rows, removing the legacy writes or dropping the plaintext columns before a successful live provider-connect/reconnect exercise would make the change difficult to validate and could break an unobserved compatibility path. The correct next gate is runtime/provider verification of a fresh connection, reconnect, refresh, selection, and publish flow using the encrypted columns. After that gate passes, the plaintext writes can be removed first, followed by a separately reviewed schema-retirement migration.
+
+
+## 2026-10-08 — Live database recheck changed the retirement gate
+
+A subsequent Neon production recheck found a newly created Pinterest `social_accounts` row (id 62, user 8, account name `Poem`). Metadata-only inspection shows its access and refresh credentials are present in the legacy plaintext columns, while all three encrypted credential columns are currently empty and `credential_encryption_version` is null. No credential values were retrieved or logged.
+
+This proves the credential migration is not yet effective for the currently active connection path/deployment. The row has not been deleted or modified in this checkpoint because no new destructive authorization was given for this newly created account. The immediate blocker is to identify why the live connection path bypassed the encrypted-write code, then either perform an authorized encrypted backfill or replace the row through a verified encrypted connection flow.
+
+**Important status correction:** the database is no longer at zero social accounts. The earlier cleanup remains valid for IDs 46 and 61, but the current production state is 1 social account, 0 OAuth selection rows, and 0 orphaned social targets.
