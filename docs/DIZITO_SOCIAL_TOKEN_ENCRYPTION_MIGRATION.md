@@ -260,3 +260,11 @@ At minimum:
 - The command requires `DATABASE_URL` and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY`, uses the same AES-256-GCM v1 payload format as the application helper, serializes execution with a PostgreSQL advisory lock, updates only missing encrypted fields, never prints credential values, and verifies that no credential-bearing rows remain plaintext-only before reporting success.
 - Execution is **blocked pending confirmation that the encryption key is provisioned in the deployment/runtime environment**. The secret value is not exposed or requested in chat.
 - Plaintext retirement remains blocked until backfill coverage, rollback readiness, and runtime/provider verification are complete.
+
+## 2026-10-08 authorized cleanup checkpoint
+
+- The two remaining legacy `social_accounts` rows were explicitly authorized for deletion instead of backfill.
+- Account IDs `46` and `61` were deleted from Neon. Their 2 dependent `post_targets` were removed by the existing `ON DELETE CASCADE` relationship.
+- Post-delete verification found 0 `social_accounts` rows and 0 `oauth_page_selections` rows.
+- The encrypted credential schema and encrypted-first/dual-write application paths remain in place for future connections.
+- The guarded backfill command remains available for any future legacy rows, but no current backfill is required.
