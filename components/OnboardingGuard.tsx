@@ -15,10 +15,6 @@ export default function OnboardingGuard({
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    check();
-  }, []);
-
   async function check() {
     try {
       const response = await fetch("/api/onboarding");
@@ -42,6 +38,12 @@ export default function OnboardingGuard({
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    check();
+  }, []);
+
+
 
   if (loading) {
     return (
