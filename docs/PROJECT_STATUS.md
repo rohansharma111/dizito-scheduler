@@ -928,3 +928,10 @@ Important rollout boundary:
 - Google Business connection currently reaches the provider-resource discovery stage but returns Dizito's `QUOTA_EXCEEDED` error classification. The UI message is intentionally mapped to `Rate Limit Reached`.
 - Source inspection confirms this classification originates from Google Business API errors containing `Quota exceeded`; it is not Dizito's internal account-plan limit.
 - No repeated Google retries were performed to avoid amplifying a provider quota/rate-limit condition. Google Business runtime verification remains pending until the provider quota window clears or the Google Cloud API quota/permissions are corrected.
+
+## 2026-10-08 — Workstream D Google Business quota handling hardened
+
+- Google Business location discovery now preserves provider HTTP status, structured error reason, and `Retry-After` metadata internally without exposing provider payloads.
+- HTTP 429 and structured `rateLimitExceeded`/`quotaExceeded` responses are explicitly classified as `QUOTA_EXCEEDED` by the OAuth callback.
+- This does not bypass Google's quota; the current production blocker remains provider-side quota/access. Google documentation notes that some Business Profile APIs can have quota 0 until access is requested. citeturn1search0turn1search1
+- Commit: `716e4d715235583e0443bc42d082a020c02271b8` plus callback classification commit `67e39e73c247a529d36fe4a0e0e94cbae707c5b4`.
