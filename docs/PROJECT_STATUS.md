@@ -50,6 +50,17 @@ Core principles:
 - AI output must remain grounded, reviewable and fail-closed on malformed output;
 - attribution must be evidence-based rather than fabricated.
 
+
+### Marketing V1 UI + Design System — Workstream A checkpoint (2026-10-07)
+
+- Branch `v1/marketing-ui-design` is 0 commits behind current `main` at workstream start and contains only UI/design-system changes.
+- Reusable Dizito visual primitives now live in `components/dizito/DizitoUI.tsx`; global tokens and responsive visual rules live in `app/globals.css`.
+- Protected navigation now exposes the intended merchant loop: Business Brain → AI Strategist → Generate My Week → Content Review → Optimizer, alongside Media, Channels & Accounts and Business Impact.
+- A dedicated Business Brain read surface was added using the existing tenant-scoped `/api/marketing/business-brain` contract. No business-brain persistence or API behavior was changed.
+- Dashboard, setup, weekly planning, strategist, content review, media, accounts, Business Impact, optimizer and billing presentation were refreshed without changing billing logic, provider adapters, commerce architecture, media provider implementation or database schema.
+- Verification boundary: source/diff inspection completed; no fresh GitHub Actions run exists for the branch, so overall test/lint/build green status remains unclaimed. No external provider/runtime verification was performed.
+- Remaining UI work: detailed product/offer/service editing surfaces, final scheduling edge-state polish, deeper mobile interaction QA and browser-level end-to-end verification.
+
 ## 3. Current implementation snapshot
 
 ### Core application
@@ -746,6 +757,38 @@ New canonical planning documents:
 - `docs/DIZITO_PARALLEL_WORKSTREAMS.md`.
 
 These define the launch gates and the multi-chat ownership model.
+
+### Workstream A UI continuation — 2026-10-08
+- Audited the merchant-context APIs before extending the UI: Goals and Offers currently support GET/POST only; no Services API exists under `app/api/marketing`.
+- No unsupported Services CRUD or Goal/Offer edit/delete UX was added.
+- Fixed the Product Edit loading/not-found state markup and aligned Generate My Week with the reusable Dizito design system while preserving existing generation/approval behavior.
+- Verification remains source-level only; no fresh build/lint/test/browser run is claimed.
+
+
+### Workstream A distribution UI continuation — 2026-10-08
+- Standardized Marketing Content, Posts, Drafts and Calendar around shared Dizito page/header/card/state primitives.
+- Added explicit loading, empty and API-error recovery states without changing publishing/scheduling APIs.
+- No database, billing, provider-adapter, commerce or media-provider changes. Verification remains source-level only.
+
+
+### 2026-10-08 — Workstream A UI consistency continuation
+- Merchant-facing Accounts and Activity surfaces received Dizito design-system alignment and mobile interaction polish.
+- Accounts retains existing platform connection/reconnection contracts and plan-limit behavior.
+- Activity retains existing event loading, filtering, grouping, and payload inspection behavior.
+- Analytics and other legacy merchant surfaces remain candidates for later visual consistency passes; this workstream does not claim browser/build verification.
+
+
+### 2026-10-08 — Workstream A merchant-surface consistency continuation
+- Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
+- Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
+- No backend/API/provider/database/billing/media architecture changes were introduced.
+
+### 2026-10-08 — Workstream A final merchant-surface consistency pass
+- Polished remaining high-traffic legacy surfaces: Experiments, Attribution, Settings, and Bulk Upload with shared Dizito UI primitives and responsive states.
+- Corrected a formatting defect in components/SidebarClient.tsx where escaped newline text had entered the navigation section definition.
+- Preserved existing APIs, provider/account behavior, experiment semantics, attribution semantics, settings read-only behavior, and bulk-upload CSV/import logic.
+- Final source-level audit found no merge markers, malformed escaped imports, or sidebar escaped-newline artifacts on the audited surfaces.
+- Runtime build/lint/browser verification remains unavailable; branch must not be described as runtime-green.
 
 ## 2026-10-07 — Workstream B subscription/pricing implementation checkpoint
 

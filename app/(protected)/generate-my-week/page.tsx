@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, CheckCircle2, FlaskConical, Sparkles, WandSparkles } from "lucide-react";
+import { DizitoBadge, DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
@@ -21,6 +24,7 @@ export default function GenerateMyWeekPage() {
   const [approved, setApproved] = useState(false);
   const [strategyHandoff, setStrategyHandoff] = useState<any>(null);
   const [optimizerHandoff, setOptimizerHandoff] = useState<any>(null);
+
   useEffect(() => {
     const strategyRaw = sessionStorage.getItem("dizito-strategy-handoff");
     const optimizerRaw = sessionStorage.getItem("dizito-optimizer-handoff");
@@ -47,11 +51,19 @@ export default function GenerateMyWeekPage() {
       const response = await fetch("/api/marketing/weekly-plans/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weekStart, strategy: strategyHandoff ? { ...strategyHandoff, optimization: optimizerHandoff ?? undefined } : optimizerHandoff ? { optimization: optimizerHandoff } : undefined }),
+        body: JSON.stringify({
+          weekStart,
+          strategy: strategyHandoff
+            ? { ...strategyHandoff, optimization: optimizerHandoff ?? undefined }
+            : optimizerHandoff
+              ? { optimization: optimizerHandoff }
+              : undefined,
+        }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to generate week");
-      setPlan(data.generatedWeek);      if (strategyHandoff) sessionStorage.removeItem("dizito-strategy-handoff");
+      setPlan(data.generatedWeek);
+      if (strategyHandoff) sessionStorage.removeItem("dizito-strategy-handoff");
       if (optimizerHandoff) sessionStorage.removeItem("dizito-optimizer-handoff");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to generate week");
@@ -69,7 +81,15 @@ export default function GenerateMyWeekPage() {
     const first = recommendations[0];
     const strategy = {
       strategySummary: plan.strategySummary,
-      experiment: plan.experiment ? { hypothesis: plan.experiment.hypothesis, change: plan.experiment.change, metric: plan.experiment.metric, disposition: plan.experiment.disposition, selectionReason: plan.experiment.selectionReason } : null,
+      experiment: plan.experiment
+        ? {
+            hypothesis: plan.experiment.hypothesis,
+            change: plan.experiment.change,
+            metric: plan.experiment.metric,
+            disposition: plan.experiment.disposition,
+            selectionReason: plan.experiment.selectionReason,
+          }
+        : null,
       campaigns: [
         {
           name: `Weekly ${plan.weekStart} marketing campaign`,
@@ -91,7 +111,9 @@ export default function GenerateMyWeekPage() {
             plannedFor: item.day,
             sourceCampaignId: item.sourceCampaignId ?? null,
             evidence: item.evidence ?? null,
-            supportingExperimentIds: Array.isArray(item.supportingExperimentIds) ? item.supportingExperimentIds.map(Number).filter((id: number) => Number.isFinite(id)) : [],
+            supportingExperimentIds: Array.isArray(item.supportingExperimentIds)
+              ? item.supportingExperimentIds.map(Number).filter((id: number) => Number.isFinite(id))
+              : [],
           })),
         },
       ],
@@ -117,75 +139,158 @@ export default function GenerateMyWeekPage() {
   const recommendations = plan?.recommendations ?? [];
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 24, alignItems: "flex-end", marginBottom: 32 }}>
-        <div>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>AI Marketing Operator</p>
-          <h1 style={{ margin: "8px 0", fontSize: 36 }}>Generate My Week</h1>
-          <p style={{ margin: 0, maxWidth: 680, opacity: 0.7 }}>Use your Business Brain, goals, products, offers, media and recent marketing activity to create a reviewable weekly plan.</p>{strategyHandoff && <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 700 }}>Using the latest AI Strategist recommendation.</p>}{optimizerHandoff && <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 700 }}>Applying the latest AI Optimizer recommendation.</p>}
-        </div>
-        <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
-          Week starts
-          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #ccc" }} />
-        </label>
+    <DizitoPage>
+      <DizitoPageHeader
+        eyebrow="AI marketing operator"
+        title="Generate My Week"
+        description="Turn your Business Brain, strategy, products, offers, media and recent activity into a reviewable weekly plan."
+        action={
+          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold shadow-sm">
+            <CalendarDays size={16} className="text-violet-600" />
+            <span className="sr-only">Week starts</span>
+            <input
+              type="date"
+              value={weekStart}
+              onChange={(e) => setWeekStart(e.target.value)}
+              className="bg-transparent outline-none"
+            />
+          </label>
+        }
+      />
+
+      {(strategyHandoff || optimizerHandoff) && (
+        <DizitoCard tone="ai" className="mb-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <DizitoBadge tone="ai"><Sparkles size={13} /> AI handoff</DizitoBadge>
+            {strategyHandoff && <span className="text-sm font-semibold text-slate-700">Latest Strategist recommendation will guide this week.</span>}
+            {optimizerHandoff && <span className="text-sm font-semibold text-slate-700">Optimizer evidence will be applied where available.</span>}
+          </div>
+        </DizitoCard>
+      )}
+
+      <div className="mb-5 flex flex-wrap gap-2">
+        <DizitoButton onClick={generate} disabled={loading || saving}>
+          <WandSparkles size={16} /> {loading ? "Generating…" : "Generate My Week"}
+        </DizitoButton>
+        {plan && !approved && (
+          <DizitoButton variant="secondary" onClick={approve} disabled={saving || recommendations.length === 0}>
+            <CheckCircle2 size={16} /> {saving ? "Approving…" : "Approve Week"}
+          </DizitoButton>
+        )}
+        {approved && <DizitoBadge tone="success"><CheckCircle2 size={14} /> Approved for review</DizitoBadge>}
       </div>
 
-      <section style={{ display: "flex", gap: 12, marginBottom: 28 }}>
-        <button onClick={generate} disabled={loading || saving} style={{ padding: "12px 18px", borderRadius: 9, border: 0, cursor: loading ? "wait" : "pointer", fontWeight: 700 }}>
-          {loading ? "Generating…" : "Generate My Week"}
-        </button>
-        {plan && !approved && <button onClick={approve} disabled={saving || recommendations.length === 0} style={{ padding: "12px 18px", borderRadius: 9, border: "1px solid #bbb", cursor: saving ? "wait" : "pointer", fontWeight: 700 }}>
-          {saving ? "Approving…" : "Approve Week"}
-        </button>}
-      </section>
+      {message && (
+        <DizitoCard className="mb-5" tone="soft">
+          <p className="text-sm font-semibold text-slate-700">{message}</p>
+        </DizitoCard>
+      )}
 
-      {message && <div style={{ marginBottom: 24, padding: 12, borderRadius: 8, background: "#f4f4f4" }}>{message}</div>}
+      {!plan && !loading && (
+        <DizitoState
+          kind="empty"
+          title="Your week is not planned yet"
+          description="Generate a recommendation first. Approval creates a planned campaign and Content Items; it does not schedule or publish posts."
+          action={<DizitoButton onClick={generate} disabled={saving}><WandSparkles size={15} /> Generate plan</DizitoButton>}
+        />
+      )}
 
-      {!plan && <section style={{ padding: 28, border: "1px dashed #bbb", borderRadius: 12 }}><strong>Your week is not planned yet.</strong><p style={{ opacity: 0.7 }}>Generate a recommendation first. Nothing is published automatically.</p></section>}
+      {loading && (
+        <DizitoCard>
+          <div className="space-y-3 animate-pulse">
+            <div className="h-6 w-2/3 rounded-lg bg-slate-100" />
+            <div className="h-4 w-full rounded-lg bg-slate-100" />
+            <div className="h-4 w-5/6 rounded-lg bg-slate-100" />
+            <div className="grid gap-3 md:grid-cols-2">
+              {[1, 2, 3, 4].map((item) => <div key={item} className="h-32 rounded-2xl bg-slate-100" />)}
+            </div>
+          </div>
+        </DizitoCard>
+      )}
 
-      {plan && <section style={{ display: "grid", gap: 16 }}>
-        <div style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
-          <h2 style={{ marginTop: 0 }}>{plan.strategySummary}</h2>
-          {recommendations[0] && <div style={{ marginTop: 16, padding: 14, borderRadius: 8, border: "1px solid #ccc" }}>
-            <strong>Highest-evidence optimization focus</strong>
-            <p style={{ margin: "8px 0" }}>{recommendations[0].rationale}</p>
-            {Array.isArray(recommendations[0].supportingExperimentIds) && recommendations[0].supportingExperimentIds.length > 0
-              ? <div style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>
-                <p style={{ margin: 0 }}>Supporting completed experiments: {recommendations[0].supportingExperimentIds.map((id: number) => `#${id}`).join(", ")}.</p>
-                <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {recommendations[0].supportingExperimentIds.map((id: number) => <button key={id} type="button" onClick={() => { window.location.href = `/experiments?focus=${id}`; }} style={{ padding: "6px 10px", borderRadius: 7, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: 600 }}>View Experiment #{id}</button>)}
+      {plan && (
+        <div className="space-y-5">
+          <DizitoCard tone="ai">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="max-w-3xl">
+                <DizitoBadge tone="ai"><Sparkles size={13} /> Weekly strategy</DizitoBadge>
+                <h2 className="mt-3 text-xl font-black text-slate-900">{plan.strategySummary}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Review the recommendations below before approval. Publishing remains a separate step.</p>
+              </div>
+              <DizitoBadge tone={approved ? "success" : "neutral"}>{approved ? "Approved" : "Needs review"}</DizitoBadge>
+            </div>
+
+            {recommendations[0] && (
+              <div className="mt-5 rounded-2xl border border-violet-100 bg-white/80 p-4">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-700">
+                  <Sparkles size={13} /> Highest-evidence optimization focus
                 </div>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{recommendations[0].rationale}</p>
+                {recommendations[0].evidence && (
+                  <p className="mt-3 text-xs text-slate-500">
+                    Observed evidence: {recommendations[0].evidence.sourceType === "variant" ? `Variant #${recommendations[0].evidence.sourceId}` : `Content Item #${recommendations[0].evidence.sourceId}`} · {recommendations[0].evidence.count} {String(recommendations[0].evidence.actionType).replaceAll("_", " ")} action{recommendations[0].evidence.count === 1 ? "" : "s"} · value {recommendations[0].evidence.value}{recommendations[0].evidence.platform ? ` · ${recommendations[0].evidence.platform}` : ""}. This is observational evidence, not causal proof.
+                  </p>
+                )}
               </div>
-              : <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>No completed experiment history is attached to this recommendation.</p>}
-            {recommendations[0].evidence && <p style={{ margin: "8px 0 0", fontSize: 13, opacity: 0.7 }}>
-              Observed evidence: {recommendations[0].evidence.sourceType === "variant" ? `Variant #${recommendations[0].evidence.sourceId}` : `Content Item #${recommendations[0].evidence.sourceId}`} · {recommendations[0].evidence.count} {String(recommendations[0].evidence.actionType).replaceAll("_", " ")} action{recommendations[0].evidence.count === 1 ? "" : "s"} · value {recommendations[0].evidence.value}{recommendations[0].evidence.platform ? ` · ${recommendations[0].evidence.platform}` : ""}. This is observational evidence, not causal proof.
-            </p>}
-          </div>}
-          <p style={{ marginBottom: 0, opacity: 0.7 }}>Review the recommendations below before approving. Approval creates a planned campaign and Content Items; it does not schedule or publish posts.</p>
-          {plan.experiment && <div style={{ marginTop: 16, padding: 14, borderRadius: 8, background: "#f7f7f7" }}>
-            <strong>Experiment to review</strong>
-            <p><strong>Hypothesis:</strong> {plan.experiment.hypothesis}</p>
-            <p><strong>Change:</strong> {plan.experiment.change}</p>
-            <p><strong>Measure:</strong> {plan.experiment.metric}</p><p><strong>Disposition:</strong> {plan.experiment.disposition}</p><p style={{ marginBottom: 0 }}><strong>Why selected:</strong> {plan.experiment.selectionReason}</p>
-          </div>}
-        </div>
-        <div style={{ display: "grid", gap: 12 }}>
-          {recommendations.map((item: any, index: number) => (
-            <article key={`${item.day}-${index}`} style={{ padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <strong>{dayNames[index] ?? item.day}</strong>
-                <span style={{ opacity: 0.6 }}>{item.contentType}</span>
+            )}
+
+            {plan.experiment && (
+              <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-700"><FlaskConical size={14} /> Experiment to review</div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Info label="Hypothesis" value={plan.experiment.hypothesis} />
+                  <Info label="Change" value={plan.experiment.change} />
+                  <Info label="Measure" value={plan.experiment.metric} />
+                  <Info label="Disposition" value={plan.experiment.disposition} />
+                </div>
+                {plan.experiment.selectionReason && <p className="mt-3 text-sm text-slate-600"><strong>Why selected:</strong> {plan.experiment.selectionReason}</p>}
               </div>
-              <h3 style={{ marginBottom: 8 }}>{item.topic}</h3>
-              <p><strong>Hook:</strong> {item.hook}</p>
-              <p><strong>CTA:</strong> {item.cta}</p>
-              <p style={{ opacity: 0.7 }}>{item.rationale}</p>{item.sourceCampaignId ? <p style={{ marginTop: 8, fontSize: 13 }}><a href={`/campaigns?focus=${item.sourceCampaignId}`} style={{ fontWeight: 700, textDecoration: "underline" }}>Source campaign #{item.sourceCampaignId}</a></p> : null}
-              {Array.isArray(item.supportingExperimentIds) && item.supportingExperimentIds.length > 0 && <div style={{ marginTop: 12, padding: 12, borderRadius: 8, border: "1px dashed #ccc", fontSize: 13 }}><strong>Experiment evidence:</strong> {item.supportingExperimentIds.map((id: number) => `Experiment #${id}`).join(", ")}<div style={{ marginTop: 4, opacity: 0.65 }}>Linked from the optimizer's completed experiment history.</div></div>}{item.evidence && <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: "#f7f7f7", fontSize: 13 }}><strong>Observed evidence:</strong> {item.evidence.sourceType === "variant" ? `Variant #${item.evidence.sourceId}` : `Content Item #${item.evidence.sourceId}`} · {item.evidence.count} {String(item.evidence.actionType).replaceAll("_", " ")} action{item.evidence.count === 1 ? "" : "s"} · value {item.evidence.value}{item.evidence.platform ? ` · ${item.evidence.platform}` : ""}<div style={{ marginTop: 4, opacity: 0.65 }}>This is observed customer outcome data, not proof of causality.</div></div>}
-              {item.suggestedChannels?.length > 0 && <p style={{ fontSize: 13, opacity: 0.65 }}>Channels: {item.suggestedChannels.join(", ")}</p>}
-            </article>
-          ))}
+            )}
+          </DizitoCard>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {recommendations.map((item: any, index: number) => (
+              <DizitoCard key={`${item.day}-${index}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <DizitoBadge tone="neutral">{dayNames[index] ?? item.day}</DizitoBadge>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{item.contentType}</span>
+                </div>
+                <h3 className="mt-4 text-lg font-black text-slate-900">{item.topic}</h3>
+                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                  <p><strong className="text-slate-800">Hook:</strong> {item.hook}</p>
+                  <p><strong className="text-slate-800">CTA:</strong> {item.cta}</p>
+                  <p className="leading-6">{item.rationale}</p>
+                </div>
+                {item.sourceCampaignId && (
+                  <Link href={`/campaigns?focus=${item.sourceCampaignId}`} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-violet-700 hover:underline">
+                    Source campaign #{item.sourceCampaignId} <ArrowRight size={13} />
+                  </Link>
+                )}
+                {Array.isArray(item.supportingExperimentIds) && item.supportingExperimentIds.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                    <strong>Experiment evidence:</strong> {item.supportingExperimentIds.map((id: number) => `Experiment #${id}`).join(", ")}.
+                    <div className="mt-1 text-slate-400">Linked from completed experiment history.</div>
+                  </div>
+                )}
+                {item.evidence && (
+                  <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
+                    <strong>Observed outcome:</strong> {item.evidence.count} {String(item.evidence.actionType).replaceAll("_", " ")} action{item.evidence.count === 1 ? "" : "s"} · value {item.evidence.value}{item.evidence.platform ? ` · ${item.evidence.platform}` : ""}.
+                  </div>
+                )}
+                {item.suggestedChannels?.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {item.suggestedChannels.map((channel: string) => <DizitoBadge key={channel} tone="neutral">{channel}</DizitoBadge>)}
+                  </div>
+                )}
+              </DizitoCard>
+            ))}
+          </div>
         </div>
-      </section>}
-    </main>
+      )}
+    </DizitoPage>
   );
+}
+
+function Info({ label, value }: { label: string; value?: string | null }) {
+  return <div className="rounded-xl bg-white/70 p-3"><div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div><div className="mt-1 text-sm font-semibold text-slate-700">{value || "Not specified"}</div></div>;
 }

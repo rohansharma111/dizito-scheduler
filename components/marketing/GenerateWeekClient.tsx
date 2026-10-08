@@ -145,7 +145,7 @@ export default function GenerateWeekClient() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <header className="rounded-2xl border bg-white p-6 shadow-sm">
+      <header className="dizito-card dizito-card-ai">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-600"><Sparkles size={16} /> AI Marketing Planner</div>
@@ -154,8 +154,8 @@ export default function GenerateWeekClient() {
             <div className="mt-3 text-sm text-gray-500">Week of <span className="font-medium text-gray-700">{week.start}</span> → <span className="font-medium text-gray-700">{week.end}</span></div>
           </div>
           <div className="flex gap-2">
-            <button onClick={generate} disabled={loading || approving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? <Loader2 className="animate-spin" size={18} /> : strategy ? <RefreshCw size={18} /> : <Sparkles size={18} />}{loading ? "Generating..." : strategy ? "Regenerate" : "Generate My Week"}</button>
-            {strategy && <button onClick={approve} disabled={approving || approved} className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">{approving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}{approved ? "Week Approved" : "Approve Week"}</button>}
+            <button onClick={generate} disabled={loading || approving} className="dizito-button dizito-button-ai">{loading ? <Loader2 className="animate-spin" size={18} /> : strategy ? <RefreshCw size={18} /> : <Sparkles size={18} />}{loading ? "Generating..." : strategy ? "Regenerate" : "Generate My Week"}</button>
+            {strategy && <button onClick={approve} disabled={approving || approved} className="dizito-button dizito-button-secondary">{approving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}{approved ? "Week Approved" : "Approve Week"}</button>}
           </div>
         </div>
       </header>
