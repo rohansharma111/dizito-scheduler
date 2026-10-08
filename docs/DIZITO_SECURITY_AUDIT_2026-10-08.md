@@ -260,3 +260,13 @@ Important: this is source-implemented only. No production deployment or live pro
 - No production database migration or destructive data operation was executed in this continuation.
 - CI remains a repository-wide issue: the previous Validate run exposed 238 lint errors and 78 warnings across unrelated existing files, plus the rate-limit test syntax error fixed above. A fresh post-fix workflow result is required before claiming the branch is CI-green.
 - Remaining security focus: true DNS-aware/network-egress enforcement for any user-influenced outbound HTTP, media codec/container processing isolation, production secret-rotation/incident-response verification, and runtime/provider verification.
+
+
+## 2026-10-09 — WooCommerce outbound boundary hardening
+
+- Hardened the remaining user-supplied outbound commerce URL boundary in lib/platforms/woocommerce/client.ts.
+- WooCommerce requests now perform a DNS preflight and reject hostnames resolving to loopback, private, link-local, carrier-grade NAT, or other local-address ranges before issuing the outbound request.
+- Added a 15-second request timeout when the caller does not provide its own signal.
+- Provider-controlled WooCommerce error messages are no longer propagated through the generic client error path; callers receive status-based errors instead.
+- Added regression coverage for private DNS resolution and provider-error redaction.
+- This reduces DNS-based SSRF exposure but is not a complete network-egress guarantee because DNS preflight and the subsequent connection are separate operations. A deployment-level egress policy remains the strongest control against DNS rebinding.
