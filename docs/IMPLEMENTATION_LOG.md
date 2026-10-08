@@ -716,3 +716,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Updated the Pinterest boards endpoint to use `resolveOAuthSelectionCredentials(...)`, decrypt `pages_encrypted`, retain legacy fallback during migration, handle missing/malformed payloads safely, and avoid returning raw provider/database error text to the browser.
 - Commit: `97b15eec8630b2685d9286d0954d50a40004c3b3`.
 - Deployment/runtime verification remains pending; the deployed application must include this commit and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY` must be configured before the Pinterest board-selection flow can be re-tested.
+
+## 2026-10-08 — Workstream D distributed rate-limit implementation
+
+- Added additive migration `023_api_rate_limits.sql` and Postgres-backed `consumeRateLimit` using atomic time-window counters and HMAC-hashed bucket/identifier keys.
+- Applied limits to high-cost AI Creator, weekly strategy, strategist, AI image generation, media upload, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation routes.
+- The limiter is intentionally serverless-safe and does not persist raw user identifiers.
+- Verification remains incomplete: repository Test/Lint workflows are still red; no production migration or runtime provider verification has been performed.
