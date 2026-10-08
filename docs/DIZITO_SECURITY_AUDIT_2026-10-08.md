@@ -122,3 +122,11 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Source search found no application references to this endpoint. The authenticated LinkedIn callback remains the canonical code-exchange path.
 - No database changes were made.
 - This finding is now tracked as fixed; legacy social-token plaintext storage remains a separate migration-sensitive P1.
+
+
+### Checkpoint — 2026-10-08 16:38 IST
+- Branch: `v1/security-audit`
+- PR: #49, open and unmerged.
+- Latest head: `684c3e51e1df54b675d539783d0928fcca0c3ddf`.
+- GitHub Actions reports no workflow runs for this exact head, so no CI result is claimed for it.
+- No production deployment, live OAuth/provider exercise, or destructive database change was performed.
