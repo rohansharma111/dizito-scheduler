@@ -218,7 +218,7 @@ export default async function ProductsPage() {
             </table>
           </div>
         )}
-      </div>
+      </DizitoCard>
     </div>
   );
 }
