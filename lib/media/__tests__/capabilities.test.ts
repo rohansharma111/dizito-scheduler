@@ -25,6 +25,10 @@ describe("media capability resolution", () => {
     expect(getMediaCapability("pinterest", "video_pin")?.requiresCover).toBe(true);
   });
 
+  it("fails closed for partially verified Facebook video", () => {
+    expect(getMediaCapability("facebook", "video")).toBeNull();
+  });
+
   it("records LinkedIn's verified video constraints", () => {
     const capability = getMediaCapability("linkedin", "video");
     expect(capability?.maxBytes).toBe(500 * 1024 * 1024);
