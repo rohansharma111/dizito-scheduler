@@ -7,7 +7,7 @@ function normalizeSubscription(subscription: unknown): RazorpaySubscriptionEntit
     throw new Error("Razorpay returned an invalid subscription response");
   }
 
-  const entity = subscription as Partial<RazorpaySubscriptionEntity>;
+  const entity = subscription as RazorpaySubscriptionEntity;
 
   return {
     id: entity.id,
