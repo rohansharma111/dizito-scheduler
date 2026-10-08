@@ -197,6 +197,7 @@ export async function POST(request: Request) {
       access_token_encrypted = $2,
       page_access_token = NULL,
       page_access_token_encrypted = $3,
+      credential_encryption_version = 'v1',
       status = 'connected',
       last_checked_at = NOW()
     WHERE
@@ -279,7 +280,8 @@ export async function POST(request: Request) {
       page_id,
       user_id,
       page_access_token,
-      page_access_token_encrypted
+      page_access_token_encrypted,
+      credential_encryption_version
     )
     VALUES
     (
@@ -290,7 +292,8 @@ export async function POST(request: Request) {
       $4,
       $5,
       NULL,
-      $6
+      $6,
+      'v1'
     )
     RETURNING id
     `,
@@ -350,6 +353,7 @@ export async function POST(request: Request) {
       access_token_encrypted = $2,
       page_access_token = NULL,
       page_access_token_encrypted = $3,
+      credential_encryption_version = 'v1',
       status = 'connected',
       last_checked_at = NOW()
     WHERE
@@ -452,7 +456,8 @@ export async function POST(request: Request) {
               instagram_business_id,
               user_id,
               page_access_token,
-              page_access_token_encrypted
+              page_access_token_encrypted,
+              credential_encryption_version
             )
             VALUES
             (
@@ -464,7 +469,8 @@ export async function POST(request: Request) {
               $5,
               $6,
               NULL,
-              $7
+              $7,
+              'v1'
             )
             RETURNING id
             `,
