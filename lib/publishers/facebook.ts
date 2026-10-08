@@ -49,7 +49,7 @@ export async function publishToFacebook(context: PublisherContext) {
 
   const data = await response.json();
 
-  console.log("FACEBOOK RESPONSE:", JSON.stringify(data, null, 2));
+  console.log("FACEBOOK RESPONSE STATUS:", response.status);
 
   if (data.error) {
     throw new Error(JSON.stringify(data.error));
