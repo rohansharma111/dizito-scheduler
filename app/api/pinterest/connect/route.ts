@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createEvent } from "@/lib/events";
 import { getPlan } from "@/lib/plans";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
+import { resolveOAuthSelectionCredentials } from "@/lib/security/social-oauth-selection";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const oauthData = selectionResult.rows[0];
+  const oauthData = resolveOAuthSelectionCredentials(selectionResult.rows[0]);
 
   const reconnectAccountId = oauthData.reconnect_account_id;
 
@@ -187,7 +189,9 @@ export async function POST(request: Request) {
           SET
             account_name = $1,
             access_token = $2,
-            refresh_token = COALESCE($3, refresh_token),
+            access_token_encrypted = $3,
+            refresh_token = COALESCE($4, refresh_token),
+            refresh_token_encrypted = COALESCE($5, refresh_token_encrypted),
             token_expires_at = CASE
               WHEN $4 IS NULL THEN token_expires_at
               ELSE $4
@@ -202,7 +206,9 @@ export async function POST(request: Request) {
           [
             reconnectAccount.account_name,
             accessToken,
+            encryptSocialCredential(accessToken),
             oauthData.refresh_token ?? null,
+            oauthData.refresh_token ? encryptSocialCredential(oauthData.refresh_token) : null,
             oauthData.token_expires_at ?? null,
             reconnectAccountId,
             userId,
@@ -294,7 +300,9 @@ export async function POST(request: Request) {
             platform,
             account_name,
             access_token,
+            access_token_encrypted,
             refresh_token,
+            refresh_token_encrypted,
             token_expires_at,
             board_id,
     pinterest_profile_id,
@@ -309,7 +317,9 @@ export async function POST(request: Request) {
             $5,
             $6,
             $7,
-            $8
+            $8,
+            $9,
+            $10
           )
           RETURNING id
           `,
@@ -317,7 +327,9 @@ export async function POST(request: Request) {
           "pinterest",
           board.name,
           accessToken,
+          encryptSocialCredential(accessToken),
           oauthData.refresh_token ?? null,
+          oauthData.refresh_token ? encryptSocialCredential(oauthData.refresh_token) : null,
           oauthData.token_expires_at ?? null,
           board.id,
           profile?.id,
