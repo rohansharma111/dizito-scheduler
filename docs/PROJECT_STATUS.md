@@ -784,3 +784,10 @@ Important rollout boundary:
 - Plan-change persistence now clears stale pending-plan state and explicitly removes scheduled cancellation state when switching back to a paid plan.
 - Re-ran the V1 migration through Neon’s disposable migration flow on an isolated temporary branch. Validation confirmed all five catalog plans, ten entitlement values per plan, the three new subscription columns, and legacy subscription backfill behavior. The temporary branch was then discarded; the default/live branch was not changed.
 - No Razorpay plan IDs were added. Provider mapping remains an explicit configuration dependency.
+
+
+## 2026-10-08 — Workstream B final hardening checkpoint
+
+- Billing API routes now use a typed authenticated-user helper with safe-positive-integer validation; no billing route needs `session.user as any` for user identity.
+- Latest GitHub Actions run for PR #47 (head `d1d20b50d4fa1231d52092add093a7418729d509`) remains red at the repository test stage because of seven existing Commerce/Flipkart/WooCommerce test failures. No billing test failure was reported in that run; lint/build were skipped by workflow gating.
+- The billing-specific implementation is therefore not claimed as repository-wide green. The branch remains intentionally unmerged and the default Neon branch remains unchanged.
