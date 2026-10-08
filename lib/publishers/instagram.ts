@@ -42,7 +42,7 @@ export async function publishToInstagram(context: PublisherContext) {
 
   const container = await containerResponse.json();
 
-  console.log("INSTAGRAM CONTAINER:", JSON.stringify(container, null, 2));
+  console.log("INSTAGRAM CONTAINER STATUS:", containerResponse.status);
 
   if (container.error) {
     throw new Error(JSON.stringify(container.error));
