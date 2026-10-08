@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { getBillingUserId } from "@/lib/billing/session";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { BillingRepository } from "@/lib/billing/repository";
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     const subscription = await BillingRepository.getSubscriptionByProviderId(
       razorpay_subscription_id,
     );
-    if (!subscription || subscription.user_id !== Number((session.user as any).id)) {
+    if (!subscription || subscription.user_id !== getBillingUserId(session)) {
       return Response.json({ success: false, error: "Subscription not found" }, { status: 404 });
     }
 
