@@ -135,7 +135,7 @@ async function publishLinkedInImage(context: PublisherContext) {
 
   const registerData = await registerResponse.json();
 
-  console.log("LINKEDIN REGISTER:", JSON.stringify(registerData, null, 2));
+  console.log("LINKEDIN REGISTER STATUS:", registerResponse.status);
 
   if (!registerResponse.ok) {
     throw new Error(JSON.stringify(registerData));
