@@ -586,3 +586,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Paid plan changes now clear stale pending-plan and scheduled-cancellation state.
 - Validated `021_billing_v1_plans_entitlements.sql` through a disposable Neon migration branch. The isolated branch confirmed five billing plans, ten entitlement assignments per plan, the new subscription linkage columns, and one legacy subscription successfully backfilled. The temporary branch was discarded and no default/live schema change was applied.
 - Billing remains dependent on explicit Razorpay provider mappings; no provider plan IDs were hard-coded.
+
+
+## 2026-10-08 — Workstream B final hardening checkpoint
+
+- Billing API session identity access was cleaned up with a typed safe-positive-integer helper; billing routes no longer use `session.user as any`.
+- Latest PR #47 CI still stops at the repository test stage on seven pre-existing Commerce/Flipkart/WooCommerce failures; no billing failure was reported. Lint/build did not execute because the workflow gates them after test failure.
+- Workstream B remains unmerged. No default/live Neon migration was applied; the validated disposable migration branch was discarded.
