@@ -239,3 +239,13 @@ Following the Pinterest live-state finding, the same migration gate was applied 
 - A source-level sweep of these seven credential write paths found no remaining direct parameterized writes to plaintext token columns.
 
 Important: this is source-implemented only. No production deployment or live provider exercise is claimed, and account 62 remains unchanged in Neon. The plaintext schema columns cannot yet be dropped until deployed runtime verification and safe migration of any remaining legacy rows are complete.
+
+
+## 2026-10-08 continuation — credential fail-closed boundary and distributed rate limiting
+
+- **P1 credential read path hardened:** `resolveSocialAccountCredentials` no longer falls back to legacy plaintext `social_accounts` credential columns. Encrypted columns are the only accepted credential source; plaintext-only legacy rows now fail closed with an explicit migration-required error.
+- Added regression coverage for encrypted resolution, malformed ciphertext rejection, and unmigrated plaintext fail-closed behavior.
+- **P1 rate limiting implementation added:** new additive `api_rate_limits` storage and serverless-safe Postgres-backed `consumeRateLimit` helper use HMAC-hashed bucket/identifier keys and atomic window counters.
+- Rate limits are applied to high-cost AI generation, AI image generation, media uploads, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation.
+- No destructive migration or production backfill was executed. The existing social-credential backfill/retirement process remains a deployment prerequisite for legacy rows.
+- PR #55 contains the implementation. CI remains non-green because the repository's Test and Lint workflows still fail; this work is therefore not marked production-ready.
