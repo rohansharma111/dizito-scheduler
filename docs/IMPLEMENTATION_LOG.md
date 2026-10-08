@@ -617,7 +617,7 @@ Never convert “implemented” to “verified” or “production-ready” with
 
 - **Status:** Implemented; not runtime-verified.
 - Replaced the Pinterest video publisher's full `arrayBuffer()` materialization with a streamed multipart request body.
-- Preserved Pinterest's documented sequence: register video upload, upload multipart media, poll media status, then create the Pin using `video_id` plus `cover_image_url`. citeturn0search0
+- Preserved Pinterest's documented sequence: register video upload, upload multipart media, poll media status, then create the Pin using `video_id` plus `cover_image_url`.
 - Scheduler media projection now carries filename and video lifecycle metadata required by the publisher.
 - Created draft PR #50 for CI/review; no merge performed.
 - GitHub currently reports no workflow run/status for the latest head commit, so tests/lint/build remain unclaimed.
