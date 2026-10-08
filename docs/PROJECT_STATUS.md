@@ -755,3 +755,10 @@ These define the launch gates and the multi-chat ownership model.
 - Remaining blocker: Next.js 16.2.7 dependency floor; upgrade to 16.3.8 with a real lockfile regeneration and full CI verification before V1 launch.
 - Remaining important risks: plaintext legacy social OAuth token storage, distributed rate limiting, DNS-level SSRF/egress controls, and file content sniffing.
 - No merge; no destructive DB changes.
+
+
+## 2026-10-08 — Security upload-content hardening
+
+- Added server-side file-signature validation for supported JPEG/PNG/GIF/WebM/MP4/QuickTime uploads.
+- Added regression coverage for accepted signatures, MIME/content mismatches, and unsupported types.
+- This closes the previously identified client-MIME-only validation gap at the basic content-signature layer; full codec/container validation remains a separate hardening item.
