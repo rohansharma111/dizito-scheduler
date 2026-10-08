@@ -36,8 +36,6 @@ export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadAnalytics(); }, []);
-
   async function loadAnalytics() {
     try {
       const response = await fetch("/api/analytics");
@@ -49,6 +47,10 @@ export default function AnalyticsPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => { loadAnalytics(); }, []);
+
+
 
   if (loading) {
     return (
