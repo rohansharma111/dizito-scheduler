@@ -67,9 +67,10 @@ export const razorpayProvider: BillingProvider = {
     providerSubscriptionId: string,
     cancelAtCycleEnd: boolean,
   ): Promise<RazorpaySubscriptionEntity> {
-    const subscription = await razorpay.subscriptions.cancel(providerSubscriptionId, {
-      cancel_at_cycle_end: cancelAtCycleEnd,
-    });
+    const subscription = await razorpay.subscriptions.cancel(
+      providerSubscriptionId,
+      cancelAtCycleEnd,
+    );
 
     return normalizeSubscription(subscription);
   },
