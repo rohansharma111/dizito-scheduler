@@ -815,3 +815,8 @@ These define the launch gates and the multi-chat ownership model.
 - Future social-account connections use encrypted credential columns with encrypted-first reads; plaintext legacy columns remain temporarily for compatibility and are not yet retired.
 - Additional security fixes corrected credential-refresh/reconnect SQL parameter binding and removed raw provider error-body exposure from major social publishers.
 - Workstream D remains an implementation/runtime-verification checkpoint, not a production security certification. Full CI and external provider verification remain pending.
+
+
+### Workstream D live-state correction — 2026-10-08
+
+A production recheck found one newly created Pinterest social account (id 62). Metadata-only inspection shows legacy plaintext access/refresh credentials are present while encrypted credential columns are empty. This indicates the currently active connection/deployment path is not using the encrypted-write implementation from `v1/security-audit` for this connection. No destructive change was made to this new row without explicit authorization. Workstream D therefore remains blocked on identifying the active deployment/code path and safely migrating or replacing this credential through the encrypted flow.
