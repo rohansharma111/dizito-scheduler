@@ -213,3 +213,9 @@ Open before launch:
 - [x] Scheduler `social_accounts` lookup is tenant-scoped to the owning post user.
 - [x] Regression test covers foreign-tenant account rejection before publisher invocation.
 - [ ] CI/runtime execution of this regression remains pending; no workflow run was observed for the fix commits in this checkpoint.
+
+### OAuth secret-leakage regression
+
+- [x] Meta token-exchange errors do not return raw provider payloads.
+- [x] LinkedIn token-exchange errors do not log or return raw provider token payloads.
+- [ ] Runtime/provider verification remains pending.
