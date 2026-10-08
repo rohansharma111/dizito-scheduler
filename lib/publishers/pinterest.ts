@@ -76,13 +76,14 @@ async function publishPinterestVideo(
 
   const contentLength = preamble.byteLength + Number(media.bytes) + epilogue.byteLength;
   const reader = videoResponse.body.getReader();
+  let preambleSent = false;
   let finished = false;
 
   const body = new ReadableStream<Uint8Array>({
     async pull(controller) {
-      if (preamble.byteLength > 0) {
+      if (!preambleSent) {
         controller.enqueue(preamble);
-        preamble.fill(0);
+        preambleSent = true;
       }
 
       if (finished) {
