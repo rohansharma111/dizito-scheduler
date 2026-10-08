@@ -28,16 +28,6 @@ export async function POST(request: Request) {
      */
     const rawBody = await request.text();
 
-    console.log("RAZORPAY WEBHOOK RAW BODY:", rawBody);
-    console.log(
-      "RAZORPAY WEBHOOK SIGNATURE:",
-      request.headers.get("x-razorpay-signature"),
-    );
-    console.log(
-      "RAZORPAY WEBHOOK EVENT ID:",
-      request.headers.get("x-razorpay-event-id"),
-    );
-
     /*
      * Razorpay webhook signature.
      */
