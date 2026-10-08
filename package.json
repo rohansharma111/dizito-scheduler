@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:backfill-social-credentials": "node scripts/backfill-social-credentials.mjs"
   },
   "dependencies": {
     "cloudinary": "^2.10.0",
