@@ -1,59 +1,59 @@
 import { PublisherContext } from "./types";
+import { resolvePostMedia } from "./media";
+
+const GRAPH_VERSION = "v26.0";
 
 export async function publishToFacebook(context: PublisherContext) {
   const { post, account } = context;
 
-  if (!post) {
-    throw new Error("Post not found");
+  if (!post) throw new Error("Post not found");
+  if (!account) throw new Error("Facebook account not found");
+  if (!account.page_id) throw new Error("Facebook page id missing");
+  if (!account.page_access_token) throw new Error("Facebook page access token missing");
+
+  const resolved = await resolvePostMedia(context, "facebook");
+  if (!resolved) throw new Error("No media selected for this post");
+
+  const { media, mediaType } = resolved;
+
+  if (mediaType === "image") {
+    const response = await fetch(
+      `https://graph.facebook.com/${GRAPH_VERSION}/${account.page_id}/photos`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: media.secure_url,
+          caption: post.post,
+          access_token: account.page_access_token,
+        }),
+      },
+    );
+
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(JSON.stringify(data.error ?? data));
+    return { ...data, mediaType: "image" };
   }
 
-  if (!account) {
-    throw new Error("Facebook account not found");
+  if (mediaType !== "video") {
+    throw new Error(`Facebook publish type ${mediaType} is not implemented`);
   }
-
-  if (!account.page_id) {
-    throw new Error("Facebook page id missing");
-  }
-
-  if (!account.page_access_token) {
-    throw new Error("Facebook page access token missing");
-  }
-
-  if (!post.secure_url) {
-    throw new Error("Facebook requires an image.");
-  }
-
-  console.log("FACEBOOK PUBLISH:", {
-    pageId: account.page_id,
-    postId: post.id,
-  });
 
   const response = await fetch(
-    `https://graph.facebook.com/v26.0/${account.page_id}/photos`,
+    `https://graph.facebook.com/${GRAPH_VERSION}/${account.page_id}/videos`,
     {
       method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        url: post.secure_url,
-
-        caption: post.post,
-
+        file_url: media.secure_url,
+        description: post.post,
         access_token: account.page_access_token,
       }),
     },
   );
 
   const data = await response.json();
+  if (!response.ok || data.error) throw new Error(JSON.stringify(data.error ?? data));
 
-  console.log("FACEBOOK RESPONSE STATUS:", response.status);
-
-  if (data.error) {
-    throw new Error(`Facebook publish failed: HTTP ${response.status}`);
-  }
-
-  return data;
+  return { ...data, mediaType: "video" };
 }
