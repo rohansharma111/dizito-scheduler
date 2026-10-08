@@ -789,3 +789,12 @@ These define the launch gates and the multi-chat ownership model.
 ## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
 
 - Security migration 019 applied to Neon production/default branch; additive encrypted credential columns are present. OAuth/social account callbacks and selection consumers now dual-write encrypted values while retaining legacy plaintext fields for rollback compatibility. Runtime end-to-end OAuth verification and CI remain pending.
+
+## 2026-10-08 — Security encrypted-credential rollout checkpoint
+
+- Migration 019 is applied to the Neon production/default branch after temporary-branch validation.
+- OAuth callback/account-selection and Pinterest refresh paths dual-write encrypted social credentials; scheduler, account-health, and temporary OAuth-selection reads prefer encrypted values with legacy fallback.
+- Neon verification currently shows 2 `social_accounts` rows, 0 encrypted social rows, and 0 `oauth_page_selections` rows. The existing social rows therefore still require backfill.
+- Added `npm run db:backfill-social-credentials`, a guarded application-side backfill requiring `DATABASE_URL` and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY`, with advisory-lock/transaction protection and coverage verification.
+- **Current blocker:** the actual encryption key cannot be inspected through the available GitHub integration. Provision/confirm it in the runtime environment, then execute the guarded backfill. Do not paste the secret into chat.
+- Plaintext column retirement remains blocked until backfill, runtime/provider verification, and rollback readiness are demonstrated.
