@@ -1,3 +1,11 @@
+## 2026-10-08 — Workstream H reconciliation onto current main
+
+- Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
+- Current `main` already contains `021_billing_v1_plans_entitlements.sql`, so the H observability migration is canonically represented as `022_infrastructure_observability_v1.sql` to avoid a migration filename collision.
+- The production Neon observability changes were already applied during the earlier H checkpoint; reconciliation did not re-run or alter production SQL.
+- Preserved the evidence-backed `pg_stat_statements` enablement and the two production indexes; the deferred `post_target_attempts` index remains absent.
+- No marketing UI, billing business logic, provider adapters, media workflows, retention deletion, queue/worker architecture, or destructive SQL was introduced.
+
 ## 2026-10-07 — Google Business Profile API access request submitted
 
 - **Status:** Pending Google allowlisting/approval; provider runtime verification has not started.
