@@ -1,3 +1,12 @@
+## 2026-10-09 — Workstream D rate limiting
+
+- Added `023_security_rate_limits_v1.sql` with one durable counter row per scoped identity, avoiding in-memory state across serverless instances.
+- Added `lib/security/rate-limit.ts` with authenticated tenant keys and HMAC-hashed anonymous IP keys.
+- Applied protection to AI image generation, media upload/completion, post creation, and OAuth initiation for Meta, LinkedIn, Pinterest and Google Business.
+- Added focused tests for identity handling and HTTP 429 response semantics.
+- Production Neon application of migration 023 remains pending until the schema change is explicitly approved and validated.
+- Rate limiting is an application-level control and remains complementary to Vercel WAF/edge controls and bot mitigation.
+
 ## 2026-10-08 — Workstream H reconciliation onto current main
 
 - Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
