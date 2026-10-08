@@ -136,7 +136,25 @@ export async function POST(request: Request) {
     }
   }
 
-  const pages = oauthData.pages;
+  let pages: Array<Record<string, any>>;
+
+  try {
+    const parsedPages =
+      typeof oauthData.pages === "string"
+        ? JSON.parse(oauthData.pages)
+        : oauthData.pages;
+
+    pages = Array.isArray(parsedPages) ? parsedPages : [];
+  } catch {
+    return Response.json(
+      {
+        error: "Meta account-selection session is invalid.",
+      },
+      {
+        status: 502,
+      },
+    );
+  }
 
   const accessToken = oauthData.access_token;
 
