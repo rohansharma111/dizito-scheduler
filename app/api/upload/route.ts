@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
+import { matchesDeclaredMediaType } from "@/lib/security/media-signature";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_MEDIA_TYPES = new Set([
@@ -83,6 +84,18 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (!matchesDeclaredMediaType(buffer, file.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Uploaded file content does not match its declared media type",
+        },
+        {
+          status: 415,
+        },
+      );
+    }
 
     const media = await mediaService.uploadMedia({
       userId: Number(session.user.id),
