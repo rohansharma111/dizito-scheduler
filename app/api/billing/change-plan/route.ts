@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getBillingUserId } from "@/lib/billing/session";
 import { authOptions } from "@/lib/auth";
 import { changeSubscriptionPlan } from "@/lib/billing/service";
 import type { BillingPlan } from "@/lib/billing/types";
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
     }
 
     const result = await changeSubscriptionPlan({
-      userId: Number((session.user as any).id),
+      userId: getBillingUserId(session),
       targetPlan,
     });
 
