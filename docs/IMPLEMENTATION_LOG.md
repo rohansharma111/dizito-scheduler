@@ -561,3 +561,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Verified source-level credential paths: Shopify/Amazon/Flipkart/WooCommerce are application-encrypted with tenant-scoped reads/writes; legacy Meta/Pinterest/LinkedIn/Google Business token columns remain plaintext and are explicitly tracked as a migration-sensitive P1.
 - P0 remaining: Next.js 16.2.7 must be upgraded to patched 16.3.8 with a regenerated package-lock. The temporary CI lock refresh attempt was removed because it did not execute on the branch; no inconsistent dependency state was left behind.
 - Runtime verification: pending. No merge or destructive DB change performed.
+
+
+## 2026-10-08 — Security audit checkpoint reconciliation
+
+- **Status:** Implemented source-level hardening; not fully runtime-verified.
+- Corrected the security audit records to reflect the actual dependency state: package.json and package-lock.json are aligned on Next.js 16.3.8 and eslint-config-next 16.3.8, and npm ci succeeds under Node 22.
+- Latest observed PR #49 remains open and unmerged. Validate and Quality Checks are not green because of repository-wide existing lint/test debt; no unrelated cleanup was added to the security branch.
+- Remaining P1 security risks remain explicitly tracked: plaintext legacy social OAuth tokens, distributed rate limiting, DNS-aware SSRF/egress enforcement, and file content/magic-byte validation.
