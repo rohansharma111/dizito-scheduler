@@ -1,3 +1,12 @@
+## 2026-10-08 — Workstream D security regression continuation
+
+- Reconciled the security work against current main (`fd57fb359a0d54d94a4dfb9b2ae5dc010ebadd5e`) rather than the stale historical security branch.
+- Commit sequence on `v1/security-audit-2026-10-09` ends at `68e73f93925f1121b7d644a569a973c7ad7414b8` for the credential-resolution hardening.
+- `resolveSocialAccountCredentials` no longer returns legacy plaintext `access_token`, `page_access_token`, or `refresh_token` values. If a plaintext-only legacy value remains, the resolver throws `Legacy plaintext social credential requires migration before use`.
+- Regression coverage replaced the previous legacy-fallback expectation with a fail-closed assertion.
+- PR #55: security regression hardening; intentionally no destructive SQL or production backfill.
+- Verification: both repository GitHub Actions workflows ran on the branch. `Quality Checks` failed at Test; `Validate` failed at Lint. Existing repository-wide CI debt remains and no green repository-wide result is claimed.
+
 ## 2026-10-08 — Workstream H reconciliation onto current main
 
 - Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
