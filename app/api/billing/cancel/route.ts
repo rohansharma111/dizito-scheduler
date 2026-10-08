@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getBillingUserId } from "@/lib/billing/session";
 import { authOptions } from "@/lib/auth";
 import { BillingRepository } from "@/lib/billing/repository";
 import { billingProviders } from "@/lib/billing/providers/registry";
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = Number((session.user as any).id);
+    const userId = getBillingUserId(session);
     const body = await request.json().catch(() => ({}));
     const immediate = body.immediate === true;
     const subscription = await BillingRepository.getActiveSubscriptionForUser(userId);
