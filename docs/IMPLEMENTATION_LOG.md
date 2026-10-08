@@ -659,3 +659,14 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Billing API session identity access was cleaned up with a typed safe-positive-integer helper; billing routes no longer use `session.user as any`.
 - Latest PR #47 CI still stops at the repository test stage on seven pre-existing Commerce/Flipkart/WooCommerce failures; no billing failure was reported. Lint/build did not execute because the workflow gates them after test failure.
 - Workstream B remains unmerged. No default/live Neon migration was applied; the validated disposable migration branch was discarded.
+
+
+## 2026-10-08 — Workstream C reconciled onto current main
+
+- Workstream C media/video implementation was reconciled onto the current main lineage without replacing newer parallel-workstream changes.
+- Video remains first-class media: direct signed Cloudinary upload, explicit processing/lifecycle metadata, provider-specific capability resolution, and platform-specific publish workflows.
+- Existing image publishing paths remain intact.
+- Unsupported/unverified video capabilities remain fail-closed for Facebook and Google.
+- The additive media migration remains committed but is not applied to Neon.
+- Provider runtime verification for Pinterest video, Instagram video and LinkedIn video remains pending; provider access is not treated as runtime verification.
+- Repository-wide CI readiness remains subject to the current QA/CI workstream; no new green status is claimed by this reconciliation alone.
