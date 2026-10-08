@@ -893,3 +893,10 @@ Important rollout boundary:
 - Meta OAuth temporary-selection creation now also records `credential_encryption_version = 'v1'`.
 - Remaining source hardening: explicitly set the encryption-version metadata on every future Meta connect-pages, LinkedIn, and Google Business social-account write/reconnect path; runtime provider verification for those providers remains pending.
 - Workstream D is not yet a production security certification.
+
+## 2026-10-08 — Workstream D social-provider encryption metadata hardening complete
+
+- Added explicit `credential_encryption_version = 'v1'` writes to Meta/Facebook/Instagram connect/reconnect, LinkedIn connect/reconnect, and Google Business connect/reconnect paths.
+- Production metadata check currently shows the connected Pinterest account as `v1` encrypted with zero plaintext credentials.
+- No other social provider accounts are currently present in the production database, so Meta, Instagram, LinkedIn, and Google Business runtime verification still requires controlled provider connections/reconnections when those credentials are available.
+- Source-level encrypted-write hardening is complete for the audited social OAuth paths. Runtime provider verification and deployment-state verification remain separate launch gates.
