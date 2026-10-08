@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getBillingUserId } from "@/lib/billing/session";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { createSubscription } from "@/lib/billing/service";
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid or unavailable plan" }, { status: 400 });
     }
 
-    const userId = Number((session.user as any).id);
+    const userId = getBillingUserId(session);
     const userResult = await pool.query("SELECT id, email FROM users WHERE id = $1", [userId]);
     const user = userResult.rows[0];
     if (!user) return Response.json({ error: "User not found" }, { status: 404 });
