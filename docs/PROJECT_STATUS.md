@@ -921,3 +921,10 @@ Important rollout boundary:
 - Production metadata-only verification now shows Facebook, Instagram, and Pinterest accounts all have `credential_encryption_version = 'v1'`, encrypted credential material present, zero plaintext credential fields, and non-null tenant ownership.
 - No credential values were retrieved or logged.
 - Remaining runtime provider verification: LinkedIn and Google Business. Broader publishing/reconnect/refresh verification remains separate from connection-time verification.
+
+## 2026-10-08 — Workstream D LinkedIn runtime verification + Google Business quota checkpoint
+
+- LinkedIn connection is now runtime-verified at production metadata level: encrypted credential present, `credential_encryption_version = 'v1'`, and no plaintext access/refresh credential persisted.
+- Google Business connection currently reaches the provider-resource discovery stage but returns Dizito's `QUOTA_EXCEEDED` error classification. The UI message is intentionally mapped to `Rate Limit Reached`.
+- Source inspection confirms this classification originates from Google Business API errors containing `Quota exceeded`; it is not Dizito's internal account-plan limit.
+- No repeated Google retries were performed to avoid amplifying a provider quota/rate-limit condition. Google Business runtime verification remains pending until the provider quota window clears or the Google Cloud API quota/permissions are corrected.
