@@ -69,7 +69,7 @@ export async function publishToInstagram(context: PublisherContext) {
 
   const publishData = await publishResponse.json();
 
-  console.log("INSTAGRAM PUBLISH:", JSON.stringify(publishData, null, 2));
+  console.log("INSTAGRAM PUBLISH STATUS:", publishResponse.status);
 
   if (publishData.error) {
     throw new Error(JSON.stringify(publishData.error));
