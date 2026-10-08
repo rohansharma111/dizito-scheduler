@@ -324,10 +324,12 @@ export async function GET(request: Request) {
 
               headers: {
                 "Content-Type": "application/json",
+                "x-dizito-internal-secret": process.env.NEXTAUTH_SECRET ?? "",
               },
 
               body: JSON.stringify({
-                socialAccountId: accountId,
+                socialAccountId: accountId,,
+                userId: userId
               }),
             },
           );
