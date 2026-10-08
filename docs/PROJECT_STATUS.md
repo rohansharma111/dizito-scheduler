@@ -945,3 +945,10 @@ Important rollout boundary:
 - HTTP 429 and structured `rateLimitExceeded`/`quotaExceeded` responses are explicitly classified as `QUOTA_EXCEEDED` by the OAuth callback.
 - This does not bypass Google's quota; the current production blocker remains provider-side quota/access. Google documentation notes that some Business Profile APIs can have quota 0 until access is requested. citeturn1search0turn1search1
 - Commit: `716e4d715235583e0443bc42d082a020c02271b8` plus callback classification commit `67e39e73c247a529d36fe4a0e0e94cbae707c5b4`.
+
+## 2026-10-08 — Workstream D distributed rate-limit implementation
+
+- Added additive migration `023_api_rate_limits.sql` and Postgres-backed `consumeRateLimit` using atomic time-window counters and HMAC-hashed bucket/identifier keys.
+- Applied limits to high-cost AI Creator, weekly strategy, strategist, AI image generation, media upload, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation routes.
+- The limiter is intentionally serverless-safe and does not persist raw user identifiers.
+- Verification remains incomplete: repository Test/Lint workflows are still red; no production migration or runtime provider verification has been performed.
