@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
 import { getUploadPolicy } from "@/lib/media/upload-policy";
 import { matchesDeclaredMediaType } from "@/lib/security/media-signature";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +13,15 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimit = await checkRateLimit(request, {
+      scope: "media-upload",
+      limit: 20,
+      windowSeconds: 60,
+      userId: session.user.id,
+    });
+    const rateLimitError = rateLimitResponse(rateLimit);
+    if (rateLimitError) return rateLimitError;
 
     const formData = await request.formData();
     const file = formData.get("file");
