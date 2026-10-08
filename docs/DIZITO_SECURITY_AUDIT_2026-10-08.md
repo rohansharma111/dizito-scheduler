@@ -136,3 +136,14 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Pinterest and Google Business callback state checks now use the shared constant-time `verifyOAuthState()` helper instead of direct string comparison.
 - This is defense-in-depth; both flows already used high-entropy, HttpOnly, short-lived state cookies and authenticated callback sessions.
 - Legacy social-token migration remains deferred because a safe additive dual-read/dual-write path requires complete consumer inventory and application-key access; no schema-only migration was introduced.
+
+
+### 2026-10-08 continuation — legacy social-token consumer inventory
+
+- Completed a source-level consumer inventory for the plaintext legacy social OAuth credentials.
+- Confirmed `social_accounts.access_token`, `page_access_token`, and `refresh_token` are consumed by provider publishers, account-health checks, and the scheduler's `SELECT *` account-loading path.
+- Confirmed `oauth_page_selections` is a temporary credential-bearing store used by Meta, Pinterest, and Google Business selection/reconnect flows; its token fields are deleted after the corresponding selection flow completes.
+- Confirmed the Meta Page-selection JSON also carries Page access-token material and therefore cannot be treated as token-free merely because the SQL token column is migrated.
+- Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` with the safe additive dual-read/dual-write migration sequence.
+- No schema migration, backfill, plaintext-column removal, or destructive DB change was introduced.
+- Status remains **P1 deferred / migration-sensitive** until the application credential boundary is implemented and verified.
