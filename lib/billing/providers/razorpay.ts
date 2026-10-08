@@ -52,9 +52,11 @@ export const razorpayProvider: BillingProvider = {
     providerSubscriptionId: string,
     input: UpdateSubscriptionInput,
   ): Promise<RazorpaySubscriptionEntity> {
+    const scheduleChangeAt: "now" | "cycle_end" = input.scheduleChangeAt ?? "now";
+
     const subscription = await razorpay.subscriptions.update(providerSubscriptionId, {
       plan_id: input.providerPlanId,
-      schedule_change_at: input.scheduleChangeAt ?? "now",
+      schedule_change_at: scheduleChangeAt,
       customer_notify: input.customerNotify ?? true,
     });
 
