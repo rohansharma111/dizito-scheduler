@@ -1,3 +1,10 @@
+### 2026-10-09 — Workstream D migration 023 applied to production
+- Explicit production authorization received for migration 023.
+- Applied prepared migration `3afcd733-c0e6-46a7-990d-b794eb03cc79` to Neon production branch `br-empty-rice-ayeuugek` in project `purple-wildflower-87394884`.
+- Verified `api_rate_limits` table and `api_rate_limits_updated_at_idx` exist; verified 4 expected NOT NULL columns: `key_hash`, `window_started_at`, `request_count`, `updated_at`.
+- Verified initial row count is 0.
+- Runtime limiter enforcement remains a separate deployment/verification boundary; PR #55 remains open/unmerged and repository CI is not green.
+
 ## 2026-10-09 — Workstream D deployment-readiness checkpoint
 
 - Read-only production Neon audit (purple-wildflower-87394884 / production) confirms encrypted social-account columns are present.
