@@ -11,7 +11,7 @@ export type CreateSubscriptionInput = {
 
 export type UpdateSubscriptionInput = {
   providerPlanId: string;
-  scheduleChangeAt?: string;
+  scheduleChangeAt?: "now" | "cycle_end";
   customerNotify?: boolean;
 };
 
