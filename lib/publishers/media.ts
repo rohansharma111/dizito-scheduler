@@ -1,5 +1,5 @@
 import { mediaService } from "@/lib/media/service";
-import { getMediaCapability, resolvePublishMediaType, type PublishMediaKind } from "@/lib/media/capabilities";
+import { getMediaCapability, resolvePublishMediaType, type MediaConstraints, type PublishMediaKind } from "@/lib/media/capabilities";
 
 export interface PublishMedia {
   id?: number;
@@ -13,6 +13,81 @@ export interface PublishMedia {
   duration_seconds?: number | null;
   width?: number | null;
   height?: number | null;
+}
+
+export function validatePublishMedia(media: PublishMedia, capability: MediaConstraints): void {
+  if (capability.mimeTypes.length) {
+    if (!media.mime_type || !capability.mimeTypes.includes(media.mime_type)) {
+      throw new Error(
+        media.mime_type
+          ? `MIME type ${media.mime_type} is not supported for this media capability`
+          : "Media MIME type is required for publishing",
+      );
+    }
+  }
+
+  if (capability.maxBytes !== null) {
+    if (media.bytes === null || media.bytes === undefined || media.bytes <= 0) {
+      throw new Error("Media byte size is required for publishing");
+    }
+    if (media.bytes > capability.maxBytes) {
+      throw new Error("Media exceeds the configured size limit");
+    }
+  }
+
+  if (capability.minDurationSeconds !== null) {
+    if (media.duration_seconds === null || media.duration_seconds === undefined) {
+      throw new Error("Video duration is required for publishing");
+    }
+    if (media.duration_seconds < capability.minDurationSeconds) {
+      throw new Error("Video is shorter than the configured minimum duration");
+    }
+  }
+
+  if (capability.maxDurationSeconds !== null) {
+    if (media.duration_seconds === null || media.duration_seconds === undefined) {
+      throw new Error("Video duration is required for publishing");
+    }
+    if (media.duration_seconds > capability.maxDurationSeconds) {
+      throw new Error("Video exceeds the configured maximum duration");
+    }
+  }
+
+  if (capability.minWidth !== null) {
+    if (media.width === null || media.width === undefined) {
+      throw new Error("Media width is required for publishing");
+    }
+    if (media.width < capability.minWidth) {
+      throw new Error("Media width is below the configured minimum");
+    }
+  }
+
+  if (capability.maxWidth !== null) {
+    if (media.width === null || media.width === undefined) {
+      throw new Error("Media width is required for publishing");
+    }
+    if (media.width > capability.maxWidth) {
+      throw new Error("Media width exceeds the configured maximum");
+    }
+  }
+
+  if (capability.minHeight !== null) {
+    if (media.height === null || media.height === undefined) {
+      throw new Error("Media height is required for publishing");
+    }
+    if (media.height < capability.minHeight) {
+      throw new Error("Media height is below the configured minimum");
+    }
+  }
+
+  if (capability.maxHeight !== null) {
+    if (media.height === null || media.height === undefined) {
+      throw new Error("Media height is required for publishing");
+    }
+    if (media.height > capability.maxHeight) {
+      throw new Error("Media height exceeds the configured maximum");
+    }
+  }
 }
 
 export async function resolvePostMedia(context: { post: any; account: any }, platform: string) {
@@ -53,30 +128,11 @@ export async function resolvePostMedia(context: { post: any; account: any }, pla
     throw new Error(`Media capability is fail-closed for ${platform}:${mediaType}`);
   }
 
-  if (capability.mimeTypes.length && media.mime_type && !capability.mimeTypes.includes(media.mime_type)) {
-    throw new Error(`MIME type ${media.mime_type} is not supported for ${platform}`);
-  }
-
-  if (capability.maxBytes !== null && media.bytes && media.bytes > capability.maxBytes) {
-    throw new Error(`Media exceeds the ${platform} size limit`);
-  }
-
-  if (
-    capability.minDurationSeconds !== null &&
-    media.duration_seconds !== null &&
-    media.duration_seconds !== undefined &&
-    media.duration_seconds < capability.minDurationSeconds
-  ) {
-    throw new Error(`Video is shorter than the ${platform} minimum duration`);
-  }
-
-  if (
-    capability.maxDurationSeconds !== null &&
-    media.duration_seconds !== null &&
-    media.duration_seconds !== undefined &&
-    media.duration_seconds > capability.maxDurationSeconds
-  ) {
-    throw new Error(`Video exceeds the ${platform} maximum duration`);
+  try {
+    validatePublishMedia(media, capability);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Media validation failed";
+    throw new Error(`${platform} media validation failed: ${message}`);
   }
 
   return { media, mediaType: mediaType as PublishMediaKind, capability };
