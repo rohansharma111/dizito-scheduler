@@ -219,3 +219,12 @@ Open before launch:
 - [x] Meta token-exchange errors do not return raw provider payloads.
 - [x] LinkedIn token-exchange errors do not log or return raw provider token payloads.
 - [ ] Runtime/provider verification remains pending.
+
+### Provider response leakage hardening
+
+- [x] Facebook publisher no longer logs raw provider response bodies.
+- [x] Instagram publisher no longer logs raw provider response bodies.
+- [x] LinkedIn publisher no longer logs raw provider response/error bodies.
+- [x] Pinterest publisher no longer logs raw provider response bodies.
+- [x] Google Business publisher no longer promotes the raw provider payload into thrown errors.
+- [ ] Runtime verification remains pending.
