@@ -7,6 +7,7 @@ import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 import Link from "next/link";
 import { hasFeature } from "@/lib/plans";
 import { useDropzone } from "react-dropzone";
+import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 type CsvRow = {
   content?: string;
@@ -328,16 +329,15 @@ ${result.failed}
 
   if (planLoading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse">Loading...</div>
-      </div>
+      <DizitoPage><DizitoState kind="empty" title="Loading bulk upload" description="Preparing your plan and connected publishing accounts." /></DizitoPage>
     );
   }
 
   if (!hasFeature(plan, "bulkUpload")) {
     return (
-      <div className="p-8">
-        <div className="bg-yellow-50 border rounded p-6">
+      <DizitoPage>
+        <DizitoPageHeader eyebrow="Assets & Distribution" title="Bulk Upload" description="Import scheduled posts from CSV into your connected channels." />
+        <DizitoCard tone="soft" className="p-6">
           <h2 className="text-xl font-bold">Bulk Upload</h2>
 
           <p className="mt-2">
@@ -358,18 +358,14 @@ ${result.failed}
           >
             Upgrade Plan
           </Link>
-        </div>
-      </div>
+        </DizitoCard>
+      </DizitoPage>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Bulk Upload</h1>
-
-        <p className="text-gray-500 mt-2">Upload multiple posts using CSV</p>
-      </div>
+    <DizitoPage className="space-y-6">
+      <DizitoPageHeader eyebrow="Assets & Distribution" title="Bulk Upload" description="Upload scheduled posts from CSV, validate them before import, and choose connected accounts for distribution." />
 
       <div className="bg-white border rounded-lg p-6">
         <h2 className="font-semibold mb-4">CSV Format</h2>
@@ -795,5 +791,6 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
         </div>
       )}
     </div>
+    </DizitoPage>
   );
 }
