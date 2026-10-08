@@ -806,3 +806,12 @@ These define the launch gates and the multi-chat ownership model.
 - Neon verification now reports 0 `social_accounts` rows and 0 `oauth_page_selections` rows.
 - No legacy social-account credential backfill is currently required. Encrypted schema, dual-write and encrypted-first reads remain implemented for future connections.
 - Plaintext-column retirement remains a separate migration task after runtime/provider verification.
+
+
+## 2026-10-08 — Workstream D security checkpoint update
+
+- Migration 019 is applied in Neon production/default.
+- The remaining legacy social_accounts rows were removed with explicit user authorization; post-delete verification found 0 social_accounts and 0 oauth_page_selections.
+- Future social-account connections use encrypted credential columns with encrypted-first reads; plaintext legacy columns remain temporarily for compatibility and are not yet retired.
+- Additional security fixes corrected credential-refresh/reconnect SQL parameter binding and removed raw provider error-body exposure from major social publishers.
+- Workstream D remains an implementation/runtime-verification checkpoint, not a production security certification. Full CI and external provider verification remain pending.
