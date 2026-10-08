@@ -244,3 +244,11 @@ At minimum:
 - Added `db/migrations/019_social_account_credential_encryption.sql` as an **additive-only staged migration** for encrypted social-account and temporary OAuth credential fields.
 - The migration has **not** been applied to Neon and performs no data transformation or deletion.
 - Dual-write and migration-on-read remain the next application step; legacy plaintext storage remains active until those paths are completed and verified.
+
+## 2026-10-08 rollout checkpoint
+
+- Migration 019 has been applied to the Neon production/default branch after validation on a temporary Neon branch.
+- The migration added encrypted columns only; no legacy plaintext values were transformed or removed.
+- OAuth callback/account-selection writes now dual-write encrypted credential values.
+- Scheduler, account-health, and temporary OAuth-selection reads prefer encrypted values and fall back to legacy plaintext during migration.
+- Existing legacy rows have not yet been backfilled; plaintext retirement remains blocked until backfill coverage, rollback readiness, and runtime/provider verification are complete.
