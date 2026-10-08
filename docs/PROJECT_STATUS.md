@@ -1,14 +1,24 @@
 # Dizito Project Status & Roadmap
 
-**Last updated:** 2026-10-07  
+**Last updated:** 2026-10-08  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Default branch:** `main`  
-**Latest observed commit:** `84c325f0e0f39e58e8caf8d99c047b6bfe3a5be1`  
+**Latest observed main commit:** `c2fc3fe50c24493db21818b5a59f65a47a3b2087`  
 **Project:** Dizito — AI Commerce Operating System
 
 > This is the canonical working status document. Repository code/schema and observed verification are authoritative. “Implemented” does not mean “verified,” and “verified” does not mean “production-ready.”
 
 ## 1. Current phase
+
+**2026-10-08 — Workstream E marketing QA checkpoint**
+
+- `v1/marketing-qa-ci` is based directly on current `main` (`c2fc3fe50c24493db21818b5a59f65a47a3b2087`).
+- Focused regression coverage was added for review-gate bypass, weekly approval, variant provenance, attribution distinction, optimizer evidence/disposition, and tenant isolation.
+- Existing `lib/marketing/creator.test.ts` already covers malformed Creator JSON fail-closed behavior.
+- A PR was opened only to expose the branch to repository CI; no merge was performed.
+- GitHub Actions has not reported a run/status for the QA branch at this checkpoint. Therefore TypeScript, lint, Vitest, build, and repository-wide CI remain **not runtime-verified** from this chat.
+- Vercel success on `main` is deployment status only and is not treated as proof of test/lint/build completion.
+
 
 **2026-10-07 validation checkpoint**
 
