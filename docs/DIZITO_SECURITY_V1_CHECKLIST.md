@@ -228,3 +228,12 @@ Open before launch:
 - [x] Pinterest publisher no longer logs raw provider response bodies.
 - [x] Google Business publisher no longer promotes the raw provider payload into thrown errors.
 - [ ] Runtime verification remains pending.
+
+### 2026-10-08 continuation — encrypted-first application seam
+
+- [x] Added encrypted-first social account credential resolver used by scheduler and account-health reads.
+- [x] Added regression tests for encrypted precedence, legacy fallback, and malformed encrypted values.
+- [x] Added additive-only migration 019 for encrypted social credential columns; migration is staged but **not applied to Neon**.
+- [x] Added a dual-write encryption helper and unit coverage; OAuth callback wiring remains intentionally gated on migration deployment ordering.
+- [ ] Wire Meta/LinkedIn/Pinterest/Google Business OAuth writes to encrypted columns after migration 019 is applied to the target database.
+- [ ] Migrate temporary OAuth Page-selection credential material to encrypted storage and update all consumers.
