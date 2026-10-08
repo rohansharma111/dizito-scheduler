@@ -76,7 +76,7 @@ export async function publishToGoogleBusiness(context: PublisherContext) {
       data?.error?.message ||
       data?.error?.status ||
       data?.message ||
-      JSON.stringify(data);
+      `HTTP ${response.status}`;
 
     /*
         Auth errors
