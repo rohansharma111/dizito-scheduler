@@ -106,3 +106,14 @@ Test:
 ### Meesho
 Blocked.
 
+### Pinterest video upload implementation note — 2026-10-08
+
+The current publisher follows Pinterest's documented video-Pin sequence: register `/media`, multipart-upload the video using returned upload parameters, poll `GET /media/{media_id}` until success, then create the Pin with `source_type=video_id`, `media_id`, and a valid `cover_image_url`. citeturn0search0
+
+The application handoff from Cloudinary has been changed to stream the video rather than buffer the entire asset in memory. This is source-level hardening only; it does not constitute provider runtime verification.
+
+Current verification status remains:
+- Standard Access: granted;
+- image Pin live verification: pending;
+- video Pin live verification: pending;
+- current-build end-to-end video verification: required before production readiness.
