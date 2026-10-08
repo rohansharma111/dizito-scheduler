@@ -624,3 +624,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 ## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
 
 - Migration 019 was approved and applied to the Neon production/default branch after isolated-branch verification. Added encrypted credential columns to social_accounts and oauth_page_selections without transforming/deleting existing values. OAuth callbacks, Meta/Pinterest/Google selection flows, and Pinterest token refresh now dual-write encrypted credentials; scheduler, account health, and temporary OAuth selection reads prefer encrypted values with legacy fallback. No destructive DB operation was performed. Runtime OAuth/provider verification and CI remain pending.
+
+## 2026-10-08 — Guarded social credential backfill preparation
+
+- Added `scripts/backfill-social-credentials.mjs` and the `db:backfill-social-credentials` package command.
+- The script uses the same AES-256-GCM v1 payload format, requires `DATABASE_URL` and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY`, serializes work under a PostgreSQL advisory lock, updates only missing encrypted fields, and never prints credential values.
+- It verifies that no credential-bearing rows remain plaintext-only before reporting success.
+- **Execution status:** not run. The deployment/runtime encryption key cannot be inspected via the available GitHub integration; no secret value was requested or exposed.
+- Existing Neon verification remains 2 legacy social-account rows and 0 encrypted rows. No destructive operation or merge performed.
