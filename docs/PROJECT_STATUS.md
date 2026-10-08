@@ -774,3 +774,13 @@ Important rollout boundary:
 - Razorpay provider mappings intentionally remain unpopulated until real Razorpay plan IDs are configured;
 - Razorpay live checkout/webhook/provider verification remains external and is not claimed complete;
 - branch tests/typecheck/build still require verification before merge.
+
+
+## 2026-10-08 — Workstream B billing correctness + disposable migration verification
+
+- **Status:** Implemented; not production-applied.
+- Corrected subscription lookup so expired `payment_failed`/`grace_period` subscriptions no longer count as active; only an unexpired grace period retains paid access.
+- Reworked subscription updates to distinguish omitted fields from explicit NULL, allowing cancellation and lifecycle transitions to clear nullable state such as pending plan changes/grace-period fields deterministically.
+- Plan-change persistence now clears stale pending-plan state and explicitly removes scheduled cancellation state when switching back to a paid plan.
+- Re-ran the V1 migration through Neon’s disposable migration flow on an isolated temporary branch. Validation confirmed all five catalog plans, ten entitlement values per plan, the three new subscription columns, and legacy subscription backfill behavior. The temporary branch was then discarded; the default/live branch was not changed.
+- No Razorpay plan IDs were added. Provider mapping remains an explicit configuration dependency.
