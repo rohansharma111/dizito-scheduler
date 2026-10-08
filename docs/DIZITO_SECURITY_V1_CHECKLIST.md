@@ -181,8 +181,8 @@ Implemented in v1/security-audit:
 - OAuth-state regression tests.
 
 Open before launch:
-- [ ] Upgrade Next.js 16.2.7 to patched 16.3.8 and regenerate package-lock.
+- [x] Align Next.js and eslint-config-next to patched 16.3.8; npm ci succeeds with the matching lockfile. Full CI/runtime verification remains pending.
 - [ ] Migrate legacy social OAuth tokens from plaintext storage to application-encrypted storage.
 - [ ] Add distributed rate limiting for abuse-sensitive endpoints.
 - [ ] Complete DNS-aware SSRF/egress controls for arbitrary commerce store hosts.
-- [ ] Add file magic-byte/content validation if hostile uploads are in scope.
+- [ ] Add file magic-byte/content validation if hostile uploads are in scope (no detector dependency is currently installed; do not hand-edit the lockfile).
