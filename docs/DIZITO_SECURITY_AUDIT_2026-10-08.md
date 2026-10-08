@@ -94,15 +94,17 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - OAuth-state regression tests.
 
 ### Runtime verified
-- **Not yet verified in a running environment.**
-- Repository CI uses npm ci, npm test, lint, and build; this audit branch has not been merged or deployed.
+- CI `npm ci` now succeeds on the security branch with Node 22 and Next.js 16.3.8 manifest/lockfile alignment.
+- Full CI is **not green**: lint fails on 238 repository-wide errors, predominantly pre-existing `no-explicit-any` debt; test suite reports 7 existing commerce/reconciliation failures outside the security patch.
+- The security recovery endpoint's newly introduced `any` lint error was corrected before the latest CI run.
+- No production deployment/runtime exercise has been performed.
 
 ### Externally verified
 - Next.js security advisories/release status were checked against current public Next.js/GitHub advisory information.
 - Provider live OAuth, webhook delivery, upload, and commerce API behavior were not externally exercised.
 
 ### Remaining risks
-- P0: CI verification must confirm the Next.js 16.3.8 manifest/lockfile reconciliation and Node 22 runtime.
+- CI remains non-green due to pre-existing repository-wide lint/test debt; security-specific runtime behavior still needs targeted execution.
 - P1: plaintext legacy social token storage.
 - P1: distributed rate limiting.
 - P1 residual: DNS-level SSRF/egress controls.
