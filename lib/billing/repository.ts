@@ -132,8 +132,11 @@ export async function getActiveSubscriptionForUser(
     `SELECT * FROM subscriptions
      WHERE user_id = $1
        AND (
-         status IN ('created','authenticated','active','pending','paused','payment_failed','grace_period')
-         OR (status IN ('payment_failed','grace_period') AND grace_period_until > NOW())
+         status IN ('created','authenticated','active','pending','paused')
+         OR (
+           status IN ('payment_failed','grace_period')
+           AND grace_period_until > NOW()
+         )
        )
      ORDER BY id DESC LIMIT 1`,
     [userId],
@@ -163,47 +166,42 @@ export async function updateSubscription(
   },
   client?: PoolClient,
 ) {
+  const fields: Array<[string, unknown]> = [
+    ["status", updates.status],
+    ["provider_customer_id", updates.providerCustomerId],
+    ["trial_start_at", updates.trialStartAt],
+    ["trial_end_at", updates.trialEndAt],
+    ["current_period_start", updates.currentPeriodStart],
+    ["current_period_end", updates.currentPeriodEnd],
+    ["cancel_at_period_end", updates.cancelAtPeriodEnd],
+    ["cancelled_at", updates.cancelledAt],
+    ["ended_at", updates.endedAt],
+    ["metadata", updates.metadata],
+    ["payment_failed_at", updates.paymentFailedAt],
+    ["grace_period_until", updates.gracePeriodUntil],
+    ["billing_plan_id", updates.billingPlanId],
+    ["pending_billing_plan_id", updates.pendingBillingPlanId],
+    ["plan_change_at", updates.planChangeAt],
+    ["plan", updates.plan],
+  ].filter(([, value]) => value !== undefined);
+
+  const values: unknown[] = [];
+  const setClauses = fields.map(([column, value]) => {
+    values.push(value);
+    return `${column} = $${values.length}`;
+  });
+
+  values.push(providerSubscriptionId);
+  const providerIdParam = values.length;
+
   const result = await db(client).query(
-    `UPDATE subscriptions SET
-       status = COALESCE($2,status),
-       provider_customer_id = COALESCE($3,provider_customer_id),
-       trial_start_at = COALESCE($4,trial_start_at),
-       trial_end_at = COALESCE($5,trial_end_at),
-       current_period_start = COALESCE($6,current_period_start),
-       current_period_end = COALESCE($7,current_period_end),
-       cancel_at_period_end = COALESCE($8,cancel_at_period_end),
-       cancelled_at = COALESCE($9,cancelled_at),
-       ended_at = COALESCE($10,ended_at),
-       metadata = COALESCE($11,metadata),
-       payment_failed_at = COALESCE($12,payment_failed_at),
-       grace_period_until = COALESCE($13,grace_period_until),
-       billing_plan_id = COALESCE($14,billing_plan_id),
-       pending_billing_plan_id = COALESCE($15,pending_billing_plan_id),
-       plan_change_at = COALESCE($16,plan_change_at),
-       plan = COALESCE($17,plan),
-       updated_at = NOW()
-     WHERE provider_subscription_id = $1
+    `UPDATE subscriptions
+     SET ${setClauses.join(", ")}, updated_at = NOW()
+     WHERE provider_subscription_id = $${providerIdParam}
      RETURNING *`,
-    [
-      providerSubscriptionId,
-      updates.status,
-      updates.providerCustomerId,
-      updates.trialStartAt,
-      updates.trialEndAt,
-      updates.currentPeriodStart,
-      updates.currentPeriodEnd,
-      updates.cancelAtPeriodEnd,
-      updates.cancelledAt,
-      updates.endedAt,
-      updates.metadata,
-      updates.paymentFailedAt,
-      updates.gracePeriodUntil,
-      updates.billingPlanId,
-      updates.pendingBillingPlanId,
-      updates.planChangeAt,
-      updates.plan,
-    ],
+    values,
   );
+
   return result.rows[0] as SubscriptionRecord | undefined;
 }
 
@@ -212,14 +210,18 @@ export async function cancelSubscription(
   cancelledAt: Date = new Date(),
   client?: PoolClient,
 ) {
-  return updateSubscription(providerSubscriptionId, {
-    status: "cancelled",
-    cancelledAt,
-    endedAt: cancelledAt,
-    cancelAtPeriodEnd: false,
-    pendingBillingPlanId: null,
-    planChangeAt: cancelledAt,
-  }, client);
+  return updateSubscription(
+    providerSubscriptionId,
+    {
+      status: "cancelled",
+      cancelledAt,
+      endedAt: cancelledAt,
+      cancelAtPeriodEnd: false,
+      pendingBillingPlanId: null,
+      planChangeAt: cancelledAt,
+    },
+    client,
+  );
 }
 
 export async function deleteSubscription(id: number, client?: PoolClient) {
