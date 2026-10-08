@@ -878,3 +878,10 @@ Important rollout boundary:
 - The endpoint now resolves encrypted OAuth selection credentials through the shared resolver, safely handles absent/malformed board payloads, and no longer exposes raw internal error text.
 - Commit: 97b15eec8630b2685d9286d0954d50a40004c3b3.
 - Required next gate: deploy current main, ensure SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY is present, then retry Pinterest OAuth → board selection and verify encrypted credential metadata only.
+
+## 2026-10-08 — Workstream D Pinterest encryption-version write hardening
+
+- Pinterest connect/reconnect now explicitly persists `credential_encryption_version = 'v1'` whenever encrypted social credentials are written.
+- This closes the metadata consistency gap found during the first successful encrypted Pinterest connection.
+- Commit: `7da79919c4b5518e9170f8afd6f1e174ae57e15c`.
+- Existing production Pinterest account was already normalized to `v1`; no credential values were read.
