@@ -191,3 +191,8 @@ Open before launch:
 ### 2026-10-08 continuation
 - [x] Removed unused unauthenticated LinkedIn token-exchange proxy; canonical LinkedIn OAuth callback is authenticated and state-bound.
 - [ ] Legacy social OAuth token columns still require additive application-encrypted migration.
+
+
+### 2026-10-08 continuation
+- [x] Pinterest and Google Business OAuth callbacks use shared constant-time state verification.
+- [ ] Legacy social OAuth token migration remains pending; no schema-only encryption migration was introduced.
