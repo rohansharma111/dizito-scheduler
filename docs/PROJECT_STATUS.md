@@ -907,3 +907,10 @@ Important rollout boundary:
 - Updated `/api/account-selection` to use `resolveOAuthSelectionCredentials(...)`, decrypt the encrypted page payload, safely handle missing/malformed selection data, and avoid exposing raw internal errors.
 - Commit: `92c8bf25aec9d8881b6c9afc2ac096c5efba6d4f`.
 - This is the Meta equivalent of the previously fixed Pinterest encrypted board-selection read issue. Deployment of this commit is required before the browser flow can be re-tested.
+
+## 2026-10-08 — Workstream D Meta connect encrypted-selection parsing fix
+
+- Meta account selection successfully loaded after the encrypted-read fix, but `/api/meta/connect-pages` returned HTTP 500 because the decrypted `pages_encrypted` payload is a JSON string and the endpoint attempted `pages.find(...)` before parsing it.
+- Updated the endpoint to parse and validate the decrypted page-selection payload before iterating, with a safe invalid-session response.
+- Commit: `c6d1d74f0ab5d78faa98dbe8981dddfc2799a86d`.
+- This is another migration-read compatibility fix; no credential values were read or logged.
