@@ -1,3 +1,11 @@
+## 2026-10-09 — Workstream D migration 023 production application
+
+- Migration `023_api_rate_limits.sql` was explicitly authorized and applied to Neon project `purple-wildflower-87394884`, database `neondb`, production branch `br-empty-rice-ayeuugek`.
+- The prepared migration `3afcd733-c0e6-46a7-990d-b794eb03cc79` was completed with `apply_changes: true`; its temporary validation branch was deleted after successful application.
+- Read-only production verification confirms `public.api_rate_limits` exists, `api_rate_limits_updated_at_idx` exists, all 4 expected columns are present and NOT NULL, and the table contains 0 rows immediately after migration.
+- No application data was modified beyond the additive schema objects in migration 023. No destructive SQL or provider mutation was performed.
+- The distributed rate-limit runtime paths still require application deployment/merge and runtime verification; schema application alone does not establish end-to-end limiter enforcement.
+
 ## 2026-10-09 — Workstream D deployment-readiness checkpoint
 
 - Production Neon (purple-wildflower-87394884, default branch production) was inspected read-only for the security deployment boundary.
