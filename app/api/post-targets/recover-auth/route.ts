@@ -6,12 +6,13 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json() as unknown;
+    const payload = body && typeof body === "object" ? body as Record<string, unknown> : {};
     const session = await getServerSession(authOptions);
     const internalSecret = request.headers.get("x-dizito-internal-secret");
     const configuredSecret = process.env.NEXTAUTH_SECRET;
-    const sessionUserId = session?.user ? Number((session.user as any).id) : null;
-    const internalUserId = Number(body.userId);
+    const sessionUserId = session?.user?.id ? Number(session.user.id) : null;
+    const internalUserId = Number(payload.userId);
     const isInternal = Boolean(configuredSecret && internalSecret === configuredSecret);
 
     if (!sessionUserId && !isInternal) {
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!body.socialAccountId) {
+    if (!payload.socialAccountId) {
       return Response.json(
         {
           error: "socialAccountId required",
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const socialAccountId = Number(body.socialAccountId);
+    const socialAccountId = Number(payload.socialAccountId);
 
     /*
       Find auth failures
