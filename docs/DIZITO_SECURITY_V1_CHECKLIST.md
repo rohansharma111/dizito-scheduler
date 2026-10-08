@@ -207,3 +207,9 @@ Open before launch:
 - [ ] Additive encrypted columns and dual-write migration.
 - [ ] Encrypted-first dual-read and migration-on-read.
 - [ ] Verify migration coverage and remove legacy plaintext columns only after rollback/readiness checks.
+
+### Scheduler credential-boundary regression
+
+- [x] Scheduler `social_accounts` lookup is tenant-scoped to the owning post user.
+- [x] Regression test covers foreign-tenant account rejection before publisher invocation.
+- [ ] CI/runtime execution of this regression remains pending; no workflow run was observed for the fix commits in this checkpoint.
