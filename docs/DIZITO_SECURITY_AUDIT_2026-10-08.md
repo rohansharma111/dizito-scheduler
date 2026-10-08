@@ -183,3 +183,13 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Post-delete verification: 0 remaining rows for those account IDs, 0 remaining dependent targets, and 0 total `social_accounts` rows.
 - No OAuth selection rows existed.
 - This was an explicitly authorized destructive data operation; no other social-account rows existed at the time of deletion.
+
+
+## 2026-10-08 — Post-cleanup security continuation
+
+- Neon production/default branch was rechecked after the explicitly authorized legacy social-account deletion: social_accounts = 0 and oauth_page_selections = 0; no current credential backfill is required.
+- Follow-up source audit fixed a Pinterest account-health refresh parameter-binding defect, corrected the LinkedIn reconnect account/user parameter binding, and added the missing social-credential encryption import used by the refresh path.
+- Provider publisher errors were hardened so Facebook, Instagram, LinkedIn, and Pinterest no longer return raw provider error bodies through thrown errors; failures retain HTTP status context only.
+- Meta's no-Pages error response no longer returns raw Page discovery provider payloads to the browser; only counts and the discovery source are exposed.
+- These changes are source-level hardening; no live provider mutation or full CI pass is claimed.
+- Remaining P1s: distributed/serverless-safe rate limiting, DNS-aware SSRF/network egress enforcement, full media processing isolation, production secret-rotation verification, and runtime/provider verification.
