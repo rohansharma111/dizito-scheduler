@@ -967,3 +967,10 @@ Important rollout boundary:
 - Added regression coverage for private DNS resolution and provider-controlled error leakage.
 - Residual DNS rebinding risk remains because preflight and connection are separate; deployment-level egress policy is still the definitive control.
 - No production migration or destructive operation performed.
+
+## 2026-10-09 — Workstream D media completion boundary hardening
+
+- Hardened MediaService.completeDirectUpload() so a direct-upload completion cannot persist a Cloudinary resource unless its public ID is under the authenticated user's users/<userId>/ folder, its Cloudinary resource_type matches the declared MIME class, its returned format matches an allowlisted MIME/format pair, and its reported byte size is positive.
+- Added lib/media/service.test.ts covering valid completion plus ownership, resource-type, format, and size mismatch rejection.
+- Confirmed the application does not execute server-side video codecs/FFmpeg on uploaded video; video processing remains delegated to Cloudinary's managed media boundary.
+- This is source-level hardening only. No production migration, destructive operation, or live provider mutation was performed. Fresh CI evidence remains required.
