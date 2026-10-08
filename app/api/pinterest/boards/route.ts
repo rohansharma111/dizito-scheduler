@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { resolveOAuthSelectionCredentials } from "@/lib/security/social-oauth-selection";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -21,7 +22,7 @@ export async function GET() {
   try {
     const result = await pool.query(
       `
-      SELECT pages
+      SELECT *
       FROM oauth_page_selections
       WHERE user_id = $1
       ORDER BY id DESC
@@ -41,21 +42,37 @@ export async function GET() {
       );
     }
 
-    const payload =
-      typeof result.rows[0].pages === "string"
-        ? JSON.parse(result.rows[0].pages)
-        : result.rows[0].pages;
+    const oauthData = resolveOAuthSelectionCredentials(result.rows[0]);
 
-    return Response.json(payload.boards ?? []);
+    if (!oauthData.pages) {
+      return Response.json([]);
+    }
+
+    let payload: { boards?: unknown[] };
+
+    try {
+      payload =
+        typeof oauthData.pages === "string"
+          ? JSON.parse(oauthData.pages)
+          : oauthData.pages;
+    } catch {
+      return Response.json(
+        {
+          error: "Pinterest board session is invalid.",
+        },
+        {
+          status: 502,
+        },
+      );
+    }
+
+    return Response.json(Array.isArray(payload?.boards) ? payload.boards : []);
   } catch (error) {
     console.error("Pinterest boards error:", error);
 
     return Response.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load Pinterest boards.",
+        error: "Failed to load Pinterest boards.",
       },
       {
         status: 500,
