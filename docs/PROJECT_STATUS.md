@@ -779,3 +779,10 @@ These define the launch gates and the multi-chat ownership model.
 - Capability formatting was cleaned without changing the fail-closed verification rules.
 - No GitHub Actions workflow run is available for the current workstream commit, so tests/type-check/lint/build remain unclaimed.
 - The Neon media migration remains intentionally unapplied from this workstream.
+
+
+## Workstream C — Scheduler media projection hardening — 2026-10-08
+
+- Scheduler target loading now passes media type, duration, poster URL, processing state, upload protocol, processing error and metadata into publisher context.
+- The media join is tenant-scoped and excludes soft-deleted assets, preventing a stale/cross-tenant media row from becoming publishable through scheduler context.
+- Added regression coverage documenting Facebook video's intentionally fail-closed capability state.
