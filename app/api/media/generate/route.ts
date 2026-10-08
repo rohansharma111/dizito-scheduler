@@ -10,6 +10,7 @@ import { getCurrentUsage } from "@/lib/usage/getCurrentUsage";
 import { incrementAIImagesGenerated } from "@/lib/usage/incrementAIImagesGenerated";
 
 import { getPlan, canGenerateAIImage } from "@/lib/plans";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
         },
       );
     }
+
+    const rateLimit = await consumeRateLimit({ bucket: "ai:image", identifier: `user:${session.user.id}`, limit: 10, windowSeconds: 60 });
+    if (!rateLimit.allowed) return NextResponse.json({ success: false, error: "Too many AI image requests. Please try again shortly." }, { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } });
 
     const body = await request.json();
 
