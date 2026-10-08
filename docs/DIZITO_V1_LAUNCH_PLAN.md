@@ -381,3 +381,10 @@ Still required before launch:
 - Run focused media tests plus repository type-check/lint/build.
 - Perform controlled runtime verification for supported video workflows.
 - Do not treat provider-access approval as equivalent to runtime publish verification.
+
+### Phase E.3 — Media/video post-edit boundary hardening — 2026-10-08
+
+- Post editing now uses the same media lifecycle rules as creation: tenant ownership, non-deleted asset and `ready` processing state are required.
+- Explicit media clearing is supported without treating an omitted `mediaId` as a clear operation.
+- Post detail media reads are tenant-scoped and exclude soft-deleted assets.
+- Remaining gates are unchanged: apply the additive media migration, run focused tests/type-check/lint/build, and perform controlled provider runtime verification.
