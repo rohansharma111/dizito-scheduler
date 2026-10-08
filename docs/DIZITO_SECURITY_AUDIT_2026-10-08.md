@@ -147,3 +147,11 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` with the safe additive dual-read/dual-write migration sequence.
 - No schema migration, backfill, plaintext-column removal, or destructive DB change was introduced.
 - Status remains **P1 deferred / migration-sensitive** until the application credential boundary is implemented and verified.
+
+## Scheduler tenant-boundary follow-up
+
+- **P1 identified and fixed:** `lib/scheduler/processTarget.ts` previously loaded `social_accounts` by account ID alone before publishing. The lookup now requires both `social_accounts.id = $1` and `social_accounts.user_id = $2`, with the post owner supplied as `$2`.
+- **Regression coverage added:** `lib/scheduler/processTarget.test.ts` verifies the tenant-scoped query parameters and verifies that a foreign-tenant account result prevents publishing.
+- This protects the credential-bearing publisher context even if a malformed or cross-tenant `post_targets` relationship reaches the scheduler.
+- No database migration was required or performed.
+- GitHub Actions for the two fix commits returned no workflow runs; therefore this change is **source-implemented but not CI/runtime verified** in this checkpoint.
