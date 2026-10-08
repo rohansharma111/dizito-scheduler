@@ -192,6 +192,7 @@ export async function POST(request: Request) {
             access_token_encrypted = $2,
             refresh_token = NULL,
             refresh_token_encrypted = COALESCE($3, refresh_token_encrypted),
+            credential_encryption_version = 'v1',
             token_expires_at = CASE
               WHEN $4 IS NULL THEN token_expires_at
               ELSE $4
@@ -301,6 +302,7 @@ export async function POST(request: Request) {
             access_token_encrypted,
             refresh_token,
             refresh_token_encrypted,
+            credential_encryption_version,
             token_expires_at,
             board_id,
     pinterest_profile_id,
@@ -314,6 +316,7 @@ export async function POST(request: Request) {
             $3,
             NULL,
             $4,
+            'v1',
             $5,
             $6,
             $7,
