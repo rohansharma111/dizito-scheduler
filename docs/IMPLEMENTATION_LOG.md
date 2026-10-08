@@ -610,3 +610,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Removed raw provider response/error logging from Facebook, Instagram, LinkedIn, Pinterest, and Google Business publishers.
 - OAuth token-exchange error responses for Meta and LinkedIn were also redacted in prior security commits.
 - Runtime/CI verification remains pending.
+
+## 2026-10-08 — Workstream D encrypted-first social credential seam
+
+- **Status:** Implemented source-level; runtime/CI verification pending.
+- Added an encrypted-first compatibility resolver for social_accounts credentials and wired it into scheduler publishing and account-health checks.
+- Added regression tests proving encrypted values take precedence, legacy plaintext values remain a temporary migration fallback, and malformed ciphertext fails closed.
+- Added additive migration 019_social_account_credential_encryption.sql; it is staged only and has not been applied to Neon.
+- Added a dual-write encryption helper and tests. Provider OAuth callback writes are intentionally not yet switched to new columns because deployment must apply the additive schema before application SQL references those columns.
+- Remaining work: apply migration under explicit approval, wire all OAuth/reconnect/refresh writes, migrate temporary OAuth selection credential material, then verify and retire plaintext fields.
+- No destructive database operation or merge performed.
