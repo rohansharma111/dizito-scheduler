@@ -612,3 +612,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Explicit null/empty media selection clears media; omitted `mediaId` preserves the existing association.
 - Post detail media joins are tenant-scoped and exclude soft-deleted media while exposing video lifecycle metadata.
 - Tests/lint/type-check/build and database/runtime verification remain pending.
+
+## 2026-10-08 — Pinterest large-video upload hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Replaced the Pinterest video publisher's full `arrayBuffer()` materialization with a streamed multipart request body.
+- Preserved Pinterest's documented sequence: register video upload, upload multipart media, poll media status, then create the Pin using `video_id` plus `cover_image_url`. citeturn0search0
+- Scheduler media projection now carries filename and video lifecycle metadata required by the publisher.
+- Created draft PR #50 for CI/review; no merge performed.
+- GitHub currently reports no workflow run/status for the latest head commit, so tests/lint/build remain unclaimed.
