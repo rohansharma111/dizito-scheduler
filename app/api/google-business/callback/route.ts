@@ -10,6 +10,7 @@ import { exchangeToken } from "@/lib/platforms/google-business/exchangeToken";
 import { getProfile } from "@/lib/platforms/google-business/getProfile";
 import { getLocations } from "@/lib/platforms/google-business/getLocations";
 import type { GoogleBusinessLocation } from "@/lib/platforms/google-business/types";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -112,14 +113,16 @@ export async function GET(request: Request) {
         UPDATE social_accounts
         SET
           access_token = $1,
-          refresh_token = $2,
+          access_token_encrypted = $2,
+          refresh_token = $3,
+          refresh_token_encrypted = $4,
           status = 'connected',
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
         WHERE id = $3 AND user_id = $4
         `,
-        [token.accessToken, token.refreshToken ?? null, account.id, userId],
+        [token.accessToken, encryptSocialCredential(token.accessToken), token.refreshToken ?? null, token.refreshToken ? encryptSocialCredential(token.refreshToken) : null, account.id, userId],
       );
 
       await createEvent(
@@ -184,8 +187,11 @@ export async function GET(request: Request) {
       (
         user_id,
         access_token,
+        access_token_encrypted,
         refresh_token,
+        refresh_token_encrypted,
         pages,
+        pages_encrypted,
         reconnect_account_id,
         reconnect_type,
         created_at
@@ -196,6 +202,7 @@ export async function GET(request: Request) {
         $2,
         $3,
         $4,
+        $5,
         NULL,
         NULL,
         NOW()
@@ -204,11 +211,17 @@ export async function GET(request: Request) {
       [
         userId,
         token.accessToken,
+        encryptSocialCredential(token.accessToken),
         token.refreshToken,
+        token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
         JSON.stringify({
           profile,
           locations,
         }),
+        encryptSocialCredential(JSON.stringify({
+          profile,
+          locations,
+        })),
       ],
     );
 
