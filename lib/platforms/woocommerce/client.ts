@@ -1,16 +1,41 @@
+import { isIP } from "node:net";
 import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getWooCommerceCredentials } from "@/lib/platforms/woocommerce/credentials";
 
 export interface WooCommerceClientConfig { storeUrl: string; consumerKey: string; consumerSecret: string; }
 
-export function normalizeWooCommerceStoreUrl(value: string) {
-  const normalized = value.trim().replace(/\/$/, "");
-  if (!/^https?:\/\//i.test(normalized)) throw new Error("WooCommerce store URL must start with http:// or https://");
-  const url = new URL(normalized);
-  if (!url.hostname) throw new Error("WooCommerce store URL is invalid");
-  return url.toString().replace(/\/$/, "");
+function isPrivateOrLocalHost(hostname: string) {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+  const ipVersion = isIP(host);
+  if (ipVersion === 4) {
+    const octets = host.split(".").map(Number);
+    const [a, b] = octets;
+    return a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127);
+  }
+  if (ipVersion === 6) {
+    return host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:");
+  }
+  return false;
 }
 
+export function normalizeWooCommerceStoreUrl(value: string) {
+  const normalized = value.trim().replace(/\/$/, "");
+  if (!/^https?:\/\//i.test(normalized)) {
+    throw new Error("WooCommerce store URL must start with http:// or https://");
+  }
+  const url = new URL(normalized);
+  if (!url.hostname || url.username || url.password) {
+    throw new Error("WooCommerce store URL is invalid");
+  }
+  if (isPrivateOrLocalHost(url.hostname)) {
+    throw new Error("WooCommerce store URL must use a public host");
+  }
+  if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
+    throw new Error("WooCommerce store URL must use HTTPS in production");
+  }
+  return url.toString().replace(/\/$/, "");
+}
 function getApiUrl(storeUrl: string, path: string) { return `${normalizeWooCommerceStoreUrl(storeUrl)}/wp-json/wc/v3/${path.replace(/^\//, "")}`; }
 function getAuthHeader(consumerKey: string, consumerSecret: string) { return `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")}`; }
 
