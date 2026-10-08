@@ -114,6 +114,7 @@ export async function GET(request: Request) {
         SET
           access_token = NULL,
           access_token_encrypted = $1,
+          credential_encryption_version = 'v1',
           refresh_token = NULL,
           refresh_token_encrypted = $2,
           status = 'connected',
