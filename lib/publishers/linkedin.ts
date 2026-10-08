@@ -67,7 +67,7 @@ async function publishLinkedInText(context: PublisherContext) {
 
   console.log("LINKEDIN TEXT STATUS:", response.status);
 
-  console.log("LINKEDIN TEXT RESPONSE:", raw);
+  console.log("LINKEDIN TEXT RESPONSE RECEIVED:", response.status);
 
   if (!response.ok) {
     throw new Error(raw);
