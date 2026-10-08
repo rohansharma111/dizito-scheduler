@@ -18,6 +18,30 @@
 
 # Dizito Implementation Log
 
+## 2026-10-08 — Workstream E marketing QA + CI checkpoint
+
+- **Branch:** `v1/marketing-qa-ci`
+- **Base:** current `main` at `c2fc3fe50c24493db21818b5a59f65a47a3b2087`.
+- **Focused regression coverage added:**
+  - review-gate bypass: scheduling rejects `planned` content and requires approval;
+  - malformed AI output: existing `lib/marketing/creator.test.ts` verifies malformed JSON fails closed;
+  - weekly approval: valid approval dispatch and duplicate approval conflict;
+  - variant provenance: content-item/post linkage preserves `variant_id` and rejects cross-tenant variants;
+  - attribution distinction: manual attributed value/model remain distinct from observed customer-action value;
+  - optimizer evidence: observed + manually attributed evidence and supporting experiment provenance are surfaced;
+  - optimizer disposition: duplicate proposals become `avoid`, directionally positive proposals become `refine` deterministically;
+  - tenant isolation: marketing content scheduling and variant-linking tests assert user-scoped reads and reject cross-tenant resources.
+- **Production code changed:** none in this QA pass; only focused test files were added.
+- **External/runtime evidence:** no GitHub Actions run/status was observed for the QA branch/PR at checkpoint time. Local command execution was unavailable in this environment because direct GitHub cloning/network access is unavailable. Therefore no TypeScript, lint, Vitest, build, or runtime-green claim is made.
+- **CI configuration inspected:** `.github/workflows/quality.yml` runs `npm test`, `npm run lint`, then `npm run build` on pushes to `main` and pull requests targeting `main`.
+- **Classification:**
+  - Implemented: marketing workflow foundations and focused regression tests described above.
+  - Test-verified: none from fresh execution in this chat; source-level test presence verified.
+  - Runtime-verified: not established.
+  - External-provider-verified: not part of this workstream; no new provider evidence.
+- **PR:** #48 (`QA: add marketing V1 regression coverage`), intentionally not merged.
+
+
 ## 2026-10-07 — Build/type repair and validation checkpoint
 
 - Current `main`: `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`.
@@ -31,7 +55,7 @@
 
 **Purpose:** chronological durable record of meaningful implementation, architecture, verification and scope decisions.  
 **Repository:** `rohansharma111/dizito-scheduler`  
-**Latest observed main:** `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`  
+**Latest observed main:** `c2fc3fe50c24493db21818b5a59f65a47a3b2087`  
 **Last refreshed:** 2026-10-07
 
 ## 2026-10-06 — Current-state consolidation
