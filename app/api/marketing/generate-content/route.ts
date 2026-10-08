@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateMarketingCopy } from "@/lib/marketing/creator";
 import { MARKETING_PLATFORMS } from "@/lib/marketing/contentVariants";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -14,6 +15,8 @@ export async function POST(request: Request) {
     if (platform && !(MARKETING_PLATFORMS as readonly string[]).includes(platform)) return Response.json({ error: "Unsupported platform" }, { status: 400 });
 
     const userId = Number((session.user as any).id);
+    const rateLimit = await consumeRateLimit({ bucket: "ai:creator", identifier: `user:${userId}`, limit: 20, windowSeconds: 60 });
+    if (!rateLimit.allowed) return Response.json({ error: "Too many AI generation requests. Please try again shortly." }, { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } });
     if (!Number.isInteger(userId) || userId <= 0) return Response.json({ error: "Invalid user" }, { status: 401 });
 
     const copy = await generateMarketingCopy(userId, {
