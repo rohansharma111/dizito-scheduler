@@ -234,7 +234,7 @@ async function publishLinkedInImage(context: PublisherContext) {
 
   console.log("LINKEDIN IMAGE STATUS:", postResponse.status);
 
-  console.log("LINKEDIN IMAGE RESPONSE:", raw);
+  console.log("LINKEDIN IMAGE RESPONSE RECEIVED:", postResponse.status);
 
   if (!postResponse.ok) {
     throw new Error(raw);
