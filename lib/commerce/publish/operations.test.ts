@@ -44,6 +44,7 @@ describe("commerce publish operation lifecycle", () => {
 
   it("trims and persists the confirmed external id", async () => {
     const query = vi.fn()
+      .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [{ id: "operation-1", status: "in_progress", listing_id: "listing-1", provider: "flipkart" }] })
       .mockResolvedValueOnce({ rows: [{ id: "listing-1", channel_id: "channel-1", external_id: null }] })
       .mockResolvedValueOnce({})
@@ -76,6 +77,7 @@ describe("commerce publish operation lifecycle", () => {
 
   it("does not allow a terminal success to be reopened", async () => {
     const query = vi.fn()
+      .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [] });
     mocks.connect.mockResolvedValue(makeTransactionClient(query));
 
