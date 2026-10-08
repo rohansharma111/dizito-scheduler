@@ -54,7 +54,7 @@ export async function publishToPinterest(context: PublisherContext) {
 
   console.log("PINTEREST STATUS:", response.status);
 
-  console.log("PINTEREST RESPONSE:", raw);
+  console.log("PINTEREST RESPONSE RECEIVED:", response.status);
 
   if (!response.ok) {
     throw new Error(raw);
