@@ -53,18 +53,10 @@ export async function discoverMetaPages(
   const accountsData = await accountsResponse.json();
 
   console.log("META /me/accounts STATUS:", accountsResponse.status);
-  console.log(
-    "META /me/accounts RESPONSE:",
-    JSON.stringify(accountsData, null, 2),
-  );
 
   if (!accountsResponse.ok) {
     throw new Error(
-      JSON.stringify({
-        type: "ME_ACCOUNTS_ERROR",
-        status: accountsResponse.status,
-        meta: accountsData,
-      }),
+      `Meta /me/accounts request failed with status ${accountsResponse.status}`,
     );
   }
 
@@ -99,10 +91,6 @@ export async function discoverMetaPages(
   console.log(
     "META /me/assigned_pages STATUS:",
     assignedPagesResponse.status,
-  );
-  console.log(
-    "META /me/assigned_pages RESPONSE:",
-    JSON.stringify(assignedPagesData, null, 2),
   );
 
   if (!assignedPagesResponse.ok) {
