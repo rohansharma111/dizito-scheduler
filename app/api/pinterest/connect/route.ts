@@ -188,13 +188,13 @@ export async function POST(request: Request) {
           UPDATE social_accounts
           SET
             account_name = $1,
-            access_token = $2,
-            access_token_encrypted = $3,
-            refresh_token = COALESCE($4, refresh_token),
-            refresh_token_encrypted = COALESCE($5, refresh_token_encrypted),
+            access_token = NULL,
+            access_token_encrypted = $2,
+            refresh_token = NULL,
+            refresh_token_encrypted = COALESCE($3, refresh_token_encrypted),
             token_expires_at = CASE
-              WHEN $5 IS NULL THEN token_expires_at
-              ELSE $5
+              WHEN $4 IS NULL THEN token_expires_at
+              ELSE $4
             END,
             status = 'connected',
             last_checked_at = NOW(),
@@ -205,9 +205,7 @@ export async function POST(request: Request) {
           `,
           [
             reconnectAccount.account_name,
-            accessToken,
             encryptSocialCredential(accessToken),
-            oauthData.refresh_token ?? null,
             oauthData.refresh_token ? encryptSocialCredential(oauthData.refresh_token) : null,
             oauthData.token_expires_at ?? null,
             reconnectAccountId,
@@ -326,9 +324,7 @@ export async function POST(request: Request) {
         [
           "pinterest",
           board.name,
-          accessToken,
           encryptSocialCredential(accessToken),
-          oauthData.refresh_token ?? null,
           oauthData.refresh_token ? encryptSocialCredential(oauthData.refresh_token) : null,
           oauthData.token_expires_at ?? null,
           board.id,
