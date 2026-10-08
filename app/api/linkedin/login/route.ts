@@ -1,3 +1,5 @@
+import { randomBytes } from "crypto";
+import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -21,9 +23,30 @@ export async function GET(request: Request) {
 
   const reconnectType = searchParams.get("type") ?? "account";
 
-  const state = reconnect
-    ? `reconnect:${reconnect}:${reconnectType}`
-    : "connect";
+  const state = randomBytes(32).toString("base64url");
+  const cookieStore = await cookies();
+
+  cookieStore.set("linkedin_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
+  cookieStore.set("linkedin_oauth_reconnect", reconnect ?? "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
+  cookieStore.set("linkedin_oauth_reconnect_type", reconnectType, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
 
   const clientId = process.env.LINKEDIN_CLIENT_ID;
 
