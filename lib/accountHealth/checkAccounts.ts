@@ -144,10 +144,10 @@ async function checkPinterestAccount(account: any) {
       `
       UPDATE social_accounts
       SET
-        access_token = $1,
-        access_token_encrypted = $2,
-        refresh_token = COALESCE($3, refresh_token),
-        refresh_token_encrypted = COALESCE($4, refresh_token_encrypted),
+        access_token = NULL,
+        access_token_encrypted = $1,
+        refresh_token = NULL,
+        refresh_token_encrypted = COALESCE($2, refresh_token_encrypted),
         token_expires_at = CASE
           WHEN $3 IS NULL THEN token_expires_at
           ELSE NOW() + ($3 * INTERVAL '1 second')
@@ -159,9 +159,7 @@ async function checkPinterestAccount(account: any) {
       WHERE id = $6
       `,
       [
-        token.accessToken,
         encryptSocialCredential(token.accessToken),
-        token.refreshToken ?? null,
         token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
         token.expiresIn ?? null,
         account.id,
