@@ -1,8 +1,12 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OpenAI configuration is missing");
+  }
+  return new OpenAI({ apiKey });
+}
 
 export interface GenerateImageInput {
   prompt: string;
@@ -28,7 +32,7 @@ export class ImageGenerator {
       throw new Error("Prompt is required");
     }
 
-    const response = await openai.images.generate({
+    const response = await getOpenAIClient().images.generate({
       model: "gpt-image-1",
 
       prompt,
