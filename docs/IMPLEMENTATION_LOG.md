@@ -744,3 +744,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Reviewed the current media-processing architecture: Dizito does not run FFmpeg or another local video codec/container parser; large video uploads use signed direct Cloudinary upload and provider-returned metadata. Therefore no local codec sandbox was introduced without an actual processing worker boundary to isolate.
 - Remaining deployment control: provider/container isolation is delegated to Cloudinary for the current architecture; if future local media transformation is introduced, it must run in an isolated worker/container with bounded resources and no tenant-controlled outbound network access.
 - No production migration or destructive operation performed.
+
+
+## 2026-10-09 — Workstream D CI regression follow-up
+
+- Fresh PR #55 CI completed red on merge ref 73adefc9...: Validate stopped at repository lint and Quality Checks stopped at Test.
+- Validate reported 316 repository lint problems (238 errors, 78 warnings), plus the rate-limit test parser error in that merge ref.
+- Quality Checks reported 11 failures, predominantly existing Commerce/Flipkart/WooCommerce lifecycle-test drift. The Workstream D-specific WooCommerce request test failed because its DNS mock was not hoisted under Vitest; the test is now using vi.hoisted(...).
+- Corrected the WooCommerce generic request failure path to redact provider-controlled response messages and return only a stable HTTP-status error.
+- Added the CI follow-up to persistent project status. PR #55 remains open/unmerged and requires a fresh CI run after these fixes.
