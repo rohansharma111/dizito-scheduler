@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { verifyOAuthState } from "@/lib/security/oauth-state";
 import { canConnectAccount } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 import {
   discoverMetaPages,
   getInstagramBusinessAccount,
@@ -264,10 +265,11 @@ export async function GET(request: Request) {
         UPDATE social_accounts
         SET
           access_token = $1,
+          access_token_encrypted = $2,
           updated_at = NOW()
         WHERE id = $2
         `,
-        [accessToken, existingAccount.id],
+        [accessToken, encryptSocialCredential(accessToken), existingAccount.id],
       );
 
       await createEvent(
@@ -314,11 +316,12 @@ export async function GET(request: Request) {
         UPDATE social_accounts
         SET
           access_token = $1,
-          page_id = $2,
+          access_token_encrypted = $2,
+          page_id = $3,
           updated_at = NOW()
         WHERE id = $3
         `,
-            [accessToken, page.id, existingAccount.id],
+            [accessToken, encryptSocialCredential(accessToken), page.id, existingAccount.id],
           );
 
           await createEvent(
@@ -394,7 +397,9 @@ export async function GET(request: Request) {
     (
       user_id,
       access_token,
+      access_token_encrypted,
       pages,
+      pages_encrypted,
       created_at
     )
     VALUES
@@ -402,10 +407,11 @@ export async function GET(request: Request) {
       $1,
       $2,
       $3,
+      $4,
       NOW()
     )
     `,
-    [userId, accessToken, JSON.stringify(enrichedPages)],
+    [userId, accessToken, encryptSocialCredential(accessToken), JSON.stringify(enrichedPages), encryptSocialCredential(JSON.stringify(enrichedPages))],
   );
 
   return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select/meta`);
