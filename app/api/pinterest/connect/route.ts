@@ -200,8 +200,8 @@ export async function POST(request: Request) {
             last_checked_at = NOW(),
             updated_at = NOW()
           WHERE
-            id = $6
-            AND user_id = $7
+            id = $5
+            AND user_id = $6
           `,
           [
             reconnectAccount.account_name,
