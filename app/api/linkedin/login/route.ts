@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,15 @@ export async function GET(request: Request) {
       },
     );
   }
+
+  const rateLimit = await checkRateLimit(request, {
+    scope: "oauth-initiation:linkedin",
+    limit: 10,
+    windowSeconds: 60,
+    userId: session.user.id,
+  });
+  const rateLimitError = rateLimitResponse(rateLimit);
+  if (rateLimitError) return rateLimitError;
 
   const { searchParams } = new URL(request.url);
 
