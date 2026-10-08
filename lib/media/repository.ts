@@ -20,10 +20,17 @@ export class MediaRepository {
         bytes,
         resource_type,
         folder,
-        tags
+        tags,
+        media_type,
+        duration_seconds,
+        poster_url,
+        processing_state,
+        upload_protocol,
+        processing_error,
+        metadata
       )
       VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20
       )
       RETURNING *
       `,
@@ -41,6 +48,13 @@ export class MediaRepository {
         data.resourceType,
         data.folder,
         data.tags,
+        data.resourceType === "video" ? "video" : "image",
+        data.durationSeconds ?? null,
+        data.posterUrl ?? null,
+        data.processingState ?? "ready",
+        data.uploadProtocol ?? "server_proxy",
+        data.processingError ?? null,
+        data.metadata ?? {},
       ],
     );
 
