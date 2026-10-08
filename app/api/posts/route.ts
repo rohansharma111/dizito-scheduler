@@ -7,6 +7,7 @@ import { createEvent } from "@/lib/events";
 import { getCurrentUsage } from "@/lib/usage/getCurrentUsage";
 import { incrementPostsCreated } from "@/lib/usage/incrementPostsCreated";
 import { startAccountHealthScheduler } from "@/scheduler/accountHealthScheduler";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 startScheduler();
 startAccountHealthScheduler();
@@ -84,6 +85,15 @@ export async function POST(request: Request) {
   }
 
   const userId = (session.user as any).id;
+
+  const rateLimit = await checkRateLimit(request, {
+    scope: "post-create",
+    limit: 30,
+    windowSeconds: 60,
+    userId,
+  });
+  const rateLimitError = rateLimitResponse(rateLimit);
+  if (rateLimitError) return rateLimitError;
 
   /*
     VALIDATE STATUS
