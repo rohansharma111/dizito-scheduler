@@ -4,6 +4,15 @@ import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_MEDIA_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
 
 export async function POST(request: Request) {
   try {
@@ -45,6 +54,18 @@ export async function POST(request: Request) {
         },
         {
           status: 400,
+        },
+      );
+    }
+
+    if (!ALLOWED_MEDIA_TYPES.has(file.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Only supported image and video media types may be uploaded",
+        },
+        {
+          status: 415,
         },
       );
     }
