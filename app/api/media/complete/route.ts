@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import { mediaService } from "@/lib/media/service";
+import { getUploadPolicy } from "@/lib/media/upload-policy";
 
 export async function POST(request: Request) {
   try {
@@ -33,6 +34,27 @@ export async function POST(request: Request) {
       resource_type: resourceType,
       type: "upload",
     });
+
+    const resourceFormat = String(resource.format ?? "").toLowerCase();
+    const allowedFormats =
+      resourceType === "video"
+        ? new Set(["mp4", "mov", "m4v"])
+        : new Set(["jpg", "jpeg", "png", "webp"]);
+
+    if (!allowedFormats.has(resourceFormat)) {
+      return NextResponse.json(
+        { success: false, error: "Uploaded media format is not supported" },
+        { status: 400 },
+      );
+    }
+
+    const policy = getUploadPolicy(body.mimeType, Number(resource.bytes ?? 0));
+    if (!policy.allowed || policy.resourceType !== resourceType) {
+      return NextResponse.json(
+        { success: false, error: policy.allowed ? "Uploaded media type mismatch" : policy.error },
+        { status: 400 },
+      );
+    }
 
     const media = await mediaService.completeDirectUpload({
       userId,
