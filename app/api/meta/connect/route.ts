@@ -4,7 +4,12 @@ import { cookies } from "next/headers";
 import { authOptions } from "@/lib/auth";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);\n  if (!session?.user) {\n    return Response.json({ error: "Unauthorized" }, { status: 401 });\n  }\n\n  const { searchParams } = new URL(request.url);
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
 
   /*
     reconnect=accountId
