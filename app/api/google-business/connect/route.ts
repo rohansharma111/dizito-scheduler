@@ -198,10 +198,10 @@ export async function POST(request: Request) {
           UPDATE social_accounts
           SET
             account_name = $1,
-            access_token = $2,
-            access_token_encrypted = $3,
-            refresh_token = $4,
-            refresh_token_encrypted = $5,
+            access_token = NULL,
+            access_token_encrypted = $2,
+            refresh_token = NULL,
+            refresh_token_encrypted = $3,
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
@@ -211,9 +211,7 @@ export async function POST(request: Request) {
           `,
           [
             reconnectAccount.account_name,
-            accessToken,
             encryptSocialCredential(accessToken),
-            refreshToken,
             refreshToken ? encryptSocialCredential(refreshToken) : null,
             reconnectAccountId,
             userId,
@@ -326,14 +324,14 @@ export async function POST(request: Request) {
           (
             $1,
             $2,
+            NULL,
             $3,
+            NULL,
             $4,
             $5,
             $6,
             $7,
-            $8,
-            $9,
-            $10
+            $8
           )
           RETURNING id
           `,
@@ -342,11 +340,7 @@ export async function POST(request: Request) {
 
           location.name,
 
-          accessToken,
-
           encryptSocialCredential(accessToken),
-
-          refreshToken,
 
           refreshToken ? encryptSocialCredential(refreshToken) : null,
 
