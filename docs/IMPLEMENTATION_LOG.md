@@ -593,3 +593,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Replaced direct Pinterest and Google Business OAuth state string comparisons with the shared constant-time verifier.
 - No schema or dependency changes.
 - Intentionally did not introduce a plaintext-token-to-encrypted-column migration without a proven dual-read/dual-write application path.
+
+
+## 2026-10-08 — Security audit: legacy social-token consumer inventory
+
+- **Status:** Source-level inventory/design complete; implementation and runtime verification pending.
+- Mapped plaintext social OAuth credential reads/writes across Meta/Instagram, LinkedIn, Pinterest, and Google Business.
+- Confirmed provider publishers, account-health checks, and scheduler account loading depend on the legacy credential fields.
+- Confirmed temporary OAuth selection rows are credential-bearing and Meta Page selection JSON can contain Page access-token material.
+- Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` defining the non-destructive additive encrypted-column, dual-read/dual-write migration sequence.
+- Deliberately did not introduce a schema migration or backfill before the application credential boundary exists.
