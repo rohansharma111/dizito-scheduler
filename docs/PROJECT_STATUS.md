@@ -952,3 +952,12 @@ Important rollout boundary:
 - Applied limits to high-cost AI Creator, weekly strategy, strategist, AI image generation, media upload, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation routes.
 - The limiter is intentionally serverless-safe and does not persist raw user identifiers.
 - Verification remains incomplete: repository Test/Lint workflows are still red; no production migration or runtime provider verification has been performed.
+
+
+## 2026-10-09 — Workstream D focused security continuation
+
+- Fixed the distributed rate-limit regression test syntax error in `lib/security/rate-limit.test.ts`.
+- Hardened Amazon product-type schema retrieval against SSRF by restricting schema fetches to HTTPS Amazon SP-API hosts and added regression coverage.
+- Added rate limiting to direct Cloudinary upload initialization/completion endpoints.
+- No production migration or destructive operation executed.
+- Workstream D remains not production-ready: fresh CI evidence is pending; repository-wide lint debt remains; DNS-aware egress/media-processing isolation and runtime/provider verification remain open.
