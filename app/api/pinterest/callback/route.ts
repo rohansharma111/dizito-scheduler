@@ -136,13 +136,13 @@ export async function GET(request: Request) {
         `
         UPDATE social_accounts
         SET
-          access_token = $1,
-          access_token_encrypted = $2,
-          refresh_token = COALESCE($3, refresh_token),
-          refresh_token_encrypted = COALESCE($4, refresh_token_encrypted),
+          access_token = NULL,
+          access_token_encrypted = $1,
+          refresh_token = NULL,
+          refresh_token_encrypted = COALESCE($2, refresh_token_encrypted),
           token_expires_at = CASE
-            WHEN $5 IS NULL THEN token_expires_at
-            ELSE NOW() + ($5 * INTERVAL '1 second')
+            WHEN $3 IS NULL THEN token_expires_at
+            ELSE NOW() + ($3 * INTERVAL '1 second')
           END,
           status = 'connected',
           health_status = 'healthy',
@@ -151,9 +151,7 @@ export async function GET(request: Request) {
         WHERE id = $6 AND user_id = $7
         `,
         [
-          token.accessToken,
           encryptSocialCredential(token.accessToken),
-          token.refreshToken ?? null,
           token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
           token.expiresIn ?? null,
           account.id,
@@ -237,11 +235,11 @@ export async function GET(request: Request) {
       VALUES
       (
         $1,
+        NULL,
         $2,
+        NULL,
         $3,
         $4,
-        $5,
-        $6,
         $7,
         $8,
         NULL,
@@ -251,17 +249,12 @@ export async function GET(request: Request) {
       `,
       [
         userId,
-        token.accessToken,
         encryptSocialCredential(token.accessToken),
-        token.refreshToken ?? null,
         token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
         token.expiresIn
           ? new Date(Date.now() + Number(token.expiresIn) * 1000)
           : null,
-        JSON.stringify({
-          profile,
-          boards,
-        }),
+        NULL,
         encryptSocialCredential(JSON.stringify({
           profile,
           boards,
