@@ -53,7 +53,7 @@ describe("reconcileFlipkartPublishOperation", () => {
       externalIdConfirmed: true,
       externalId: "FK-123",
     });
-    expect(mocks.markSucceeded).toHaveBeenCalledWith(7, "operation-1", "FK-123");
+    expect(mocks.markSucceeded).toHaveBeenCalledWith(7, "operation-1", "FK-123", "listing-1", "flipkart");
   });
 
   it("never treats a caller-supplied external id as provider confirmation", async () => {
