@@ -17,11 +17,13 @@ export async function failPayment(payload: RazorpayWebhookPayload) {
     throw new Error("Payment failure payload does not identify a subscription");
   }
 
-  const subscription = subscriptionEntity
-    ? subscriptionEntity
-    : await BillingRepository.getSubscriptionByProviderId(providerSubscriptionId);
+  const subscriptionRecord = await BillingRepository.getSubscriptionByProviderId(
+    providerSubscriptionId,
+  );
 
-  if (!subscription) throw new Error("Subscription not found");
+  if (!subscriptionEntity && !subscriptionRecord) {
+    throw new Error("Subscription not found");
+  }
 
   const now = new Date();
   const gracePeriodUntil = new Date(
@@ -31,7 +33,7 @@ export async function failPayment(payload: RazorpayWebhookPayload) {
   const result = await syncSubscription({
     providerSubscriptionId,
     status: "grace_period",
-    providerCustomerId: subscriptionEntity?.customer_id ?? subscription.provider_customer_id,
+    providerCustomerId: subscriptionEntity?.customer_id ?? subscriptionRecord?.provider_customer_id ?? null,
     paymentFailedAt: now,
     gracePeriodUntil,
     metadata: payload,
