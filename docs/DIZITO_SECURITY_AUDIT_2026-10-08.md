@@ -249,3 +249,14 @@ Important: this is source-implemented only. No production deployment or live pro
 - Rate limits are applied to high-cost AI generation, AI image generation, media uploads, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation.
 - No destructive migration or production backfill was executed. The existing social-credential backfill/retirement process remains a deployment prerequisite for legacy rows.
 - PR #55 contains the implementation. CI remains non-green because the repository's Test and Lint workflows still fail; this work is therefore not marked production-ready.
+
+
+## 2026-10-09 — Workstream D focused regression continuation
+
+- Fixed a security-test regression introduced by the distributed rate limiter: lib/security/rate-limit.test.ts was missing the closing ); for its test suite. The correction is committed on the security branch.
+- Added an SSRF boundary around Amazon product-type schema retrieval. Schema URLs are now parsed and accepted only over HTTPS from the known Amazon SP-API hosts: sellingpartnerapi-na.amazon.com, sellingpartnerapi-eu.amazon.com, and sellingpartnerapi-fe.amazon.com. Non-Amazon, plaintext HTTP, and metadata-service-style URLs are rejected before network access.
+- Added regression coverage for the Amazon schema-fetch SSRF boundary.
+- Added distributed rate limiting to the signed direct-media upload initialization and completion endpoints in addition to the existing upload/generation limits.
+- No production database migration or destructive data operation was executed in this continuation.
+- CI remains a repository-wide issue: the previous Validate run exposed 238 lint errors and 78 warnings across unrelated existing files, plus the rate-limit test syntax error fixed above. A fresh post-fix workflow result is required before claiming the branch is CI-green.
+- Remaining security focus: true DNS-aware/network-egress enforcement for any user-influenced outbound HTTP, media codec/container processing isolation, production secret-rotation/incident-response verification, and runtime/provider verification.
