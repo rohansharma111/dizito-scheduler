@@ -1,4 +1,5 @@
 import { isIP } from "node:net";
+import { lookup } from "node:dns/promises";
 import { getCommerceChannelById, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getWooCommerceCredentials } from "@/lib/platforms/woocommerce/credentials";
 
@@ -36,6 +37,14 @@ export function normalizeWooCommerceStoreUrl(value: string) {
   }
   return url.toString().replace(/\/$/, "");
 }
+async function assertPublicDnsResolution(storeUrl: string) {
+  const url = new URL(normalizeWooCommerceStoreUrl(storeUrl));
+  const addresses = await lookup(url.hostname, { all: true, verbatim: true });
+  if (!addresses.length || addresses.some(({ address }) => isPrivateOrLocalHost(address))) {
+    throw new Error("WooCommerce store URL resolves to a private or local network address");
+  }
+}
+
 function getApiUrl(storeUrl: string, path: string) { return `${normalizeWooCommerceStoreUrl(storeUrl)}/wp-json/wc/v3/${path.replace(/^\//, "")}`; }
 function getAuthHeader(consumerKey: string, consumerSecret: string) { return `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")}`; }
 
@@ -45,7 +54,20 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
   headers.set("Authorization", getAuthHeader(config.consumerKey, config.consumerSecret));
   headers.set("Accept", "application/json");
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const response = await fetch(getApiUrl(config.storeUrl, path), { ...init, headers, cache: "no-store" });
+  await assertPublicDnsResolution(config.storeUrl);
+  const controller = init.signal ? null : new AbortController();
+  const timeout = controller ? setTimeout(() => controller.abort(), 15_000) : null;
+  let response: Response;
+  try {
+    response = await fetch(getApiUrl(config.storeUrl, path), { ...init, headers, signal: init.signal ?? controller?.signal, cache: "no-store" });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("WooCommerce request timed out after 15000ms");
+    }
+    throw error;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
   const text = await response.text();
   let body: unknown = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
