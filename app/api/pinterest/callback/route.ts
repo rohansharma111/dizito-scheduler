@@ -141,14 +141,14 @@ export async function GET(request: Request) {
           refresh_token = COALESCE($3, refresh_token),
           refresh_token_encrypted = COALESCE($4, refresh_token_encrypted),
           token_expires_at = CASE
-            WHEN $3 IS NULL THEN token_expires_at
-            ELSE NOW() + ($3 * INTERVAL '1 second')
+            WHEN $5 IS NULL THEN token_expires_at
+            ELSE NOW() + ($5 * INTERVAL '1 second')
           END,
           status = 'connected',
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
-        WHERE id = $4 AND user_id = $5
+        WHERE id = $6 AND user_id = $7
         `,
         [
           token.accessToken,
@@ -229,6 +229,7 @@ export async function GET(request: Request) {
         refresh_token_encrypted,
         token_expires_at,
         pages,
+        pages_encrypted,
         reconnect_account_id,
         reconnect_type,
         created_at
@@ -241,6 +242,7 @@ export async function GET(request: Request) {
         $4,
         $5,
         $6,
+        $7,
         NULL,
         NULL,
         NOW()
@@ -259,6 +261,10 @@ export async function GET(request: Request) {
           profile,
           boards,
         }),
+        encryptSocialCredential(JSON.stringify({
+          profile,
+          boards,
+        })),
       ],
     );
 
