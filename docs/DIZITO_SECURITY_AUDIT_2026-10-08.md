@@ -166,3 +166,11 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 ## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
 
 - Migration 019 is now applied to the Neon production/default branch after isolated-branch validation. The migration is additive only: encrypted columns were added to social_accounts and oauth_page_selections; no existing credential values were transformed or deleted. Meta, LinkedIn, Pinterest, and Google Business OAuth/account-selection paths now dual-write encrypted credential values, and scheduler/account-health/OAuth-selection reads prefer encrypted values with legacy fallback. Current Neon row-count verification found no existing encrypted rows because the current database has no active temporary OAuth selection rows and the two existing social accounts predate the migration. Backfill and plaintext retirement remain pending.
+
+### 2026-10-08 — guarded legacy social credential backfill
+
+- Added the controlled application-side backfill command for the already-applied migration 019.
+- Current Neon verification remains: 2 `social_accounts` rows, 0 encrypted social rows, and 0 `oauth_page_selections` rows.
+- The command fails closed without a valid `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY` or `DATABASE_URL`, takes an advisory lock, uses a transaction, never logs credential material, and verifies coverage before completion.
+- Actual execution is **not yet performed** because the deployment/runtime encryption key cannot be inspected through the available GitHub integration. Do not paste the secret into chat.
+- This is not a runtime/provider verification result; legacy plaintext fields remain intentionally retained.
