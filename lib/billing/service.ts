@@ -94,10 +94,11 @@ export async function changeSubscriptionPlan(params: {
   const result = await BillingRepository.updateSubscription(
     subscription.provider_subscription_id,
     {
-      pendingBillingPlanId: target.id,
+      pendingBillingPlanId: null,
       planChangeAt: new Date(),
       billingPlanId: target.id,
       plan: params.targetPlan,
+      cancelAtPeriodEnd: false,
     },
   );
 
