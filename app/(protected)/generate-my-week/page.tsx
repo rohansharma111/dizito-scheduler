@@ -181,7 +181,7 @@ export default function GenerateMyWeekPage() {
       </div>
 
       {message && (
-        <DizitoCard className="mb-5" tone={approved ? "success" : "soft"}>
+        <DizitoCard className="mb-5" tone="soft">
           <p className="text-sm font-semibold text-slate-700">{message}</p>
         </DizitoCard>
       )}
