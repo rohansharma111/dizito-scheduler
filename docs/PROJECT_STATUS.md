@@ -974,3 +974,13 @@ Important rollout boundary:
 - Added lib/media/service.test.ts covering valid completion plus ownership, resource-type, format, and size mismatch rejection.
 - Confirmed the application does not execute server-side video codecs/FFmpeg on uploaded video; video processing remains delegated to Cloudinary's managed media boundary.
 - This is source-level hardening only. No production migration, destructive operation, or live provider mutation was performed. Fresh CI evidence remains required.
+
+
+## 2026-10-09 — Workstream D CI regression follow-up
+
+- Fresh CI runs for PR #55 completed red: Validate stopped at repository-wide lint, while Quality Checks stopped at Test.
+- Validate reported the previously expected repository-wide lint debt (316 problems: 238 errors, 78 warnings) and also showed the rate-limit test parser failure in the merge ref; the branch source now contains the corrected test terminator, so a new CI run is required to confirm the merge-ref state.
+- Quality Checks reported 11 failures. Most are existing Commerce/Flipkart/WooCommerce lifecycle-test drift; one Workstream D-introduced failure was the WooCommerce DNS mock being declared before Vitest mock hoisting. That test has now been corrected with vi.hoisted(...).
+- The WooCommerce generic request path also still surfaced provider-controlled error messages despite the intended redaction contract. It has now been changed to return only the HTTP-status error.
+- No production migration, destructive operation, credential backfill, or provider mutation was performed.
+- PR #55 remains open and unmerged. CI-green and production-ready status remain unclaimed pending a fresh run.
