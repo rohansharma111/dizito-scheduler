@@ -825,3 +825,8 @@ A production recheck found one newly created Pinterest social account (id 62). M
 ### 2026-10-08 — Pinterest credential-write correction
 
 The newly observed Pinterest account 62 exposed that the security branch was still intentionally dual-writing legacy plaintext fields. The Pinterest callback, board-selection connect path, and account-health refresh path have now been changed to encrypted-only credential persistence while retaining encrypted-first/legacy-fallback reads during migration. Existing row 62 was not directly modified or deleted. Runtime deployment verification and a live reconnect/health exercise are still required before declaring the migration effective.
+
+
+### 2026-10-08 — Social OAuth encrypted-only write migration expanded
+
+After the live Pinterest finding, encrypted-only persistence was extended consistently across Meta/Facebook, Instagram, LinkedIn, Google Business, and Pinterest OAuth callback/connect paths. Temporary OAuth selection stores now also leave plaintext credential columns NULL. Existing encrypted-first/legacy-fallback reads remain during migration. No production row was modified in this step; deployment/runtime verification remains required before plaintext schema retirement.
