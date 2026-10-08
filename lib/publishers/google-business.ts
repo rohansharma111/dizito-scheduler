@@ -38,7 +38,15 @@ export async function publishToGoogleBusiness(context: PublisherContext) {
       Optional image
   */
 
-  const image = post.secure_url ?? post.image ?? post.imageUrl ?? null;
+  const resolved = await import("./media").then(({ resolvePostMedia }) =>
+    resolvePostMedia(context, "google_business_local_post"),
+  );
+
+  if (resolved?.mediaType === "video") {
+    throw new Error("Google Business Local Posts do not support generic video media");
+  }
+
+  const image = resolved?.media.secure_url ?? post.secure_url ?? post.image ?? post.imageUrl ?? null;
 
   if (image) {
     body.media = [
@@ -76,7 +84,7 @@ export async function publishToGoogleBusiness(context: PublisherContext) {
       data?.error?.message ||
       data?.error?.status ||
       data?.message ||
-      `HTTP ${response.status}`;
+      JSON.stringify(data);
 
     /*
         Auth errors
