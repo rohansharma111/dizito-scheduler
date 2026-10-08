@@ -243,6 +243,7 @@ export async function GET(request: Request) {
         $5,
         $6,
         $7,
+        $8,
         NULL,
         NULL,
         NOW()
