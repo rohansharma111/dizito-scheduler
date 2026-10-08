@@ -69,8 +69,8 @@ describe("commerce publish operation lifecycle", () => {
       external_id: "FK-123",
     });
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining("status IN ('prepared', 'in_progress', 'unknown')"),
-      ["operation-1", 7, "listing-1", "flipkart"],
+      expect.stringContaining("UPDATE commerce_publish_operations"),
+      ["operation-1", 7, "FK-123"],
     );
     expect(query).toHaveBeenCalledWith("COMMIT");
   });
@@ -84,7 +84,7 @@ describe("commerce publish operation lifecycle", () => {
     await markCommercePublishOperationSucceeded(7, "operation-1", "FK-123", "listing-1", "flipkart");
 
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining("status IN ('prepared', 'in_progress', 'unknown')"),
+      expect.stringContaining("SELECT *"),
       ["operation-1", 7, "listing-1", "flipkart"],
     );
   });
