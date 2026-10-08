@@ -130,3 +130,9 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Latest head: `684c3e51e1df54b675d539783d0928fcca0c3ddf`.
 - GitHub Actions reports no workflow runs for this exact head, so no CI result is claimed for it.
 - No production deployment, live OAuth/provider exercise, or destructive database change was performed.
+
+
+### 2026-10-08 continuation — OAuth comparison hardening
+- Pinterest and Google Business callback state checks now use the shared constant-time `verifyOAuthState()` helper instead of direct string comparison.
+- This is defense-in-depth; both flows already used high-entropy, HttpOnly, short-lived state cookies and authenticated callback sessions.
+- Legacy social-token migration remains deferred because a safe additive dual-read/dual-write path requires complete consumer inventory and application-key access; no schema-only migration was introduced.
