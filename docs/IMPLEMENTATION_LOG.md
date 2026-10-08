@@ -632,3 +632,16 @@ Never convert “implemented” to “verified” or “production-ready” with
 - It verifies that no credential-bearing rows remain plaintext-only before reporting success.
 - **Execution status:** not run. The deployment/runtime encryption key cannot be inspected via the available GitHub integration; no secret value was requested or exposed.
 - Existing Neon verification remains 2 legacy social-account rows and 0 encrypted rows. No destructive operation or merge performed.
+
+
+## 2026-10-08 — Workstream D authorized legacy social-account cleanup
+
+- Status: Completed as an explicitly authorized destructive cleanup; post-delete database verification passed.
+- User explicitly approved removing the remaining legacy social-account rows instead of running the credential backfill.
+- Deleted social account IDs 46 and 61 from Neon production/default branch br-empty-rice-ayeuugek in a transaction.
+- Their two dependent post_targets rows were removed by the existing ON DELETE CASCADE foreign key.
+- Post-delete verification: social_accounts = 0, oauth_page_selections = 0, and no dependent targets remain for the deleted account IDs.
+- Migration 019 remains applied. Encrypted credential columns, encrypted-first readers, and dual-write application paths remain in the repository for future connections.
+- The guarded backfill script remains available for any future legacy rows, but no current backfill is required.
+- Plaintext legacy columns remain in the schema intentionally; retirement/removal is a separate step after complete runtime/provider verification and confirmation that no compatibility path still depends on them.
+- This database cleanup does not constitute provider runtime verification, full CI verification, or a claim of production security certification.
