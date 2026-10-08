@@ -186,7 +186,7 @@ async function publishLinkedInImage(context: PublisherContext) {
   if (!uploadResponse.ok) {
     const error = await uploadResponse.text();
 
-    throw new Error(error);
+    throw new Error(`LinkedIn image upload failed: HTTP ${uploadResponse.status}`);
   }
 
   /*
