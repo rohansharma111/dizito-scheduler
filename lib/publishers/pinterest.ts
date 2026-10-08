@@ -50,14 +50,14 @@ export async function publishToPinterest(context: PublisherContext) {
     }),
   });
 
-  const raw = await response.text();
+  await response.text();
 
   console.log("PINTEREST STATUS:", response.status);
 
   console.log("PINTEREST RESPONSE RECEIVED:", response.status);
 
   if (!response.ok) {
-    throw new Error(raw);
+    throw new Error(`Pinterest publish failed: HTTP ${response.status}`);
   }
 
   return {
