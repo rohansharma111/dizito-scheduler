@@ -156,7 +156,7 @@ async function checkPinterestAccount(account: any) {
         health_status = 'healthy',
         last_checked_at = NOW(),
         updated_at = NOW()
-      WHERE id = $6
+      WHERE id = $4
       `,
       [
         encryptSocialCredential(token.accessToken),
