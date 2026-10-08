@@ -552,3 +552,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Recorded the need for a Dizito-specific design system, subscription/pricing redesign, video capability architecture, security audit, scalability/observability work and explicit external provider verification.
 - Current Neon inspection found approximately 12 MB database size, 46 public tables and 156 public indexes; no storage-driven migration is currently justified.
 - Added parallel workstream guidance so UI, billing, media/video, security, QA/CI, external provider verification, commerce hardening and infrastructure can proceed with explicit file ownership and continuation handoffs.
+
+## 2026-10-08 — Workstream D security audit
+
+- Branch: v1/security-audit
+- Added: docs/DIZITO_SECURITY_AUDIT_2026-10-08.md
+- Fixed: OAuth state binding for Meta/LinkedIn; authenticated OAuth initiation for Pinterest/Google Business; tenant authorization for auth-target recovery; webhook payload/signature logging; WooCommerce URL SSRF/HTTP boundary checks; media MIME allowlist; baseline security headers; OAuth state regression tests.
+- Verified source-level credential paths: Shopify/Amazon/Flipkart/WooCommerce are application-encrypted with tenant-scoped reads/writes; legacy Meta/Pinterest/LinkedIn/Google Business token columns remain plaintext and are explicitly tracked as a migration-sensitive P1.
+- P0 remaining: Next.js 16.2.7 must be upgraded to patched 16.3.8 with a regenerated package-lock. The temporary CI lock refresh attempt was removed because it did not execute on the branch; no inconsistent dependency state was left behind.
+- Runtime verification: pending. No merge or destructive DB change performed.
