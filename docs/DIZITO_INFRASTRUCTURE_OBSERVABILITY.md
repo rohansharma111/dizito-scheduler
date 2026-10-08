@@ -52,7 +52,7 @@ Observed control-plane state:
 - No active/stalled query >30 seconds observed.
 - No locks reported by the Neon lock diagnostic at audit time.
 - Four client connections observed: **1 active, 3 idle**; the connection snapshot reported 3 with a wait event.
-- `pg_stat_statements` is **not installed**. The read-only Neon diagnostics that depend on it therefore could not run.
+- `pg_stat_statements` was enabled during the H production checkpoint and is now installed at version **1.12**. The first post-enable statistics snapshot is not yet representative of normal application traffic.
 
 Current high-value table counts:
 
@@ -99,7 +99,7 @@ On a temporary Neon branch, the two indexes changed those plans to index scans:
    - `(user_id, created_at DESC)`;
    - directly matches the existing billing-history predicate/order.
 
-Migration 021 was then applied to the production/default branch. Live verification confirms both indexes exist.
+The production observability SQL was then applied to the production/default branch. Live verification confirms both indexes exist.
 
 ### 3.3 Attempt-count index deliberately deferred
 
