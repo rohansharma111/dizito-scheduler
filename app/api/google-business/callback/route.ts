@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { createEvent } from "@/lib/events";
+import { verifyOAuthState } from "@/lib/security/oauth-state";
 
 import { exchangeToken } from "@/lib/platforms/google-business/exchangeToken";
 import { getProfile } from "@/lib/platforms/google-business/getProfile";
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (storedState !== state) {
+  if (!verifyOAuthState(storedState, state)) {
     return Response.redirect(
       `${process.env.NEXTAUTH_URL}/accounts/connect-error?platform=google-business&code=AUTH_FAILED`,
     );
