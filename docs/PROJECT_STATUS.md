@@ -1,3 +1,13 @@
+## 2026-10-09 — Workstream D CI verification checkpoint
+
+- Fresh CI completed for PR #55 head `7918a99812d657913c89e12e60f66b458d6e51d5`.
+- **Quality Checks #829:** failed at Test with 8 existing Commerce/Flipkart/WooCommerce lifecycle failures. The prior Workstream D-specific rate-limit/media mock-hoisting failures and scheduler plaintext-credential regression are no longer present in the failure set.
+- **Validate #767:** failed at repository-wide lint with **315 problems (237 errors, 78 warnings)**; TypeScript validation and production build were skipped by workflow gating.
+- Workstream D security implementation is therefore not blocked by a currently observed security-specific test failure. Repository-wide CI remains red because of pre-existing QA/test/lint debt outside this security workstream.
+- PR #55 remains open and mergeable but unmerged. No production migration, destructive operation, or provider mutation was performed.
+- Migration 023 still requires explicit production application before code paths using the distributed limiter can be deployed.
+- Workstream D next boundary is controlled deployment/runtime verification and legacy encrypted-credential migration readiness; broader test/lint cleanup belongs with Workstream E rather than introducing unrelated changes here.
+
 ## 2026-10-09 — Workstream D encrypted-credential regression fix
 
 - PR #55 CI for head `649e7ac17950d2ccf2efbd679bf70efe52462079` completed with both Quality Checks and Validate red.
