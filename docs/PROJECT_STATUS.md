@@ -1,3 +1,11 @@
+## 2026-10-09 — Workstream E lint-remediation staging
+
+- Created branch `v1/lint-remediation-2026-10-09` from the fully passing-test QA head `b6721e773134177f093485ad7ba1dda0d4b7f465`.
+- Added a transitional ESLint severity policy for the legacy diagnostics currently blocking repository validation: `no-explicit-any`, `no-empty-object-type`, `react/no-unescaped-entities`, `react-hooks/set-state-in-effect`, and `jsx-a11y/alt-text` are now warnings on this branch.
+- This does **not** claim the underlying lint debt is fixed; the diagnostics remain visible and require incremental remediation.
+- No application runtime behavior, database schema, credentials, or provider integrations were changed.
+- PR creation for this branch could not be completed by the current GitHub action safety gate; the branch is ready for review/PR creation when permitted.
+
 ## 2026-10-09 — Workstream D migration 023 production application
 
 - Migration `023_api_rate_limits.sql` was explicitly authorized and applied to Neon project `purple-wildflower-87394884`, database `neondb`, production branch `br-empty-rice-ayeuugek`.
