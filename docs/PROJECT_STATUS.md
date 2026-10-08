@@ -900,3 +900,10 @@ Important rollout boundary:
 - Production metadata check currently shows the connected Pinterest account as `v1` encrypted with zero plaintext credentials.
 - No other social provider accounts are currently present in the production database, so Meta, Instagram, LinkedIn, and Google Business runtime verification still requires controlled provider connections/reconnections when those credentials are available.
 - Source-level encrypted-write hardening is complete for the audited social OAuth paths. Runtime provider verification and deployment-state verification remain separate launch gates.
+
+## 2026-10-08 — Workstream D Meta account-selection encrypted-read fix
+
+- Meta OAuth successfully reached `/accounts/select/meta`, but the UI showed zero accounts because `/api/account-selection` still read legacy `oauth_page_selections.pages` directly after encrypted-only writes moved the payload to `pages_encrypted`.
+- Updated `/api/account-selection` to use `resolveOAuthSelectionCredentials(...)`, decrypt the encrypted page payload, safely handle missing/malformed selection data, and avoid exposing raw internal errors.
+- Commit: `92c8bf25aec9d8881b6c9afc2ac096c5efba6d4f`.
+- This is the Meta equivalent of the previously fixed Pinterest encrypted board-selection read issue. Deployment of this commit is required before the browser flow can be re-tested.
