@@ -9,7 +9,7 @@ export async function authenticateSubscriptionLifecycle(context: BillingContext)
   const result = await syncSubscription({
     providerSubscriptionId: entity.id,
 
-    status: "created",
+    status: "authenticated",
 
     providerCustomerId: entity.customer_id ?? null,
 
@@ -36,7 +36,7 @@ export async function authenticateSubscriptionLifecycle(context: BillingContext)
     },
   );
 
-  billingLogger.info("Subscription created", result.id);
+  billingLogger.info("Subscription authenticated", result.id);
 
   return result;
 }

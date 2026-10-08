@@ -27,7 +27,7 @@ type SyncSubscriptionInput = {
 
   gracePeriodUntil?: Date | null;
 
-  metadata?: any;
+  metadata?: unknown;
 };
 
 export async function syncSubscription(

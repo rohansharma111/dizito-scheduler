@@ -618,3 +618,44 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Preserved existing experiment lifecycle/observational-evidence semantics, explicit attribution language, settings read-only behavior, and bulk CSV validation/import/account-selection flows.
 - Added consistent loading, empty/error, plan-limit, responsive, and mobile-friendly presentation where appropriate.
 - Source-level sanity checks passed on touched surfaces; runtime build/lint/browser verification remains unavailable in this environment.
+
+## 2026-10-07 — Workstream B V1 subscription/pricing implementation
+
+- Branch: `v1/subscription-pricing`.
+- Audit found the historical billing model centered on Creator/Agency, `users.plan`, environment-backed Razorpay plan IDs, and separate legacy usage counters.
+- Implemented canonical V1 billing layers: plan catalog, entitlement definitions/values, subscription linkage, provider mappings, usage counters and idempotent webhook events.
+- V1 pricing hypotheses seeded: Free ₹0, Growth ₹799/month, Pro ₹1,999/month, Agency ₹4,999+ future, Founding Beta ₹499/month. These are explicitly marked as hypotheses in catalog metadata/UI.
+- Added compatibility mapping: Creator → Growth; Agency remains future; legacy `users.plan` remains a mirror until broader migration is intentionally approved.
+- Added lifecycle support for trial, authentication, activation, payment failure/grace period, pause/pending, cancellation, completion and plan changes.
+- Added centralized entitlement enforcement for AI actions, publishing, social channels, commerce channels and product capabilities.
+- Added billing/pricing UI and authenticated plan-change/cancellation routes.
+- Added regression tests for catalog compatibility and subscription state mapping.
+- Migration was source-reviewed and Neon schema was inspected. A disposable migration validation attempt caught a parser issue before any live/default schema change; the migration was revised to avoid ambiguous table/column names. A second disposable validation was blocked by the tool safety layer, so migration execution remains unverified.
+- No Razorpay provider IDs were hard-coded into product/business logic. Provider mappings must be configured explicitly before paid checkout can operate.
+- No provider publisher or global design-system architecture was modified.
+
+## 2026-10-07 — Workstream B verification pass
+
+- Created draft verification PR #47 (not merged) so repository CI could run against the Workstream B branch.
+- Quality Checks test job failed on 7 existing Commerce/Flipkart/WooCommerce tests; the new billing catalog/state tests passed. The failing stack traces are outside `lib/billing`.
+- Validate lint job initially reported billing `no-explicit-any` violations. Those were corrected in the billing files; the subsequent lint run reported no `lib/billing/*` violations.
+- Repository-wide lint still fails on 226 pre-existing errors across unrelated application areas, so TypeScript validation and production build are gated/skipped by the workflow.
+- Local execution was attempted but the model environment cannot resolve GitHub networking; therefore GitHub Actions is the authoritative execution evidence for this pass.
+- Live Neon schema verification confirmed: `users.id` is integer; `subscriptions.user_id` is bigint with its existing FK; `subscriptions` already contains `grace_period_until` and `payment_failed_at`; `social_accounts.user_id` and `commerce_channels.user_id` are integer. The V1 migration uses integer for the new usage-counter user FK and only adds canonical billing-plan linkage fields to subscriptions.
+- No live/default Neon migration was applied.
+
+
+## 2026-10-08 — Workstream B billing correctness + migration verification
+
+- Corrected active-subscription selection so expired payment-failure/grace-period records no longer retain paid access.
+- Reworked nullable subscription updates so explicit NULL values are persisted instead of being swallowed by SQL `COALESCE` behavior; this fixes deterministic clearing of pending plan/cancellation lifecycle state.
+- Paid plan changes now clear stale pending-plan and scheduled-cancellation state.
+- Validated `021_billing_v1_plans_entitlements.sql` through a disposable Neon migration branch. The isolated branch confirmed five billing plans, ten entitlement assignments per plan, the new subscription linkage columns, and one legacy subscription successfully backfilled. The temporary branch was discarded and no default/live schema change was applied.
+- Billing remains dependent on explicit Razorpay provider mappings; no provider plan IDs were hard-coded.
+
+
+## 2026-10-08 — Workstream B final hardening checkpoint
+
+- Billing API session identity access was cleaned up with a typed safe-positive-integer helper; billing routes no longer use `session.user as any`.
+- Latest PR #47 CI still stops at the repository test stage on seven pre-existing Commerce/Flipkart/WooCommerce failures; no billing failure was reported. Lint/build did not execute because the workflow gates them after test failure.
+- Workstream B remains unmerged. No default/live Neon migration was applied; the validated disposable migration branch was discarded.

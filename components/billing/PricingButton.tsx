@@ -6,77 +6,39 @@ import { useRouter } from "next/navigation";
 import { startSubscription } from "@/lib/billing/frontend";
 
 type Props = {
-  plan: "free" | "creator" | "agency";
-
+  plan: "free" | "growth" | "pro";
   href: string;
-
   label: string;
-
   popular?: boolean;
 };
 
-export default function PricingButton({
-  plan,
-  href,
-  label,
-  popular = false,
-}: Props) {
+export default function PricingButton({ plan, href, label, popular = false }: Props) {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
-
-  /*
-    Enable real billing only
-    when you want.
-  */
   const billingEnabled = process.env.NEXT_PUBLIC_BILLING_ENABLED === "true";
+  const isPaidPlan = plan === "growth" || plan === "pro";
 
-  /*
-    Only Creator & Agency
-    use Razorpay.
-  */
-  const isPaidPlan = plan === "creator" || plan === "agency";
-
-  /*
-    Billing disabled OR free plan
-    Keep current behaviour.
-  */
   if (!billingEnabled || !isPaidPlan) {
     return (
       <Link
         href={href}
-        className={`mt-10 block w-full rounded-lg px-6 py-3 text-center font-medium transition ${
-          popular
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "bg-gray-100 hover:bg-gray-200"
-        }`}
+        className={`mt-9 block w-full rounded-lg px-6 py-3 text-center font-medium transition ${popular ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-100 hover:bg-gray-200"}`}
       >
         {label}
       </Link>
     );
   }
 
-  const paidPlan: "creator" | "agency" = plan;
-
   async function handleSubscribe() {
     if (loading) return;
-
     setLoading(true);
-
     try {
-      const result = await startSubscription({
-        plan: paidPlan,
-      });
-
+      const result = await startSubscription({ plan });
       if (!result.success) {
         alert(result.error);
         return;
       }
-
-      alert(
-        "Subscription started successfully.\n\nYour account will automatically upgrade once Razorpay confirms the payment.",
-      );
-
+      alert("Checkout completed. Dizito will activate the plan after Razorpay confirms the subscription.");
       router.refresh();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Something went wrong.");
@@ -90,11 +52,7 @@ export default function PricingButton({
       type="button"
       onClick={handleSubscribe}
       disabled={loading}
-      className={`mt-10 block w-full rounded-lg px-6 py-3 text-center font-medium transition ${
-        popular
-          ? "bg-blue-600 text-white hover:bg-blue-700"
-          : "bg-gray-100 hover:bg-gray-200"
-      } ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+      className={`mt-9 block w-full rounded-lg px-6 py-3 text-center font-medium transition ${popular ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-100 hover:bg-gray-200"} ${loading ? "cursor-not-allowed opacity-60" : ""}`}
     >
       {loading ? "Opening Checkout..." : label}
     </button>
