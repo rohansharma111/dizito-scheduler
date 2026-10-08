@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const query = vi.fn();
+const { query } = vi.hoisted(() => ({ query: vi.fn() }));
 vi.mock("@/lib/db", () => ({ pool: { query } }));
 
 describe("distributed rate limiter", () => {
@@ -27,4 +27,4 @@ describe("distributed rate limiter", () => {
     expect(result.allowed).toBe(false);
     expect(result.resetAt.toISOString()).toBe("2026-10-08T18:01:00.000Z");
   });
-}
+});
