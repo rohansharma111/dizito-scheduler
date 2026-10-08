@@ -155,11 +155,20 @@ export async function GET(request: Request) {
     const accessToken = tokenData.access_token;
 
     if (!accessToken) {
-      console.error("LINKEDIN TOKEN ERROR", tokenData);
-
-      return Response.json(tokenData, {
-        status: 400,
+      console.error("LINKEDIN TOKEN EXCHANGE FAILED", {
+        status: tokenResponse.status,
+        error: tokenData?.error,
+        error_description: tokenData?.error_description,
       });
+
+      return Response.json(
+        {
+          error: "LinkedIn token exchange failed",
+        },
+        {
+          status: 400,
+        },
+      );
     }
 
     /*
