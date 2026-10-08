@@ -820,3 +820,8 @@ These define the launch gates and the multi-chat ownership model.
 ### Workstream D live-state correction — 2026-10-08
 
 A production recheck found one newly created Pinterest social account (id 62). Metadata-only inspection shows legacy plaintext access/refresh credentials are present while encrypted credential columns are empty. This indicates the currently active connection/deployment path is not using the encrypted-write implementation from `v1/security-audit` for this connection. No destructive change was made to this new row without explicit authorization. Workstream D therefore remains blocked on identifying the active deployment/code path and safely migrating or replacing this credential through the encrypted flow.
+
+
+### 2026-10-08 — Pinterest credential-write correction
+
+The newly observed Pinterest account 62 exposed that the security branch was still intentionally dual-writing legacy plaintext fields. The Pinterest callback, board-selection connect path, and account-health refresh path have now been changed to encrypted-only credential persistence while retaining encrypted-first/legacy-fallback reads during migration. Existing row 62 was not directly modified or deleted. Runtime deployment verification and a live reconnect/health exercise are still required before declaring the migration effective.
