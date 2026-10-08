@@ -60,15 +60,15 @@ async function publishPinterestVideo(
   const encoder = new TextEncoder();
   const uploadFields = Object.entries(registration.upload_parameters ?? {}).map(
     ([key, value]) =>
-      `--${boundary}\\r\\nContent-Disposition: form-data; name="${key}"\\r\\n\\r\\n${String(value)}\\r\\n`,
+      `--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${String(value)}\r\n`,
   );
-  const fileName = (media.file_name ?? "video.mp4").replace(/[\\r\\n"]/g, "_");
+  const fileName = (media.file_name ?? "video.mp4").replace(/[\r\n"]/g, "_");
   const contentType = media.mime_type ?? videoResponse.headers.get("content-type") ?? "video/mp4";
   const preamble = encoder.encode(
     uploadFields.join("") +
-      `--${boundary}\\r\\nContent-Disposition: form-data; name="file"; filename="${fileName}"\\r\\nContent-Type: ${contentType}\\r\\n\\r\\n`,
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: ${contentType}\r\n\r\n`,
   );
-  const epilogue = encoder.encode(`\\r\\n--${boundary}--\\r\\n`);
+  const epilogue = encoder.encode(`\r\n--${boundary}--\r\n`);
 
   if (!media.bytes || media.bytes <= 0) {
     throw new Error("Pinterest video byte size is required for streaming upload");
