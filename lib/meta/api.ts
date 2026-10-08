@@ -30,11 +30,15 @@ export type MetaPage = {
   tasks?: string[];
 };
 
+export type MetaCollectionResponse = {
+  data?: unknown[];
+};
+
 export type MetaPageDiscovery = {
   pages: MetaPage[];
   source: "accounts" | "assigned_pages" | "none";
-  accountsResponse: unknown;
-  assignedPagesResponse?: unknown;
+  accountsResponse: MetaCollectionResponse;
+  assignedPagesResponse?: MetaCollectionResponse;
 };
 
 export async function discoverMetaPages(
