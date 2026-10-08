@@ -351,3 +351,22 @@ When choosing the next feature, ask:
 **“What prevents a real merchant from successfully using Dizito every week?”**
 
 Prefer work that removes that blocker over adding another integration or speculative AI feature.
+
+
+### Phase E.4 — Media/video reconciliation — 2026-10-08
+
+Workstream C has been reconciled onto the current main lineage without discarding newer parallel-workstream changes.
+
+The implementation now carries forward:
+- first-class image/video media modeling;
+- signed direct Cloudinary upload for large video;
+- processing/lifecycle metadata and poster support;
+- provider-specific video publishing workflows;
+- fail-closed behavior for unsupported or incompletely verified capabilities;
+- media ownership/readiness enforcement at post creation and edit boundaries.
+
+Launch gates remain:
+- apply the additive media migration through the normal database migration process;
+- run current focused and repository validation suites;
+- perform controlled Instagram, Pinterest and LinkedIn video runtime verification;
+- retain Facebook/Google video fail-closed behavior until their verification boundary changes.
