@@ -626,3 +626,9 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
 - Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
 - No backend/API/provider/database/billing/media architecture changes were introduced.
+
+### 2026-10-08 — Workstream A final merchant-surface consistency pass
+- Completed the planned V1 merchant UI consistency sweep across remaining legacy high-traffic surfaces: Experiments, Attribution, Settings, and Bulk Upload with shared Dizito UI primitives and responsive states.
+- Corrected a navigation formatting defect in SidebarClient.tsx during source audit; no product behavior was changed.
+- Workstream remains UI-only: no provider adapters, backend contracts, billing logic, commerce architecture, media implementation, or database schema changes were introduced.
+- Runtime verification remains pending outside this environment.
