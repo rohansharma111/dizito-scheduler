@@ -65,6 +65,7 @@ describe("MediaService.completeDirectUpload", () => {
     const service = new MediaService();
     await expect(service.completeDirectUpload({
       ...baseInput,
+      publicId: "users/43/video-1",
       resource: {
         public_id: "users/43/video-1",
         secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
