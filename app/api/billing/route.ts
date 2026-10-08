@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getBillingUserId } from "@/lib/billing/session";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { BillingRepository } from "@/lib/billing/repository";
@@ -10,7 +11,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = Number((session.user as any).id);
+    const userId = getBillingUserId(session);
     const context = await getEffectiveBillingContext(userId);
     const plan = await BillingRepository.getPlanByCode(context.planCode);
     if (!plan) return Response.json({ error: "Billing plan not configured" }, { status: 500 });
