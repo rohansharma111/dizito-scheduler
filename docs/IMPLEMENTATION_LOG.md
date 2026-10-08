@@ -1,3 +1,11 @@
+## 2026-10-08 — Workstream H reconciliation onto current main
+
+- Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
+- Current `main` already contains `021_billing_v1_plans_entitlements.sql`, so the H observability migration is canonically represented as `022_infrastructure_observability_v1.sql` to avoid a migration filename collision.
+- The production Neon observability changes were already applied during the earlier H checkpoint; reconciliation did not re-run or alter production SQL.
+- Preserved the evidence-backed `pg_stat_statements` enablement and the two production indexes; the deferred `post_target_attempts` index remains absent.
+- No marketing UI, billing business logic, provider adapters, media workflows, retention deletion, queue/worker architecture, or destructive SQL was introduced.
+
 ## 2026-10-07 — Google Business Profile API access request submitted
 
 - **Status:** Pending Google allowlisting/approval; provider runtime verification has not started.
@@ -553,95 +561,135 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Current Neon inspection found approximately 12 MB database size, 46 public tables and 156 public indexes; no storage-driven migration is currently justified.
 - Added parallel workstream guidance so UI, billing, media/video, security, QA/CI, external provider verification, commerce hardening and infrastructure can proceed with explicit file ownership and continuation handoffs.
 
-## 2026-10-08 — Workstream D security audit
 
-- Branch: v1/security-audit
-- Added: docs/DIZITO_SECURITY_AUDIT_2026-10-08.md
-- Fixed: OAuth state binding for Meta/LinkedIn; authenticated OAuth initiation for Pinterest/Google Business; tenant authorization for auth-target recovery; webhook payload/signature logging; WooCommerce URL SSRF/HTTP boundary checks; media MIME allowlist; baseline security headers; OAuth state regression tests.
-- Verified source-level credential paths: Shopify/Amazon/Flipkart/WooCommerce are application-encrypted with tenant-scoped reads/writes; legacy Meta/Pinterest/LinkedIn/Google Business token columns remain plaintext and are explicitly tracked as a migration-sensitive P1.
-- P0 remaining: Next.js 16.2.7 must be upgraded to patched 16.3.8 with a regenerated package-lock. The temporary CI lock refresh attempt was removed because it did not execute on the branch; no inconsistent dependency state was left behind.
-- Runtime verification: pending. No merge or destructive DB change performed.
+## 2026-10-07 — Workstream A: Marketing V1 UI + Dizito design system checkpoint
 
-
-## 2026-10-08 — Security audit checkpoint reconciliation
-
-- **Status:** Implemented source-level hardening; not fully runtime-verified.
-- Corrected the security audit records to reflect the actual dependency state: package.json and package-lock.json are aligned on Next.js 16.3.8 and eslint-config-next 16.3.8, and npm ci succeeds under Node 22.
-- Latest observed PR #49 remains open and unmerged. Validate and Quality Checks are not green because of repository-wide existing lint/test debt; no unrelated cleanup was added to the security branch.
-- Remaining P1 security risks remain explicitly tracked: plaintext legacy social OAuth tokens, distributed rate limiting, DNS-aware SSRF/egress enforcement, and file content/magic-byte validation.
-
-
-## 2026-10-08 — Upload content-signature hardening
-
-- **Status:** Implemented; source-level and regression-test coverage added; runtime execution remains subject to the repository CI state.
-- Added lightweight magic-byte/container-header validation for supported image/video upload MIME types before Cloudinary upload.
-- Added regression tests covering valid signatures and MIME/content mismatches.
-- No dependency or database changes were introduced.
+- **Branch:** `v1/marketing-ui-design`
+- **Scope:** merchant-facing Marketing V1 UI and reusable Dizito visual primitives only.
+- **Implemented:**
+  - established reusable `components/dizito/DizitoUI.tsx` primitives for pages, headers, cards, buttons, badges, metrics, states and AI identity;
+  - established the Dizito visual language in `app/globals.css` with ink/lime/violet/cyan tokens, responsive surfaces and accessible focus states;
+  - redesigned the protected shell/header/sidebar around the AI operating-loop navigation;
+  - added a dedicated Business Brain read surface backed by the existing `/api/marketing/business-brain` endpoint;
+  - redesigned dashboard, Business Setup, Generate My Week, Strategist, Content Review, Media, Channels & Accounts, Business Impact, Optimizer and billing presentation surfaces to use the shared system;
+  - added loading, empty, error, disconnected/reconnect and plan-limit presentation improvements where the existing API state supported them.
+- **Architecture preserved:** no billing business logic, provider adapters, commerce orchestration, media-provider implementation or database migrations were modified.
+- **Database impact:** none.
+- **Provider impact:** none.
+- **Verification:** repository diff/source inspection completed; branch is 0 commits behind `main`. No GitHub Actions run is currently exposed for this branch, so test/lint/build green status is **not claimed**. No provider/runtime verification was performed.
+- **Known follow-up:** the remaining V1 UI pass should audit detailed product/offer/service editors, content scheduling edge states, mobile interaction polish and end-to-end browser behavior once a runnable local/preview environment is available.
 
 
-## 2026-10-08 — Security audit continuation: LinkedIn token proxy
+## 2026-10-08 — Workstream A continuation: merchant context UI
 
-- **Status:** Implemented source-level hardening; runtime verification pending.
-- Removed unused `app/api/linkedin/token` unauthenticated token-exchange proxy after source search found no callers.
-- The endpoint accepted an authorization code, used the server-side LinkedIn client secret, and returned the provider token response directly; removing it eliminates an unnecessary credential-bearing API surface.
-- No database changes. No unrelated feature redesign.
-
-
-## 2026-10-08 — Security OAuth comparison hardening
-
-- **Status:** Implemented source-level hardening; runtime verification pending.
-- Replaced direct Pinterest and Google Business OAuth state string comparisons with the shared constant-time verifier.
-- No schema or dependency changes.
-- Intentionally did not introduce a plaintext-token-to-encrypted-column migration without a proven dual-read/dual-write application path.
+- Added actionable Goal and Offer creation controls to the Business Brain UI using the existing tenant-scoped `/api/marketing/goals` and `/api/marketing/offers` contracts.
+- Refreshed the existing Product catalog, Product creation and Product editing surfaces to use the Dizito visual system and responsive states.
+- No product, goal, offer, billing, provider or database backend logic was changed.
+- Verification: changed-file source sanity inspection completed; no fresh CI/browser run is available, so runtime green status remains unclaimed.
 
 
-## 2026-10-08 — Security audit: legacy social-token consumer inventory
+## 2026-10-08 — Workstream A: weekly planning UI continuation
 
-- **Status:** Source-level inventory/design complete; implementation and runtime verification pending.
-- Mapped plaintext social OAuth credential reads/writes across Meta/Instagram, LinkedIn, Pinterest, and Google Business.
-- Confirmed provider publishers, account-health checks, and scheduler account loading depend on the legacy credential fields.
-- Confirmed temporary OAuth selection rows are credential-bearing and Meta Page selection JSON can contain Page access-token material.
-- Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` defining the non-destructive additive encrypted-column, dual-read/dual-write migration sequence.
-- Deliberately did not introduce a schema migration or backfill before the application credential boundary exists.
-
-### 2026-10-08 — Workstream D credential-boundary hardening
-- Added versioned AES-256-GCM application primitive for the planned legacy social-token migration (`lib/security/social-credentials.ts`) with regression tests.
-- Confirmed legacy `social_accounts` credential columns remain plaintext-capable; no production/schema migration was applied.
-- Removed raw provider response/error logging from Facebook, Instagram, LinkedIn, Pinterest, and Google Business publishers.
-- OAuth token-exchange error responses for Meta and LinkedIn were also redacted in prior security commits.
-- Runtime/CI verification remains pending.
-
-## 2026-10-08 — Workstream D encrypted-first social credential seam
-
-- **Status:** Implemented source-level; runtime/CI verification pending.
-- Added an encrypted-first compatibility resolver for social_accounts credentials and wired it into scheduler publishing and account-health checks.
-- Added regression tests proving encrypted values take precedence, legacy plaintext values remain a temporary migration fallback, and malformed ciphertext fails closed.
-- Added additive migration 019_social_account_credential_encryption.sql; it is staged only and has not been applied to Neon.
-- Added a dual-write encryption helper and tests. Provider OAuth callback writes are intentionally not yet switched to new columns because deployment must apply the additive schema before application SQL references those columns.
-- Remaining work: apply migration under explicit approval, wire all OAuth/reconnect/refresh writes, migrate temporary OAuth selection credential material, then verify and retire plaintext fields.
-- No destructive database operation or merge performed.
-
-## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
-
-- Migration 019 was approved and applied to the Neon production/default branch after isolated-branch verification. Added encrypted credential columns to social_accounts and oauth_page_selections without transforming/deleting existing values. OAuth callbacks, Meta/Pinterest/Google selection flows, and Pinterest token refresh now dual-write encrypted credentials; scheduler, account health, and temporary OAuth selection reads prefer encrypted values with legacy fallback. No destructive DB operation was performed. Runtime OAuth/provider verification and CI remain pending.
-
-## 2026-10-08 — Guarded social credential backfill preparation
-
-- Added `scripts/backfill-social-credentials.mjs` and the `db:backfill-social-credentials` package command.
-- The script uses the same AES-256-GCM v1 payload format, requires `DATABASE_URL` and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY`, serializes work under a PostgreSQL advisory lock, updates only missing encrypted fields, and never prints credential values.
-- It verifies that no credential-bearing rows remain plaintext-only before reporting success.
-- **Execution status:** not run. The deployment/runtime encryption key cannot be inspected via the available GitHub integration; no secret value was requested or exposed.
-- Existing Neon verification remains 2 legacy social-account rows and 0 encrypted rows. No destructive operation or merge performed.
+- Audited the existing marketing API before adding merchant-context controls.
+- Confirmed there is currently no `services` marketing domain/API in `app/api/marketing`; no Services CRUD or schema was invented in the UI pass.
+- Confirmed Goals and Offers currently expose GET/POST only; edit/delete controls are intentionally deferred rather than creating unsupported API behavior.
+- Fixed the Product Edit loading/not-found JSX state introduced during the earlier visual pass.
+- Reworked `Generate My Week` to use the shared Dizito page/card/button/badge/state primitives while preserving the existing weekly-plan generate/approve contracts and the explicit rule that approval does not publish.
+- Source-level checks passed for brace balance, merge markers and malformed literal import escapes on the touched UI files.
+- No database, billing, provider-adapter, commerce-service or media-provider changes were made. Runtime/browser/build verification remains pending.
 
 
-## 2026-10-08 — Workstream D authorized legacy social-account cleanup
+### Workstream A distribution UI continuation — 2026-10-08
+- Standardized Marketing Content, Posts, Drafts and Calendar around shared Dizito page/header/card/state primitives.
+- Added explicit loading, empty and API-error recovery states and responsive shell treatment without changing child publishing/scheduling components or API contracts.
+- Content Review continues to require human approval before scheduling; connected-account selection and existing variant/post creation behavior are unchanged.
+- No database, billing, provider-adapter, commerce or media-provider changes. Verification is source-level only; runtime/build/lint/test evidence remains pending.
 
-- Status: Completed as an explicitly authorized destructive cleanup; post-delete database verification passed.
-- User explicitly approved removing the remaining legacy social-account rows instead of running the credential backfill.
-- Deleted social account IDs 46 and 61 from Neon production/default branch br-empty-rice-ayeuugek in a transaction.
-- Their two dependent post_targets rows were removed by the existing ON DELETE CASCADE foreign key.
-- Post-delete verification: social_accounts = 0, oauth_page_selections = 0, and no dependent targets remain for the deleted account IDs.
-- Migration 019 remains applied. Encrypted credential columns, encrypted-first readers, and dual-write application paths remain in the repository for future connections.
-- The guarded backfill script remains available for any future legacy rows, but no current backfill is required.
-- Plaintext legacy columns remain in the schema intentionally; retirement/removal is a separate step after complete runtime/provider verification and confirmation that no compatibility path still depends on them.
-- This database cleanup does not constitute provider runtime verification, full CI verification, or a claim of production security certification.
+
+### 2026-10-08 — Workstream A UI consistency continuation
+- Polished `app/(protected)/accounts/AccountsClient.tsx` with shared Dizito page/card/button/badge/state primitives.
+- Preserved all existing account connection, reconnect, health-check, disconnect, plan-limit, and API contracts.
+- Improved narrow-screen channel connection actions and account status presentation.
+- Polished `app/(protected)/activity/page.tsx` with shared Dizito page/card/state presentation while preserving the existing activity API, filters, grouping, and event details.
+- No provider adapter, billing business logic, commerce backend, media provider, or database schema changes were made.
+
+
+### 2026-10-08 — Workstream A merchant-surface consistency continuation
+- Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
+- Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
+- No backend/API/provider/database/billing/media architecture changes were introduced.
+
+
+## Workstream A — Remaining Merchant Surface Polish (2026-10-08)
+- Continued branch `v1/marketing-ui-design` without changing backend contracts, provider adapters, billing logic, or commerce architecture.
+- Polished Experiments, Attribution, Settings, and Bulk Upload to the shared Dizito UI system.
+- Preserved existing experiment lifecycle/observational-evidence semantics, explicit attribution language, settings read-only behavior, and bulk CSV validation/import/account-selection flows.
+- Added consistent loading, empty/error, plan-limit, responsive, and mobile-friendly presentation where appropriate.
+- Source-level sanity checks passed on touched surfaces; runtime build/lint/browser verification remains unavailable in this environment.
+
+## 2026-10-07 — Workstream B V1 subscription/pricing implementation
+
+- Branch: `v1/subscription-pricing`.
+- Audit found the historical billing model centered on Creator/Agency, `users.plan`, environment-backed Razorpay plan IDs, and separate legacy usage counters.
+- Implemented canonical V1 billing layers: plan catalog, entitlement definitions/values, subscription linkage, provider mappings, usage counters and idempotent webhook events.
+- V1 pricing hypotheses seeded: Free ₹0, Growth ₹799/month, Pro ₹1,999/month, Agency ₹4,999+ future, Founding Beta ₹499/month. These are explicitly marked as hypotheses in catalog metadata/UI.
+- Added compatibility mapping: Creator → Growth; Agency remains future; legacy `users.plan` remains a mirror until broader migration is intentionally approved.
+- Added lifecycle support for trial, authentication, activation, payment failure/grace period, pause/pending, cancellation, completion and plan changes.
+- Added centralized entitlement enforcement for AI actions, publishing, social channels, commerce channels and product capabilities.
+- Added billing/pricing UI and authenticated plan-change/cancellation routes.
+- Added regression tests for catalog compatibility and subscription state mapping.
+- Migration was source-reviewed and Neon schema was inspected. A disposable migration validation attempt caught a parser issue before any live/default schema change; the migration was revised to avoid ambiguous table/column names. A second disposable validation was blocked by the tool safety layer, so migration execution remains unverified.
+- No Razorpay provider IDs were hard-coded into product/business logic. Provider mappings must be configured explicitly before paid checkout can operate.
+- No provider publisher or global design-system architecture was modified.
+
+## 2026-10-07 — Workstream B verification pass
+
+- Created draft verification PR #47 (not merged) so repository CI could run against the Workstream B branch.
+- Quality Checks test job failed on 7 existing Commerce/Flipkart/WooCommerce tests; the new billing catalog/state tests passed. The failing stack traces are outside `lib/billing`.
+- Validate lint job initially reported billing `no-explicit-any` violations. Those were corrected in the billing files; the subsequent lint run reported no `lib/billing/*` violations.
+- Repository-wide lint still fails on 226 pre-existing errors across unrelated application areas, so TypeScript validation and production build are gated/skipped by the workflow.
+- Local execution was attempted but the model environment cannot resolve GitHub networking; therefore GitHub Actions is the authoritative execution evidence for this pass.
+- Live Neon schema verification confirmed: `users.id` is integer; `subscriptions.user_id` is bigint with its existing FK; `subscriptions` already contains `grace_period_until` and `payment_failed_at`; `social_accounts.user_id` and `commerce_channels.user_id` are integer. The V1 migration uses integer for the new usage-counter user FK and only adds canonical billing-plan linkage fields to subscriptions.
+- No live/default Neon migration was applied.
+
+
+## 2026-10-08 — Workstream B billing correctness + migration verification
+
+- Corrected active-subscription selection so expired payment-failure/grace-period records no longer retain paid access.
+- Reworked nullable subscription updates so explicit NULL values are persisted instead of being swallowed by SQL `COALESCE` behavior; this fixes deterministic clearing of pending plan/cancellation lifecycle state.
+- Paid plan changes now clear stale pending-plan and scheduled-cancellation state.
+- Validated `021_billing_v1_plans_entitlements.sql` through a disposable Neon migration branch. The isolated branch confirmed five billing plans, ten entitlement assignments per plan, the new subscription linkage columns, and one legacy subscription successfully backfilled. The temporary branch was discarded and no default/live schema change was applied.
+- Billing remains dependent on explicit Razorpay provider mappings; no provider plan IDs were hard-coded.
+
+
+## 2026-10-08 — Workstream B final hardening checkpoint
+
+- Billing API session identity access was cleaned up with a typed safe-positive-integer helper; billing routes no longer use `session.user as any`.
+- Latest PR #47 CI still stops at the repository test stage on seven pre-existing Commerce/Flipkart/WooCommerce failures; no billing failure was reported. Lint/build did not execute because the workflow gates them after test failure.
+- Workstream B remains unmerged. No default/live Neon migration was applied; the validated disposable migration branch was discarded.
+
+
+## 2026-10-08 — Workstream C reconciled onto current main
+
+- Workstream C media/video implementation was reconciled onto the current main lineage without replacing newer parallel-workstream changes.
+- Video remains first-class media: direct signed Cloudinary upload, explicit processing/lifecycle metadata, provider-specific capability resolution, and platform-specific publish workflows.
+- Existing image publishing paths remain intact.
+- Unsupported/unverified video capabilities remain fail-closed for Facebook and Google.
+- The additive media migration remains committed but is not applied to Neon.
+- Provider runtime verification for Pinterest video, Instagram video and LinkedIn video remains pending; provider access is not treated as runtime verification.
+- Repository-wide CI readiness remains subject to the current QA/CI workstream; no new green status is claimed by this reconciliation alone.
+## 2026-10-08 — Project-wide progress tracking rule
+- Established persistent progress tracking as a project-wide Dizito operating rule: each active workstream/chat must keep implementation, verification, migration, external-provider, branch/PR, blockers, dependencies, and continuation handoff status synchronized in the persistent documentation.
+- Completion labels must distinguish implementation-complete, verified, integrated/merged, and production-ready states.
+- Workstream A is implementation-complete and handed off to Workstream E for runtime/browser QA; no unnecessary UI churn should be introduced.
+- Workstream B is implemented and merged into main; current follow-up is build/type correctness and controlled/live billing verification, not a redesign of the billing model.
+
+
+
+## 2026-10-08 — Workstream D reconciliation with current main
+
+- Reconciled the security workstream onto the current `main` lineage after PR #49 developed merge conflicts.
+- Preserved migration 019, encrypted social credential helpers, OAuth state hardening, tenant-bound scheduler/recover-auth paths, upload signature validation, WooCommerce SSRF hardening, webhook/log hardening, and security tests.
+- Social OAuth writes for Meta/Facebook, Instagram, LinkedIn, Google Business, and Pinterest now persist credentials through encrypted columns and clear legacy plaintext token columns; encrypted-first/legacy-fallback reads remain temporarily.
+- Production account 62 remains unchanged pending deployment/runtime verification; no new destructive database operation was performed during reconciliation.
+- Runtime deployment/provider verification remains required before retiring legacy plaintext credential columns. Workstream D is not a production security certification.
