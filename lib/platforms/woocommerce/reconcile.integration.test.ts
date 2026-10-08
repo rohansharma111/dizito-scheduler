@@ -139,6 +139,8 @@ describe("reconcileWooCommercePublish", () => {
     ).resolves.toEqual({
       error: "RECONCILIATION_FAILED",
       message: "listing update failed",
+      reconciliationRequired: true,
+      ambiguous: true,
     });
 
     expect(query).toHaveBeenCalledWith("BEGIN");
@@ -168,6 +170,8 @@ describe("reconcileWooCommercePublish", () => {
     ).resolves.toEqual({
       error: "RECONCILIATION_FAILED",
       message: "attempt update failed",
+      reconciliationRequired: true,
+      ambiguous: true,
     });
 
     expect(query).toHaveBeenCalledWith("ROLLBACK");
