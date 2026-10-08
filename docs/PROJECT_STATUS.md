@@ -746,3 +746,12 @@ New canonical planning documents:
 - `docs/DIZITO_PARALLEL_WORKSTREAMS.md`.
 
 These define the launch gates and the multi-chat ownership model.
+
+## 2026-10-08 — Security Workstream D checkpoint
+
+- Security audit branch: v1/security-audit
+- Security audit report: docs/DIZITO_SECURITY_AUDIT_2026-10-08.md
+- P1 fixes implemented: OAuth state/session binding, cross-tenant auth-recovery authorization, webhook secret/payload log removal, WooCommerce outbound URL hardening, upload MIME allowlist, baseline security headers.
+- Remaining blocker: Next.js 16.2.7 dependency floor; upgrade to 16.3.8 with a real lockfile regeneration and full CI verification before V1 launch.
+- Remaining important risks: plaintext legacy social OAuth token storage, distributed rate limiting, DNS-level SSRF/egress controls, and file content sniffing.
+- No merge; no destructive DB changes.
