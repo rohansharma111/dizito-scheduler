@@ -106,3 +106,39 @@ Test:
 ### Meesho
 Blocked.
 
+## 2026-10-08 — Workstream F external verification checkpoint
+
+**Branch:** `v1/provider-verification`  
+**Verification boundary:** source/provider-contract inspection plus external-provider capability/status reconciliation. No provider secret, OAuth token, API key, or credential was recorded.
+
+### Execution result
+
+No live provider mutation was executed from this verification environment because the workstream has repository access but does not have an authorized runtime session/credential set for the external provider accounts. This is an execution limitation, not evidence of provider failure.
+
+Therefore:
+- **Live Pin / publish IDs:** none recorded.
+- **Provider-side create/update/delete mutations:** none executed.
+- **Persisted external-ID/reconciliation evidence from a live provider:** none added.
+- **No mutation flag was enabled solely to manufacture verification evidence.**
+
+### Provider checkpoint
+
+| Provider | External state | Test result in this checkpoint | Exact next controlled test |
+|---|---|---|---|
+| Meta | `business_management` review in progress | **BLOCKED/PENDING** — no approval claimed | After approval, use a non-developer/customer-like account: Business Portfolio Page discovery → Facebook publish → Instagram discovery → Instagram publish → reconnect → failure/retry |
+| Pinterest | Standard Access granted | **ACCESS CONFIRMED; LIVE TEST PENDING** | Create a real image Pin with selected board; capture Pin ID; verify persisted state; retry/reconnect; then separately run video Pin processing/create/reconciliation |
+| Google Business | Basic API Access application pending; support case `0-3242000041809` | **BLOCKED/PENDING** — no API access claimed | Wait for approval evidence, then OAuth → location discovery → controlled Business Profile post → read-back/reconciliation |
+| LinkedIn | Existing developer access | **CAPABILITY CONFIRMED; LIVE TEST PENDING** | Controlled organization/member image publish, capture post URN, verify persistence/read-back; then repeat with video asset |
+| WooCommerce | Store credentials/test environment required | **BLOCKED/PENDING** — no live mutation | Controlled create → provider read-back → update → price/inventory → ambiguous/retry → reconcile → disconnect/reconnect |
+| Amazon | SP-API/LWA foundation available | **CODE FOUNDATION; LIVE TEST PENDING** | Representative product types → schema/conditional validation → catalog match → ASIN persistence → offer mapping → controlled publish/update → reconciliation |
+| Flipkart | Authorized sandbox/provider environment required | **FAIL-CLOSED / PENDING** — live mutation flag remains disabled | Use authorized sandbox; capture exact response shape/external ID; verify replay/idempotency, reconciliation and mismatch handling |
+| Meesho | No authoritative API/partner access | **BLOCKED BY POLICY** | Do not implement provider-specific behavior until authoritative partner/API access exists |
+
+### Capability evidence checked
+
+- Pinterest's current official documentation explicitly supports image and video Pins, board assignment, Pin creation, and separate video upload/processing before Pin creation. Video processing can temporarily report an intermediate creative type, so verification must include post-processing read-back rather than treating immediate creation as the whole test. citeturn0search0
+- LinkedIn's current Posts API documentation supports organic image and video posts; image/video assets are uploaded first and their URNs are then used in post creation. citeturn0search1turn0search3
+- Pinterest also documents a sandbox for API v5 Pins/boards, including Create Pin, so a controlled sandbox path is available where the authorized account/app state permits it. citeturn0search6
+
+These documentation checks establish provider-documented capability only; they are **not** runtime verification of Dizito's credentials, tenant binding, persistence, or provider responses.
+
