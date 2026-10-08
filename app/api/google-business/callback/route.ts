@@ -141,9 +141,11 @@ export async function GET(request: Request) {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "x-dizito-internal-secret": process.env.NEXTAUTH_SECRET ?? "",
               },
               body: JSON.stringify({
-                socialAccountId: account.id,
+                socialAccountId: account.id,,
+                userId: userId
               }),
             },
           );
