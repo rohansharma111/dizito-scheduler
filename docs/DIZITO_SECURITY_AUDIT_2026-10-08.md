@@ -155,3 +155,10 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - This protects the credential-bearing publisher context even if a malformed or cross-tenant `post_targets` relationship reaches the scheduler.
 - No database migration was required or performed.
 - GitHub Actions for the two fix commits returned no workflow runs; therefore this change is **source-implemented but not CI/runtime verified** in this checkpoint.
+
+## OAuth error-response/logging follow-up
+
+- **P1 identified and fixed:** LinkedIn OAuth token-exchange failures no longer log or return the raw provider token payload. Only HTTP status and non-secret error metadata are retained.
+- **P1 identified and fixed:** Meta OAuth token-exchange failures no longer return the raw provider payload to the browser. The server logs only non-secret error metadata and returns a generic failure response.
+- Successful OAuth token handling is unchanged.
+- Runtime/provider verification remains pending.
