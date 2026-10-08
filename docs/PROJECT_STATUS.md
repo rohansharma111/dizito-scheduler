@@ -914,3 +914,10 @@ Important rollout boundary:
 - Updated the endpoint to parse and validate the decrypted page-selection payload before iterating, with a safe invalid-session response.
 - Commit: `c6d1d74f0ab5d78faa98dbe8981dddfc2799a86d`.
 - This is another migration-read compatibility fix; no credential values were read or logged.
+
+## 2026-10-08 — Workstream D Meta runtime verification passed
+
+- Meta connection is now successfully verified through the browser flow after fixing the encrypted OAuth-selection read/parse path.
+- Production metadata-only verification now shows Facebook, Instagram, and Pinterest accounts all have `credential_encryption_version = 'v1'`, encrypted credential material present, zero plaintext credential fields, and non-null tenant ownership.
+- No credential values were retrieved or logged.
+- Remaining runtime provider verification: LinkedIn and Google Business. Broader publishing/reconnect/refresh verification remains separate from connection-time verification.
