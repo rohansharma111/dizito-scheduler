@@ -45,7 +45,7 @@ export async function publishToInstagram(context: PublisherContext) {
   console.log("INSTAGRAM CONTAINER STATUS:", containerResponse.status);
 
   if (container.error) {
-    throw new Error(JSON.stringify(container.error));
+    throw new Error(`Instagram media creation failed: HTTP ${containerResponse.status}`);
   }
 
   // Meta sometimes needs a few seconds
@@ -72,7 +72,7 @@ export async function publishToInstagram(context: PublisherContext) {
   console.log("INSTAGRAM PUBLISH STATUS:", publishResponse.status);
 
   if (publishData.error) {
-    throw new Error(JSON.stringify(publishData.error));
+    throw new Error(`Instagram publish failed: HTTP ${publishResponse.status}`);
   }
 
   return publishData;
