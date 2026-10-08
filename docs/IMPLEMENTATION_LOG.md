@@ -723,3 +723,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Applied limits to high-cost AI Creator, weekly strategy, strategist, AI image generation, media upload, and authenticated Meta/LinkedIn/Pinterest/Google Business OAuth initiation routes.
 - The limiter is intentionally serverless-safe and does not persist raw user identifiers.
 - Verification remains incomplete: repository Test/Lint workflows are still red; no production migration or runtime provider verification has been performed.
+
+
+### 2026-10-09 — Workstream D SSRF/media regression continuation
+- Fixed the missing test-suite terminator in `lib/security/rate-limit.test.ts`, which was a security-branch regression and caused the previous lint gate to report a parsing error.
+- Restricted `lib/platforms/amazon/schema-fetch.ts` to HTTPS and the three known Amazon SP-API schema hosts; added `schema-fetch.test.ts` covering allowed and rejected destinations before network access.
+- Added distributed rate limiting to `/api/upload/signature` and `/api/media/complete`, extending the existing media/AI abuse controls to the complete direct-upload lifecycle.
+- No production SQL, migration application, destructive data change, or provider runtime mutation was performed.
+- Verification boundary: source changes committed; fresh GitHub Actions result still required.
