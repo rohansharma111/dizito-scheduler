@@ -862,3 +862,11 @@ Important rollout boundary:
 - Production currently contains Pinterest social account 62 from the user's reconnect. Metadata-only inspection found legacy plaintext access/refresh fields and no encrypted credential fields; the row has not been modified or deleted by the reconciliation.
 - Next launch-gate step is deployment of the reconciled `v1/security-audit` branch, followed by a controlled reconnect/health exercise and metadata-only verification. Legacy plaintext-column retirement remains deferred until runtime/provider verification is complete.
 - Do not describe Workstream D as fully secure or production-certified.
+
+## 2026-10-08 — Workstream D OAuth selection schema compatibility fix
+
+- **Status:** Live schema compatibility fix applied; runtime verification still pending.
+- The encrypted OAuth write path was blocked because legacy `oauth_page_selections.access_token` and `pages` columns remained `NOT NULL`.
+- Live Neon default branch now allows those legacy fields to be NULL, matching the encrypted-column migration contract.
+- Migration `020_oauth_page_selection_legacy_credentials_nullable.sql` is committed to keep fresh environments aligned.
+- The separate `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY` deployment configuration remains required before controlled reconnect/runtime verification can be completed.
