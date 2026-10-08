@@ -17,7 +17,7 @@ function normalizeSubscription(
 }
 
 export const razorpayProvider: BillingProvider = {
-  async createSubscription(input: CreateSubscriptionInput) {
+  async createSubscription(input: CreateSubscriptionInput): Promise<RazorpaySubscriptionEntity> {
     const startAt =
       input.trialDays > 0
         ? Math.floor(Date.now() / 1000) + input.trialDays * 24 * 60 * 60
@@ -41,7 +41,7 @@ export const razorpayProvider: BillingProvider = {
   async updateSubscription(
     providerSubscriptionId: string,
     input: UpdateSubscriptionInput,
-  ) {
+  ): Promise<RazorpaySubscriptionEntity> {
     const subscription = await razorpay.subscriptions.update(providerSubscriptionId, {
       plan_id: input.providerPlanId,
       schedule_change_at: input.scheduleChangeAt ?? "now",
@@ -54,7 +54,7 @@ export const razorpayProvider: BillingProvider = {
   async cancelSubscription(
     providerSubscriptionId: string,
     cancelAtCycleEnd: boolean,
-  ) {
+  ): Promise<RazorpaySubscriptionEntity> {
     const subscription = await razorpay.subscriptions.cancel(providerSubscriptionId, {
       cancel_at_cycle_end: cancelAtCycleEnd,
     });
@@ -62,7 +62,7 @@ export const razorpayProvider: BillingProvider = {
     return normalizeSubscription(subscription);
   },
 
-  async fetchSubscription(providerSubscriptionId: string) {
+  async fetchSubscription(providerSubscriptionId: string): Promise<RazorpaySubscriptionEntity> {
     const subscription = await razorpay.subscriptions.fetch(providerSubscriptionId);
     return normalizeSubscription(subscription);
   },
