@@ -70,7 +70,7 @@ The repository contains credential-bearing fields such as social access tokens a
 Especially important for video:
 - [ ] upload size limits;
 - [ ] MIME validation;
-- [ ] actual file/content validation;
+- [x] actual file/content signature validation for supported upload types;
 - [ ] codec/container validation where applicable;
 - [ ] duration/dimension limits;
 - [ ] image/video processing isolation;
@@ -185,4 +185,4 @@ Open before launch:
 - [ ] Migrate legacy social OAuth tokens from plaintext storage to application-encrypted storage.
 - [ ] Add distributed rate limiting for abuse-sensitive endpoints.
 - [ ] Complete DNS-aware SSRF/egress controls for arbitrary commerce store hosts.
-- [ ] Add file magic-byte/content validation if hostile uploads are in scope (no detector dependency is currently installed; do not hand-edit the lockfile).
+- [x] Add lightweight file signature validation for supported upload types. Full codec/container validation remains open if hostile uploads require it.
