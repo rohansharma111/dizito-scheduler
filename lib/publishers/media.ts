@@ -4,6 +4,7 @@ import { getMediaCapability, resolvePublishMediaType, type PublishMediaKind } fr
 export interface PublishMedia {
   id?: number;
   secure_url: string;
+  file_name?: string | null;
   poster_url?: string | null;
   resource_type: "image" | "video";
   mime_type?: string | null;
@@ -28,6 +29,7 @@ export async function resolvePostMedia(context: { post: any; account: any }, pla
   if (!media && post.secure_url) {
     media = {
       secure_url: post.secure_url,
+      file_name: post.file_name ?? null,
       resource_type: post.resource_type === "video" ? "video" : "image",
       mime_type: post.mime_type ?? null,
       media_type: post.media_type ?? null,
