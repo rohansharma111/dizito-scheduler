@@ -183,7 +183,7 @@ export async function updateSubscription(
     ["pending_billing_plan_id", updates.pendingBillingPlanId],
     ["plan_change_at", updates.planChangeAt],
     ["plan", updates.plan],
-  ].filter(([, value]) => value !== undefined);
+  ].filter((field): field is [string, unknown] => field[1] !== undefined);
 
   const values: unknown[] = [];
   const setClauses = fields.map(([column, value]) => {
