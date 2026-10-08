@@ -961,3 +961,9 @@ Important rollout boundary:
 - Added rate limiting to direct Cloudinary upload initialization/completion endpoints.
 - No production migration or destructive operation executed.
 - Workstream D remains not production-ready: fresh CI evidence is pending; repository-wide lint debt remains; DNS-aware egress/media-processing isolation and runtime/provider verification remain open.
+
+### 2026-10-09 — Workstream D outbound security continuation
+- Hardened WooCommerce outbound requests with DNS preflight against private/local address ranges, 15s timeout, and provider-error redaction.
+- Added regression coverage for private DNS resolution and provider-controlled error leakage.
+- Residual DNS rebinding risk remains because preflight and connection are separate; deployment-level egress policy is still the definitive control.
+- No production migration or destructive operation performed.
