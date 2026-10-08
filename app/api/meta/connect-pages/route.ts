@@ -200,8 +200,8 @@ export async function POST(request: Request) {
       status = 'connected',
       last_checked_at = NOW()
     WHERE
-      id = $6
-      AND user_id = $7
+      id = $4
+      AND user_id = $5
     `,
           [
             reconnectAccount.account_name,
@@ -358,9 +358,7 @@ export async function POST(request: Request) {
     `,
           [
             reconnectAccount.account_name,
-            accessToken,
             encryptSocialCredential(accessToken),
-            page.access_token,
             encryptSocialCredential(page.access_token),
             reconnectAccountId,
             userId,
@@ -460,25 +458,23 @@ export async function POST(request: Request) {
             (
               $1,
               $2,
+              NULL,
               $3,
               $4,
               $5,
               $6,
-              $7,
-              $8,
-              $9
+              NULL,
+              $7
             )
             RETURNING id
             `,
             [
               "instagram",
               page.name,
-              accessToken,
               encryptSocialCredential(accessToken),
               page.id,
               instagramId,
               userId,
-              page.access_token,
               encryptSocialCredential(page.access_token),
             ],
           );
