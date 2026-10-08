@@ -1,8 +1,11 @@
 import { pool } from "@/lib/db";
 import { createEvent } from "@/lib/events";
+import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
+import { verifyOAuthState } from "@/lib/security/oauth-state";
 import { authOptions } from "@/lib/auth";
 import { getPlan, canConnectAccount } from "@/lib/plans";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 export async function GET(request: Request) {
   try {
@@ -22,20 +25,33 @@ export async function GET(request: Request) {
     const userId = (session.user as any).id;
 
     const { searchParams } = new URL(request.url);
+    const cookieStore = await cookies();
+    const providedState = searchParams.get("state");
+    const expectedState = cookieStore.get("linkedin_oauth_state")?.value;
+    const reconnect = cookieStore.get("linkedin_oauth_reconnect")?.value || null;
+    const reconnectType = cookieStore.get("linkedin_oauth_reconnect_type")?.value || "account";
+
+    if (!verifyOAuthState(expectedState, providedState)) {
+      return Response.json({ error: "Invalid OAuth state" }, { status: 401 });
+    }
+
+    cookieStore.delete("linkedin_oauth_state");
+    cookieStore.delete("linkedin_oauth_reconnect");
+    cookieStore.delete("linkedin_oauth_reconnect_type");
 
     const error = searchParams.get("error");
 
     if (error) {
       return Response.redirect(
-        `${process.env.NEXTAUTH_URL}/accounts?error=oauth_cancelled`,
+        process.env.NEXTAUTH_URL + "/accounts?error=oauth_cancelled",
       );
     }
 
     const code = searchParams.get("code");
-
-    const state = searchParams.get("state");
-
-    const isReconnect = state?.startsWith("reconnect:");
+    const state = reconnect
+      ? "reconnect:" + reconnect + ":" + reconnectType
+      : "connect";
+    const isReconnect = state.startsWith("reconnect:");
 
     let userPlan = "free";
 
@@ -140,11 +156,20 @@ export async function GET(request: Request) {
     const accessToken = tokenData.access_token;
 
     if (!accessToken) {
-      console.error("LINKEDIN TOKEN ERROR", tokenData);
-
-      return Response.json(tokenData, {
-        status: 400,
+      console.error("LINKEDIN TOKEN EXCHANGE FAILED", {
+        status: tokenResponse.status,
+        error: tokenData?.error,
+        error_description: tokenData?.error_description,
       });
+
+      return Response.json(
+        {
+          error: "LinkedIn token exchange failed",
+        },
+        {
+          status: 400,
+        },
+      );
     }
 
     /*
@@ -271,7 +296,8 @@ export async function GET(request: Request) {
         `
     UPDATE social_accounts
     SET
-      access_token = $1,
+      access_token = NULL,
+      access_token_encrypted = $1,
       account_name = $2,
       status = 'connected',
       last_checked_at = NOW(),
@@ -280,7 +306,7 @@ export async function GET(request: Request) {
       id = $3
       AND user_id = $4
     `,
-        [accessToken, accountName, accountId, userId],
+        [encryptSocialCredential(accessToken), accountName, accountId, userId],
       );
 
       await createEvent(
@@ -309,10 +335,12 @@ export async function GET(request: Request) {
 
               headers: {
                 "Content-Type": "application/json",
+                "x-dizito-internal-secret": process.env.NEXTAUTH_SECRET ?? "",
               },
 
               body: JSON.stringify({
                 socialAccountId: accountId,
+                userId,
               }),
             },
           );
@@ -382,6 +410,7 @@ export async function GET(request: Request) {
           platform,
           account_name,
           access_token,
+          access_token_encrypted,
           linkedin_member_id,
           user_id,
           status,
@@ -391,6 +420,7 @@ export async function GET(request: Request) {
         (
           $1,
           $2,
+          NULL,
           $3,
           $4,
           $5,
@@ -399,7 +429,7 @@ export async function GET(request: Request) {
         )
         RETURNING id
         `,
-      ["linkedin", accountName, accessToken, memberId, userId, "connected"],
+      ["linkedin", accountName, encryptSocialCredential(accessToken), memberId, userId, "connected"],
     );
 
     const accountId = result.rows[0].id;
@@ -426,7 +456,7 @@ export async function GET(request: Request) {
 
     return Response.json(
       {
-        error: String(error),
+        error: "LinkedIn authentication failed",
       },
       {
         status: 500,

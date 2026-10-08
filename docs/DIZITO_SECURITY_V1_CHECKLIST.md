@@ -70,7 +70,7 @@ The repository contains credential-bearing fields such as social access tokens a
 Especially important for video:
 - [ ] upload size limits;
 - [ ] MIME validation;
-- [ ] actual file/content validation;
+- [x] actual file/content signature validation for supported upload types;
 - [ ] codec/container validation where applicable;
 - [ ] duration/dimension limits;
 - [ ] image/video processing isolation;
@@ -167,3 +167,77 @@ Report:
 
 Use OWASP ASVS as the external audit framework.
 
+## 2026-10-08 Audit Addendum
+
+See docs/DIZITO_SECURITY_AUDIT_2026-10-08.md for the source-level audit and finding classifications.
+
+Implemented in v1/security-audit:
+- OAuth state binding/session checks.
+- Tenant authorization on auth recovery.
+- Removal of raw Razorpay webhook logging.
+- WooCommerce URL boundary hardening.
+- Upload MIME allowlist.
+- Baseline security headers.
+- OAuth-state regression tests.
+
+Open before launch:
+- [x] Align Next.js and eslint-config-next to patched 16.3.8; npm ci succeeds with the matching lockfile. Full CI/runtime verification remains pending.
+- [ ] Migrate legacy social OAuth tokens from plaintext storage to application-encrypted storage.
+- [ ] Add distributed rate limiting for abuse-sensitive endpoints.
+- [ ] Complete DNS-aware SSRF/egress controls for arbitrary commerce store hosts.
+- [x] Add lightweight file signature validation for supported upload types. Full codec/container validation remains open if hostile uploads require it.
+
+
+### 2026-10-08 continuation
+- [x] Removed unused unauthenticated LinkedIn token-exchange proxy; canonical LinkedIn OAuth callback is authenticated and state-bound.
+- [ ] Legacy social OAuth token columns still require additive application-encrypted migration.
+
+
+### 2026-10-08 continuation
+- [x] Pinterest and Google Business OAuth callbacks use shared constant-time state verification.
+- [ ] Legacy social OAuth token migration remains pending; no schema-only encryption migration was introduced.
+
+
+### 2026-10-08 continuation — credential migration inventory
+
+- [x] Source-level inventory of legacy social OAuth token consumers completed.
+- [x] Confirmed scheduler and account-health credential consumption paths.
+- [x] Confirmed temporary OAuth-selection credential paths and Meta Page-token material inside selection JSON.
+- [ ] Introduce server-only encrypted social credential repository/service.
+- [ ] Additive encrypted columns and dual-write migration.
+- [ ] Encrypted-first dual-read and migration-on-read.
+- [ ] Verify migration coverage and remove legacy plaintext columns only after rollback/readiness checks.
+
+### Scheduler credential-boundary regression
+
+- [x] Scheduler `social_accounts` lookup is tenant-scoped to the owning post user.
+- [x] Regression test covers foreign-tenant account rejection before publisher invocation.
+- [ ] CI/runtime execution of this regression remains pending; no workflow run was observed for the fix commits in this checkpoint.
+
+### OAuth secret-leakage regression
+
+- [x] Meta token-exchange errors do not return raw provider payloads.
+- [x] LinkedIn token-exchange errors do not log or return raw provider token payloads.
+- [ ] Runtime/provider verification remains pending.
+
+### Provider response leakage hardening
+
+- [x] Facebook publisher no longer logs raw provider response bodies.
+- [x] Instagram publisher no longer logs raw provider response bodies.
+- [x] LinkedIn publisher no longer logs raw provider response/error bodies.
+- [x] Pinterest publisher no longer logs raw provider response bodies.
+- [x] Google Business publisher no longer promotes the raw provider payload into thrown errors.
+- [ ] Runtime verification remains pending.
+
+### 2026-10-08 continuation — encrypted-first application seam
+
+- [x] Added encrypted-first social account credential resolver used by scheduler and account-health reads.
+- [x] Added regression tests for encrypted precedence, legacy fallback, and malformed encrypted values.
+- [x] Added additive-only migration 019 for encrypted social credential columns; migration is staged but **not applied to Neon**.
+- [x] Added a dual-write encryption helper and unit coverage; OAuth callback wiring remains intentionally gated on migration deployment ordering.
+- [ ] Wire Meta/LinkedIn/Pinterest/Google Business OAuth writes to encrypted columns after migration 019 is applied to the target database.
+- [ ] Migrate temporary OAuth Page-selection credential material to encrypted storage and update all consumers.
+
+## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
+
+- Migration 019 has been applied to Neon after temporary-branch validation. Dual-write coverage is now implemented for Meta, LinkedIn, Pinterest, Google Business OAuth/account-selection paths and Pinterest token refresh; encrypted-first reads are implemented for scheduler, account-health, and temporary OAuth selections. Legacy plaintext fields remain intentionally present for rollback/migration compatibility.

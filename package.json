@@ -9,12 +9,13 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:backfill-social-credentials": "node scripts/backfill-social-credentials.mjs"
   },
   "dependencies": {
     "cloudinary": "^2.10.0",
     "lucide-react": "^1.22.0",
-    "next": "16.2.7",
+    "next": "16.3.8",
     "next-auth": "^4.24.14",
     "node-cron": "^4.2.1",
     "openai": "^7.4.0",
@@ -37,7 +38,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "16.2.7",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^2.1.9"

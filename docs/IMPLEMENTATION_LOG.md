@@ -684,3 +684,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Workstream A is implementation-complete and handed off to Workstream E for runtime/browser QA; no unnecessary UI churn should be introduced.
 - Workstream B is implemented and merged into main; current follow-up is build/type correctness and controlled/live billing verification, not a redesign of the billing model.
 
+
+
+## 2026-10-08 — Workstream D reconciliation with current main
+
+- Reconciled the security workstream onto the current `main` lineage after PR #49 developed merge conflicts.
+- Preserved migration 019, encrypted social credential helpers, OAuth state hardening, tenant-bound scheduler/recover-auth paths, upload signature validation, WooCommerce SSRF hardening, webhook/log hardening, and security tests.
+- Social OAuth writes for Meta/Facebook, Instagram, LinkedIn, Google Business, and Pinterest now persist credentials through encrypted columns and clear legacy plaintext token columns; encrypted-first/legacy-fallback reads remain temporarily.
+- Production account 62 remains unchanged pending deployment/runtime verification; no new destructive database operation was performed during reconciliation.
+- Runtime deployment/provider verification remains required before retiring legacy plaintext credential columns. Workstream D is not a production security certification.

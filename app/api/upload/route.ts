@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
 import { getUploadPolicy } from "@/lib/media/upload-policy";
+import { matchesDeclaredMediaType } from "@/lib/security/media-signature";
 
 export async function POST(request: Request) {
   try {
@@ -40,6 +41,13 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (!matchesDeclaredMediaType(buffer, file.type)) {
+      return NextResponse.json(
+        { success: false, error: "Uploaded file content does not match its declared media type" },
+        { status: 415 },
+      );
+    }
     const media = await mediaService.uploadMedia({
       userId: Number(session.user.id),
       buffer,

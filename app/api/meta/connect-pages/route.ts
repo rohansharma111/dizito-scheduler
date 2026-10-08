@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createEvent } from "@/lib/events";
 import { getPlan } from "@/lib/plans";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
+import { resolveOAuthSelectionCredentials } from "@/lib/security/social-oauth-selection";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const oauthData = selectionResult.rows[0];
+  const oauthData = resolveOAuthSelectionCredentials(selectionResult.rows[0]);
 
   const reconnectAccountId = oauthData.reconnect_account_id;
 
@@ -191,8 +193,10 @@ export async function POST(request: Request) {
     UPDATE social_accounts
     SET
       account_name = $1,
-      access_token = $2,
-      page_access_token = $3,
+      access_token = NULL,
+      access_token_encrypted = $2,
+      page_access_token = NULL,
+      page_access_token_encrypted = $3,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
@@ -201,8 +205,8 @@ export async function POST(request: Request) {
     `,
           [
             reconnectAccount.account_name,
-            accessToken,
-            page.access_token,
+            encryptSocialCredential(accessToken),
+            encryptSocialCredential(page.access_token),
             reconnectAccountId,
             userId,
           ],
@@ -271,17 +275,21 @@ export async function POST(request: Request) {
       platform,
       account_name,
       access_token,
+      access_token_encrypted,
       page_id,
       user_id,
-      page_access_token
+      page_access_token,
+      page_access_token_encrypted
     )
     VALUES
     (
       $1,
       $2,
+      NULL,
       $3,
       $4,
       $5,
+      NULL,
       $6
     )
     RETURNING id
@@ -289,10 +297,10 @@ export async function POST(request: Request) {
             [
               "facebook",
               page.name,
-              accessToken,
+              encryptSocialCredential(accessToken),
               page.id,
               userId,
-              page.access_token,
+              encryptSocialCredential(page.access_token),
             ],
           );
 
@@ -338,8 +346,10 @@ export async function POST(request: Request) {
     UPDATE social_accounts
     SET
       account_name = $1,
-      access_token = $2,
-      page_access_token = $3,
+      access_token = NULL,
+      access_token_encrypted = $2,
+      page_access_token = NULL,
+      page_access_token_encrypted = $3,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
@@ -348,8 +358,8 @@ export async function POST(request: Request) {
     `,
           [
             reconnectAccount.account_name,
-            accessToken,
-            page.access_token,
+            encryptSocialCredential(accessToken),
+            encryptSocialCredential(page.access_token),
             reconnectAccountId,
             userId,
           ],
@@ -437,19 +447,23 @@ export async function POST(request: Request) {
               platform,
               account_name,
               access_token,
+              access_token_encrypted,
               page_id,
               instagram_business_id,
               user_id,
-              page_access_token
+              page_access_token,
+              page_access_token_encrypted
             )
             VALUES
             (
               $1,
               $2,
+              NULL,
               $3,
               $4,
               $5,
               $6,
+              NULL,
               $7
             )
             RETURNING id
@@ -457,11 +471,11 @@ export async function POST(request: Request) {
             [
               "instagram",
               page.name,
-              accessToken,
+              encryptSocialCredential(accessToken),
               page.id,
               instagramId,
               userId,
-              page.access_token,
+              encryptSocialCredential(page.access_token),
             ],
           );
 

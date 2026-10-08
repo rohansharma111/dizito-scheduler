@@ -10,8 +10,14 @@ describe("normalizeWooCommerceStoreUrl", () => {
     expect(normalizeWooCommerceStoreUrl("https://store.example.com/shop/")).toBe("https://store.example.com/shop");
   });
 
-  it("accepts HTTP URLs", () => {
-    expect(normalizeWooCommerceStoreUrl("http://localhost:8080/")).toBe("http://localhost:8080");
+  it("rejects loopback and private destinations", () => {
+    expect(() => normalizeWooCommerceStoreUrl("http://localhost:8080/")).toThrow("public host");
+    expect(() => normalizeWooCommerceStoreUrl("http://127.0.0.1:8080/")).toThrow("public host");
+    expect(() => normalizeWooCommerceStoreUrl("http://192.168.1.10/")).toThrow("public host");
+  });
+
+  it("rejects credential-bearing URLs", () => {
+    expect(() => normalizeWooCommerceStoreUrl("https://user:pass@store.example.com")).toThrow("invalid");
   });
 
   it("rejects URLs without an HTTP scheme", () => {

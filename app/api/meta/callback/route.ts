@@ -1,8 +1,11 @@
 import { pool } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
+import { verifyOAuthState } from "@/lib/security/oauth-state";
 import { canConnectAccount } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 import {
   discoverMetaPages,
   getInstagramBusinessAccount,
@@ -29,10 +32,25 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   const code = searchParams.get("code");
+  const providedState = searchParams.get("state");
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get("meta_oauth_state")?.value;
+  const reconnect = cookieStore.get("meta_oauth_reconnect")?.value || null;
+  const reconnectType = cookieStore.get("meta_oauth_reconnect_type")?.value || null;
 
-  const state = searchParams.get("state");
+  if (!verifyOAuthState(expectedState, providedState)) {
+    return Response.json({ error: "Invalid OAuth state" }, { status: 401 });
+  }
 
-  const isReconnect = state?.startsWith("reconnect:");
+  cookieStore.delete("meta_oauth_state");
+  cookieStore.delete("meta_oauth_reconnect");
+  cookieStore.delete("meta_oauth_reconnect_type");
+
+  const state = reconnect && reconnectType
+    ? `reconnect:${reconnect}:${reconnectType}`
+    : "connect";
+
+  const isReconnect = state.startsWith("reconnect:");
 
   const error = searchParams.get("error");
 
@@ -116,9 +134,21 @@ export async function GET(request: Request) {
   const accessToken = tokenData.access_token;
 
   if (!accessToken) {
-    return Response.json(tokenData, {
-      status: 400,
+    console.error("META TOKEN EXCHANGE FAILED", {
+      status: tokenResponse.status,
+      error: tokenData?.error,
+      error_description: tokenData?.error_description,
+      error_code: tokenData?.error_code,
     });
+
+    return Response.json(
+      {
+        error: "Meta token exchange failed",
+      },
+      {
+        status: 400,
+      },
+    );
   }
 
   const permissionsResponse = await fetch(
@@ -169,8 +199,8 @@ export async function GET(request: Request) {
         error:
           "No Facebook Pages were returned by Meta. If this Page is managed through a Business Portfolio, the Meta app must have the business-management access required for business-scoped Page discovery and the user must authorize that access.",
         discoverySource: pageDiscovery.source,
-        accounts: pageDiscovery.accountsResponse,
-        assignedPages: pageDiscovery.assignedPagesResponse ?? null,
+        accountCount: pageDiscovery.accountsResponse?.data?.length ?? 0,
+        assignedPageCount: pageDiscovery.assignedPagesResponse?.data?.length ?? 0,
       },
       {
         status: 400,
@@ -234,11 +264,12 @@ export async function GET(request: Request) {
         `
         UPDATE social_accounts
         SET
-          access_token = $1,
+          access_token = NULL,
+          access_token_encrypted = $1,
           updated_at = NOW()
         WHERE id = $2
         `,
-        [accessToken, existingAccount.id],
+        [encryptSocialCredential(accessToken), existingAccount.id],
       );
 
       await createEvent(
@@ -284,12 +315,13 @@ export async function GET(request: Request) {
             `
         UPDATE social_accounts
         SET
-          access_token = $1,
+          access_token = NULL,
+          access_token_encrypted = $1,
           page_id = $2,
           updated_at = NOW()
         WHERE id = $3
         `,
-            [accessToken, page.id, existingAccount.id],
+            [encryptSocialCredential(accessToken), page.id, existingAccount.id],
           );
 
           await createEvent(
@@ -365,18 +397,22 @@ export async function GET(request: Request) {
     (
       user_id,
       access_token,
+      access_token_encrypted,
       pages,
+      pages_encrypted,
       created_at
     )
     VALUES
     (
       $1,
+      NULL,
       $2,
+      NULL,
       $3,
       NOW()
     )
     `,
-    [userId, accessToken, JSON.stringify(enrichedPages)],
+    [userId, encryptSocialCredential(accessToken), encryptSocialCredential(JSON.stringify(enrichedPages))],
   );
 
   return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select/meta`);

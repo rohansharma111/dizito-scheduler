@@ -1,5 +1,6 @@
 import { pool } from "../db";
 import { publishers } from "../publishers";
+import { resolveSocialAccountCredentials } from "@/lib/security/social-account-credentials";
 
 export async function processTarget(target: any) {
   console.log(`Processing Target ${target.id} (${target.platform})`);
@@ -42,22 +43,12 @@ export async function processTarget(target: any) {
 
         m.height,
 
-        m.bytes,
-
-        m.media_type,
-        m.duration_seconds,
-        m.poster_url,
-        m.processing_state,
-        m.upload_protocol,
-        m.processing_error,
-        m.metadata
+        m.bytes
 
       FROM posts p
 
       LEFT JOIN media_library m
         ON p.media_id = m.id
-        AND m.user_id = p.user_id
-        AND m.deleted_at IS NULL
 
       WHERE p.id = $1
     `,
@@ -79,11 +70,14 @@ export async function processTarget(target: any) {
       SELECT *
       FROM social_accounts
       WHERE id = $1
+        AND user_id = $2
     `,
-    [target.social_account_id],
+    [target.social_account_id, post.user_id],
   );
 
-  const account = accountResult.rows[0];
+  const account = accountResult.rows[0]
+    ? resolveSocialAccountCredentials(accountResult.rows[0])
+    : null;
 
   if (!account) {
     throw new Error("Account not found");

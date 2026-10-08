@@ -1,5 +1,7 @@
 import { pool } from "@/lib/db";
 import { refreshPinterestToken } from "@/lib/platforms/pinterest/refreshToken";
+import { resolveSocialAccountCredentials } from "@/lib/security/social-account-credentials";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 async function checkInstagramAccount(account: any) {
   const response = await fetch(
@@ -142,8 +144,10 @@ async function checkPinterestAccount(account: any) {
       `
       UPDATE social_accounts
       SET
-        access_token = $1,
-        refresh_token = COALESCE($2, refresh_token),
+        access_token = NULL,
+        access_token_encrypted = $1,
+        refresh_token = NULL,
+        refresh_token_encrypted = COALESCE($2, refresh_token_encrypted),
         token_expires_at = CASE
           WHEN $3 IS NULL THEN token_expires_at
           ELSE NOW() + ($3 * INTERVAL '1 second')
@@ -155,8 +159,8 @@ async function checkPinterestAccount(account: any) {
       WHERE id = $4
       `,
       [
-        token.accessToken,
-        token.refreshToken ?? null,
+        encryptSocialCredential(token.accessToken),
+        token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
         token.expiresIn ?? null,
         account.id,
       ],
@@ -365,9 +369,10 @@ export async function checkAccounts(userId?: number) {
     error: 0,
   };
 
-  for (const account of result.rows) {
+  for (const rawAccount of result.rows) {
     summary.total++;
 
+    const account = resolveSocialAccountCredentials(rawAccount);
     const health = await checkAccount(account);
 
     if (health.status === "healthy") {

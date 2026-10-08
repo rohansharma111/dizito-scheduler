@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createEvent } from "@/lib/events";
 import { getPlan } from "@/lib/plans";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
+import { resolveOAuthSelectionCredentials } from "@/lib/security/social-oauth-selection";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const oauthData = selectionResult.rows[0];
+  const oauthData = resolveOAuthSelectionCredentials(selectionResult.rows[0]);
 
   const reconnectAccountId = oauthData.reconnect_account_id;
 
@@ -196,8 +198,10 @@ export async function POST(request: Request) {
           UPDATE social_accounts
           SET
             account_name = $1,
-            access_token = $2,
-            refresh_token = $3,
+            access_token = NULL,
+            access_token_encrypted = $2,
+            refresh_token = NULL,
+            refresh_token_encrypted = $3,
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
@@ -207,8 +211,8 @@ export async function POST(request: Request) {
           `,
           [
             reconnectAccount.account_name,
-            accessToken,
-            refreshToken,
+            encryptSocialCredential(accessToken),
+            refreshToken ? encryptSocialCredential(refreshToken) : null,
             reconnectAccountId,
             userId,
           ],
@@ -308,7 +312,9 @@ export async function POST(request: Request) {
             platform,
             account_name,
             access_token,
+            access_token_encrypted,
             refresh_token,
+            refresh_token_encrypted,
             google_location_id,
             google_account_id,
             google_profile_id,
@@ -318,7 +324,9 @@ export async function POST(request: Request) {
           (
             $1,
             $2,
+            NULL,
             $3,
+            NULL,
             $4,
             $5,
             $6,
@@ -332,9 +340,9 @@ export async function POST(request: Request) {
 
           location.name,
 
-          accessToken,
+          encryptSocialCredential(accessToken),
 
-          refreshToken,
+          refreshToken ? encryptSocialCredential(refreshToken) : null,
 
           location.id,
 

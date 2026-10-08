@@ -4,11 +4,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { createEvent } from "@/lib/events";
+import { verifyOAuthState } from "@/lib/security/oauth-state";
 
 import { exchangeToken } from "@/lib/platforms/google-business/exchangeToken";
 import { getProfile } from "@/lib/platforms/google-business/getProfile";
 import { getLocations } from "@/lib/platforms/google-business/getLocations";
 import type { GoogleBusinessLocation } from "@/lib/platforms/google-business/types";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,7 +43,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (storedState !== state) {
+  if (!verifyOAuthState(storedState, state)) {
     return Response.redirect(
       `${process.env.NEXTAUTH_URL}/accounts/connect-error?platform=google-business&code=AUTH_FAILED`,
     );
@@ -110,15 +112,17 @@ export async function GET(request: Request) {
         `
         UPDATE social_accounts
         SET
-          access_token = $1,
-          refresh_token = $2,
+          access_token = NULL,
+          access_token_encrypted = $1,
+          refresh_token = NULL,
+          refresh_token_encrypted = $2,
           status = 'connected',
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
         WHERE id = $3 AND user_id = $4
         `,
-        [token.accessToken, token.refreshToken ?? null, account.id, userId],
+        [encryptSocialCredential(token.accessToken), token.refreshToken ? encryptSocialCredential(token.refreshToken) : null, account.id, userId],
       );
 
       await createEvent(
@@ -141,9 +145,11 @@ export async function GET(request: Request) {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "x-dizito-internal-secret": process.env.NEXTAUTH_SECRET ?? "",
               },
               body: JSON.stringify({
                 socialAccountId: account.id,
+                userId,
               }),
             },
           );
@@ -181,8 +187,11 @@ export async function GET(request: Request) {
       (
         user_id,
         access_token,
+        access_token_encrypted,
         refresh_token,
+        refresh_token_encrypted,
         pages,
+        pages_encrypted,
         reconnect_account_id,
         reconnect_type,
         created_at
@@ -190,9 +199,12 @@ export async function GET(request: Request) {
       VALUES
       (
         $1,
+        NULL,
         $2,
+        NULL,
         $3,
         $4,
+        NULL,
         NULL,
         NULL,
         NOW()
@@ -200,12 +212,12 @@ export async function GET(request: Request) {
       `,
       [
         userId,
-        token.accessToken,
-        token.refreshToken,
-        JSON.stringify({
+        encryptSocialCredential(token.accessToken),
+        token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
+        encryptSocialCredential(JSON.stringify({
           profile,
           locations,
-        }),
+        })),
       ],
     );
 

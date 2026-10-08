@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { createEvent } from "@/lib/events";
+import { verifyOAuthState } from "@/lib/security/oauth-state";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 import { exchangeToken } from "@/lib/platforms/pinterest/exchangeToken";
 import { getProfile } from "@/lib/platforms/pinterest/getProfile";
@@ -54,7 +56,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (storedState !== state) {
+  if (!verifyOAuthState(storedState, state)) {
     return Response.json(
       {
         error: "Invalid OAuth state",
@@ -134,8 +136,10 @@ export async function GET(request: Request) {
         `
         UPDATE social_accounts
         SET
-          access_token = $1,
-          refresh_token = COALESCE($2, refresh_token),
+          access_token = NULL,
+          access_token_encrypted = $1,
+          refresh_token = NULL,
+          refresh_token_encrypted = COALESCE($2, refresh_token_encrypted),
           token_expires_at = CASE
             WHEN $3 IS NULL THEN token_expires_at
             ELSE NOW() + ($3 * INTERVAL '1 second')
@@ -147,8 +151,8 @@ export async function GET(request: Request) {
         WHERE id = $4 AND user_id = $5
         `,
         [
-          token.accessToken,
-          token.refreshToken ?? null,
+          encryptSocialCredential(token.accessToken),
+          token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
           token.expiresIn ?? null,
           account.id,
           userId,
@@ -175,9 +179,11 @@ export async function GET(request: Request) {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "x-dizito-internal-secret": process.env.NEXTAUTH_SECRET ?? "",
               },
               body: JSON.stringify({
                 socialAccountId: account.id,
+                userId,
               }),
             },
           );
@@ -216,9 +222,12 @@ export async function GET(request: Request) {
       (
         user_id,
         access_token,
+        access_token_encrypted,
         refresh_token,
+        refresh_token_encrypted,
         token_expires_at,
         pages,
+        pages_encrypted,
         reconnect_account_id,
         reconnect_type,
         created_at
@@ -226,9 +235,12 @@ export async function GET(request: Request) {
       VALUES
       (
         $1,
+        NULL,
         $2,
+        NULL,
         $3,
         $4,
+        NULL,
         $5,
         NULL,
         NULL,
@@ -237,15 +249,15 @@ export async function GET(request: Request) {
       `,
       [
         userId,
-        token.accessToken,
-        token.refreshToken ?? null,
+        encryptSocialCredential(token.accessToken),
+        token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
         token.expiresIn
           ? new Date(Date.now() + Number(token.expiresIn) * 1000)
           : null,
-        JSON.stringify({
+        encryptSocialCredential(JSON.stringify({
           profile,
           boards,
-        }),
+        })),
       ],
     );
 

@@ -852,3 +852,13 @@ Important rollout boundary:
 - Facebook video and Google video capabilities remain fail-closed where verification is incomplete/unsupported.
 - The additive media schema migration is committed but remains unapplied to Neon pending explicit migration execution.
 - Controlled provider runtime verification remains a launch gate for supported video workflows.
+
+
+## 2026-10-08 — Workstream D reconciliation with current main
+
+- PR #49 security work is being reconciled onto the current `main` lineage; implementation remains distinct from runtime verification.
+- Preserved the security workstream's tenant isolation, OAuth state validation, encrypted social credential persistence, webhook/log hardening, upload signature validation, WooCommerce SSRF protections, and security regression tests.
+- Social OAuth encrypted-only writes now cover Meta/Facebook, Instagram, LinkedIn, Google Business, and Pinterest; encrypted-first/legacy-fallback reads remain temporarily during migration.
+- Production currently contains Pinterest social account 62 from the user's reconnect. Metadata-only inspection found legacy plaintext access/refresh fields and no encrypted credential fields; the row has not been modified or deleted by the reconciliation.
+- Next launch-gate step is deployment of the reconciled `v1/security-audit` branch, followed by a controlled reconnect/health exercise and metadata-only verification. Legacy plaintext-column retirement remains deferred until runtime/provider verification is complete.
+- Do not describe Workstream D as fully secure or production-certified.
