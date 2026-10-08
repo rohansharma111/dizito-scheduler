@@ -798,3 +798,11 @@ These define the launch gates and the multi-chat ownership model.
 - Added `npm run db:backfill-social-credentials`, a guarded application-side backfill requiring `DATABASE_URL` and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY`, with advisory-lock/transaction protection and coverage verification.
 - **Current blocker:** the actual encryption key cannot be inspected through the available GitHub integration. Provision/confirm it in the runtime environment, then execute the guarded backfill. Do not paste the secret into chat.
 - Plaintext column retirement remains blocked until backfill, runtime/provider verification, and rollback readiness are demonstrated.
+
+## 2026-10-08 — Security legacy social-account cleanup
+
+- The two remaining legacy `social_accounts` records were explicitly authorized for deletion.
+- Deleted IDs `46` and `61`; their 2 dependent `post_targets` were removed through the existing `ON DELETE CASCADE` foreign key.
+- Neon verification now reports 0 `social_accounts` rows and 0 `oauth_page_selections` rows.
+- No legacy social-account credential backfill is currently required. Encrypted schema, dual-write and encrypted-first reads remain implemented for future connections.
+- Plaintext-column retirement remains a separate migration task after runtime/provider verification.
