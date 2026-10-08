@@ -116,3 +116,9 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - P1 residual: full codec/container validation and media-processing isolation.
 - Production secret rotation/incident-response posture was not externally verified.
 - No security audit can establish that the deployed artifact exactly matches this branch without deployment/SBOM verification.
+
+### 2026-10-08 continuation — LinkedIn token proxy
+- **P1 important fixed:** removed the unused unauthenticated `app/api/linkedin/token` endpoint, which accepted an authorization code, performed the server-side LinkedIn token exchange, and returned the provider response directly.
+- Source search found no application references to this endpoint. The authenticated LinkedIn callback remains the canonical code-exchange path.
+- No database changes were made.
+- This finding is now tracked as fixed; legacy social-token plaintext storage remains a separate migration-sensitive P1.
