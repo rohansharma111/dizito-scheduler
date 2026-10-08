@@ -1,5 +1,6 @@
 import { pool } from "@/lib/db";
 import { refreshPinterestToken } from "@/lib/platforms/pinterest/refreshToken";
+import { resolveSocialAccountCredentials } from "@/lib/security/social-account-credentials";
 
 async function checkInstagramAccount(account: any) {
   const response = await fetch(
@@ -365,9 +366,10 @@ export async function checkAccounts(userId?: number) {
     error: 0,
   };
 
-  for (const account of result.rows) {
+  for (const rawAccount of result.rows) {
     summary.total++;
 
+    const account = resolveSocialAccountCredentials(rawAccount);
     const health = await checkAccount(account);
 
     if (health.status === "healthy") {
