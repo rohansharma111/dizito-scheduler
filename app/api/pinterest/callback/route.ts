@@ -178,8 +178,8 @@ export async function GET(request: Request) {
                 "x-dizito-internal-secret": process.env.NEXTAUTH_SECRET ?? "",
               },
               body: JSON.stringify({
-                socialAccountId: account.id,,
-                userId: userId
+                socialAccountId: account.id,
+                userId,
               }),
             },
           );
