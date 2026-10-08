@@ -1,247 +1,247 @@
 import { PublisherContext } from "./types";
+import { resolvePostMedia } from "./media";
 
-export async function publishToLinkedIn(context: PublisherContext) {
-  if (context.post.secure_url) {
-    return publishLinkedInImage(context);
-  }
+const LINKEDIN_VERSION = process.env.LINKEDIN_VERSION ?? "202603";
 
-  return publishLinkedInText(context);
+function headers(accessToken: string) {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+    "LinkedIn-Version": LINKEDIN_VERSION,
+    "X-Restli-Protocol-Version": "2.0.0",
+  };
 }
 
 async function publishLinkedInText(context: PublisherContext) {
   const { post, account, target } = context;
-
   const accessToken = account.access_token;
-
   const memberId = account.linkedin_member_id;
 
-  if (!accessToken) {
-    throw new Error("LinkedIn access token missing");
-  }
-
-  if (!memberId) {
-    throw new Error("LinkedIn member id missing");
-  }
-
-  console.log("Publishing LinkedIn Text:", {
-    postId: post.id,
-    targetId: target.id,
-    memberId,
-  });
+  if (!accessToken) throw new Error("LinkedIn access token missing");
+  if (!memberId) throw new Error("LinkedIn member id missing");
 
   const response = await fetch("https://api.linkedin.com/rest/posts", {
     method: "POST",
-
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-
-      "Content-Type": "application/json",
-
-      "LinkedIn-Version": "202506",
-
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
-
+    headers: headers(accessToken),
     body: JSON.stringify({
       author: `urn:li:person:${memberId}`,
-
       commentary: post.post,
-
       visibility: "PUBLIC",
-
-      distribution: {
-        feedDistribution: "MAIN_FEED",
-
-        targetEntities: [],
-
-        thirdPartyDistributionChannels: [],
-      },
-
+      distribution: { feedDistribution: "MAIN_FEED", targetEntities: [], thirdPartyDistributionChannels: [] },
       lifecycleState: "PUBLISHED",
-
       isReshareDisabledByAuthor: false,
     }),
   });
 
-  await response.text();
-
-  console.log("LINKEDIN TEXT STATUS:", response.status);
-
-  console.log("LINKEDIN TEXT RESPONSE RECEIVED:", response.status);
-
-  if (!response.ok) {
-    throw new Error(`LinkedIn text publish failed: HTTP ${response.status}`);
-  }
-
-  return {
-    success: true,
-    type: "text",
-  };
+  const raw = await response.text();
+  if (!response.ok) throw new Error(raw);
+  return { success: true, type: "text", targetId: target.id };
 }
 
-async function publishLinkedInImage(context: PublisherContext) {
-  const { post, account, target } = context;
-
-  const accessToken = account.access_token;
-
-  const memberId = account.linkedin_member_id;
-
-  if (!accessToken) {
-    throw new Error("LinkedIn access token missing");
-  }
-
-  if (!memberId) {
-    throw new Error("LinkedIn member id missing");
-  }
-
-  if (!post.secure_url) {
-    throw new Error("LinkedIn image missing");
-  }
-
-  console.log("Publishing LinkedIn Image:", {
-    postId: post.id,
-    targetId: target.id,
-    memberId,
-    image: post.secure_url,
-  });
-
-  /*
-    STEP 1
-    Register upload
-  */
-
-  const registerResponse = await fetch(
-    "https://api.linkedin.com/rest/images?action=initializeUpload",
+async function uploadLinkedInVideo(
+  secureUrl: string,
+  bytes: number,
+  accessToken: string,
+  owner: string,
+) {
+  const initResponse = await fetch(
+    "https://api.linkedin.com/rest/videos?action=initializeUpload",
     {
       method: "POST",
-
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-
-        "LinkedIn-Version": "202506",
-
-        "Content-Type": "application/json",
-
-        "X-Restli-Protocol-Version": "2.0.0",
-      },
-
+      headers: headers(accessToken),
       body: JSON.stringify({
         initializeUploadRequest: {
-          owner: `urn:li:person:${memberId}`,
+          owner,
+          fileSizeBytes: bytes,
+          uploadCaptions: false,
+          uploadThumbnail: false,
         },
       }),
     },
   );
 
-  const registerData = await registerResponse.json();
+  const init = await initResponse.json();
+  if (!initResponse.ok) throw new Error(JSON.stringify(init));
 
-  console.log("LINKEDIN REGISTER STATUS:", registerResponse.status);
-
-  if (!registerResponse.ok) {
-    throw new Error(`LinkedIn upload initialization failed: HTTP ${registerResponse.status}`);
+  const value = init.value;
+  const instructions = value?.uploadInstructions ?? [];
+  if (!value?.video || instructions.length === 0) {
+    throw new Error("LinkedIn video upload instructions missing");
   }
+
+  const etags: string[] = [];
+
+  for (const instruction of instructions) {
+    const sourceResponse = await fetch(secureUrl, {
+      headers: { Range: `bytes=${instruction.firstByte}-${instruction.lastByte}` },
+    });
+    if (!sourceResponse.ok || !sourceResponse.body) {
+      throw new Error(`Unable to read Cloudinary video range ${instruction.firstByte}-${instruction.lastByte}`);
+    }
+
+    const contentLength = instruction.lastByte - instruction.firstByte + 1;
+    const uploadResponse = await fetch(instruction.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Length": String(contentLength),
+      },
+      body: sourceResponse.body,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    if (!uploadResponse.ok) {
+      throw new Error(await uploadResponse.text());
+    }
+
+    const etag = uploadResponse.headers.get("etag");
+    if (!etag) throw new Error("LinkedIn video upload did not return an ETag");
+    etags.push(etag.replace(/^"|"$/g, ""));
+  }
+
+  const finalizeResponse = await fetch(
+    "https://api.linkedin.com/rest/videos?action=finalizeUpload",
+    {
+      method: "POST",
+      headers: headers(accessToken),
+      body: JSON.stringify({
+        finalizeUploadRequest: {
+          video: value.video,
+          uploadToken: value.uploadToken ?? "",
+          uploadedPartIds: etags,
+        },
+      }),
+    },
+  );
+
+  if (!finalizeResponse.ok) {
+    throw new Error(await finalizeResponse.text());
+  }
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const statusResponse = await fetch(
+      `https://api.linkedin.com/rest/videos/${encodeURIComponent(value.video)}`,
+      { headers: headers(accessToken) },
+    );
+    const status = await statusResponse.json();
+
+    if (!statusResponse.ok) throw new Error(JSON.stringify(status));
+    if (status.status === "AVAILABLE") return value.video;
+    if (status.status === "PROCESSING_FAILED") {
+      throw new Error(status.processingFailureReason || "LinkedIn video processing failed");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  throw new Error("LinkedIn video processing timed out");
+}
+
+async function publishLinkedInImage(context: PublisherContext, media: any) {
+  const { post, account, target } = context;
+  const accessToken = account.access_token;
+  const memberId = account.linkedin_member_id;
+
+  if (!accessToken) throw new Error("LinkedIn access token missing");
+  if (!memberId) throw new Error("LinkedIn member id missing");
+
+  const registerResponse = await fetch(
+    "https://api.linkedin.com/rest/images?action=initializeUpload",
+    {
+      method: "POST",
+      headers: headers(accessToken),
+      body: JSON.stringify({
+        initializeUploadRequest: { owner: `urn:li:person:${memberId}` },
+      }),
+    },
+  );
+  const registerData = await registerResponse.json();
+  if (!registerResponse.ok) throw new Error(JSON.stringify(registerData));
 
   const uploadUrl = registerData?.value?.uploadUrl;
-
   const imageUrn = registerData?.value?.image;
+  if (!uploadUrl || !imageUrn) throw new Error("LinkedIn image upload metadata missing");
 
-  if (!uploadUrl) {
-    throw new Error("LinkedIn uploadUrl missing");
-  }
-
-  if (!imageUrn) {
-    throw new Error("LinkedIn image URN missing");
-  }
-
-  /*
-    STEP 2
-    Download image
-  */
-
-  const imageResponse = await fetch(post.secure_url);
-
-  if (!imageResponse.ok) {
-    throw new Error("Failed to download image");
-  }
-
-  const imageBuffer = await imageResponse.arrayBuffer();
-
-  /*
-    STEP 3
-    Upload binary
-  */
+  const imageResponse = await fetch(media.secure_url);
+  if (!imageResponse.ok || !imageResponse.body) throw new Error("Failed to download image");
 
   const uploadResponse = await fetch(uploadUrl, {
     method: "PUT",
+    headers: { "Content-Type": "application/octet-stream" },
+    body: imageResponse.body,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
 
-    headers: {
-      "Content-Type": "application/octet-stream",
-    },
-
-    body: imageBuffer,
-  });
-
-  console.log("LINKEDIN UPLOAD STATUS:", uploadResponse.status);
-
-  if (!uploadResponse.ok) {
-    const error = await uploadResponse.text();
-
-    throw new Error(`LinkedIn image upload failed: HTTP ${uploadResponse.status}`);
-  }
-
-  /*
-    STEP 4
-    Create post
-  */
+  if (!uploadResponse.ok) throw new Error(await uploadResponse.text());
 
   const postResponse = await fetch("https://api.linkedin.com/rest/posts", {
     method: "POST",
-
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-
-      "Content-Type": "application/json",
-
-      "LinkedIn-Version": "202506",
-
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
-
+    headers: headers(accessToken),
     body: JSON.stringify({
       author: `urn:li:person:${memberId}`,
-
       commentary: post.post,
-
       visibility: "PUBLIC",
-
-      distribution: {
-        feedDistribution: "MAIN_FEED",
-      },
-
-      content: {
-        media: {
-          id: imageUrn,
-        },
-      },
-
+      distribution: { feedDistribution: "MAIN_FEED" },
+      content: { media: { id: imageUrn } },
       lifecycleState: "PUBLISHED",
-
       isReshareDisabledByAuthor: false,
     }),
   });
 
-  await postResponse.text();
+  const raw = await postResponse.text();
+  if (!postResponse.ok) throw new Error(raw);
+  return { success: true, type: "image", targetId: target.id };
+}
 
-  console.log("LINKEDIN IMAGE STATUS:", postResponse.status);
+async function publishLinkedInVideo(context: PublisherContext, media: any) {
+  const { post, account, target } = context;
+  const accessToken = account.access_token;
+  const memberId = account.linkedin_member_id;
 
-  console.log("LINKEDIN IMAGE RESPONSE RECEIVED:", postResponse.status);
+  if (!accessToken) throw new Error("LinkedIn access token missing");
+  if (!memberId) throw new Error("LinkedIn member id missing");
+  if (!media.bytes) throw new Error("LinkedIn video byte size is required");
 
-  if (!postResponse.ok) {
-    throw new Error(`LinkedIn image publish failed: HTTP ${postResponse.status}`);
+  const videoUrn = await uploadLinkedInVideo(
+    media.secure_url,
+    Number(media.bytes),
+    accessToken,
+    `urn:li:person:${memberId}`,
+  );
+
+  const postResponse = await fetch("https://api.linkedin.com/rest/posts", {
+    method: "POST",
+    headers: headers(accessToken),
+    body: JSON.stringify({
+      author: `urn:li:person:${memberId}`,
+      commentary: post.post,
+      visibility: "PUBLIC",
+      distribution: { feedDistribution: "MAIN_FEED" },
+      content: { media: { title: post.post?.slice(0, 200) ?? "Dizito video", id: videoUrn } },
+      lifecycleState: "PUBLISHED",
+      isReshareDisabledByAuthor: false,
+    }),
+  });
+
+  const raw = await postResponse.text();
+  if (!postResponse.ok) throw new Error(raw);
+  return { success: true, type: "video", videoUrn, targetId: target.id };
+}
+
+export async function publishToLinkedIn(context: PublisherContext) {
+  const resolved = await resolvePostMedia(context, "linkedin");
+
+  if (!resolved) {
+    return publishLinkedInText(context);
   }
 
-  return {
-    success: true,
-    type: "image",
-  };
+  if (resolved.mediaType === "image") {
+    return publishLinkedInImage(context, resolved.media);
+  }
+
+  if (resolved.mediaType === "video") {
+    return publishLinkedInVideo(context, resolved.media);
+  }
+
+  throw new Error(`LinkedIn publish type ${resolved.mediaType} is not implemented`);
 }
