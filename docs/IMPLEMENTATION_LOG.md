@@ -737,3 +737,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added 15-second timeout and removed provider-controlled error message propagation from the generic WooCommerce client failure path.
 - Added regression tests for private DNS resolution and provider error redaction.
 - Source implemented; CI/runtime verification remains pending.
+
+### 2026-10-09 — Workstream D direct-media completion hardening
+- Hardened MediaService.completeDirectUpload() to verify authenticated-user Cloudinary folder ownership, exact Cloudinary resource type, MIME-to-format compatibility, and positive provider-reported byte size before persistence.
+- Added lib/media/service.test.ts regression coverage for valid direct completion and ownership/type/format/size mismatches.
+- Reviewed the current media-processing architecture: Dizito does not run FFmpeg or another local video codec/container parser; large video uploads use signed direct Cloudinary upload and provider-returned metadata. Therefore no local codec sandbox was introduced without an actual processing worker boundary to isolate.
+- Remaining deployment control: provider/container isolation is delegated to Cloudinary for the current architecture; if future local media transformation is introduced, it must run in an isolated worker/container with bounded resources and no tenant-controlled outbound network access.
+- No production migration or destructive operation performed.
