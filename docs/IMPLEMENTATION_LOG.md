@@ -604,3 +604,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - **Status:** Implemented; not runtime-verified.
 - Direct Cloudinary upload completion now re-reads the uploaded resource server-side and validates resource type, supported Cloudinary format, MIME policy and actual byte size before creating the media-library record.
 - This closes the gap where a client could obtain a valid signed folder upload but bypass the application-reported size/type policy during completion.
+
+## 2026-10-08 — Post edit media lifecycle hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Hardened `app/api/posts/[id]/route.ts` so media selection during edits follows the same tenant, soft-delete and processing-state invariants as post creation.
+- Explicit null/empty media selection clears media; omitted `mediaId` preserves the existing association.
+- Post detail media joins are tenant-scoped and exclude soft-deleted media while exposing video lifecycle metadata.
+- Tests/lint/type-check/build and database/runtime verification remain pending.
