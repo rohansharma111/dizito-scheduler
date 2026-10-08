@@ -577,3 +577,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Local execution was attempted but the model environment cannot resolve GitHub networking; therefore GitHub Actions is the authoritative execution evidence for this pass.
 - Live Neon schema verification confirmed: `users.id` is integer; `subscriptions.user_id` is bigint with its existing FK; `subscriptions` already contains `grace_period_until` and `payment_failed_at`; `social_accounts.user_id` and `commerce_channels.user_id` are integer. The V1 migration uses integer for the new usage-counter user FK and only adds canonical billing-plan linkage fields to subscriptions.
 - No live/default Neon migration was applied.
+
+
+## 2026-10-08 — Workstream B billing correctness + migration verification
+
+- Corrected active-subscription selection so expired payment-failure/grace-period records no longer retain paid access.
+- Reworked nullable subscription updates so explicit NULL values are persisted instead of being swallowed by SQL `COALESCE` behavior; this fixes deterministic clearing of pending plan/cancellation lifecycle state.
+- Paid plan changes now clear stale pending-plan and scheduled-cancellation state.
+- Validated `021_billing_v1_plans_entitlements.sql` through a disposable Neon migration branch. The isolated branch confirmed five billing plans, ten entitlement assignments per plan, the new subscription linkage columns, and one legacy subscription successfully backfilled. The temporary branch was discarded and no default/live schema change was applied.
+- Billing remains dependent on explicit Razorpay provider mappings; no provider plan IDs were hard-coded.
