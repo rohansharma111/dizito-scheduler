@@ -107,7 +107,7 @@ describe("publishWooCommerceProduct", () => {
     expect(query).toHaveBeenCalledWith("BEGIN");
     expect(query).toHaveBeenCalledWith("COMMIT");
     expect(mocks.createWooCommerceProduct).not.toHaveBeenCalled();
-    expect(mocks.pool.query).toHaveBeenCalledTimes(1);
+    expect(mocks.pool.query).not.toHaveBeenCalled();
   });
 
   it("stops an in-flight attempt and requires reconciliation", async () => {
