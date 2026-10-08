@@ -30,6 +30,34 @@ export default function NotificationDropdown() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  async function loadCount() {
+    try {
+      const response = await fetch("/api/notifications/count");
+
+      const data = await response.json();
+
+      setCount(data.count || 0);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadNotifications() {
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/notifications");
+
+      const data = await response.json();
+
+      setNotifications(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadCount();
 
@@ -67,33 +95,9 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  async function loadCount() {
-    try {
-      const response = await fetch("/api/notifications/count");
 
-      const data = await response.json();
 
-      setCount(data.count || 0);
-    } catch (error) {
-      console.error(error);
-    }
-  }
 
-  async function loadNotifications() {
-    try {
-      setLoading(true);
-
-      const response = await fetch("/api/notifications");
-
-      const data = await response.json();
-
-      setNotifications(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function markRead(id: number) {
     try {
