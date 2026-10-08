@@ -800,3 +800,12 @@ These define the launch gates and the multi-chat ownership model.
 - The Pinterest publisher no longer materializes the entire Cloudinary video into an application-memory `Blob`; it streams the Cloudinary response into a multipart request while preserving the provider-required upload fields.
 - This is an implementation-level memory optimization, not runtime provider verification. A controlled Pinterest video-Pin publish remains required.
 - A draft PR #50 was opened solely to expose the branch to repository CI/review; it is not merged.
+
+
+## Workstream C — Media publish metadata fail-closed hardening — 2026-10-08
+
+- Verified media publishing now rejects verified video assets when capability-required MIME, byte size, duration, or configured dimensions are missing instead of treating absent metadata as an implicit pass.
+- Added regression tests covering missing video metadata and configured size/duration/dimension constraints.
+- Current GitHub Actions evidence is now available: the new media tests are within the passing portion of the suite, but the overall test workflow has 7 unrelated Commerce failures and the validation workflow has 241 existing ESLint errors across the repository.
+- These CI failures are not being masked or attributed to the media changes; build/type-check did not execute because the workflows stop after their failing test/lint steps.
+- Migration remains unapplied and controlled provider runtime verification remains pending.
