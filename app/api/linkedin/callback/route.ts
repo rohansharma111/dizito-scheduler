@@ -298,13 +298,13 @@ export async function GET(request: Request) {
     SET
       access_token = NULL,
       access_token_encrypted = $1,
-      account_name = $3,
+      account_name = $2,
       status = 'connected',
       last_checked_at = NOW(),
       updated_at = NOW()
     WHERE
-      id = $4
-      AND user_id = $5
+      id = $3
+      AND user_id = $4
     `,
         [encryptSocialCredential(accessToken), accountName, accountId, userId],
       );
