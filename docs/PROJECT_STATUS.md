@@ -984,3 +984,11 @@ Important rollout boundary:
 - The WooCommerce generic request path also still surfaced provider-controlled error messages despite the intended redaction contract. It has now been changed to return only the HTTP-status error.
 - No production migration, destructive operation, credential backfill, or provider mutation was performed.
 - PR #55 remains open and unmerged. CI-green and production-ready status remain unclaimed pending a fresh run.
+
+
+## 2026-10-09 — Workstream D latest CI regression fixes
+
+- Latest PR #55 CI rerun completed red, but the WooCommerce security regression tests now pass (4 request tests plus the existing 5 client tests); Amazon schema security tests also pass.
+- Quality Checks still had two Workstream D test-collection failures caused by Vitest mock-hoisting in `lib/security/rate-limit.test.ts` and `lib/media/service.test.ts`. Both mocks have now been converted to `vi.hoisted(...)`.
+- The remaining Quality Checks failures are existing Commerce/Flipkart/WooCommerce lifecycle drift plus the intentional fail-closed legacy credential test mismatch in scheduler coverage; these are not being broadened into Workstream D without evidence that they are regressions from this branch.
+- A fresh CI run is required for the new fixes. PR #55 remains open and unmerged.
