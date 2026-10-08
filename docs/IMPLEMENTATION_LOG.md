@@ -577,3 +577,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added lightweight magic-byte/container-header validation for supported image/video upload MIME types before Cloudinary upload.
 - Added regression tests covering valid signatures and MIME/content mismatches.
 - No dependency or database changes were introduced.
+
+
+## 2026-10-08 — Security audit continuation: LinkedIn token proxy
+
+- **Status:** Implemented source-level hardening; runtime verification pending.
+- Removed unused `app/api/linkedin/token` unauthenticated token-exchange proxy after source search found no callers.
+- The endpoint accepted an authorization code, used the server-side LinkedIn client secret, and returned the provider token response directly; removing it eliminates an unnecessary credential-bearing API surface.
+- No database changes. No unrelated feature redesign.
