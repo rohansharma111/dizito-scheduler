@@ -16,9 +16,9 @@ export default function PricingButton({ plan, href, label, popular = false }: Pr
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const billingEnabled = process.env.NEXT_PUBLIC_BILLING_ENABLED === "true";
-  const isPaidPlan = plan === "growth" || plan === "pro";
+  const paidPlan = plan === "growth" || plan === "pro" ? plan : null;
 
-  if (!billingEnabled || !isPaidPlan) {
+  if (!billingEnabled || !paidPlan) {
     return (
       <Link
         href={href}
@@ -33,7 +33,7 @@ export default function PricingButton({ plan, href, label, popular = false }: Pr
     if (loading) return;
     setLoading(true);
     try {
-      const result = await startSubscription({ plan });
+      const result = await startSubscription({ plan: paidPlan });
       if (!result.success) {
         alert(result.error);
         return;
