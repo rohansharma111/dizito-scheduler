@@ -15,6 +15,13 @@ export interface MediaItem {
   height: number | null;
 
   bytes: number;
+  media_type?: "image" | "video";
+  duration_seconds?: number | null;
+  poster_url?: string | null;
+  processing_state?: "pending" | "uploading" | "processing" | "ready" | "failed";
+  upload_protocol?: "server_proxy" | "cloudinary_signed_direct";
+  processing_error?: string | null;
+  metadata?: Record<string, unknown> | null;
 
   folder: string | null;
   tags: string[] | null;

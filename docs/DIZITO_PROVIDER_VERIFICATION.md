@@ -106,3 +106,17 @@ Test:
 ### Meesho
 Blocked.
 
+
+
+### Workstream C reconciliation — 2026-10-08
+
+The media/video implementation has been reconciled onto the current main lineage. This does not change provider verification status.
+
+Current media verification boundary:
+- Instagram Reel/video workflow: provider constraints verified from official documentation; current-build live publish verification remains pending.
+- Pinterest video Pin workflow: official register → multipart upload → processing-status → Pin creation sequence verified; current-build live video Pin verification remains pending.
+- LinkedIn video workflow: official initialize/upload/finalize/availability sequence verified; current-build live publish verification remains pending.
+- Facebook video: remains fail-closed because current implementation-level provider verification is incomplete.
+- Google Business video: remains fail-closed; do not advertise generic Local Post video support.
+
+Provider access authorization and provider runtime mutation verification remain separate gates.

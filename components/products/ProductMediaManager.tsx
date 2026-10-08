@@ -6,6 +6,8 @@ interface ProductMedia {
   id: number;
   media_id: number;
   secure_url: string;
+  media_type?: "image" | "video";
+  poster_url?: string | null;
   original_name?: string | null;
   file_name?: string | null;
   is_primary: boolean;
@@ -15,6 +17,8 @@ interface ProductMedia {
 interface LibraryMedia {
   id: number;
   secure_url: string;
+  media_type?: "image" | "video";
+  poster_url?: string | null;
   original_name?: string | null;
   file_name?: string | null;
 }
@@ -188,11 +192,22 @@ export default function ProductMediaManager({ productId, initialMedia }: Props) 
           {media.map((item) => (
             <div key={item.id} className="space-y-2">
               <div className="relative aspect-square rounded-xl overflow-hidden border bg-gray-50">
-                <img
-                  src={item.secure_url}
-                  alt={item.original_name || item.file_name || "Product image"}
-                  className="w-full h-full object-cover"
-                />
+                {item.media_type === "video" ? (
+                  <video
+                    src={item.secure_url}
+                    poster={item.poster_url ?? undefined}
+                    controls
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={item.secure_url}
+                    alt={item.original_name || item.file_name || "Product image"}
+                    className="w-full h-full object-cover"
+                  />
+                )}
                 {item.is_primary && (
                   <div className="absolute top-2 left-2 bg-white px-2 py-1 rounded-full text-xs font-semibold shadow">
                     ★ Primary
@@ -254,11 +269,21 @@ export default function ProductMediaManager({ productId, initialMedia }: Props) 
                       className="text-left border rounded-xl overflow-hidden hover:ring-2 hover:ring-blue-500 disabled:opacity-50"
                     >
                       <div className="aspect-square bg-gray-50">
-                        <img
-                          src={item.secure_url}
-                          alt={item.original_name || item.file_name || "Media"}
-                          className="w-full h-full object-cover"
-                        />
+                        {item.media_type === "video" ? (
+                          <video
+                            src={item.secure_url}
+                            poster={item.poster_url ?? undefined}
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <img
+                            src={item.secure_url}
+                            alt={item.original_name || item.file_name || "Media"}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
                       <div className="px-3 py-2 text-sm truncate">
                         {item.original_name || item.file_name || `Media ${item.id}`}

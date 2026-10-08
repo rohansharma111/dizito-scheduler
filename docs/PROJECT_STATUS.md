@@ -834,3 +834,13 @@ Important rollout boundary:
 - Billing API routes now use a typed authenticated-user helper with safe-positive-integer validation; no billing route needs `session.user as any` for user identity.
 - Latest GitHub Actions run for PR #47 (head `d1d20b50d4fa1231d52092add093a7418729d509`) remains red at the repository test stage because of seven existing Commerce/Flipkart/WooCommerce test failures. No billing test failure was reported in that run; lint/build were skipped by workflow gating.
 - The billing-specific implementation is therefore not claimed as repository-wide green. The branch remains intentionally unmerged and the default Neon branch remains unchanged.
+
+
+## Workstream C — Reconciled onto current main — 2026-10-08
+
+- The media/video workstream has been reconciled onto the current main lineage while preserving newer parallel-workstream changes.
+- Video is a first-class media capability with direct signed Cloudinary upload, processing state, MIME/size/duration/dimension validation, poster support, and platform-specific publishing workflows.
+- Image publishing remains supported and is not stored as video data in the legacy image_url field.
+- Facebook video and Google video capabilities remain fail-closed where verification is incomplete/unsupported.
+- The additive media schema migration is committed but remains unapplied to Neon pending explicit migration execution.
+- Controlled provider runtime verification remains a launch gate for supported video workflows.
