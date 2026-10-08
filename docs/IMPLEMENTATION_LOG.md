@@ -1,3 +1,12 @@
+## 2026-10-09 — Workstream D deployment-readiness checkpoint
+
+- Read-only production Neon audit (purple-wildflower-87394884 / production) confirms encrypted social-account columns are present.
+- Count-only credential audit found 0 legacy plaintext credential-bearing social_accounts rows and 2 rows with encrypted credential material. oauth_page_selections has 0 rows.
+- api_rate_limits is absent from production, so migration 023_api_rate_limits.sql remains a required pre-deployment change and has not been applied.
+- No production write, migration, destructive SQL, credential mutation, or provider mutation was performed.
+- Latest completed PR #55 CI observed on head 1db22d85ea26fb415fc7828992fb703e005043cc: Quality Checks #832 failed at Test and Validate #770 failed at Lint; no newly observed Workstream D-specific security regression was identified.
+- Next D boundary: explicit authorization for migration 023, controlled runtime verification, and final legacy-credential migration/retirement readiness checks.
+
 ## 2026-10-09 — Workstream D latest CI reconciliation
 
 - Fresh PR #55 CI completed for the current security branch head: **Quality Checks #831** and **Validate #769**.
