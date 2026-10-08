@@ -1,5 +1,6 @@
 import { pool } from "../db";
 import { publishers } from "../publishers";
+import { resolveSocialAccountCredentials } from "@/lib/security/social-account-credentials";
 
 export async function processTarget(target: any) {
   console.log(`Processing Target ${target.id} (${target.platform})`);
@@ -74,7 +75,9 @@ export async function processTarget(target: any) {
     [target.social_account_id, post.user_id],
   );
 
-  const account = accountResult.rows[0];
+  const account = accountResult.rows[0]
+    ? resolveSocialAccountCredentials(accountResult.rows[0])
+    : null;
 
   if (!account) {
     throw new Error("Account not found");
