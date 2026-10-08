@@ -174,3 +174,12 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - The command fails closed without a valid `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY` or `DATABASE_URL`, takes an advisory lock, uses a transaction, never logs credential material, and verifies coverage before completion.
 - Actual execution is **not yet performed** because the deployment/runtime encryption key cannot be inspected through the available GitHub integration. Do not paste the secret into chat.
 - This is not a runtime/provider verification result; legacy plaintext fields remain intentionally retained.
+
+### 2026-10-08 — authorized legacy social-account cleanup
+
+- User explicitly authorized deletion of the two remaining legacy `social_accounts` rows instead of performing a plaintext-to-encrypted backfill.
+- Deleted account IDs `46` and `61` from the Neon production/default branch.
+- Those rows had 2 dependent `post_targets`; the foreign key is `ON DELETE CASCADE`, so those target rows were removed automatically as part of the same transaction.
+- Post-delete verification: 0 remaining rows for those account IDs, 0 remaining dependent targets, and 0 total `social_accounts` rows.
+- No OAuth selection rows existed.
+- This was an explicitly authorized destructive data operation; no other social-account rows existed at the time of deletion.
