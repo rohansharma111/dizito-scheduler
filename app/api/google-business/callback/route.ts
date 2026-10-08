@@ -120,7 +120,7 @@ export async function GET(request: Request) {
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
-        WHERE id = $5 AND user_id = $6
+        WHERE id = $3 AND user_id = $4
         `,
         [encryptSocialCredential(token.accessToken), token.refreshToken ? encryptSocialCredential(token.refreshToken) : null, account.id, userId],
       );
@@ -204,6 +204,7 @@ export async function GET(request: Request) {
         NULL,
         $3,
         $4,
+        NULL,
         NULL,
         NULL,
         NOW()
