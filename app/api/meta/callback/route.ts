@@ -264,12 +264,12 @@ export async function GET(request: Request) {
         `
         UPDATE social_accounts
         SET
-          access_token = $1,
-          access_token_encrypted = $2,
+          access_token = NULL,
+          access_token_encrypted = $1,
           updated_at = NOW()
         WHERE id = $3
         `,
-        [accessToken, encryptSocialCredential(accessToken), existingAccount.id],
+        [encryptSocialCredential(accessToken), existingAccount.id],
       );
 
       await createEvent(
@@ -315,13 +315,13 @@ export async function GET(request: Request) {
             `
         UPDATE social_accounts
         SET
-          access_token = $1,
-          access_token_encrypted = $2,
-          page_id = $3,
+          access_token = NULL,
+          access_token_encrypted = $1,
+          page_id = $2,
           updated_at = NOW()
         WHERE id = $4
         `,
-            [accessToken, encryptSocialCredential(accessToken), page.id, existingAccount.id],
+            [encryptSocialCredential(accessToken), page.id, existingAccount.id],
           );
 
           await createEvent(
@@ -405,14 +405,15 @@ export async function GET(request: Request) {
     VALUES
     (
       $1,
+      NULL,
       $2,
+      NULL,
       $3,
       $4,
-      $5,
       NOW()
     )
     `,
-    [userId, accessToken, encryptSocialCredential(accessToken), JSON.stringify(enrichedPages), encryptSocialCredential(JSON.stringify(enrichedPages))],
+    [userId, encryptSocialCredential(accessToken), encryptSocialCredential(JSON.stringify(enrichedPages))],
   );
 
   return Response.redirect(`${process.env.NEXTAUTH_URL}/accounts/select/meta`);
