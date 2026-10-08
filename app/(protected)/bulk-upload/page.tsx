@@ -790,7 +790,6 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
           )}
         </div>
       )}
-    </div>
     </DizitoPage>
   );
 }
