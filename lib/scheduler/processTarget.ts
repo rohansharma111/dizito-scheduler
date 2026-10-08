@@ -69,8 +69,9 @@ export async function processTarget(target: any) {
       SELECT *
       FROM social_accounts
       WHERE id = $1
+        AND user_id = $2
     `,
-    [target.social_account_id],
+    [target.social_account_id, post.user_id],
   );
 
   const account = accountResult.rows[0];
