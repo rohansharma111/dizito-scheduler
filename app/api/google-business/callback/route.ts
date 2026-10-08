@@ -8,7 +8,7 @@ import { verifyOAuthState } from "@/lib/security/oauth-state";
 
 import { exchangeToken } from "@/lib/platforms/google-business/exchangeToken";
 import { getProfile } from "@/lib/platforms/google-business/getProfile";
-import { getLocations } from "@/lib/platforms/google-business/getLocations";
+import { GoogleBusinessApiError, getLocations } from "@/lib/platforms/google-business/getLocations";
 import type { GoogleBusinessLocation } from "@/lib/platforms/google-business/types";
 import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
@@ -242,7 +242,13 @@ export async function GET(request: Request) {
 
     let code = "UNKNOWN";
 
-    if (message.includes("Quota exceeded")) {
+    if (
+      (error instanceof GoogleBusinessApiError &&
+        (error.status === 429 ||
+          error.reason === "rateLimitExceeded" ||
+          error.reason === "quotaExceeded")) ||
+      message.includes("Quota exceeded")
+    ) {
       code = "QUOTA_EXCEEDED";
     } else if (message.includes("not been used")) {
       code = "API_DISABLED";
