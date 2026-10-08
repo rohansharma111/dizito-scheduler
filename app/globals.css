@@ -1,5 +1,79 @@
 @import "tailwindcss";
 
-body{
-  background:#f3f4f6;
+:root {
+  --dizito-ink: #111827;
+  --dizito-muted: #667085;
+  --dizito-line: #e5e7eb;
+  --dizito-paper: #ffffff;
+  --dizito-canvas: #f6f7f4;
+  --dizito-lime: #c7f36b;
+  --dizito-lime-strong: #9fda35;
+  --dizito-violet: #6d5dfc;
+  --dizito-violet-soft: #efedff;
+  --dizito-cyan: #c8f5ef;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--dizito-canvas); }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 85% -10%, rgba(199,243,107,.20), transparent 28rem),
+    radial-gradient(circle at 10% 0%, rgba(109,93,252,.07), transparent 24rem),
+    var(--dizito-canvas);
+  color: var(--dizito-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, input, textarea, select { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(109,93,252,.25);
+  outline-offset: 2px;
+}
+
+.dizito-page { width: 100%; max-width: 1240px; margin: 0 auto; padding: 8px 0 40px; }
+.dizito-page-header { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:24px; }
+.dizito-eyebrow { display:inline-flex; align-items:center; gap:6px; color:#6658e8; font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px; }
+.dizito-title { margin:0; font-size:clamp(28px,3vw,42px); line-height:1.04; letter-spacing:-.035em; font-weight:800; }
+.dizito-subtitle { margin:9px 0 0; max-width:760px; color:var(--dizito-muted); font-size:15px; line-height:1.6; }
+.dizito-card { border:1px solid rgba(17,24,39,.08); border-radius:22px; background:rgba(255,255,255,.92); box-shadow:0 12px 32px rgba(17,24,39,.05); padding:22px; }
+.dizito-card-ai { background:linear-gradient(135deg,#fff 0%,#f6f4ff 100%); border-color:rgba(109,93,252,.16); }
+.dizito-card-soft { background:#fbfcfa; box-shadow:none; }
+.dizito-card-dark { color:#fff; background:#171a22; border-color:#272c38; }
+.dizito-section-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.dizito-section-header h2 { margin:0; font-size:18px; font-weight:800; letter-spacing:-.02em; }
+.dizito-section-header p { margin:4px 0 0; color:var(--dizito-muted); font-size:13px; line-height:1.5; }
+.dizito-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:0 15px; border-radius:13px; border:1px solid transparent; font-size:13px; font-weight:750; transition:.18s ease; cursor:pointer; }
+.dizito-button:disabled { opacity:.5; cursor:not-allowed; }
+.dizito-button-primary { color:#111827; background:var(--dizito-lime); box-shadow:0 8px 18px rgba(159,218,53,.18); }
+.dizito-button-primary:hover:not(:disabled) { background:var(--dizito-lime-strong); transform:translateY(-1px); }
+.dizito-button-secondary { color:#111827; background:#fff; border-color:#dfe3e8; }
+.dizito-button-secondary:hover:not(:disabled), .dizito-button-ghost:hover:not(:disabled) { background:#f3f4f6; }
+.dizito-button-ghost { color:#475467; background:transparent; }
+.dizito-button-danger { color:#b42318; background:#fff1f0; border-color:#fecdca; }
+.dizito-button-ai { color:#fff; background:#17132f; }
+.dizito-badge { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:5px 9px; font-size:11px; font-weight:750; }
+.dizito-badge-neutral { color:#475467; background:#f2f4f7; }
+.dizito-badge-success { color:#067647; background:#ecfdf3; }
+.dizito-badge-warning { color:#b54708; background:#fffaeb; }
+.dizito-badge-danger { color:#b42318; background:#fef3f2; }
+.dizito-badge-ai { color:#5746c8; background:var(--dizito-violet-soft); }
+.dizito-badge-info { color:#087a75; background:#ecfdf9; }
+.dizito-metric { min-width:0; padding:18px; border:1px solid rgba(17,24,39,.07); border-radius:18px; background:#fff; }
+.dizito-metric-label { color:#667085; font-size:12px; font-weight:650; }
+.dizito-metric-icon { color:#6d5dfc; }
+.dizito-metric-value { margin-top:8px; font-size:28px; line-height:1; font-weight:850; letter-spacing:-.04em; }
+.dizito-metric-hint { margin-top:8px; color:#98a2b3; font-size:11px; }
+.dizito-state { display:flex; gap:14px; align-items:flex-start; padding:24px; border-radius:18px; border:1px dashed #d0d5dd; background:#fff; }
+.dizito-state h3 { margin:0; font-size:14px; font-weight:800; }
+.dizito-state p { margin:5px 0 0; color:#667085; font-size:13px; line-height:1.5; }
+.dizito-state-empty svg { color:#6d5dfc; }
+.dizito-state-error { border-style:solid; border-color:#fecdca; background:#fff7f6; color:#b42318; }
+.dizito-state-success { border-style:solid; border-color:#abefc6; background:#f3fff7; color:#067647; }
+.dizito-ai-mark { display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px; background:#eeebff; color:#5746c8; font-size:10px; font-weight:800; letter-spacing:.04em; }
+
+@media (max-width: 767px) {
+  .dizito-page { padding-bottom:28px; }
+  .dizito-page-header { align-items:flex-start; flex-direction:column; gap:14px; }
+  .dizito-card { border-radius:18px; padding:17px; }
 }

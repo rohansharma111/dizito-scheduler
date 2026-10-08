@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Package, Plus, Search } from "lucide-react";
+import { DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -16,7 +18,8 @@ export default async function ProductsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <DizitoPageHeader eyebrow="Commerce context" title="Products" description="Manage the canonical products that Dizito can understand, feature and carry into marketing decisions." action={<Link href="/products/new"><DizitoButton><Plus size={15}/>Add product</DizitoButton></Link>}/>
+      <div className="hidden">
         <div>
           <h1 className="text-3xl font-bold">Products</h1>
 
@@ -45,7 +48,7 @@ export default async function ProductsPage() {
       </div>
 
       {/* FILTER BAR */}
-      <div className="bg-white border rounded-xl p-4 mb-6">
+      <DizitoCard tone="soft" className="mb-5">
         <div className="flex flex-col md:flex-row gap-3">
           <input
             type="text"
@@ -104,10 +107,10 @@ export default async function ProductsPage() {
       </div>
 
       {/* PRODUCTS */}
-      <div className="bg-white border rounded-xl overflow-hidden">
+      <DizitoCard className="overflow-hidden !p-0">
         {products.length === 0 ? (
           <div className="py-20 text-center px-6">
-            <div className="text-5xl mb-4">📦</div>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-violet-600"><Package size={22}/></div>
 
             <h2 className="text-xl font-semibold">No products yet</h2>
 
@@ -158,12 +161,12 @@ export default async function ProductsPage() {
                 {products.map((product: any) => (
                   <tr
                     key={product.id}
-                    className="border-b last:border-b-0 hover:bg-gray-50"
+                    className="border-b last:border-b-0 hover:bg-slate-50/70"
                   >
                     <td className="px-6 py-4">
                       <Link
                         href={`/products/${product.id}`}
-                        className="font-medium hover:text-blue-600"
+                        className="font-bold hover:text-violet-600"
                       >
                         {product.name}
                       </Link>
@@ -204,7 +207,7 @@ export default async function ProductsPage() {
                     <td className="px-6 py-4 text-right">
                       <Link
                         href={`/products/${product.id}`}
-                        className="text-blue-600 font-medium hover:underline"
+                        className="text-violet-700 font-bold hover:underline"
                       >
                         Open
                       </Link>
