@@ -160,6 +160,64 @@ export async function POST(request: Request) {
     );
   }
 
+
+  /*
+    VERIFY MEDIA OWNERSHIP
+  */
+
+  const mediaId =
+    body.mediaId === null || body.mediaId === undefined || body.mediaId === ""
+      ? null
+      : Number(body.mediaId);
+
+  if (mediaId !== null && (!Number.isInteger(mediaId) || mediaId <= 0)) {
+    return Response.json(
+      {
+        error: "Invalid media selection",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
+  if (mediaId !== null) {
+    const mediaResult = await pool.query(
+      `
+        SELECT id, resource_type, mime_type, media_type, processing_state
+        FROM media_library
+        WHERE id = $1
+          AND user_id = $2
+          AND deleted_at IS NULL
+      `,
+      [mediaId, userId],
+    );
+
+    const media = mediaResult.rows[0];
+
+    if (!media) {
+      return Response.json(
+        {
+          error: "Invalid media selection",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (media.processing_state && media.processing_state !== "ready") {
+      return Response.json(
+        {
+          error: "Selected media is not ready for publishing",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
+  }
+
   /*
     LOAD USER PLAN
   */
@@ -244,7 +302,7 @@ export async function POST(request: Request) {
         )
         RETURNING *
         `,
-      [body.post, body.scheduleTime, status, body.mediaId, userId],
+      [body.post, body.scheduleTime, status, mediaId, userId],
     );
 
     const post = postResult.rows[0];
