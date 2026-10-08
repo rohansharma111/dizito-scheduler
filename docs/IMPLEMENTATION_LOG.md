@@ -731,3 +731,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added distributed rate limiting to `/api/upload/signature` and `/api/media/complete`, extending the existing media/AI abuse controls to the complete direct-upload lifecycle.
 - No production SQL, migration application, destructive data change, or provider runtime mutation was performed.
 - Verification boundary: source changes committed; fresh GitHub Actions result still required.
+
+### 2026-10-09 — Workstream D WooCommerce SSRF continuation
+- Added DNS preflight to WooCommerce outbound requests and reject private/local/link-local/CGNAT destinations before network access.
+- Added 15-second timeout and removed provider-controlled error message propagation from the generic WooCommerce client failure path.
+- Added regression tests for private DNS resolution and provider error redaction.
+- Source implemented; CI/runtime verification remains pending.
