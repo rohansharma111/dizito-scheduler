@@ -10,6 +10,7 @@ import { getCurrentUsage } from "@/lib/usage/getCurrentUsage";
 import { incrementAIImagesGenerated } from "@/lib/usage/incrementAIImagesGenerated";
 
 import { getPlan, canGenerateAIImage } from "@/lib/plans";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
     }
 
     const userId = Number(session.user.id);
+
+    const rateLimit = await checkRateLimit(request, {
+      scope: "ai-image-generation",
+      limit: 10,
+      windowSeconds: 60,
+      userId,
+    });
+    const rateLimitError = rateLimitResponse(rateLimit);
+    if (rateLimitError) return rateLimitError;
 
     /*
       Load user plan

@@ -2,12 +2,22 @@ import { randomBytes } from "crypto";
 import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rateLimit = await checkRateLimit(request, {
+    scope: "oauth-initiation:meta",
+    limit: 10,
+    windowSeconds: 60,
+    userId: session.user.id,
+  });
+  const rateLimitError = rateLimitResponse(rateLimit);
+  if (rateLimitError) return rateLimitError;
 
   const { searchParams } = new URL(request.url);
 

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import { mediaService } from "@/lib/media/service";
 import { getUploadPolicy } from "@/lib/media/upload-policy";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +20,15 @@ export async function POST(request: Request) {
     };
 
     const userId = Number(session.user.id);
+
+    const rateLimit = await checkRateLimit(request, {
+      scope: "media-upload-complete",
+      limit: 20,
+      windowSeconds: 60,
+      userId,
+    });
+    const rateLimitError = rateLimitResponse(rateLimit);
+    if (rateLimitError) return rateLimitError;
     const publicId = body.publicId?.trim();
     if (!publicId || !body.fileName || !body.mimeType) {
       return NextResponse.json({ success: false, error: "publicId, fileName and mimeType are required" }, { status: 400 });
