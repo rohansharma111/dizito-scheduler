@@ -785,3 +785,7 @@ These define the launch gates and the multi-chat ownership model.
 - Confirmed temporary OAuth selection rows and Meta Page-selection JSON are credential-bearing transient paths.
 - Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` with the safe application-boundary and additive migration plan.
 - No schema migration, backfill, or destructive database change performed; runtime verification remains pending.
+
+## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
+
+- Security migration 019 applied to Neon production/default branch; additive encrypted credential columns are present. OAuth/social account callbacks and selection consumers now dual-write encrypted values while retaining legacy plaintext fields for rollback compatibility. Runtime end-to-end OAuth verification and CI remain pending.
