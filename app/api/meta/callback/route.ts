@@ -133,9 +133,21 @@ export async function GET(request: Request) {
   const accessToken = tokenData.access_token;
 
   if (!accessToken) {
-    return Response.json(tokenData, {
-      status: 400,
+    console.error("META TOKEN EXCHANGE FAILED", {
+      status: tokenResponse.status,
+      error: tokenData?.error,
+      error_description: tokenData?.error_description,
+      error_code: tokenData?.error_code,
     });
+
+    return Response.json(
+      {
+        error: "Meta token exchange failed",
+      },
+      {
+        status: 400,
+      },
+    );
   }
 
   const permissionsResponse = await fetch(
