@@ -26,16 +26,10 @@ type RazorpayCheckout = {
 
 type RazorpayConstructor = new (options: RazorpayCheckoutOptions) => RazorpayCheckout;
 
-declare global {
-  interface Window {
-    Razorpay: RazorpayConstructor;
-  }
-}
-
 let razorpayLoaded = false;
 
 async function loadRazorpayScript(): Promise<void> {
-  if (razorpayLoaded || window.Razorpay) {
+  if (razorpayLoaded || typeof window.Razorpay !== "undefined") {
     razorpayLoaded = true;
     return;
   }
@@ -71,7 +65,7 @@ export async function startSubscription(
     }
 
     return await new Promise<BillingResult>((resolve) => {
-      const razorpay = new window.Razorpay({
+      const razorpay = new (window.Razorpay as RazorpayConstructor)({
         key: data.razorpayKey,
         subscription_id: data.subscriptionId,
         name: "Dizito",
