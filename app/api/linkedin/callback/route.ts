@@ -303,8 +303,8 @@ export async function GET(request: Request) {
       last_checked_at = NOW(),
       updated_at = NOW()
     WHERE
-      id = $3
-      AND user_id = $4
+      id = $4
+      AND user_id = $5
     `,
         [accessToken, encryptSocialCredential(accessToken), accountName, accountId, userId],
       );
@@ -456,7 +456,7 @@ export async function GET(request: Request) {
 
     return Response.json(
       {
-        error: String(error),
+        error: "LinkedIn authentication failed",
       },
       {
         status: 500,
