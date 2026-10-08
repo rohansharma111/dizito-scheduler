@@ -2,67 +2,44 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+import { getUploadPolicy } from "@/lib/media/upload-policy";
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
-        {
-          status: 401,
-        },
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
-
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "No file uploaded",
-        },
-        {
-          status: 400,
-        },
-      );
+      return NextResponse.json({ success: false, error: "No file uploaded" }, { status: 400 });
     }
 
     if (file.size === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "File is empty",
-        },
-        {
-          status: 400,
-        },
-      );
+      return NextResponse.json({ success: false, error: "File is empty" }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    const policy = getUploadPolicy(file.type, file.size);
+    if (!policy.allowed) {
+      return NextResponse.json({ success: false, error: policy.error }, { status: 413 });
+    }
+
+    if (policy.resourceType === "video") {
       return NextResponse.json(
         {
           success: false,
-          error: "File exceeds the maximum allowed size (10 MB)",
+          error: "Video uploads must use the signed direct Cloudinary upload flow.",
+          code: "DIRECT_UPLOAD_REQUIRED",
         },
-        {
-          status: 413,
-        },
+        { status: 409 },
       );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-
     const media = await mediaService.uploadMedia({
       userId: Number(session.user.id),
       buffer,
@@ -70,26 +47,12 @@ export async function POST(request: Request) {
       mimeType: file.type,
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        media,
-      },
-      {
-        status: 201,
-      },
-    );
+    return NextResponse.json({ success: true, media }, { status: 201 });
   } catch (error) {
     console.error("Media upload failed:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      {
-        status: 500,
-      },
+      { success: false, error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 },
     );
   }
 }
