@@ -26,16 +26,14 @@ describe("social account credential resolver", () => {
   });
 
   it("fails closed when only legacy plaintext credentials exist", () => {
-    const account = resolveSocialAccountCredentials({
-      id: 1,
-      access_token: "legacy-access",
-      page_access_token: "legacy-page",
-      refresh_token: "legacy-refresh",
-    });
-
-    expect(account.access_token).toBeNull();
-    expect(account.page_access_token).toBeNull();
-    expect(account.refresh_token).toBeNull();
+    expect(() =>
+      resolveSocialAccountCredentials({
+        id: 1,
+        access_token: "legacy-access",
+        page_access_token: "legacy-page",
+        refresh_token: "legacy-refresh",
+      }),
+    ).toThrow("Legacy plaintext social credential requires migration before use");
   });
 
   it("rejects malformed encrypted values instead of silently falling back", () => {
