@@ -42,7 +42,8 @@ This audit was performed before security changes. No destructive database change
 7. **Media upload accepted arbitrary MIME types despite the UI only advertising images/video.**
    - Added server-side allowlist for JPEG/PNG/WebP/GIF/MP4/WebM/QuickTime.
    - Size remains capped at 10 MB.
-   - Residual risk: MIME type is still client-supplied; content-sniffing/magic-byte validation should be added if the media threat model requires hostile file uploads.
+   - Added server-side signature validation for the supported JPEG/PNG/GIF/WebM/MP4/QuickTime types, with regression coverage.
+   - Residual risk: this is lightweight signature validation, not full codec/container parsing or media-processing isolation.
 
 ### P1 — deferred / migration-sensitive
 
@@ -112,6 +113,6 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - P1: plaintext legacy social token storage.
 - P1: distributed rate limiting.
 - P1 residual: DNS-level SSRF/egress controls.
-- P1 residual: file content/magic-byte validation.
+- P1 residual: full codec/container validation and media-processing isolation.
 - Production secret rotation/incident-response posture was not externally verified.
 - No security audit can establish that the deployed artifact exactly matches this branch without deployment/SBOM verification.
