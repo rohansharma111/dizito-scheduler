@@ -112,17 +112,17 @@ export async function GET(request: Request) {
         `
         UPDATE social_accounts
         SET
-          access_token = $1,
-          access_token_encrypted = $2,
-          refresh_token = $3,
-          refresh_token_encrypted = $4,
+          access_token = NULL,
+          access_token_encrypted = $1,
+          refresh_token = NULL,
+          refresh_token_encrypted = $2,
           status = 'connected',
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
         WHERE id = $5 AND user_id = $6
         `,
-        [token.accessToken, encryptSocialCredential(token.accessToken), token.refreshToken ?? null, token.refreshToken ? encryptSocialCredential(token.refreshToken) : null, account.id, userId],
+        [encryptSocialCredential(token.accessToken), token.refreshToken ? encryptSocialCredential(token.refreshToken) : null, account.id, userId],
       );
 
       await createEvent(
@@ -199,12 +199,11 @@ export async function GET(request: Request) {
       VALUES
       (
         $1,
+        NULL,
         $2,
+        NULL,
         $3,
         $4,
-        $5,
-        $6,
-        $7,
         NULL,
         NULL,
         NOW()
@@ -212,14 +211,8 @@ export async function GET(request: Request) {
       `,
       [
         userId,
-        token.accessToken,
         encryptSocialCredential(token.accessToken),
-        token.refreshToken,
         token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
-        JSON.stringify({
-          profile,
-          locations,
-        }),
         encryptSocialCredential(JSON.stringify({
           profile,
           locations,
