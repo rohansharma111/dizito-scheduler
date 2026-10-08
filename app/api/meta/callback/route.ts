@@ -1,6 +1,8 @@
 import { pool } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
+import { verifyOAuthState } from "@/lib/security/oauth-state";
 import { canConnectAccount } from "@/lib/plans";
 import { createEvent } from "@/lib/events";
 import {
@@ -29,10 +31,25 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   const code = searchParams.get("code");
+  const providedState = searchParams.get("state");
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get("meta_oauth_state")?.value;
+  const reconnect = cookieStore.get("meta_oauth_reconnect")?.value || null;
+  const reconnectType = cookieStore.get("meta_oauth_reconnect_type")?.value || null;
 
-  const state = searchParams.get("state");
+  if (!verifyOAuthState(expectedState, providedState)) {
+    return Response.json({ error: "Invalid OAuth state" }, { status: 401 });
+  }
 
-  const isReconnect = state?.startsWith("reconnect:");
+  cookieStore.delete("meta_oauth_state");
+  cookieStore.delete("meta_oauth_reconnect");
+  cookieStore.delete("meta_oauth_reconnect_type");
+
+  const state = reconnect && reconnectType
+    ? `reconnect:${reconnect}:${reconnectType}`
+    : "connect";
+
+  const isReconnect = state.startsWith("reconnect:");
 
   const error = searchParams.get("error");
 
