@@ -162,3 +162,7 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - **P1 identified and fixed:** Meta OAuth token-exchange failures no longer return the raw provider payload to the browser. The server logs only non-secret error metadata and returns a generic failure response.
 - Successful OAuth token handling is unchanged.
 - Runtime/provider verification remains pending.
+
+## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
+
+- Migration 019 is now applied to the Neon production/default branch after isolated-branch validation. The migration is additive only: encrypted columns were added to social_accounts and oauth_page_selections; no existing credential values were transformed or deleted. Meta, LinkedIn, Pinterest, and Google Business OAuth/account-selection paths now dual-write encrypted credential values, and scheduler/account-health/OAuth-selection reads prefer encrypted values with legacy fallback. Current Neon row-count verification found no existing encrypted rows because the current database has no active temporary OAuth selection rows and the two existing social accounts predate the migration. Backfill and plaintext retirement remain pending.
