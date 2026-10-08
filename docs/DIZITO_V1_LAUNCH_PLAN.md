@@ -366,3 +366,18 @@ When choosing the next feature, ask:
 **“What prevents a real merchant from successfully using Dizito every week?”**
 
 Prefer work that removes that blocker over adding another integration or speculative AI feature.
+
+
+### Phase E.2 — Media/video integration hardening — 2026-10-08
+
+Completed:
+- Post creation now binds `mediaId` to the authenticated tenant and rejects deleted/unready media.
+- Media UI types expose video lifecycle metadata.
+- Existing image publishing remains intact; video continues through platform-specific capability resolution.
+- Unsupported or unverified platform media remains fail-closed.
+
+Still required before launch:
+- Apply the additive media migration through the normal database migration process.
+- Run focused media tests plus repository type-check/lint/build.
+- Perform controlled runtime verification for supported video workflows.
+- Do not treat provider-access approval as equivalent to runtime publish verification.
