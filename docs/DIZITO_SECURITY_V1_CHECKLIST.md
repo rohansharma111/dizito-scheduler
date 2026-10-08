@@ -186,3 +186,8 @@ Open before launch:
 - [ ] Add distributed rate limiting for abuse-sensitive endpoints.
 - [ ] Complete DNS-aware SSRF/egress controls for arbitrary commerce store hosts.
 - [x] Add lightweight file signature validation for supported upload types. Full codec/container validation remains open if hostile uploads require it.
+
+
+### 2026-10-08 continuation
+- [x] Removed unused unauthenticated LinkedIn token-exchange proxy; canonical LinkedIn OAuth callback is authenticated and state-bound.
+- [ ] Legacy social OAuth token columns still require additive application-encrypted migration.
