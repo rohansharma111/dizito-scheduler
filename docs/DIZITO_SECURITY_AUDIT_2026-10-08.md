@@ -102,7 +102,7 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Provider live OAuth, webhook delivery, upload, and commerce API behavior were not externally exercised.
 
 ### Remaining risks
-- P0: Next.js 16.2.7 dependency floor.
+- P0: CI verification must confirm the Next.js 16.3.8 manifest/lockfile reconciliation and Node 22 runtime.
 - P1: plaintext legacy social token storage.
 - P1: distributed rate limiting.
 - P1 residual: DNS-level SSRF/egress controls.
