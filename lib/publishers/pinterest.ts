@@ -23,7 +23,13 @@ async function pollPinterestMedia(mediaId: string, accessToken: string) {
 }
 
 async function publishPinterestVideo(
-  media: { secure_url: string; poster_url?: string | null },
+  media: {
+    secure_url: string;
+    poster_url?: string | null;
+    file_name?: string | null;
+    mime_type?: string | null;
+    bytes?: number | null;
+  },
   title: string,
   description: string,
   boardId: string,
@@ -46,23 +52,67 @@ async function publishPinterestVideo(
   if (!registerResponse.ok) throw new Error(JSON.stringify(registration));
 
   const videoResponse = await fetch(media.secure_url);
-  if (!videoResponse.ok) throw new Error("Failed to fetch video from Cloudinary");
-
-  const form = new FormData();
-  for (const [key, value] of Object.entries(registration.upload_parameters ?? {})) {
-    form.append(key, String(value));
+  if (!videoResponse.ok || !videoResponse.body) {
+    throw new Error("Failed to fetch video from Cloudinary");
   }
-  form.append(
-    "file",
-    new Blob([await videoResponse.arrayBuffer()], {
-      type: videoResponse.headers.get("content-type") ?? "video/mp4",
-    }),
+
+  const boundary = `----DizitoPinterestVideo-${crypto.randomUUID()}`;
+  const encoder = new TextEncoder();
+  const uploadFields = Object.entries(registration.upload_parameters ?? {}).map(
+    ([key, value]) =>
+      `--${boundary}\\r\\nContent-Disposition: form-data; name="${key}"\\r\\n\\r\\n${String(value)}\\r\\n`,
   );
+  const fileName = (media.file_name ?? "video.mp4").replace(/[\\r\\n"]/g, "_");
+  const contentType = media.mime_type ?? videoResponse.headers.get("content-type") ?? "video/mp4";
+  const preamble = encoder.encode(
+    uploadFields.join("") +
+      `--${boundary}\\r\\nContent-Disposition: form-data; name="file"; filename="${fileName}"\\r\\nContent-Type: ${contentType}\\r\\n\\r\\n`,
+  );
+  const epilogue = encoder.encode(`\\r\\n--${boundary}--\\r\\n`);
+
+  if (!media.bytes || media.bytes <= 0) {
+    throw new Error("Pinterest video byte size is required for streaming upload");
+  }
+
+  const contentLength = preamble.byteLength + Number(media.bytes) + epilogue.byteLength;
+  const reader = videoResponse.body.getReader();
+  let finished = false;
+
+  const body = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      if (preamble.byteLength > 0) {
+        controller.enqueue(preamble);
+        preamble.fill(0);
+      }
+
+      if (finished) {
+        controller.enqueue(epilogue);
+        controller.close();
+        return;
+      }
+
+      const chunk = await reader.read();
+      if (chunk.done) {
+        finished = true;
+        return;
+      }
+
+      controller.enqueue(chunk.value);
+    },
+    async cancel(reason) {
+      await reader.cancel(reason);
+    },
+  });
 
   const uploadResponse = await fetch(registration.upload_url, {
     method: "POST",
-    body: form,
-  });
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      "Content-Length": String(contentLength),
+    },
+    body,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
 
   if (!uploadResponse.ok) {
     throw new Error(await uploadResponse.text());
