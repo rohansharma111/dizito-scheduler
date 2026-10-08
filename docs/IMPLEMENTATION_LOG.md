@@ -620,3 +620,7 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added a dual-write encryption helper and tests. Provider OAuth callback writes are intentionally not yet switched to new columns because deployment must apply the additive schema before application SQL references those columns.
 - Remaining work: apply migration under explicit approval, wire all OAuth/reconnect/refresh writes, migrate temporary OAuth selection credential material, then verify and retire plaintext fields.
 - No destructive database operation or merge performed.
+
+## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
+
+- Migration 019 was approved and applied to the Neon production/default branch after isolated-branch verification. Added encrypted credential columns to social_accounts and oauth_page_selections without transforming/deleting existing values. OAuth callbacks, Meta/Pinterest/Google selection flows, and Pinterest token refresh now dual-write encrypted credentials; scheduler, account health, and temporary OAuth selection reads prefer encrypted values with legacy fallback. No destructive DB operation was performed. Runtime OAuth/provider verification and CI remain pending.
