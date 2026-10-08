@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { createEvent } from "@/lib/events";
 import { verifyOAuthState } from "@/lib/security/oauth-state";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 import { exchangeToken } from "@/lib/platforms/pinterest/exchangeToken";
 import { getProfile } from "@/lib/platforms/pinterest/getProfile";
@@ -136,7 +137,9 @@ export async function GET(request: Request) {
         UPDATE social_accounts
         SET
           access_token = $1,
-          refresh_token = COALESCE($2, refresh_token),
+          access_token_encrypted = $2,
+          refresh_token = COALESCE($3, refresh_token),
+          refresh_token_encrypted = COALESCE($4, refresh_token_encrypted),
           token_expires_at = CASE
             WHEN $3 IS NULL THEN token_expires_at
             ELSE NOW() + ($3 * INTERVAL '1 second')
@@ -149,7 +152,9 @@ export async function GET(request: Request) {
         `,
         [
           token.accessToken,
+          encryptSocialCredential(token.accessToken),
           token.refreshToken ?? null,
+          token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
           token.expiresIn ?? null,
           account.id,
           userId,
@@ -219,7 +224,9 @@ export async function GET(request: Request) {
       (
         user_id,
         access_token,
+        access_token_encrypted,
         refresh_token,
+        refresh_token_encrypted,
         token_expires_at,
         pages,
         reconnect_account_id,
@@ -233,6 +240,7 @@ export async function GET(request: Request) {
         $3,
         $4,
         $5,
+        $6,
         NULL,
         NULL,
         NOW()
@@ -241,7 +249,9 @@ export async function GET(request: Request) {
       [
         userId,
         token.accessToken,
+        encryptSocialCredential(token.accessToken),
         token.refreshToken ?? null,
+        token.refreshToken ? encryptSocialCredential(token.refreshToken) : null,
         token.expiresIn
           ? new Date(Date.now() + Number(token.expiresIn) * 1000)
           : null,
