@@ -585,3 +585,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Removed unused `app/api/linkedin/token` unauthenticated token-exchange proxy after source search found no callers.
 - The endpoint accepted an authorization code, used the server-side LinkedIn client secret, and returned the provider token response directly; removing it eliminates an unnecessary credential-bearing API surface.
 - No database changes. No unrelated feature redesign.
+
+
+## 2026-10-08 — Security OAuth comparison hardening
+
+- **Status:** Implemented source-level hardening; runtime verification pending.
+- Replaced direct Pinterest and Google Business OAuth state string comparisons with the shared constant-time verifier.
+- No schema or dependency changes.
+- Intentionally did not introduce a plaintext-token-to-encrypted-column migration without a proven dual-read/dual-write application path.
