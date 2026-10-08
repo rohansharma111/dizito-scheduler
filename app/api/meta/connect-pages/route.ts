@@ -193,10 +193,10 @@ export async function POST(request: Request) {
     UPDATE social_accounts
     SET
       account_name = $1,
-      access_token = $2,
-      access_token_encrypted = $3,
-      page_access_token = $4,
-      page_access_token_encrypted = $5,
+      access_token = NULL,
+      access_token_encrypted = $2,
+      page_access_token = NULL,
+      page_access_token_encrypted = $3,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
@@ -205,9 +205,7 @@ export async function POST(request: Request) {
     `,
           [
             reconnectAccount.account_name,
-            accessToken,
             encryptSocialCredential(accessToken),
-            page.access_token,
             encryptSocialCredential(page.access_token),
             reconnectAccountId,
             userId,
@@ -287,23 +285,21 @@ export async function POST(request: Request) {
     (
       $1,
       $2,
+      NULL,
       $3,
       $4,
       $5,
-      $6,
-      $7,
-      $8
+      NULL,
+      $6
     )
     RETURNING id
     `,
             [
               "facebook",
               page.name,
-              accessToken,
               encryptSocialCredential(accessToken),
               page.id,
               userId,
-              page.access_token,
               encryptSocialCredential(page.access_token),
             ],
           );
@@ -350,10 +346,10 @@ export async function POST(request: Request) {
     UPDATE social_accounts
     SET
       account_name = $1,
-      access_token = $2,
-      access_token_encrypted = $3,
-      page_access_token = $4,
-      page_access_token_encrypted = $5,
+      access_token = NULL,
+      access_token_encrypted = $2,
+      page_access_token = NULL,
+      page_access_token_encrypted = $3,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
