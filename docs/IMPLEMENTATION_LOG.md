@@ -630,3 +630,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added regression coverage for missing video metadata, LinkedIn size/duration bounds, and configured dimension bounds.
 - GitHub Actions ran for the current head: the media capability tests were included in the passing test set, but the repository-wide test workflow still failed on 7 unrelated Commerce tests; the validation workflow also failed on pre-existing repository-wide ESLint debt (241 errors).
 - No production migration or live provider verification was performed.
+
+
+## 2026-10-08 — Media library video preview hardening
+
+- Media library cards now render stored video assets with their poster URL, native controls, muted/inline playback, and metadata preload instead of showing a generic video placeholder.
+- The latest `main` also contains substantial media-library UI/design changes from the parallel marketing/design workstream. The media branch has **not** been force-reconciled with those changes because doing so safely requires a real Git rebase/merge and conflict resolution; no cross-workstream merge was performed here.
+- Current branch remains intentionally unmerged. Migration and live provider verification remain pending.
