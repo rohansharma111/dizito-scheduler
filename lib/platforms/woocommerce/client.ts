@@ -37,6 +37,7 @@ export function normalizeWooCommerceStoreUrl(value: string) {
   }
   return url.toString().replace(/\/$/, "");
 }
+
 async function assertPublicDnsResolution(storeUrl: string) {
   const url = new URL(normalizeWooCommerceStoreUrl(storeUrl));
   const addresses = await lookup(url.hostname, { all: true, verbatim: true });
@@ -72,8 +73,7 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
   let body: unknown = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
   if (!response.ok) {
-    const message = typeof body === "object" && body !== null && "message" in body && typeof body.message === "string" ? body.message : `WooCommerce request failed with status ${response.status}`;
-    throw new Error(message);
+    throw new Error(`WooCommerce request failed with status ${response.status}`);
   }
   return body as T;
 }
