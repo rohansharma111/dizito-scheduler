@@ -10,6 +10,10 @@ const SIGNATURES = {
     buffer[5] === 0x0a &&
     buffer[6] === 0x1a &&
     buffer[7] === 0x0a,
+  "image/webp": (buffer: Buffer) =>
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP",
   "image/gif": (buffer: Buffer) =>
     buffer.length >= 6 &&
     (buffer.subarray(0, 6).toString("ascii") === "GIF87a" ||
