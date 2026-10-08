@@ -700,3 +700,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Applied the live Neon compatibility fix on `br-empty-rice-ayeuugek` by dropping `NOT NULL` from both legacy columns; verified both legacy and encrypted credential columns are nullable.
 - Added `db/migrations/020_oauth_page_selection_legacy_credentials_nullable.sql` so fresh environments receive the same schema contract.
 - No credential values were read or logged. The Pinterest account 62 remains subject to the separate runtime encryption-key/deployment gate.
+
+## 2026-10-08 — Workstream D Pinterest encrypted board-selection read fix
+
+- Production `/accounts/select/pinterest` exposed a null dereference in `/api/pinterest/boards`: the route still read legacy `oauth_page_selections.pages` directly after encrypted-only OAuth writes began storing the board/profile payload in `pages_encrypted` and setting `pages = NULL`.
+- Updated the Pinterest boards endpoint to use `resolveOAuthSelectionCredentials(...)`, decrypt `pages_encrypted`, retain legacy fallback during migration, handle missing/malformed payloads safely, and avoid returning raw provider/database error text to the browser.
+- Commit: `97b15eec8630b2685d9286d0954d50a40004c3b3`.
+- Deployment/runtime verification remains pending; the deployed application must include this commit and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY` must be configured before the Pinterest board-selection flow can be re-tested.
