@@ -2,84 +2,41 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
+import { getUploadPolicy } from "@/lib/media/upload-policy";
 import { matchesDeclaredMediaType } from "@/lib/security/media-signature";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_MEDIA_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-]);
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
-        {
-          status: 401,
-        },
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
-
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "No file uploaded",
-        },
-        {
-          status: 400,
-        },
-      );
+      return NextResponse.json({ success: false, error: "No file uploaded" }, { status: 400 });
     }
 
     if (file.size === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "File is empty",
-        },
-        {
-          status: 400,
-        },
-      );
+      return NextResponse.json({ success: false, error: "File is empty" }, { status: 400 });
     }
 
-    if (!ALLOWED_MEDIA_TYPES.has(file.type)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Only supported image and video media types may be uploaded",
-        },
-        {
-          status: 415,
-        },
-      );
+    const policy = getUploadPolicy(file.type, file.size);
+    if (!policy.allowed) {
+      return NextResponse.json({ success: false, error: policy.error }, { status: 413 });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (policy.resourceType === "video") {
       return NextResponse.json(
         {
           success: false,
-          error: "File exceeds the maximum allowed size (10 MB)",
+          error: "Video uploads must use the signed direct Cloudinary upload flow.",
+          code: "DIRECT_UPLOAD_REQUIRED",
         },
-        {
-          status: 413,
-        },
+        { status: 409 },
       );
     }
 
@@ -87,16 +44,10 @@ export async function POST(request: Request) {
 
     if (!matchesDeclaredMediaType(buffer, file.type)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Uploaded file content does not match its declared media type",
-        },
-        {
-          status: 415,
-        },
+        { success: false, error: "Uploaded file content does not match its declared media type" },
+        { status: 415 },
       );
     }
-
     const media = await mediaService.uploadMedia({
       userId: Number(session.user.id),
       buffer,
@@ -104,26 +55,12 @@ export async function POST(request: Request) {
       mimeType: file.type,
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        media,
-      },
-      {
-        status: 201,
-      },
-    );
+    return NextResponse.json({ success: true, media }, { status: 201 });
   } catch (error) {
     console.error("Media upload failed:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      {
-        status: 500,
-      },
+      { success: false, error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 },
     );
   }
 }
