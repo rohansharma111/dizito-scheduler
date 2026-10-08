@@ -252,3 +252,11 @@ At minimum:
 - OAuth callback/account-selection writes now dual-write encrypted credential values.
 - Scheduler, account-health, and temporary OAuth-selection reads prefer encrypted values and fall back to legacy plaintext during migration.
 - Existing legacy rows have not yet been backfilled; plaintext retirement remains blocked until backfill coverage, rollback readiness, and runtime/provider verification are complete.
+
+## 2026-10-08 guarded backfill checkpoint
+
+- Migration 019 is applied to Neon; existing legacy social credentials have not yet been transformed.
+- Added `scripts/backfill-social-credentials.mjs` and `npm run db:backfill-social-credentials`.
+- The command requires `DATABASE_URL` and `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY`, uses the same AES-256-GCM v1 payload format as the application helper, serializes execution with a PostgreSQL advisory lock, updates only missing encrypted fields, never prints credential values, and verifies that no credential-bearing rows remain plaintext-only before reporting success.
+- Execution is **blocked pending confirmation that the encryption key is provisioned in the deployment/runtime environment**. The secret value is not exposed or requested in chat.
+- Plaintext retirement remains blocked until backfill coverage, rollback readiness, and runtime/provider verification are complete.
