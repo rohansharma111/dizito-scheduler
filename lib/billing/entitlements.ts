@@ -24,8 +24,11 @@ export async function getEffectiveBillingContext(userId: number): Promise<Effect
       LEFT JOIN billing_plans bp ON bp.id = s.billing_plan_id
       WHERE s.user_id = $1
         AND (
-          s.status IN ('created','authenticated','active','pending','paused','payment_failed','grace_period')
-          OR (s.status IN ('payment_failed','grace_period') AND s.grace_period_until > NOW())
+          s.status IN ('created','authenticated','active','pending','paused')
+          OR (
+            s.status IN ('payment_failed','grace_period')
+            AND s.grace_period_until > NOW()
+          )
         )
       ORDER BY
         CASE WHEN s.status IN ('active','authenticated','created') THEN 0 ELSE 1 END,
@@ -48,20 +51,6 @@ export async function getEffectiveBillingContext(userId: number): Promise<Effect
 
   const fallback = LEGACY_PLAN_TO_V1[String(row.plan_code ?? "free")] ?? "free";
   const grace = row.grace_period_until ? new Date(row.grace_period_until) : null;
-
-  if (
-    (row.status === "payment_failed" || row.status === "grace_period") &&
-    grace &&
-    grace.getTime() <= Date.now()
-  ) {
-    return {
-      planCode: "free",
-      planId: null,
-      subscriptionId: Number(row.subscription_id),
-      status: row.status,
-      gracePeriodUntil: grace,
-    };
-  }
 
   return {
     planCode: fallback,
