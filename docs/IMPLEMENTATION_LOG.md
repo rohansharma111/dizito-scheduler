@@ -603,3 +603,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Confirmed temporary OAuth selection rows are credential-bearing and Meta Page selection JSON can contain Page access-token material.
 - Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` defining the non-destructive additive encrypted-column, dual-read/dual-write migration sequence.
 - Deliberately did not introduce a schema migration or backfill before the application credential boundary exists.
+
+### 2026-10-08 — Workstream D credential-boundary hardening
+- Added versioned AES-256-GCM application primitive for the planned legacy social-token migration (`lib/security/social-credentials.ts`) with regression tests.
+- Confirmed legacy `social_accounts` credential columns remain plaintext-capable; no production/schema migration was applied.
+- Removed raw provider response/error logging from Facebook, Instagram, LinkedIn, Pinterest, and Google Business publishers.
+- OAuth token-exchange error responses for Meta and LinkedIn were also redacted in prior security commits.
+- Runtime/CI verification remains pending.
