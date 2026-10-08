@@ -610,3 +610,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
 - Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
 - No backend/API/provider/database/billing/media architecture changes were introduced.
+
+
+## Workstream A — Remaining Merchant Surface Polish (2026-10-08)
+- Continued branch `v1/marketing-ui-design` without changing backend contracts, provider adapters, billing logic, or commerce architecture.
+- Polished Experiments, Attribution, Settings, and Bulk Upload to the shared Dizito UI system.
+- Preserved existing experiment lifecycle/observational-evidence semantics, explicit attribution language, settings read-only behavior, and bulk CSV validation/import/account-selection flows.
+- Added consistent loading, empty/error, plan-limit, responsive, and mobile-friendly presentation where appropriate.
+- Source-level sanity checks passed on touched surfaces; runtime build/lint/browser verification remains unavailable in this environment.
