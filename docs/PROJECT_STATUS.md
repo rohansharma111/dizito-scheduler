@@ -776,3 +776,12 @@ These define the launch gates and the multi-chat ownership model.
 
 - Pinterest and Google Business OAuth callback state validation now uses the shared constant-time verifier.
 - No database changes. Legacy social-token encryption migration remains intentionally deferred until a complete dual-read/dual-write consumer inventory is established.
+
+
+## 2026-10-08 — Legacy social OAuth token migration inventory
+
+- Completed source-level consumer mapping for plaintext social OAuth credentials.
+- Confirmed provider publishers, account-health checks, and scheduler account loading require the legacy token fields.
+- Confirmed temporary OAuth selection rows and Meta Page-selection JSON are credential-bearing transient paths.
+- Added `docs/DIZITO_SOCIAL_TOKEN_ENCRYPTION_MIGRATION.md` with the safe application-boundary and additive migration plan.
+- No schema migration, backfill, or destructive database change performed; runtime verification remains pending.
