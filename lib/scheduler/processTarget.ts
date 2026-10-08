@@ -42,7 +42,15 @@ export async function processTarget(target: any) {
 
         m.height,
 
-        m.bytes
+        m.bytes,
+
+        m.media_type,
+        m.duration_seconds,
+        m.poster_url,
+        m.processing_state,
+        m.upload_protocol,
+        m.processing_error,
+        m.metadata
 
       FROM posts p
 
