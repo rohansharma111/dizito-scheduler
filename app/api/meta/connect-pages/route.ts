@@ -200,8 +200,8 @@ export async function POST(request: Request) {
       status = 'connected',
       last_checked_at = NOW()
     WHERE
-      id = $4
-      AND user_id = $5
+      id = $6
+      AND user_id = $7
     `,
           [
             reconnectAccount.account_name,
@@ -351,7 +351,9 @@ export async function POST(request: Request) {
     SET
       account_name = $1,
       access_token = $2,
-      page_access_token = $3,
+      access_token_encrypted = $3,
+      page_access_token = $4,
+      page_access_token_encrypted = $5,
       status = 'connected',
       last_checked_at = NOW()
     WHERE
@@ -361,7 +363,9 @@ export async function POST(request: Request) {
           [
             reconnectAccount.account_name,
             accessToken,
+            encryptSocialCredential(accessToken),
             page.access_token,
+            encryptSocialCredential(page.access_token),
             reconnectAccountId,
             userId,
           ],
