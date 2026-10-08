@@ -267,7 +267,7 @@ export async function GET(request: Request) {
           access_token = $1,
           access_token_encrypted = $2,
           updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $3
         `,
         [accessToken, encryptSocialCredential(accessToken), existingAccount.id],
       );
@@ -319,7 +319,7 @@ export async function GET(request: Request) {
           access_token_encrypted = $2,
           page_id = $3,
           updated_at = NOW()
-        WHERE id = $3
+        WHERE id = $4
         `,
             [accessToken, encryptSocialCredential(accessToken), page.id, existingAccount.id],
           );
@@ -408,6 +408,7 @@ export async function GET(request: Request) {
       $2,
       $3,
       $4,
+      $5,
       NOW()
     )
     `,
