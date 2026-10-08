@@ -793,3 +793,10 @@ These define the launch gates and the multi-chat ownership model.
 - Edited posts may reference only tenant-owned, non-deleted media in `ready` processing state.
 - Post detail reads now tenant-scope the media join and exclude soft-deleted media, and expose the video lifecycle metadata needed by the media/publisher boundary.
 - This closes the remaining edit-path gap where a deleted or still-processing video could otherwise be attached after creation-time validation.
+
+## Workstream C — Large-video Pinterest handoff hardening — 2026-10-08
+
+- Pinterest's current official video-Pin workflow still requires register → multipart upload → media-status polling → Pin creation with `video_id` and a valid cover image. citeturn0search0
+- The Pinterest publisher no longer materializes the entire Cloudinary video into an application-memory `Blob`; it streams the Cloudinary response into a multipart request while preserving the provider-required upload fields.
+- This is an implementation-level memory optimization, not runtime provider verification. A controlled Pinterest video-Pin publish remains required.
+- A draft PR #50 was opened solely to expose the branch to repository CI/review; it is not merged.
