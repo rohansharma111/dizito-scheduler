@@ -237,3 +237,10 @@ At minimum:
 
 **Externally verified:** no.
 
+## 2026-10-08 implementation checkpoint
+
+- Added `lib/security/social-account-credentials.ts` as the encrypted-first compatibility boundary for scheduler and account-health credential reads.
+- Added regression tests proving encrypted values take precedence, legacy values remain a temporary fallback, and malformed encrypted values are rejected rather than silently falling back.
+- Added `db/migrations/019_social_account_credential_encryption.sql` as an **additive-only staged migration** for encrypted social-account and temporary OAuth credential fields.
+- The migration has **not** been applied to Neon and performs no data transformation or deletion.
+- Dual-write and migration-on-read remain the next application step; legacy plaintext storage remains active until those paths are completed and verified.
