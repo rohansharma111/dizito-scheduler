@@ -224,3 +224,18 @@ The Pinterest path has now been advanced to the next migration gate:
 This is source-implemented on `v1/security-audit`. Production database row 62 was **not directly modified or deleted** in this checkpoint. Existing legacy fallback reads remain temporarily available so the account can be migrated through a verified runtime path.
 
 Runtime deployment/provider verification is still required. The next verification is to exercise the deployed Pinterest reconnect/health path and confirm that row 62 has encrypted credentials with no plaintext credential fields, without exposing credential values.
+
+
+## 2026-10-08 — Social credential plaintext-write retirement across OAuth providers
+
+Following the Pinterest live-state finding, the same migration gate was applied to the remaining credential-bearing social OAuth write paths.
+
+- Meta/Facebook and Instagram callback/connect paths now persist access/page-access credentials only in encrypted columns.
+- LinkedIn callback/reconnect paths now persist access credentials only in the encrypted column.
+- Google Business callback/connect paths now persist access/refresh credentials only in encrypted columns.
+- Pinterest remains encrypted-only as previously corrected.
+- Temporary `oauth_page_selections` credential-bearing writes for Meta, Pinterest, and Google Business now keep plaintext token columns NULL while storing encrypted values.
+- Encrypted-first legacy-fallback reads remain temporarily for existing legacy accounts and rollback compatibility.
+- A source-level sweep of these seven credential write paths found no remaining direct parameterized writes to plaintext token columns.
+
+Important: this is source-implemented only. No production deployment or live provider exercise is claimed, and account 62 remains unchanged in Neon. The plaintext schema columns cannot yet be dropped until deployed runtime verification and safe migration of any remaining legacy rows are complete.
