@@ -202,6 +202,7 @@ export async function POST(request: Request) {
             access_token_encrypted = $2,
             refresh_token = NULL,
             refresh_token_encrypted = $3,
+            credential_encryption_version = 'v1',
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
@@ -318,7 +319,8 @@ export async function POST(request: Request) {
             google_location_id,
             google_account_id,
             google_profile_id,
-            user_id
+            user_id,
+            credential_encryption_version
           )
           VALUES
           (
@@ -331,7 +333,8 @@ export async function POST(request: Request) {
             $5,
             $6,
             $7,
-            $8
+            $8,
+            'v1'
           )
           RETURNING id
           `,
