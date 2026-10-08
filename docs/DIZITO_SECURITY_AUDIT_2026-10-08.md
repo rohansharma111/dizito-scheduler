@@ -9,12 +9,11 @@ This audit was performed before security changes. No destructive database change
 
 ### P0 — blocker
 
-1. **Next.js 16.2.7 is below the current security floor.**
-   - package.json and package-lock.json resolve next and eslint-config-next to 16.2.7.
-   - Next.js published September 2026 security releases requiring Active LTS 16.3.8; 16.2.7 is also below patched 16.3.6 for the September 22 critical next/og RCE advisory.
-   - This was intentionally not partially patched because the repository uses npm ci; changing only package.json would leave a stale lockfile and produce a non-reproducible build.
-   - Required follow-up: run npm install --save-exact next@16.3.8 eslint-config-next@16.3.8, inspect the lockfile diff, then run npm ci, npm test, npm run lint, and npm run build.
-   - Status: **deferred pending deterministic lockfile regeneration**.
+1. **Next.js dependency security floor was below the current patched release.**
+   - The branch now aligns package.json and package-lock.json on Next.js **16.3.8** and eslint-config-next **16.3.8**.
+   - CI installation evidence: `npm ci` succeeds on Node 22.
+   - Full repository CI remains non-green because of existing lint/test debt; this does not establish production runtime security.
+   - Status: **implemented at dependency level; runtime/deployed-artifact verification pending**.
 
 ### P1 — important
 
@@ -102,6 +101,11 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 ### Externally verified
 - Next.js security advisories/release status were checked against current public Next.js/GitHub advisory information.
 - Provider live OAuth, webhook delivery, upload, and commerce API behavior were not externally exercised.
+
+### Additional audit status
+
+- CI workflow runtime was moved to Node 22 because the current OpenAI dependency requires Node >=22; this is a compatibility correction, not a security certification.
+- Latest observed PR head is 738dad1928ed8f4f3787c3bb5da4503c5c31d834. The PR remains open and unmerged.
 
 ### Remaining risks
 - CI remains non-green due to pre-existing repository-wide lint/test debt; security-specific runtime behavior still needs targeted execution.
