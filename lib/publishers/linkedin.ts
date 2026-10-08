@@ -63,14 +63,14 @@ async function publishLinkedInText(context: PublisherContext) {
     }),
   });
 
-  const raw = await response.text();
+  await response.text();
 
   console.log("LINKEDIN TEXT STATUS:", response.status);
 
   console.log("LINKEDIN TEXT RESPONSE RECEIVED:", response.status);
 
   if (!response.ok) {
-    throw new Error(raw);
+    throw new Error(`LinkedIn text publish failed: HTTP ${response.status}`);
   }
 
   return {
@@ -138,7 +138,7 @@ async function publishLinkedInImage(context: PublisherContext) {
   console.log("LINKEDIN REGISTER STATUS:", registerResponse.status);
 
   if (!registerResponse.ok) {
-    throw new Error(JSON.stringify(registerData));
+    throw new Error(`LinkedIn upload initialization failed: HTTP ${registerResponse.status}`);
   }
 
   const uploadUrl = registerData?.value?.uploadUrl;
@@ -230,14 +230,14 @@ async function publishLinkedInImage(context: PublisherContext) {
     }),
   });
 
-  const raw = await postResponse.text();
+  await postResponse.text();
 
   console.log("LINKEDIN IMAGE STATUS:", postResponse.status);
 
   console.log("LINKEDIN IMAGE RESPONSE RECEIVED:", postResponse.status);
 
   if (!postResponse.ok) {
-    throw new Error(raw);
+    throw new Error(`LinkedIn image publish failed: HTTP ${postResponse.status}`);
   }
 
   return {
