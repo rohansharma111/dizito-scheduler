@@ -177,7 +177,8 @@ export const MEDIA_CAPABILITIES: Record<string, PlatformMediaCapability> = {
         maxDurationSeconds: 30 * 60,
         minWidth: null,
         maxWidth: null,
-        minHeight: null,        maxHeight: null,
+        minHeight: null,
+        maxHeight: null,
         requiresProcessing: true,
         requiresPolling: true,
         requiresCover: false,
@@ -249,7 +250,8 @@ export const MEDIA_CAPABILITIES: Record<string, PlatformMediaCapability> = {
         notes: "Fail closed: current Google Business Profile v4 location-media reference supports PHOTO only.",
       },
     },
-  },};
+  },
+};
 
 export function getMediaCapability(
   platform: string,
