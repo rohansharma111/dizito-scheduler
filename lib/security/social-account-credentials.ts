@@ -5,14 +5,25 @@ import {
 
 type SocialAccountRow = Record<string, unknown>;
 
-function resolveEncryptedCredential(value: unknown): string | null {
-  if (value == null || value === "") return null;
+function resolveEncryptedCredential(
+  encryptedValue: unknown,
+  legacyValue: unknown,
+): string | null {
+  if (typeof encryptedValue === "string" && encryptedValue) {
+    if (!isEncryptedSocialCredential(encryptedValue)) {
+      throw new Error("Invalid encrypted social credential");
+    }
 
-  if (typeof value !== "string" || !isEncryptedSocialCredential(value)) {
-    throw new Error("Invalid encrypted social credential");
+    return decryptSocialCredential(encryptedValue);
   }
 
-  return decryptSocialCredential(value);
+  if (typeof legacyValue === "string" && legacyValue) {
+    throw new Error(
+      "Legacy plaintext social credential requires migration before use",
+    );
+  }
+
+  return null;
 }
 
 /**
@@ -31,10 +42,17 @@ export function resolveSocialAccountCredentials<T extends SocialAccountRow>(
 } {
   return {
     ...account,
-    access_token: resolveEncryptedCredential(account.access_token_encrypted),
+    access_token: resolveEncryptedCredential(
+      account.access_token_encrypted,
+      account.access_token,
+    ),
     page_access_token: resolveEncryptedCredential(
       account.page_access_token_encrypted,
+      account.page_access_token,
     ),
-    refresh_token: resolveEncryptedCredential(account.refresh_token_encrypted),
+    refresh_token: resolveEncryptedCredential(
+      account.refresh_token_encrypted,
+      account.refresh_token,
+    ),
   };
 }
