@@ -1,10 +1,27 @@
 import { pool } from "@/lib/db";
 import { updatePostStatus } from "@/lib/post-status";
 import { createEvent } from "@/lib/events";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const session = await getServerSession(authOptions);
+    const internalSecret = request.headers.get("x-dizito-internal-secret");
+    const configuredSecret = process.env.NEXTAUTH_SECRET;
+    const sessionUserId = session?.user ? Number((session.user as any).id) : null;
+    const internalUserId = Number(body.userId);
+    const isInternal = Boolean(configuredSecret && internalSecret === configuredSecret);
+
+    if (!sessionUserId && !isInternal) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = sessionUserId ?? internalUserId;
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!body.socialAccountId) {
       return Response.json(
@@ -32,13 +49,14 @@ export async function POST(request: Request) {
           ON p.id = pt.post_id
         WHERE
           pt.social_account_id = $1
+          AND p.user_id = $2
           AND pt.status IN (
   'retry_scheduled',
   'permanent_failed',
   'failure_handler_crashed'
 )
         `,
-      [socialAccountId],
+      [socialAccountId, userId],
     );
 
     if (result.rows.length === 0) {
