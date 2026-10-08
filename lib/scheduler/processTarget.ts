@@ -48,6 +48,8 @@ export async function processTarget(target: any) {
 
       LEFT JOIN media_library m
         ON p.media_id = m.id
+        AND m.user_id = p.user_id
+        AND m.deleted_at IS NULL
 
       WHERE p.id = $1
     `,
