@@ -1,3 +1,19 @@
+## 2026-10-08 — Workstream F external provider verification checkpoint
+
+- Branch: `v1/provider-verification`.
+- Provider-access states reconciled without exposing or recording secrets.
+- Meta: `business_management` review remains in progress; no approval or customer-like verification claimed.
+- Pinterest: Standard Access remains granted; live image/video Pin publication is still pending runtime credentials/session evidence.
+- Google Business: Basic API Access remains pending; support case `0-3242000041809`; no API access claimed.
+- LinkedIn: documented image/video capability; controlled runtime publish remains pending.
+- WooCommerce: controlled live store mutation remains pending because an authorized test store/credential session is required.
+- Amazon: product/catalog/offer foundation exists; representative runtime verification remains pending.
+- Flipkart: controlled sandbox/provider verification remains pending; live mutation remains fail-closed.
+- Meesho: remains blocked; no provider-specific implementation performed.
+- No provider mutation was executed from the current verification environment because no authorized provider runtime credentials/session were available to this workstream.
+- Official provider documentation was checked for Pinterest image/video Pins and LinkedIn image/video Posts; documentation capability evidence is explicitly not treated as Dizito runtime verification.
+- No secrets were written to repository documentation.
+
 ## 2026-10-07 — Google Business Profile API access request submitted
 
 - **Status:** Pending Google allowlisting/approval; provider runtime verification has not started.
