@@ -1,3 +1,13 @@
+## 2026-10-08 — Workstream D security regression continuation
+
+- Current main HEAD reconciled to `fd57fb359a0d54d94a4dfb9b2ae5dc010ebadd5e`; the historical security branch was stale and was not reused for implementation.
+- New isolated branch: `v1/security-audit-2026-10-09`.
+- Changed `lib/security/social-account-credentials.ts` so credential-bearing application paths never fall back to legacy plaintext social token columns. Encrypted values remain the only accepted credential source; plaintext-only legacy rows now fail closed with an explicit migration-required error.
+- Added regression coverage in `lib/security/social-account-credentials.test.ts` for plaintext fail-closed behavior while preserving encrypted credential resolution and malformed-ciphertext rejection.
+- No destructive migration or production backfill was executed. The existing controlled backfill remains the required migration step before affected legacy rows can be used.
+- PR #55 opened against current main.
+- GitHub Actions `Quality Checks` and `Validate` both executed on the branch and both currently fail at their existing Test/Lint gates; therefore this change is **not** marked CI-green or production-ready. No provider runtime verification was performed.
+
 ## 2026-10-08 — Workstream H reconciliation onto current main
 
 - Reconciled `v1/infrastructure-observability` onto the current `main` lineage.
