@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { refreshPinterestToken } from "@/lib/platforms/pinterest/refreshToken";
 import { resolveSocialAccountCredentials } from "@/lib/security/social-account-credentials";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 async function checkInstagramAccount(account: any) {
   const response = await fetch(
@@ -155,7 +156,7 @@ async function checkPinterestAccount(account: any) {
         health_status = 'healthy',
         last_checked_at = NOW(),
         updated_at = NOW()
-      WHERE id = $4
+      WHERE id = $6
       `,
       [
         token.accessToken,
