@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { verifyOAuthState } from "@/lib/security/oauth-state";
 import { authOptions } from "@/lib/auth";
 import { getPlan, canConnectAccount } from "@/lib/plans";
+import { encryptSocialCredential } from "@/lib/security/social-credentials";
 
 export async function GET(request: Request) {
   try {
@@ -296,7 +297,8 @@ export async function GET(request: Request) {
     UPDATE social_accounts
     SET
       access_token = $1,
-      account_name = $2,
+      access_token_encrypted = $2,
+      account_name = $3,
       status = 'connected',
       last_checked_at = NOW(),
       updated_at = NOW()
@@ -304,7 +306,7 @@ export async function GET(request: Request) {
       id = $3
       AND user_id = $4
     `,
-        [accessToken, accountName, accountId, userId],
+        [accessToken, encryptSocialCredential(accessToken), accountName, accountId, userId],
       );
 
       await createEvent(
@@ -408,6 +410,7 @@ export async function GET(request: Request) {
           platform,
           account_name,
           access_token,
+          access_token_encrypted,
           linkedin_member_id,
           user_id,
           status,
@@ -421,11 +424,12 @@ export async function GET(request: Request) {
           $4,
           $5,
           $6,
+          $7,
           NOW()
         )
         RETURNING id
         `,
-      ["linkedin", accountName, accessToken, memberId, userId, "connected"],
+      ["linkedin", accountName, accessToken, encryptSocialCredential(accessToken), memberId, userId, "connected"],
     );
 
     const accountId = result.rows[0].id;
