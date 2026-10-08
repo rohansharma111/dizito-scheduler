@@ -753,3 +753,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Quality Checks reported 11 failures, predominantly existing Commerce/Flipkart/WooCommerce lifecycle-test drift. The Workstream D-specific WooCommerce request test failed because its DNS mock was not hoisted under Vitest; the test is now using vi.hoisted(...).
 - Corrected the WooCommerce generic request failure path to redact provider-controlled response messages and return only a stable HTTP-status error.
 - Added the CI follow-up to persistent project status. PR #55 remains open/unmerged and requires a fresh CI run after these fixes.
+
+
+## 2026-10-09 — Workstream D latest CI regression fixes
+
+- Latest PR #55 Quality Checks collected 27 passing test files plus two Workstream D-specific mock-hoisting failures; WooCommerce security request tests and Amazon schema tests passed.
+- Converted the rate-limit and media-service test dependency mocks to `vi.hoisted(...)` so Vitest cannot evaluate them before initialization.
+- Repository-wide existing Commerce/Flipkart/WooCommerce lifecycle failures remain outside the focused security changes; no unrelated behavior was changed.
+- Fresh CI is required after these fixes; no green CI or production-ready claim is made.
