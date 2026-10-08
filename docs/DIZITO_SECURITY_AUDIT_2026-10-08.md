@@ -193,3 +193,10 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 - Meta's no-Pages error response no longer returns raw Page discovery provider payloads to the browser; only counts and the discovery source are exposed.
 - These changes are source-level hardening; no live provider mutation or full CI pass is claimed.
 - Remaining P1s: distributed/serverless-safe rate limiting, DNS-aware SSRF/network egress enforcement, full media processing isolation, production secret-rotation verification, and runtime/provider verification.
+
+
+## 2026-10-08 — Credential retirement gate
+
+A further source audit covered the Meta, LinkedIn, Pinterest, and Google Business callback/connect paths plus the scheduled account-health path. All current credential consumers that read `social_accounts` credentials pass through the encrypted-first resolver where credential material is consumed. The repository still contains deliberate plaintext dual-writes for legacy compatibility.
+
+The plaintext write layer is **not retired in this checkpoint**. Although the production database currently contains zero social-account rows, removing the legacy writes or dropping the plaintext columns before a successful live provider-connect/reconnect exercise would make the change difficult to validate and could break an unobserved compatibility path. The correct next gate is runtime/provider verification of a fresh connection, reconnect, refresh, selection, and publish flow using the encrypted columns. After that gate passes, the plaintext writes can be removed first, followed by a separately reviewed schema-retirement migration.
