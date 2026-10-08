@@ -400,6 +400,7 @@ export async function GET(request: Request) {
       access_token_encrypted,
       pages,
       pages_encrypted,
+      credential_encryption_version,
       created_at
     )
     VALUES
@@ -409,6 +410,7 @@ export async function GET(request: Request) {
       $2,
       NULL,
       $3,
+      'v1',
       NOW()
     )
     `,
