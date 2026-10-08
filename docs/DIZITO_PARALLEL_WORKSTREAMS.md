@@ -593,3 +593,24 @@ If a branch already exists, do not reset or force-push it. Create a continuation
 Workstream A owns visual primitives and `app/globals.css`; Workstream B owns billing UI/backend; Workstream C owns media-specific UI/backend; Workstream D owns security helpers/tests; Workstream E owns tests/CI; Workstream F owns verification evidence; Workstream G owns commerce; Workstream H owns infrastructure/database observability.
 
 If a change genuinely crosses boundaries, make the smallest interface change in the owning workstream and hand the dependent work to the other workstream rather than editing both systems in parallel.
+## 14. Project-wide progress tracking rule — 2026-10-08
+
+Every active Dizito workstream/chat must keep persistent project status synchronized with material developments. At each meaningful checkpoint, record:
+- current workstream status and exact completion level;
+- branch/HEAD and PR/merge state;
+- files/migrations changed;
+- tests, CI, build, lint and runtime/provider verification actually performed;
+- known failures/blockers and external dependencies;
+- dependencies on other workstreams;
+- exact next action and continuation handoff when the chat approaches its limit.
+
+Use these completion labels consistently:
+1. **Implementation complete** — intended code/product scope is implemented.
+2. **Verified** — relevant tests/runtime/provider checks have actually passed.
+3. **Integrated/Merged** — changes are reconciled into the intended target branch.
+4. **Production-ready** — required verification, external configuration/access, migration, recovery and launch gates are satisfied.
+
+Current cross-workstream handoff:
+- **A:** implementation complete → Workstream E owns runtime/browser QA + CI validation.
+- **B:** implementation complete + merged → validation/configuration remains; do not reopen billing design unless validation finds a substantive defect.
+
