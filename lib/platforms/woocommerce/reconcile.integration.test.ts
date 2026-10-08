@@ -46,6 +46,9 @@ function mockDb() {
   const query = vi.fn()
     .mockResolvedValueOnce({})
     .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous", provider: "woocommerce" }] })
+    .mockResolvedValueOnce({ rows: [{ id: "listing-1", channel_id: "channel-1", external_id: null }] })
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({ rows: [] })
     .mockResolvedValueOnce({ rowCount: 1 })
     .mockResolvedValueOnce({ rowCount: 1 })
     .mockResolvedValueOnce({});
@@ -122,7 +125,10 @@ describe("reconcileWooCommercePublish", () => {
 
     const query = vi.fn()
       .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous", provider: "woocommerce" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "listing-1", channel_id: "channel-1", external_id: null }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [] })
       .mockRejectedValueOnce(new Error("listing update failed"))
       .mockResolvedValueOnce({});
     const client = { query, release: vi.fn() };
@@ -147,7 +153,10 @@ describe("reconcileWooCommercePublish", () => {
 
     const query = vi.fn()
       .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous", provider: "woocommerce" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "listing-1", channel_id: "channel-1", external_id: null }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rowCount: 1 })
       .mockRejectedValueOnce(new Error("attempt update failed"))
       .mockResolvedValueOnce({});
