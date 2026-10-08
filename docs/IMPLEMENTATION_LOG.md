@@ -587,3 +587,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Recorded the need for a Dizito-specific design system, subscription/pricing redesign, video capability architecture, security audit, scalability/observability work and explicit external provider verification.
 - Current Neon inspection found approximately 12 MB database size, 46 public tables and 156 public indexes; no storage-driven migration is currently justified.
 - Added parallel workstream guidance so UI, billing, media/video, security, QA/CI, external provider verification, commerce hardening and infrastructure can proceed with explicit file ownership and continuation handoffs.
+
+
+## 2026-10-08 — Media/video post-boundary hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Post creation now validates `mediaId` as a positive integer, verifies tenant ownership and excludes soft-deleted media before persisting the post link.
+- Posts cannot be created against media whose processing state is not `ready`.
+- `types/media.ts` now exposes the new media-library video lifecycle metadata used by the UI/publisher boundary.
+- No fresh GitHub Actions run is available for the workstream commit; tests/lint/type-check/build remain pending.
+- The additive media migration is still not applied to the default Neon branch.
