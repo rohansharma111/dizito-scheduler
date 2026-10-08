@@ -310,14 +310,14 @@ export async function POST(request: Request) {
           (
             $1,
             $2,
+            NULL,
             $3,
+            NULL,
             $4,
             $5,
             $6,
             $7,
-            $8,
-            $9,
-            $10
+            $8
           )
           RETURNING id
           `,
