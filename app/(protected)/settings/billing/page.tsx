@@ -5,399 +5,213 @@ import Link from "next/link";
 
 type BillingData = {
   plan: string;
-
   planDetails: {
     name: string;
-    price: number;
-    accounts: number;
-    monthlyPosts: number;
-    bulkUpload: boolean;
-    retrySystem: boolean;
-    calendar: boolean;
-    drafts: boolean;
-    analytics: boolean;
-    prioritySupport: boolean;
+    description: string | null;
+    priceMinor: number;
+    currency: string;
+    interval: string;
+    trialDays: number;
   };
-
   subscription: {
     provider: string | null;
     id: string | null;
     status: string | null;
-    subscriptionPlan: string | null;
     renewalDate: string | null;
     trialDaysLeft: number;
+    cancelAtPeriodEnd: boolean;
+    gracePeriodUntil: string | null;
   };
-
   usage: {
-    accountsUsed: number;
-    accountsLimit: number;
-
-    postsUsed: number;
-    postsLimit: number;
-
-    aiImagesGenerated: number;
-    aiImagesLimit: number;
-
-    published: number;
-    bulkUploads: number;
+    socialChannels: number;
+    socialChannelsLimit: number;
+    commerceChannels: number;
+    commerceChannelsLimit: number;
+    publishing: number;
+    publishingLimit: number;
+    aiActions: number;
+    aiActionsLimit: number;
   };
-
-  features: {
-    bulkUpload: boolean;
-    retrySystem: boolean;
-    calendar: boolean;
-    drafts: boolean;
-    analytics: boolean;
-    prioritySupport: boolean;
-  };
-
-  billingHistory: {
-    event: string;
-    amount: number;
-    created_at: string;
-  }[];
-
-  earlyAdopter: boolean;
+  features: Record<string, boolean>;
+  billingHistory: { event: string; amount: number | null; created_at: string }[];
+  pricingHypothesis: boolean;
 };
 
 export default function BillingPage() {
   const [billing, setBilling] = useState<BillingData | null>(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const statusColors: Record<string, string> = {
-    active: "bg-green-100 text-green-700",
-
-    authenticated: "bg-yellow-100 text-yellow-700",
-
-    cancelled: "bg-red-100 text-red-700",
-
-    halted: "bg-orange-100 text-orange-700",
-
-    completed: "bg-gray-100 text-gray-700",
-
-    payment_failed: "bg-red-100 text-red-700",
-
-    free: "bg-gray-100 text-gray-700",
-  };
-
-  useEffect(() => {
-    loadBilling();
-  }, []);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function loadBilling() {
+    const response = await fetch("/api/billing");
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Failed to load billing");
+    setBilling(data);
+  }
+
+  useEffect(() => {
+    loadBilling().catch((e) => setError(e instanceof Error ? e.message : "Failed to load billing"));
+  }, []);
+
+  async function changePlan(plan: "growth" | "pro" | "free") {
+    setBusy(plan);
+    setError(null);
     try {
-      const response = await fetch("/api/billing");
-
+      const response = await fetch("/api/billing/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
       const data = await response.json();
-
-      setBilling(data);
-    } catch (error) {
-      console.error(error);
+      if (!response.ok) throw new Error(data.error ?? "Plan change failed");
+      await loadBilling();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Plan change failed");
     } finally {
-      setLoading(false);
+      setBusy(null);
     }
   }
 
-  if (loading) {
-    return <div className="p-8">Loading billing...</div>;
+  async function cancel() {
+    setBusy("cancel");
+    setError(null);
+    try {
+      const response = await fetch("/api/billing/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ immediate: false }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Cancellation failed");
+      await loadBilling();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Cancellation failed");
+    } finally {
+      setBusy(null);
+    }
   }
 
   if (!billing) {
-    return <div className="p-8">Failed to load billing</div>;
+    return <div className="p-8">{error ? `Billing unavailable: ${error}` : "Loading billing..."}</div>;
   }
 
-  const accountPercent =
-    billing.usage.accountsLimit > 0
-      ? (billing.usage.accountsUsed / billing.usage.accountsLimit) * 100
-      : 0;
-
-  const postPercent =
-    billing.usage.postsLimit > 0 &&
-    billing.usage.postsLimit !== Number.MAX_SAFE_INTEGER
-      ? (billing.usage.postsUsed / billing.usage.postsLimit) * 100
-      : 0;
-
-  const aiPercent =
-    billing.usage.aiImagesLimit > 0 &&
-    billing.usage.aiImagesLimit !== Number.MAX_SAFE_INTEGER
-      ? (billing.usage.aiImagesGenerated / billing.usage.aiImagesLimit) * 100
-      : 0;
+  const cards = [
+    ["Social channels", billing.usage.socialChannels, billing.usage.socialChannelsLimit],
+    ["Commerce channels", billing.usage.commerceChannels, billing.usage.commerceChannelsLimit],
+    ["Publishing / month", billing.usage.publishing, billing.usage.publishingLimit],
+    ["AI actions / month", billing.usage.aiActions, billing.usage.aiActionsLimit],
+  ];
 
   return (
-    <div className="p-8 space-y-8">
-      {/* Hero */}
-
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-8 text-white">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Billing & Subscription</h1>
-
-          {billing.earlyAdopter && (
-            <span className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-semibold">
-              🔥 Early Adopter
-            </span>
-          )}
-        </div>
-
-        <p className="mt-2 opacity-90">
-          Manage your plan, subscription and usage.
-        </p>
-
-        <div className="mt-6 flex gap-8">
+    <div className="space-y-8 p-8">
+      <div className="rounded-2xl border bg-white p-8">
+        <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <div className="text-sm">Current Plan</div>
-
-            <div className="text-2xl font-bold">{billing.planDetails.name}</div>
+            <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Current plan</p>
+            <h1 className="mt-1 text-4xl font-bold">{billing.planDetails.name}</h1>
+            <p className="mt-2 max-w-2xl text-gray-600">{billing.planDetails.description}</p>
           </div>
-
-          <div>
-            <div className="text-sm">Status</div>
-
-            <div className="text-2xl font-bold">
-              {billing.subscription.status || "Free"}
+          <div className="text-right">
+            <div className="text-3xl font-bold">
+              ₹{Math.round(billing.planDetails.priceMinor / 100)}
+              <span className="text-base font-normal text-gray-500">/month</span>
             </div>
-          </div>
-
-          <div>
-            <div className="text-sm">Monthly Price</div>
-
-            <div className="text-2xl font-bold">
-              ₹{billing.planDetails.price}
+            <div className="mt-2 text-sm text-gray-500">
+              {billing.subscription.status ?? "free"}
             </div>
           </div>
         </div>
+
+        {billing.subscription.trialDaysLeft > 0 && (
+          <div className="mt-6 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-900">
+            Trial ends in {billing.subscription.trialDaysLeft} day(s).
+          </div>
+        )}
+
+        {billing.subscription.gracePeriodUntil && (
+          <div className="mt-6 rounded-lg bg-orange-50 p-4 text-sm text-orange-900">
+            Payment issue detected. Access is retained through{" "}
+            {new Date(billing.subscription.gracePeriodUntil).toLocaleDateString()}.
+          </div>
+        )}
+
+        {billing.subscription.cancelAtPeriodEnd && (
+          <div className="mt-6 rounded-lg bg-gray-100 p-4 text-sm text-gray-700">
+            Cancellation is scheduled at the end of the current billing period.
+          </div>
+        )}
       </div>
 
-      {/* Trial Banner */}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
-      {billing.subscription.trialDaysLeft > 0 && (
-        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4">
-          🎉 Trial ends in{" "}
-          <strong>{billing.subscription.trialDaysLeft} days</strong>
-        </div>
-      )}
-
-      {/* Usage */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold mb-4">Accounts Usage</h2>
-
-          <div className="flex justify-between mb-2">
-            <span>
-              {billing.usage.accountsUsed}/{billing.usage.accountsLimit}
-            </span>
-
-            <span>{Math.round(accountPercent)}%</span>
-          </div>
-
-          <div className="w-full bg-gray-200 h-3 rounded">
-            <div
-              className="bg-blue-600 h-3 rounded"
-              style={{
-                width: `${Math.min(accountPercent, 100)}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold mb-4">Posts Usage</h2>
-
-          <div className="flex justify-between mb-2">
-            <span>
-              {billing.usage.postsUsed}/
-              {billing.usage.postsLimit === Number.MAX_SAFE_INTEGER
-                ? "∞"
-                : billing.usage.postsLimit}
-            </span>
-
-            <span>
-              {billing.usage.postsLimit === Number.MAX_SAFE_INTEGER
-                ? "∞"
-                : `${Math.round(postPercent)}%`}
-            </span>
-          </div>
-
-          <div className="bg-white border rounded-xl p-6">
-            <h2 className="font-semibold mb-4">AI Images Usage</h2>
-
-            <div className="flex justify-between mb-2">
-              <span>
-                {billing.usage.aiImagesGenerated}/
-                {billing.usage.aiImagesLimit === Number.MAX_SAFE_INTEGER
-                  ? "∞"
-                  : billing.usage.aiImagesLimit}
-              </span>
-
-              <span>
-                {billing.usage.aiImagesLimit === Number.MAX_SAFE_INTEGER
-                  ? "∞"
-                  : `${Math.round(aiPercent)}%`}
-              </span>
-            </div>
-
-            <div className="w-full bg-gray-200 h-3 rounded">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {cards.map(([label, used, limit]) => (
+          <div key={label} className="rounded-xl border bg-white p-5">
+            <p className="text-sm text-gray-500">{label}</p>
+            <p className="mt-2 text-2xl font-bold">{used} / {limit}</p>
+            <div className="mt-3 h-2 rounded-full bg-gray-100">
               <div
-                className="bg-purple-600 h-3 rounded"
-                style={{
-                  width: `${Math.min(aiPercent, 100)}%`,
-                }}
+                className="h-2 rounded-full bg-blue-600"
+                style={{ width: `${Math.min(100, limit ? (Number(used) / Number(limit)) * 100 : 0)}%` }}
               />
             </div>
           </div>
-
-          <div className="w-full bg-gray-200 h-3 rounded">
-            <div
-              className="bg-green-600 h-3 rounded"
-              style={{
-                width: `${Math.min(postPercent, 100)}%`,
-              }}
-            />
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Subscription */}
-
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-6">Subscription</h2>
-
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <div className="text-gray-500">Provider</div>
-
-            <div className="font-medium">
-              {billing.subscription.provider || "-"}
+      <div className="rounded-2xl border bg-white p-7">
+        <h2 className="text-xl font-semibold">Dizito capabilities</h2>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {Object.entries(billing.features).map(([key, enabled]) => (
+            <div key={key} className="rounded-lg bg-gray-50 px-4 py-3">
+              {enabled ? "✓" : "—"} {key.replaceAll("_", " ")}
             </div>
-          </div>
-
-          <div>
-            <div className="text-gray-500">Status</div>
-
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                statusColors[billing.subscription.status ?? "free"]
-              }`}
-            >
-              {billing.subscription.status ?? "Free"}
-            </span>
-          </div>
-
-          <div>
-            <div className="text-gray-500">Subscription ID</div>
-
-            <div className="font-medium">{billing.subscription.id || "-"}</div>
-          </div>
-
-          <div>
-            <div className="text-gray-500">Renewal Date</div>
-
-            <div className="font-medium">
-              {billing.subscription.renewalDate
-                ? new Date(
-                    billing.subscription.renewalDate,
-                  ).toLocaleDateString()
-                : "-"}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Features */}
-
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-6">Features</h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>{billing.features.bulkUpload ? "✅" : "❌"} Bulk Upload</div>
-
-          <div>{billing.features.analytics ? "✅" : "❌"} Analytics</div>
-
-          <div>
-            {billing.usage.aiImagesLimit > 0 ? "✅" : "❌"} AI Image Generation
-          </div>
-
-          <div>{billing.features.retrySystem ? "✅" : "❌"} Retry System</div>
-
-          <div>{billing.features.calendar ? "✅" : "❌"} Calendar</div>
-
-          <div>{billing.features.drafts ? "✅" : "❌"} Drafts</div>
-
-          <div>
-            {billing.features.prioritySupport ? "✅" : "❌"} Priority Support
-          </div>
-        </div>
-      </div>
-
-      {/* Billing History */}
-
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-6">Billing History</h2>
-
-        {billing.billingHistory.length === 0 ? (
-          <div className="text-gray-500">No billing history yet.</div>
-        ) : (
-          <div className="space-y-3">
-            {billing.billingHistory.map((item, index) => (
-              <div key={index} className="flex justify-between border-b pb-3">
-                <div>{item.event}</div>
-
-                <div className="text-right">
-                  <div>₹{item.amount}</div>
-
-                  <div className="text-sm text-gray-500">
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-
-      <div className="flex gap-4">
-        {billing.plan === "free" && (
-          <>
-            <Link
-              href="/pricing"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg"
-            >
-              Upgrade To Creator
-            </Link>
-
-            <Link
-              href="/pricing"
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg"
-            >
-              Upgrade To Agency
-            </Link>
-          </>
-        )}
-
-        {billing.plan === "creator" && (
-          <>
-            <Link
-              href="/pricing"
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg"
-            >
-              Upgrade To Agency
-            </Link>
-
-            <button className="bg-red-600 text-white px-6 py-3 rounded-lg">
-              Cancel Subscription
+      <div className="rounded-2xl border bg-white p-7">
+        <div className="flex flex-wrap gap-3">
+          {billing.plan !== "growth" && billing.plan !== "pro" && (
+            <button disabled={!!busy} onClick={() => changePlan("growth")} className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white disabled:opacity-50">
+              {busy === "growth" ? "Updating…" : "Move to Growth"}
             </button>
-          </>
-        )}
-
-        {billing.plan === "agency" && (
-          <button className="bg-red-600 text-white px-6 py-3 rounded-lg">
-            Cancel Subscription
-          </button>
-        )}
+          )}
+          {billing.plan !== "pro" && (
+            <button disabled={!!busy} onClick={() => changePlan("pro")} className="rounded-lg bg-gray-900 px-5 py-3 font-medium text-white disabled:opacity-50">
+              {busy === "pro" ? "Updating…" : "Move to Pro"}
+            </button>
+          )}
+          {billing.subscription.id && !billing.subscription.cancelAtPeriodEnd && (
+            <button disabled={!!busy} onClick={cancel} className="rounded-lg border border-red-200 px-5 py-3 font-medium text-red-700 disabled:opacity-50">
+              {busy === "cancel" ? "Scheduling…" : "Cancel at period end"}
+            </button>
+          )}
+          <Link href="/pricing" className="rounded-lg border px-5 py-3 font-medium">View pricing</Link>
+        </div>
       </div>
+
+      <div className="rounded-2xl border bg-white p-7">
+        <h2 className="text-xl font-semibold">Billing history</h2>
+        <div className="mt-5 space-y-3">
+          {billing.billingHistory.length === 0 ? (
+            <p className="text-gray-500">No billing events yet.</p>
+          ) : (
+            billing.billingHistory.map((item, index) => (
+              <div key={index} className="flex justify-between border-b pb-3 text-sm">
+                <span>{item.event}</span>
+                <span>{item.amount == null ? "—" : `₹${item.amount}`} · {new Date(item.created_at).toLocaleDateString()}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {billing.pricingHypothesis && (
+        <p className="text-xs text-gray-500">
+          Pricing, limits and trial durations shown here are V1 product hypotheses, not final commercial commitments.
+        </p>
+      )}
     </div>
   );
 }

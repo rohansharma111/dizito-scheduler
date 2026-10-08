@@ -1,13 +1,13 @@
 export const billingLogger = {
-  info(...args: any[]) {
+  info(...args: unknown[]) {
     console.log("[BILLING]", ...args);
   },
 
-  warn(...args: any[]) {
+  warn(...args: unknown[]) {
     console.warn("[BILLING]", ...args);
   },
 
-  error(...args: any[]) {
+  error(...args: unknown[]) {
     console.error("[BILLING]", ...args);
   },
 };

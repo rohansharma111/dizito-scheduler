@@ -12,4 +12,4 @@ export type SubscriptionStatus =
   | "completed"
   | "expired";
 
-export type BillingPlan = "creator" | "agency";
+export type BillingPlan = "free" | "growth" | "pro" | "agency" | "founding_beta";

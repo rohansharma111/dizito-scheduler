@@ -35,6 +35,13 @@ export async function GET(
 
         m.id AS media_id,
 m.user_id AS media_user_id,
+m.media_type,
+m.duration_seconds,
+m.poster_url,
+m.processing_state,
+m.upload_protocol,
+m.processing_error,
+m.metadata,
 m.cloudinary_public_id,
 m.secure_url,
 m.file_name,
@@ -69,6 +76,8 @@ m.deleted_at AS media_deleted_at,
 
       LEFT JOIN media_library m
         ON p.media_id = m.id
+        AND m.user_id = p.user_id
+        AND m.deleted_at IS NULL
 
       LEFT JOIN post_targets pt
         ON pt.post_id = p.id
@@ -213,23 +222,49 @@ export async function PUT(
     }
 
     /*
-      Verify media ownership
+      VERIFY MEDIA SELECTION
+      - Omitted mediaId keeps the existing media.
+      - null/empty mediaId clears the media.
+      - A selected asset must belong to the tenant, be active, and be ready.
     */
 
-    if (body.mediaId) {
+    const hasMediaId = Object.prototype.hasOwnProperty.call(body, "mediaId");
+    const mediaId =
+      !hasMediaId || body.mediaId === null || body.mediaId === ""
+        ? hasMediaId
+          ? null
+          : post.media_id
+        : Number(body.mediaId);
+
+    if (
+      mediaId !== null &&
+      (!Number.isInteger(mediaId) || mediaId <= 0)
+    ) {
+      throw new Error("Invalid media selection");
+    }
+
+    if (mediaId !== null) {
       const media = await client.query(
         `
-        SELECT id
+        SELECT id, processing_state
         FROM media_library
         WHERE
           id = $1
           AND user_id = $2
+          AND deleted_at IS NULL
         `,
-        [body.mediaId, userId],
+        [mediaId, userId],
       );
 
       if (media.rows.length === 0) {
         throw new Error("Invalid media selection");
+      }
+
+      if (
+        media.rows[0].processing_state &&
+        media.rows[0].processing_state !== "ready"
+      ) {
+        throw new Error("Selected media is not ready for publishing");
       }
     }
 
@@ -260,7 +295,7 @@ export async function PUT(
       `,
       [
         body.post,
-        body.mediaId ?? post.media_id,
+        mediaId,
         body.scheduleTime ?? post.schedule_time,
         newStatus,
         id,

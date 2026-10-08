@@ -1,464 +1,110 @@
 import Link from "next/link";
-import { plans } from "@/lib/plans";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { BillingRepository } from "@/lib/billing/repository";
 import PricingButton from "@/components/billing/PricingButton";
+
+const fallbackPlans = [
+  { code: "free", name: "Free", price_minor: 0, trial_days: 0, description: "Start exploring Dizito.", social: 3, publishing: 50, ai: 25 },
+  { code: "growth", name: "Growth", price_minor: 79900, trial_days: 7, description: "For growing businesses.", social: 10, publishing: 500, ai: 250 },
+  { code: "pro", name: "Pro", price_minor: 199900, trial_days: 7, description: "For businesses running a serious growth engine.", social: 25, publishing: 2000, ai: 1000 },
+];
 
 export default async function PricingPage() {
   const session = await getServerSession(authOptions);
-  let userPlan: string | null = null;
+  const plans = await BillingRepository.listPublicPlans();
 
-  if (session?.user) {
-    const result = await pool.query(
-      `
-      SELECT plan
-      FROM users
-      WHERE id = $1
-      `,
-      [(session.user as any).id],
-    );
+  const planRows = plans.length
+    ? await Promise.all(
+        plans.map(async (plan) => {
+          const values = await pool.query(
+            `SELECT be.key, bpe.value
+             FROM billing_plan_entitlements bpe
+             JOIN billing_entitlements be ON be.id = bpe.entitlement_id
+             WHERE bpe.plan_id = $1`,
+            [plan.id],
+          );
+          const map = Object.fromEntries(values.rows.map((row) => [row.key, row.value]));
+          return {
+            ...plan,
+            social: Number(map["channels.social.max"] ?? 0),
+            publishing: Number(map["publishing.monthly.max"] ?? 0),
+            ai: Number(map["ai.actions.monthly.max"] ?? 0),
+          };
+        }),
+      )
+    : fallbackPlans;
 
-    userPlan = result.rows[0]?.plan || "free";
-  }
-  const pricingPlans = [
-    {
-      key: "free",
-      ...plans.free,
-      description: "Perfect for getting started",
-      button: !session
-        ? "Create Free Account"
-        : userPlan === "free"
-          ? "Current Plan"
-          : "Included",
-      href: session ? "/dashboard" : "/login",
-      popular: false,
-      disabled: userPlan === "free",
-    },
-
-    {
-      key: "creator",
-      ...plans.creator,
-      description: "Best for creators and small businesses",
-      button:
-        userPlan === "creator" ? "Current Plan" : "Request Creator Access",
-      href:
-        userPlan === "creator"
-          ? "/dashboard"
-          : "https://forms.gle/srHKFfxHertsQBH36",
-      popular: true,
-      disabled: userPlan === "creator",
-    },
-
-    {
-      key: "agency",
-      ...plans.agency,
-      description: "Built for agencies and teams",
-      button: userPlan === "agency" ? "Current Plan" : "Contact Sales",
-      href:
-        userPlan === "agency"
-          ? "/dashboard"
-          : "mailto:contact@dizito.in?subject=Agency%20Plan&body=Hello%2C%0A%0AI%20am%20interested%20in%20your%20Agency%20Plan.%20Could%20you%20please%20share%20more%20details%20about%20the%20features%2C%20pricing%2C%20and%20how%20to%20get%20started%3F%0A%0AThank%20you.",
-      popular: false,
-      disabled: userPlan === "agency",
-    },
-  ];
+  const currentPlan = session?.user
+    ? (await pool.query("SELECT plan FROM users WHERE id = $1", [(session.user as any).id])).rows[0]?.plan ?? "free"
+    : null;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Early Access Banner */}
-      <div className="bg-blue-600 text-white text-center py-3 font-medium">
-        🚀 Launch Offer • Founding users get lifetime discounted pricing
-      </div>
-
-      {/* Hero */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl font-bold mb-6">
-            Schedule Instagram, Facebook, LinkedIn, Pinterest & Google Business
-            posts from one dashboard.
-          </h1>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Create once. Publish everywhere. Built for creators, businesses and
-            agencies.
-          </p>
-
-          <div className="mt-8 flex justify-center gap-6 text-sm font-medium">
-            <span>✓ Instagram</span>
-            <span>✓ Facebook</span>
-            <span>✓ LinkedIn</span>
-            <span>✓ Pinterest</span>
-            <span>✓ Google Business</span>
-          </div>
+    <main className="min-h-screen bg-gray-50 px-6 py-16">
+      <section className="mx-auto max-w-6xl text-center">
+        <div className="inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
+          V1 pricing hypothesis — subject to beta validation
         </div>
+        <h1 className="mt-6 text-5xl font-bold tracking-tight">Plans built around the Dizito operating loop.</h1>
+        <p className="mx-auto mt-5 max-w-3xl text-lg text-gray-600">
+          Business Brain, strategy, creation, weekly planning, optimization and commerce capabilities scale with your plan.
+        </p>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="pb-20 px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-8">
-          {pricingPlans.map((plan) => (
-            <div
-              key={plan.key}
-              className={`relative rounded-2xl border bg-white p-8 shadow-sm transition ${
-                plan.popular
-                  ? "border-blue-600 shadow-xl scale-105"
-                  : "border-gray-200"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                    Most Popular
-                  </div>
-                </div>
+      <section className="mx-auto mt-14 grid max-w-6xl gap-6 lg:grid-cols-3">
+        {planRows.map((plan: any) => {
+          const isCurrent = currentPlan === plan.code || (currentPlan === "creator" && ["growth", "pro"].includes(plan.code));
+          const paid = plan.code !== "free";
+          const price = Math.round(Number(plan.price_minor) / 100);
+
+          return (
+            <article key={plan.code} className={`rounded-2xl border bg-white p-7 shadow-sm ${plan.code === "growth" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}>
+              {plan.code === "growth" && (
+                <div className="mb-5 inline-flex rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">Recommended</div>
               )}
-
               <h2 className="text-2xl font-bold">{plan.name}</h2>
+              <p className="mt-2 min-h-12 text-gray-500">{plan.description}</p>
+              <div className="mt-7 flex items-end gap-2">
+                <span className="text-5xl font-bold">₹{price}</span>
+                <span className="pb-2 text-gray-500">{price === 0 ? "forever" : "/month"}</span>
+              </div>
+              {plan.trial_days > 0 && <p className="mt-2 text-sm font-medium text-green-700">{plan.trial_days}-day trial hypothesis</p>}
 
-              <p className="mt-2 text-gray-500">{plan.description}</p>
-
-              <div className="mt-8">
-                <div className="flex items-end">
-                  <span className="text-5xl font-bold">₹{plan.price}</span>
-
-                  <span className="ml-2 text-gray-500">
-                    {plan.price === 0 ? "Forever" : "/month"}
-                  </span>
-                </div>
-
-                {plan.price !== 0 && (
-                  <div className="mt-2 text-sm text-green-600 font-medium">
-                    Limited-time launch pricing
-                  </div>
-                )}
+              <div className="mt-8 space-y-3 text-sm">
+                <div>✓ {plan.social} social channels</div>
+                <div>✓ {plan.publishing} publishing actions / month</div>
+                <div>✓ {plan.ai} AI actions / month</div>
+                <div>✓ Business Brain</div>
+                <div>{plan.code === "free" ? "—" : "✓"} Strategy + Generate My Week</div>
+                <div>{plan.code === "pro" ? "✓" : "—"} Optimizer</div>
+                <div>{plan.code === "free" ? "—" : "✓"} Commerce</div>
               </div>
 
-              <ul className="mt-8 space-y-4">
-                <li>✓ {plan.accounts} social accounts</li>
-
-                <li>
-                  ✓{" "}
-                  {plan.monthlyPosts === Number.MAX_SAFE_INTEGER
-                    ? "Unlimited"
-                    : plan.monthlyPosts}{" "}
-                  scheduled posts
-                </li>
-
-                <li>{plan.bulkUpload ? "✓" : "❌"} Bulk CSV upload</li>
-
-                <li>{plan.retrySystem ? "✓" : "❌"} Smart retry system</li>
-
-                <li>{plan.calendar ? "✓" : "❌"} Calendar view</li>
-
-                <li>{plan.drafts ? "✓" : "❌"} Draft posts</li>
-
-                <li>{plan.analytics ? "✓" : "❌"} Analytics</li>
-
-                <li>{plan.prioritySupport ? "✓" : "❌"} Priority support</li>
-              </ul>
-
-              {plan.disabled ? (
-                <div
-                  className="
-                    mt-10
-                    block
-                    w-full
-                    rounded-lg
-                    px-6
-                    py-3
-                    text-center
-                    font-medium
-                    bg-gray-300
-                    text-gray-700
-                    cursor-default
-    "
-                >
-                  {plan.button}
-                </div>
+              {isCurrent ? (
+                <div className="mt-9 rounded-lg bg-gray-100 px-6 py-3 text-center font-medium">Current plan</div>
               ) : (
                 <PricingButton
-                  plan={plan.key as "free" | "creator" | "agency"}
-                  href={plan.href}
-                  label={plan.button}
-                  popular={plan.popular}
+                  plan={plan.code as "free" | "growth" | "pro"}
+                  href={session ? "/dashboard" : "/login"}
+                  label={!session ? "Start Free" : paid ? `Choose ${plan.name}` : "Start Free"}
+                  popular={plan.code === "growth"}
                 />
               )}
-            </div>
-          ))}
-        </div>
+            </article>
+          );
+        })}
       </section>
 
-      {/* Why Dizito */}
-      <section className="pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            Why Choose Dizito?
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-3">Multi Platform Publishing</h3>
-
-              <p className="text-gray-600">
-                Create once and publish to Instagram, Facebook, LinkedIn,
-                Pinterest and Google Business.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-3">Bulk CSV Upload</h3>
-
-              <p className="text-gray-600">
-                Schedule hundreds of posts in seconds.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-3">Reliable Publishing</h3>
-
-              <p className="text-gray-600">
-                Automatic retries ensure your posts get published.
-              </p>
-            </div>
-          </div>
-        </div>
+      <section className="mx-auto mt-10 max-w-6xl rounded-2xl border bg-white p-7 text-sm text-gray-600">
+        Agency (₹4,999+ hypothesis) and Founding Beta (₹499 hypothesis) remain controlled catalog entries rather than public checkout plans.
       </section>
 
-      {/* Comparison */}
-      <section className="pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            Compare Plans
-          </h2>
-
-          <div className="overflow-x-auto bg-white rounded-xl border">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-5 text-left">Feature</th>
-                  <th className="p-5">Free</th>
-                  <th className="p-5">Creator</th>
-                  <th className="p-5">Agency</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr className="border-b">
-                  <td className="p-5">Accounts</td>
-                  <td className="text-center">{plans.free.accounts}</td>
-                  <td className="text-center">{plans.creator.accounts}</td>
-                  <td className="text-center">{plans.agency.accounts}</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Monthly Posts</td>
-                  <td className="text-center">{plans.free.monthlyPosts}</td>
-                  <td className="text-center">{plans.creator.monthlyPosts}</td>
-                  <td className="text-center">Unlimited</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Instagram Publishing</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Facebook Publishing</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">LinkedIn Publishing</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Pinterest Publishing</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Google Business Publishing</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                  <td className="text-center">✅</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Calendar View</td>
-                  <td className="text-center">
-                    {plans.free.calendar ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.creator.calendar ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.agency.calendar ? "✅" : "❌"}
-                  </td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Draft Posts</td>
-                  <td className="text-center">
-                    {plans.free.drafts ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.creator.drafts ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.agency.drafts ? "✅" : "❌"}
-                  </td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Bulk CSV Upload</td>
-                  <td className="text-center">
-                    {plans.free.bulkUpload ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.creator.bulkUpload ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.agency.bulkUpload ? "✅" : "❌"}
-                  </td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Smart Retry System</td>
-                  <td className="text-center">
-                    {plans.free.retrySystem ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.creator.retrySystem ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.agency.retrySystem ? "✅" : "❌"}
-                  </td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="p-5">Analytics</td>
-                  <td className="text-center">
-                    {plans.free.analytics ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.creator.analytics ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.agency.analytics ? "✅" : "❌"}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="p-5">Priority Support</td>
-                  <td className="text-center">
-                    {plans.free.prioritySupport ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.creator.prioritySupport ? "✅" : "❌"}
-                  </td>
-                  <td className="text-center">
-                    {plans.agency.prioritySupport ? "✅" : "❌"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="pb-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            Frequently Asked Questions
-          </h2>
-
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-2">Do I need a credit card?</h3>
-
-              <p className="text-gray-600">
-                No. You can start using Dizito for free.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-2">Which platforms are supported?</h3>
-
-              <p className="text-gray-600">
-                Instagram, Facebook, LinkedIn, Pinterest and Google Business.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-2">
-                Does Dizito support bulk upload?
-              </h3>
-
-              <p className="text-gray-600">
-                Yes, Creator and Agency plans support CSV bulk uploads.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-2">Are my social accounts secure?</h3>
-
-              <p className="text-gray-600">
-                Yes. Dizito uses official OAuth authentication from Meta,
-                LinkedIn, Pinterest and Google Business. We never store your
-                passwords.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-2">Does Dizito use official APIs?</h3>
-
-              <p className="text-gray-600">
-                Yes. Dizito publishes through the official Meta, LinkedIn,
-                Pinterest and Google Business APIs.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-bold mb-2">Can I upgrade later?</h3>
-
-              <p className="text-gray-600">
-                Yes. You can start free and upgrade anytime.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="pb-24 px-6">
-        <div className="max-w-4xl mx-auto bg-blue-600 rounded-2xl p-12 text-center text-white">
-          <h2 className="text-4xl font-bold mb-4">
-            Ready to simplify social media scheduling?
-          </h2>
-
-          <p className="text-lg opacity-90 mb-8">
-            Create once. Publish everywhere.
-          </p>
-
-          <Link
-            href={session ? "/dashboard" : "/login"}
-            className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold"
-          >
-            {session ? "Go to Dashboard" : "Create Free Account"}
-          </Link>
-        </div>
-      </section>
+      <div className="mx-auto mt-8 max-w-6xl text-center">
+        <Link href={session ? "/settings/billing" : "/login"} className="text-sm font-medium text-blue-700">
+          {session ? "Manage your subscription →" : "Sign in to manage billing →"}
+        </Link>
+      </div>
     </main>
   );
 }

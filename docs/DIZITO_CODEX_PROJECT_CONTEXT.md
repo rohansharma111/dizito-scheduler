@@ -591,3 +591,44 @@ No “fully secure” claim is allowed yet. Verify actual credential encryption,
 
 ### Parallel development
 Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats. Every workstream owns specific files/systems, uses its own branch, avoids shared-file conflicts, runs focused verification, and must provide a continuation checkpoint before chat limits are reached.
+
+## 2026-10-07 — Workstream A UI checkpoint
+
+- Branch: `v1/marketing-ui-design`.
+- Marketing V1 UI is being consolidated around a reusable Dizito design system in `components/dizito/DizitoUI.tsx` and `app/globals.css`.
+- The protected shell now treats Business Brain → Strategist → Generate My Week → Content Review → Business Impact → Optimizer as the primary merchant operating loop, with Media and Channels & Accounts as supporting surfaces.
+- Business Brain now has a dedicated read surface using the existing tenant-scoped API; this is presentation-only and does not alter persistence.
+- UI changes are intentionally isolated from billing business logic, provider adapters, commerce architecture, media-provider implementation and database migrations.
+- Current verification boundary: source/diff inspection only. No fresh GitHub Actions run is exposed for the branch; do not claim repository-wide test/lint/build green. Browser/provider runtime verification remains pending.
+
+
+### Workstream A UI continuation — 2026-10-08
+- Merchant-context audit confirmed the current marketing API surface: Goals and Offers are creation/listing endpoints, while a dedicated Services API is not present.
+- UI scope therefore remains presentation/action work against existing contracts; no unsupported CRUD or schema was introduced.
+- Generate My Week now uses shared Dizito visual primitives without changing the weekly-plan generation or approval contracts. Approval remains separate from scheduling/publishing.
+- Product Edit state markup was corrected after source inspection.
+- Runtime verification remains pending; source sanity checks are the current verification boundary.
+
+
+### Workstream A distribution UI continuation — 2026-10-08
+- Marketing Content, Posts, Drafts and Calendar now use shared Dizito shell/state primitives for consistent loading, empty and error/recovery presentation.
+- Existing scheduling, publishing, account-selection and child component behavior is preserved.
+- No backend, schema, provider or commerce changes were introduced; runtime verification remains pending.
+
+
+### 2026-10-08 — Workstream A UI consistency continuation
+- Shared Dizito visual primitives are now used on the Channels & Accounts and Activity surfaces.
+- UI-only scope remains enforced: no new persistence model, API contract, provider adapter, billing logic, commerce architecture, or media provider implementation was introduced.
+- Source-level verification was performed after the Activity JSX correction; runtime build/browser verification remains unavailable in this session.
+
+
+### 2026-10-08 — Workstream A merchant-surface consistency continuation
+- Polished `app/(protected)/analytics/page.tsx` with Dizito page, metric, card, badge, and state primitives while preserving `/api/analytics`, premium gating, platform breakdown, insights, and recent-activity semantics.
+- Polished `app/(protected)/campaigns/page.tsx` with Dizito cards, badges, buttons, responsive form controls, and state presentation while preserving campaign CRUD/status transitions, Business Brain relationships, Content Item creation/review flow, experiment links, and observed-impact reporting.
+- No backend/API/provider/database/billing/media architecture changes were introduced.
+
+### 2026-10-08 — Workstream A final merchant-surface consistency pass
+- Completed the planned V1 merchant UI consistency sweep across remaining legacy high-traffic surfaces: Experiments, Attribution, Settings, and Bulk Upload with shared Dizito UI primitives and responsive states.
+- Corrected a navigation formatting defect in SidebarClient.tsx during source audit; no product behavior was changed.
+- Workstream remains UI-only: no provider adapters, backend contracts, billing logic, commerce architecture, media implementation, or database schema changes were introduced.
+- Runtime verification remains pending outside this environment.

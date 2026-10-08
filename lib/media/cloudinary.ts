@@ -45,6 +45,15 @@ export class MediaCloudinary {
     });
   }
 
+  videoPosterUrl(publicId: string) {
+    return cloudinary.url(publicId, {
+      resource_type: "video",
+      secure: true,
+      format: "jpg",
+      transformation: [{ width: 1080, crop: "limit" }],
+    });
+  }
+
   async delete(
     publicId: string,
     resourceType: "image" | "video" | "raw" = "image",
