@@ -88,6 +88,7 @@ describe("publishWooCommerceProduct", () => {
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [{ id: "listing-1", external_id: null, publish_idempotency_key: "request-1" }] })
       .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "succeeded", external_id: "wc-101", response_payload: { id: 101 } }] })
+      .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({});
