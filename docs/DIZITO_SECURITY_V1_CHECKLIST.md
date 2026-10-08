@@ -196,3 +196,14 @@ Open before launch:
 ### 2026-10-08 continuation
 - [x] Pinterest and Google Business OAuth callbacks use shared constant-time state verification.
 - [ ] Legacy social OAuth token migration remains pending; no schema-only encryption migration was introduced.
+
+
+### 2026-10-08 continuation — credential migration inventory
+
+- [x] Source-level inventory of legacy social OAuth token consumers completed.
+- [x] Confirmed scheduler and account-health credential consumption paths.
+- [x] Confirmed temporary OAuth-selection credential paths and Meta Page-token material inside selection JSON.
+- [ ] Introduce server-only encrypted social credential repository/service.
+- [ ] Additive encrypted columns and dual-write migration.
+- [ ] Encrypted-first dual-read and migration-on-read.
+- [ ] Verify migration coverage and remove legacy plaintext columns only after rollback/readiness checks.
