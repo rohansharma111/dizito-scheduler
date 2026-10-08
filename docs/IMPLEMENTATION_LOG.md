@@ -621,3 +621,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Scheduler media projection now carries filename and video lifecycle metadata required by the publisher.
 - Created draft PR #50 for CI/review; no merge performed.
 - GitHub currently reports no workflow run/status for the latest head commit, so tests/lint/build remain unclaimed.
+
+
+## 2026-10-08 — Media publish metadata fail-closed hardening
+
+- **Status:** Implemented; runtime validation still incomplete.
+- Verified video publishing now fails closed when a capability-required MIME type, byte size, duration, or configured dimension is missing instead of silently skipping that constraint.
+- Added regression coverage for missing video metadata, LinkedIn size/duration bounds, and configured dimension bounds.
+- GitHub Actions ran for the current head: the media capability tests were included in the passing test set, but the repository-wide test workflow still failed on 7 unrelated Commerce tests; the validation workflow also failed on pre-existing repository-wide ESLint debt (241 errors).
+- No production migration or live provider verification was performed.
