@@ -328,8 +328,8 @@ export async function GET(request: Request) {
               },
 
               body: JSON.stringify({
-                socialAccountId: accountId,,
-                userId: userId
+                socialAccountId: accountId,
+                userId,
               }),
             },
           );
