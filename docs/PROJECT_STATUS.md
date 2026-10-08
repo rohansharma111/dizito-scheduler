@@ -885,3 +885,11 @@ Important rollout boundary:
 - This closes the metadata consistency gap found during the first successful encrypted Pinterest connection.
 - Commit: `7da79919c4b5518e9170f8afd6f1e174ae57e15c`.
 - Existing production Pinterest account was already normalized to `v1`; no credential values were read.
+
+## 2026-10-08 — Workstream D cross-provider encrypted-credential audit checkpoint
+
+- Production Pinterest runtime verification is now confirmed at metadata level: the connected account is `pinterest`, `connected`, has encrypted access/refresh credentials, has `credential_encryption_version = 'v1'`, and has no plaintext access/refresh/page credential fields.
+- Audited Meta/Facebook/Instagram, LinkedIn, Google Business, and Pinterest OAuth paths on current `main`: credential writes are encrypted-only, while encrypted-first/legacy-fallback reads remain in migration compatibility mode.
+- Meta OAuth temporary-selection creation now also records `credential_encryption_version = 'v1'`.
+- Remaining source hardening: explicitly set the encryption-version metadata on every future Meta connect-pages, LinkedIn, and Google Business social-account write/reconnect path; runtime provider verification for those providers remains pending.
+- Workstream D is not yet a production security certification.
