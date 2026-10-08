@@ -6,13 +6,19 @@ function normalizeSubscription(
   subscription: Awaited<ReturnType<typeof razorpay.subscriptions.create>>,
 ): RazorpaySubscriptionEntity {
   return {
-    ...subscription,
+    id: subscription.id,
+    customer_id: subscription.customer_id ?? null,
+    plan_id: subscription.plan_id,
+    status: subscription.status,
     current_start: subscription.current_start ?? null,
     current_end: subscription.current_end ?? null,
     charge_at: subscription.charge_at ?? null,
     start_at: subscription.start_at ?? null,
     end_at: subscription.end_at ?? null,
-    customer_id: subscription.customer_id ?? null,
+    total_count: subscription.total_count,
+    paid_count: subscription.paid_count,
+    remaining_count: subscription.remaining_count,
+    notes: subscription.notes,
   };
 }
 
