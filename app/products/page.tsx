@@ -104,7 +104,7 @@ export default async function ProductsPage() {
             Draft
           </button>
         </div>
-      </div>
+      </DizitoCard>
 
       {/* PRODUCTS */}
       <DizitoCard className="overflow-hidden !p-0">
