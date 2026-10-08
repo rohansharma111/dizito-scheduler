@@ -1,3 +1,12 @@
+## 2026-10-09 — Workstream D encrypted-credential regression fix
+
+- PR #55 CI for head `649e7ac17950d2ccf2efbd679bf70efe52462079` completed with both Quality Checks and Validate red.
+- Quality Checks now reaches the repository test suite; the remaining failures are existing Commerce/Flipkart/WooCommerce lifecycle drift, including WooCommerce reconciliation/publish test expectations. The earlier Workstream D rate-limit/media mock-hoisting collection failures are no longer present.
+- Validate remains blocked by repository-wide lint debt: 315 problems (237 errors, 78 warnings), preventing TypeScript validation and production build from running.
+- One scheduler test was still using a legacy plaintext social credential fixture. Updated `lib/scheduler/processTarget.test.ts` to use an encrypted credential fixture and explicitly verify decrypted credential resolution; production fail-closed behavior remains unchanged.
+- New commit: `0d2e01c79c7fcbe6addc6139a3360b6abeef3a18`.
+- Fresh CI is required after this test-only regression fix. PR #55 remains open/unmerged; no CI-green or production-ready claim is made. No production migration, destructive operation, or provider mutation was performed.
+
 ## 2026-10-08 — Workstream D security regression continuation
 
 - Current main HEAD reconciled to `fd57fb359a0d54d94a4dfb9b2ae5dc010ebadd5e`; the historical security branch was stale and was not reused for implementation.
