@@ -148,7 +148,7 @@ export async function GET(request: Request) {
           health_status = 'healthy',
           last_checked_at = NOW(),
           updated_at = NOW()
-        WHERE id = $6 AND user_id = $7
+        WHERE id = $4 AND user_id = $5
         `,
         [
           encryptSocialCredential(token.accessToken),
@@ -240,8 +240,8 @@ export async function GET(request: Request) {
         NULL,
         $3,
         $4,
-        $7,
-        $8,
+        NULL,
+        $5,
         NULL,
         NULL,
         NOW()
@@ -254,7 +254,6 @@ export async function GET(request: Request) {
         token.expiresIn
           ? new Date(Date.now() + Number(token.expiresIn) * 1000)
           : null,
-        NULL,
         encryptSocialCredential(JSON.stringify({
           profile,
           boards,
