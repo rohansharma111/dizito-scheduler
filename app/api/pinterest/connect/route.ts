@@ -193,15 +193,15 @@ export async function POST(request: Request) {
             refresh_token = COALESCE($4, refresh_token),
             refresh_token_encrypted = COALESCE($5, refresh_token_encrypted),
             token_expires_at = CASE
-              WHEN $4 IS NULL THEN token_expires_at
-              ELSE $4
+              WHEN $5 IS NULL THEN token_expires_at
+              ELSE $5
             END,
             status = 'connected',
             last_checked_at = NOW(),
             updated_at = NOW()
           WHERE
-            id = $5
-            AND user_id = $6
+            id = $6
+            AND user_id = $7
           `,
           [
             reconnectAccount.account_name,
