@@ -105,7 +105,7 @@ Custom OAuth cookies are HttpOnly, SameSite=Lax, short-lived, and Secure in prod
 ### Additional audit status
 
 - CI workflow runtime was moved to Node 22 because the current OpenAI dependency requires Node >=22; this is a compatibility correction, not a security certification.
-- Latest observed PR head is 738dad1928ed8f4f3787c3bb5da4503c5c31d834. The PR remains open and unmerged.
+- Latest observed PR head is 701f97339b20080666be5066d8adca6dbd11d201. The PR remains open and unmerged.
 
 ### Remaining risks
 - CI remains non-green due to pre-existing repository-wide lint/test debt; security-specific runtime behavior still needs targeted execution.
