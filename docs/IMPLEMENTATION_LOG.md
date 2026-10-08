@@ -597,3 +597,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - `types/media.ts` now exposes the new media-library video lifecycle metadata used by the UI/publisher boundary.
 - No fresh GitHub Actions run is available for the workstream commit; tests/lint/type-check/build remain pending.
 - The additive media migration is still not applied to the default Neon branch.
+
+
+## 2026-10-08 — Direct-upload verification hardening
+
+- **Status:** Implemented; not runtime-verified.
+- Direct Cloudinary upload completion now re-reads the uploaded resource server-side and validates resource type, supported Cloudinary format, MIME policy and actual byte size before creating the media-library record.
+- This closes the gap where a client could obtain a valid signed folder upload but bypass the application-reported size/type policy during completion.
