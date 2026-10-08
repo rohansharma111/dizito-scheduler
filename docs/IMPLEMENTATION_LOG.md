@@ -693,3 +693,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Social OAuth writes for Meta/Facebook, Instagram, LinkedIn, Google Business, and Pinterest now persist credentials through encrypted columns and clear legacy plaintext token columns; encrypted-first/legacy-fallback reads remain temporarily.
 - Production account 62 remains unchanged pending deployment/runtime verification; no new destructive database operation was performed during reconciliation.
 - Runtime deployment/provider verification remains required before retiring legacy plaintext credential columns. Workstream D is not a production security certification.
+
+## 2026-10-08 — Workstream D OAuth selection legacy-column compatibility fix
+
+- Production OAuth reconnect exposed a schema mismatch: `oauth_page_selections.access_token` and `pages` were still `NOT NULL` while the encrypted-only write path intentionally sets those legacy plaintext fields to `NULL`.
+- Applied the live Neon compatibility fix on `br-empty-rice-ayeuugek` by dropping `NOT NULL` from both legacy columns; verified both legacy and encrypted credential columns are nullable.
+- Added `db/migrations/020_oauth_page_selection_legacy_credentials_nullable.sql` so fresh environments receive the same schema contract.
+- No credential values were read or logged. The Pinterest account 62 remains subject to the separate runtime encryption-key/deployment gate.
