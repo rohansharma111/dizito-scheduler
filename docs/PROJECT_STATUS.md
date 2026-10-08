@@ -870,3 +870,11 @@ Important rollout boundary:
 - Live Neon default branch now allows those legacy fields to be NULL, matching the encrypted-column migration contract.
 - Migration `020_oauth_page_selection_legacy_credentials_nullable.sql` is committed to keep fresh environments aligned.
 - The separate `SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY` deployment configuration remains required before controlled reconnect/runtime verification can be completed.
+
+## 2026-10-08 — Workstream D Pinterest board-selection runtime fix
+
+- **Status:** Source fix committed; deployment/runtime verification pending.
+- Pinterest board selection failed because the Pinterest boards endpoint read legacy oauth_page_selections.pages directly while encrypted OAuth writes populate pages_encrypted and leave pages NULL.
+- The endpoint now resolves encrypted OAuth selection credentials through the shared resolver, safely handles absent/malformed board payloads, and no longer exposes raw internal error text.
+- Commit: 97b15eec8630b2685d9286d0954d50a40004c3b3.
+- Required next gate: deploy current main, ensure SOCIAL_ACCOUNT_TOKEN_ENCRYPTION_KEY is present, then retry Pinterest OAuth → board selection and verify encrypted credential metadata only.
