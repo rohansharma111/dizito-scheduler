@@ -237,3 +237,7 @@ Open before launch:
 - [x] Added a dual-write encryption helper and unit coverage; OAuth callback wiring remains intentionally gated on migration deployment ordering.
 - [ ] Wire Meta/LinkedIn/Pinterest/Google Business OAuth writes to encrypted columns after migration 019 is applied to the target database.
 - [ ] Migrate temporary OAuth Page-selection credential material to encrypted storage and update all consumers.
+
+## 2026-10-08 — Workstream D migration 019 / encrypted credential rollout
+
+- Migration 019 has been applied to Neon after temporary-branch validation. Dual-write coverage is now implemented for Meta, LinkedIn, Pinterest, Google Business OAuth/account-selection paths and Pinterest token refresh; encrypted-first reads are implemented for scheduler, account-health, and temporary OAuth selections. Legacy plaintext fields remain intentionally present for rollback/migration compatibility.
