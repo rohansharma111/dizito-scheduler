@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Loader2, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, ChevronUp, Loader2, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 
 type ContentItem = {
   contentType: string;
