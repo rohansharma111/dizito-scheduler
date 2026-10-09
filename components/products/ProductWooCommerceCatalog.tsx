@@ -23,6 +23,7 @@ interface WooProduct {
   image: string;
 }
 interface Props { productId: string; }
+interface Listing { channel_id: string; product_id: string; external_id: string | null; provider_metadata?: Record<string, unknown>; }
 
 export default function ProductWooCommerceCatalog({ productId }: Props) {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -34,15 +35,21 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [linkingId, setLinkingId] = useState<number | null>(null);
+  const [linkMessage, setLinkMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        const response = await fetch("/api/commerce/channels");
+        const [response, listingsResponse] = await Promise.all([fetch("/api/commerce/channels"), fetch("/api/commerce/listings")]);
         const data = await response.json();
+        const listingsData = await listingsResponse.json();
         if (!response.ok || data.success === false) throw new Error(data.error || "Unable to load commerce channels");
+        if (!listingsResponse.ok || !listingsData.success) throw new Error(listingsData.error || "Unable to load existing product links");
         const connected = (data.channels ?? []).filter((item: Channel) => item.provider === "woocommerce");
+        if (!cancelled) setListings((listingsData.listings ?? []).filter((item: Listing) => item.provider === "woocommerce"));
         if (cancelled) return;
         setChannels(connected);
         const active = connected.find((item: Channel) => item.status === "active") ?? connected[0];
@@ -83,6 +90,34 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId]);
 
+  const selectedListing = listings.find((item) => String(item.channel_id) === channelId && String(item.product_id) === productId);
+  const linkedExternalId = selectedListing?.external_id ?? null;
+
+  async function linkProduct(item: WooProduct) {
+    if (!channelId || linkingId !== null) return;
+    setLinkingId(item.id);
+    setError(null);
+    setLinkMessage(null);
+    try {
+      const response = await fetch("/api/commerce/woocommerce/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId, productId, externalProductId: String(item.id) }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "Unable to link WooCommerce product");
+      setListings((current) => {
+        const filtered = current.filter((listing) => !(String(listing.channel_id) === channelId && String(listing.product_id) === productId));
+        return [...filtered, { channel_id: channelId, product_id: productId, external_id: String(item.id), provider_metadata: data.listing?.provider_metadata }];
+      });
+      setLinkMessage(`Linked “${item.name}” (WooCommerce ID ${item.id}) to this Dizito product. No store changes were made.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to link WooCommerce product");
+    } finally {
+      setLinkingId(null);
+    }
+  }
+
   const visibleProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return products;
@@ -119,6 +154,8 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
               <RefreshCw size={15} className={loadingProducts ? "animate-spin" : ""} /> Refresh
             </button>
           </div>
+          {linkedExternalId && <p className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-800">Linked to WooCommerce product ID <strong>{linkedExternalId}</strong> for this store.</p>}
+          {linkMessage && <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{linkMessage}</p>}
           {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           {loadingProducts ? <p className="py-5 text-center text-sm text-slate-500">Reading store catalog…</p> : products.length === 0 ? (
             <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No products returned. Check the connection or refresh to try again.</p>
