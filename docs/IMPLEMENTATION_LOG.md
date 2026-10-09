@@ -1,3 +1,10 @@
+## 2026-10-09 — Apply missing marketing content and attribution schema
+
+- Production lacked migrations 006–016 marketing features and 020 marketing variant/post provenance despite `005_marketing_foundation_v1.sql` being present. This caused missing-relation errors in Strategist, Optimizer, Generate Week, and Content Items.
+- Applied `006_marketing_campaigns_v1.sql` through `016_marketing_content_item_planning_metadata_v1.sql` (only the marketing migration sharing version prefix 016) and `020_marketing_content_item_variant_posts_v1.sql` to production after validating on a temporary Neon branch.
+- Verified production tables including `marketing_customer_actions`, `marketing_asset_metadata`, `marketing_content_items`, `marketing_campaigns`, `marketing_content_item_variants`, `marketing_attributions`, and `marketing_experiments`; confirmed all 12 versions recorded in `schema_migrations`.
+- No application rows created/modified. Runtime/browser verification remains pending.
+
 ## 2026-10-09 — Apply Marketing Foundation v1 to production Neon
 
 - Target verified: project `purple-wildflower-87394884`, production/default branch `br-empty-rice-ayeuugek`, database `neondb`.
