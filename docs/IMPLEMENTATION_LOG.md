@@ -1,3 +1,10 @@
+## 2026-10-09 — Keep AI features visible but off until funded; add no-AI workflows
+
+- Added opt-in `DIZITO_AI_ENABLED === "true"` gate and `/api/marketing/ai-status`. Guarded paid OpenAI-backed routes (Strategist, Optimizer, legacy AI Generate Week, Creator) with explicit `503 AI_COMING_SOON` responses when disabled. This prevents unexpected provider calls and communicates a planned feature rather than returning opaque 500s.
+- AI controls now render Coming Soon and are disabled when the server switch is off. Added a deterministic five-post editable template-week path, a clear no-AI-cost notice in the current weekly planner, and manual content copy editing independent of AI. The deterministic weekly-plan generation endpoint remains enabled.
+- Future re-enable path: configure provider credentials and a spending cap, then set `DIZITO_AI_ENABLED=true`; do not remove the template/manual options.
+- No secrets or provider credentials were changed. CI/browser verification is pending.
+
 ## 2026-10-09 — Focus homepage on social media scheduling
 
 - Updated `app/(marketing)/page.tsx` directly on `main` so the public landing page leads with the concrete social media scheduler value proposition instead of broad operating-system positioning.
