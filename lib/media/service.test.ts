@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { create, upload, videoPosterUrl } = vi.hoisted(() => ({
+const { create, findByCloudinaryPublicId, upload, videoPosterUrl } = vi.hoisted(() => ({
   create: vi.fn(),
+  findByCloudinaryPublicId: vi.fn(),
   upload: vi.fn(),
   videoPosterUrl: vi.fn(() => "https://res.cloudinary.com/example/video/upload/poster.jpg"),
 }));
 
 vi.mock("./repository", () => ({
-  mediaRepository: { create },
+  mediaRepository: { create, findByCloudinaryPublicId },
 }));
 
 vi.mock("./cloudinary", () => ({
@@ -20,6 +21,7 @@ describe("MediaService.uploadMedia", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     create.mockResolvedValue({ id: 1 });
+    findByCloudinaryPublicId.mockResolvedValue(null);
     upload.mockResolvedValue({ publicId: "users/42/image-1", secureUrl: "https://res.cloudinary.com/example/image/upload/image-1.jpg", width: 10, height: 10, bytes: 3, format: "jpg", resourceType: "image", folder: "users/42" });
   });
 
@@ -68,6 +70,24 @@ describe("MediaService.completeDirectUpload", () => {
     mimeType: "video/mp4",
     uploadProtocol: "cloudinary_signed_direct" as const,
   };
+
+  it("returns the existing media record when completion is retried", async () => {
+    const existing = { id: 7, cloudinary_public_id: baseInput.publicId };
+    findByCloudinaryPublicId.mockResolvedValue(existing);
+    const service = new MediaService();
+
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
+        resource_type: "video",
+        format: "mp4",
+        bytes: 1024,
+      },
+    })).resolves.toEqual(existing);
+    expect(create).not.toHaveBeenCalled();
+  });
 
   it("persists a Cloudinary resource only when type, format, ownership and size match", async () => {
     const service = new MediaService();
