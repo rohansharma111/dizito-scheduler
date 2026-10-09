@@ -1,3 +1,10 @@
+## 2026-10-09 — Mobile commerce table readability (committed directly to main)
+
+- Root cause identified in `app/globals.css`: a global `body { overflow-wrap: anywhere; }` caused ordinary words, headings, and table cells to break at arbitrary character boundaries on narrow screens. Changed the global body rule to `overflow-wrap: normal`; the targeted `pre, code` rule still allows long code tokens to wrap.
+- Added deliberate horizontal scroll widths to the products list (640px), product variants (680px), and inventory table (900px) so columns remain readable rather than collapsing. Added responsive stacking for the Variants heading and a full-width mobile Add Variant action; existing event handlers remain unchanged.
+- Direct-main commits: `7666e3bc44e904324480020310bd4436d4b9f10a` (global wrapping), `1e6b318d9e36b83b04831c1775679a75fc54e556` (products table), `284a68f00b4203e0b0462f5731caf4956bf2f8ab` (variant table), `721f97d5d1d03e1b110927f9a60f630e1099ea20` (inventory table), `f6222b8802ebd668a9549b4e5ce3f5860f5aa717` (responsive variant header).
+- Scope is responsive presentation only. Product/variant/inventory persistence, values, filters, modal handlers, stock operations, and API calls are unchanged. No local lint/typecheck/test/build or real-device/browser checks have been run; verify horizontal scroll and labels at 320px, 360px, 390px, and tablet widths before declaring visual acceptance.
+
 ## 2026-10-09 — Narrow-screen Drafts actions (committed directly to main)
 
 - Updated the mobile draft-card action row in `components/DraftPosts.tsx`: reduced narrow-screen padding/gaps, prevented button labels from breaking into one letter per line, retained readable labels from 360px upward, and added explicit accessible action names and keyboard-focus styles.
