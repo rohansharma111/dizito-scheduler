@@ -7,6 +7,7 @@ import { consumeRateLimit } from "@/lib/security/rate-limit";
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (process.env.DIZITO_AI_ENABLED !== "true") return Response.json({ error: "AI copy generation is coming soon. You can write and edit post copy manually.", code: "AI_COMING_SOON" }, { status: 503 });
 
   try {
     const body = await request.json();
