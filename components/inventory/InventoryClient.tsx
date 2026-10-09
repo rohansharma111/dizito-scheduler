@@ -221,7 +221,7 @@ export default function InventoryClient({
       {/* TABLE */}
 
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="max-w-full overflow-x-auto overscroll-x-contain"><table className="w-full min-w-[680px]">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain"><table className="w-full min-w-[900px]">
             <thead>
               <tr className="bg-gray-50 border-b">
                 <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
