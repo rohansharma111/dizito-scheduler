@@ -1075,3 +1075,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added a direct post-approval action from Generate My Week to Marketing Content so merchants can continue reviewing newly created content items without hunting through navigation.
 - No data model, provider integration, publishing behavior, or WooCommerce store changes.
 - Previous product-context UI/doc changes passed both CI workflows. CI for this follow-up is pending; browser verification remains outstanding.
+
+
+## 2026-10-09 — Test WooCommerce product-reference validation
+
+- Extracted external product snapshot validation from the weekly-plan approval API into a pure helper so malformed provider IDs, oversized metadata, and unsafe links can be regression-tested without database/provider calls.
+- Added unit tests for accepted product snapshots and rejection boundaries; wired the approval route to the shared validator.
+- Commits: `b3b7015`, `91bc97d`, `483e9e5`. CI and browser flow verification pending.
