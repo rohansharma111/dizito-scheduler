@@ -1,5 +1,11 @@
 ## 2026-10-09 — Current media security continuation checkpoint
 
+- PR #58 is merged to `main` (squash merge `792f17b5769c1ca931308decca6290869164fd23`): signed direct video uploads use a server-generated user-scoped `public_id` and signed MIME-specific `allowed_formats`. CI passed on the pre-merge PR head; no post-merge workflow run was returned by the available PR-run lookup.
+- Follow-up branch `v1/media-completion-race-safety` adds a duplicate-guarded unique index migration for `(user_id, cloudinary_public_id)`, a conflict-safe repository insert path, and `lib/media/repository.test.ts`. Existing route and service regression tests remain intact. CI pending.
+- `docs/MEDIA_UPLOAD_VERIFICATION.md` describes the test-cloud verification procedure and the production migration gate. No production migration, deployment, or Cloudinary mutation has occurred. Cloudinary runtime verification needs a designated test cloud and credentials; provider-side pre-ingestion size enforcement remains unverified.
+
+## 2026-10-09 — Current media security continuation checkpoint
+
 - Latest media contract implementation is on `v1/media-signed-upload-contract`, branched from `main` at `d8abb386190926f16da9bf9ebc6ee0d94362b378`. The branch signs a server-generated user-scoped video public ID and MIME-specific `allowed_formats`; its client sends the exact signed parameters. Route regression tests cover those contract values. GitHub Actions Validate and Quality Checks passed on PR head `83d24d81203b0b948bc7f0158a12d1018f1b25c9`; real Cloudinary runtime verification remains pending.
 - Production Neon schema read-only check found no unique index for `(user_id, cloudinary_public_id)` in `media_library`; no duplicate pairs were observed. Concurrent completion remains a possible race and needs a separate migration review before adding uniqueness.
 - Byte-size admission remains enforced by Dizito before issuing signatures and against Cloudinary-reported bytes at completion, but no provider-side pre-ingestion size cap has been proven. Do not claim otherwise.
