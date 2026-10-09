@@ -90,6 +90,24 @@ describe("MediaService.completeDirectUpload", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it("validates provider metadata before returning an existing record on retry", async () => {
+    findByCloudinaryPublicId.mockResolvedValue({ id: 7, cloudinary_public_id: baseInput.publicId });
+    const service = new MediaService();
+
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.webm",
+        resource_type: "video",
+        format: "webm",
+        bytes: 1024,
+      },
+    })).rejects.toThrow("resource format does not match");
+    expect(findByCloudinaryPublicId).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it("persists a Cloudinary resource only when type, format, ownership and size match", async () => {
     const service = new MediaService();
     await expect(service.completeDirectUpload({
