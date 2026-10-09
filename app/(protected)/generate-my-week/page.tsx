@@ -143,7 +143,7 @@ export default function GenerateMyWeekPage() {
       <DizitoPageHeader
         eyebrow="AI marketing operator"
         title="Generate My Week"
-        description="Turn your Business Brain, strategy, products, offers, media and recent activity into a reviewable weekly plan."
+        description="Build a reviewable weekly plan from your saved goals, products, offers, connected channels and measured activity — no AI credits required."
         action={
           <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold shadow-sm">
             <CalendarDays size={16} className="text-violet-600" />
@@ -158,7 +158,7 @@ export default function GenerateMyWeekPage() {
         }
       />
 
-      {(strategyHandoff || optimizerHandoff) && (
+      <DizitoCard tone="soft" className="mb-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Template-assisted planning is available now</h2><p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Dizito can organize your existing business data into a weekly plan without calling a paid AI provider. Review every recommendation, edit the copy manually in Marketing Content, and approve only what fits your business. AI-assisted strategy and writing are coming soon.</p></div><DizitoBadge tone="neutral">AI · Coming soon</DizitoBadge></div></DizitoCard>\n\n      {(strategyHandoff || optimizerHandoff) && (
         <DizitoCard tone="ai" className="mb-5">
           <div className="flex flex-wrap items-center gap-2">
             <DizitoBadge tone="ai"><Sparkles size={13} /> AI handoff</DizitoBadge>
