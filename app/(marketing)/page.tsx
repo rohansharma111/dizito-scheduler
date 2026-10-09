@@ -17,26 +17,26 @@ import { authOptions } from "@/lib/auth";
 const features = [
   {
     icon: Layers3,
-    title: "One publishing workspace",
+    title: "Instagram Publishing",
     description: "Plan and publish content across Instagram, Facebook, LinkedIn, Pinterest and Google Business from one place.",
     tone: "violet",
   },
   {
     icon: CalendarClock,
-    title: "A calendar you can trust",
-    description: "See what is coming up, keep drafts organized and coordinate your publishing rhythm.",
+    title: "Calendar Scheduling",
+    description: "Visualize all scheduled posts in one place and keep your publishing rhythm organized.",
     tone: "lime",
   },
   {
     icon: Clapperboard,
-    title: "Bulk content workflows",
-    description: "Prepare batches of posts with CSV upload and review them before they enter your schedule.",
+    title: "Bulk CSV Upload",
+    description: "Schedule hundreds of posts in seconds with a workflow that keeps review in your hands.",
     tone: "cyan",
   },
   {
     icon: RefreshCw,
-    title: "Clear publishing status",
-    description: "Track post progress and understand when a connection or retry needs your attention.",
+    title: "Smart Retry System",
+    description: "Understand publishing status and recover from retryable failures without losing track.",
     tone: "violet",
   },
 ];
@@ -44,18 +44,18 @@ const features = [
 const steps = [
   {
     number: "01",
-    title: "Connect your channels",
-    description: "Bring your supported social accounts into one secure workspace.",
+    title: "Connect Accounts",
+    description: "Connect your Instagram, Facebook, LinkedIn, Pinterest and Google Business accounts securely.",
   },
   {
     number: "02",
-    title: "Create and review",
-    description: "Prepare content, tailor it for each channel and review it before publishing.",
+    title: "Create Content",
+    description: "Create one post and select multiple social accounts.",
   },
   {
     number: "03",
-    title: "Schedule and learn",
-    description: "Keep the calendar moving and use the results to make your next plan better.",
+    title: "Schedule & Publish",
+    description: "Schedule once and let Dizito publish automatically.",
   },
 ];
 
@@ -77,10 +77,10 @@ export default async function HomePage() {
             The operating system for your social presence
           </div>
           <h1 className="mx-auto mt-7 max-w-5xl text-4xl font-extrabold leading-[1.08] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
-            From scattered posts to a <span className="text-violet-700">clear publishing rhythm.</span>
+            Schedule Instagram, Facebook, LinkedIn, Pinterest &amp; Google Business from one dashboard.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-xl sm:leading-8">
-            Plan, create, review and publish across your channels from one calm, connected workspace. Spend less time coordinating content and more time growing your business.
+            Create once. Publish everywhere. Manage your social media accounts, schedule posts, bulk upload content and automate publishing from a single place.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href={ctaHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c7f36b] px-7 py-3 text-sm font-extrabold text-slate-950 shadow-[0_8px_24px_rgba(159,218,53,0.22)] transition hover:-translate-y-0.5 hover:bg-[#b8e95a]">
@@ -91,7 +91,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-medium text-slate-500">
-            {["Multi-channel publishing", "Review before publishing", "A clearer content calendar"].map((item) => (
+            {["No credit card required", "Multi-platform publishing", "Bulk scheduling"].map((item) => (
               <span key={item} className="inline-flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-600" />{item}</span>
             ))}
           </div>
