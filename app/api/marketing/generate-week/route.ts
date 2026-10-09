@@ -8,6 +8,7 @@ export async function POST() {
   if (!session?.user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (process.env.DIZITO_AI_ENABLED !== "true") return Response.json({ error: "AI weekly strategy is coming soon. Use the template-based weekly planner instead.", code: "AI_COMING_SOON" }, { status: 503 });
 
   const userId = Number((session.user as any).id);
   const rateLimit = await consumeRateLimit({ bucket: "ai:weekly-strategy", identifier: `user:${userId}`, limit: 5, windowSeconds: 300 });
