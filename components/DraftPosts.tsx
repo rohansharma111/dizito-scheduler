@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Post } from "../types";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 import { Eye, Pencil, Trash2, Copy, CalendarPlus } from "lucide-react";
 import styles from "./PostLists.module.css";
+import TablePagination from "@/components/dizito/TablePagination";
 
 export default function DraftPosts({
   posts,
@@ -13,6 +15,9 @@ export default function DraftPosts({
   posts: Post[];
   setPosts: (posts: Post[]) => void;
 }) {
+  const [draftsPage, setDraftsPage] = useState(1);
+  const [draftsPageSize, setDraftsPageSize] = useState(25);
+
   async function refreshPosts() {
     const response = await fetch("/api/posts");
 
@@ -49,6 +54,9 @@ export default function DraftPosts({
     (item) => item.status === "draft" && item.schedule_time == null,
   );
 
+  const currentDraftsPage = Math.min(draftsPage, Math.max(1, Math.ceil(drafts.length / draftsPageSize)));
+  const paginatedDrafts = drafts.slice((currentDraftsPage - 1) * draftsPageSize, currentDraftsPage * draftsPageSize);
+
   if (drafts.length === 0) {
     return (
       <div className={`mt-8 ${styles.root}`}>
@@ -82,7 +90,7 @@ export default function DraftPosts({
 
       {/* MOBILE */}
       <div className="md:hidden space-y-4">
-        {drafts.map((item) => (
+        {paginatedDrafts.map((item) => (
           <div
             key={item.id}
             className="
@@ -202,7 +210,7 @@ export default function DraftPosts({
           </thead>
 
           <tbody>
-            {drafts.map((item) => (
+            {paginatedDrafts.map((item) => (
               <tr key={item.id}>
                 <td className="border p-2">{item.post}</td>
 
@@ -318,6 +326,14 @@ export default function DraftPosts({
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={currentDraftsPage}
+        pageSize={draftsPageSize}
+        totalItems={drafts.length}
+        itemLabel="drafts"
+        onPageChange={setDraftsPage}
+        onPageSizeChange={(size) => { setDraftsPageSize(size); setDraftsPage(1); }}
+      />
     </div>
   );
 }
