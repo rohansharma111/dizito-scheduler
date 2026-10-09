@@ -1,3 +1,9 @@
+## 2026-10-09 — Multipart upload request preflight
+
+- Added an early `Content-Length` validation to `app/api/upload/route.ts` before multipart parsing. Invalid or unsafe declared lengths return 400; declared request bodies above `IMAGE_MAX_BYTES + 1 MiB` return 413 to reserve multipart framing overhead.
+- The route still applies actual file-level MIME/size policy after parsing. The header check is not a substitute for runtime/upstream body limits, since requests without a declared length can bypass it.
+- CI verification is pending on the implementation commit; no browser QA, deployment, production DB change, or provider mutation was performed.
+
 ## 2026-10-09 — Proxy upload service validation
 
 - Hardened `MediaService.uploadMedia` to apply the shared upload policy to actual buffer length, normalize the declared MIME type, verify the magic-byte signature, and reject video on the server-proxy path before Cloudinary is called.
