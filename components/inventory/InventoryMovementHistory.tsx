@@ -146,6 +146,7 @@ export default function InventoryMovementHistory({
           </div>
         </div>
       ) : (
+        <>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -257,6 +258,7 @@ export default function InventoryMovementHistory({
           onPageChange={setMovementPage}
           onPageSizeChange={(size) => { setMovementPageSize(size); setMovementPage(1); }}
         />
+        </>
       )}
     </div>
   );
