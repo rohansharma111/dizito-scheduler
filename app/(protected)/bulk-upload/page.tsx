@@ -728,6 +728,14 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
                 </tbody>
               </table>
             </div>
+            <TablePagination
+              page={previewPage}
+              pageSize={previewPageSize}
+              totalItems={filteredPreviewRows.length}
+              itemLabel="CSV rows"
+              onPageChange={setPreviewPage}
+              onPageSizeChange={(size) => { setPreviewPageSize(size); setPreviewPage(1); }}
+            />
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
