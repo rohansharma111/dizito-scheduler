@@ -1,3 +1,9 @@
+## 2026-10-09 — Draft and scheduled post list visual polish (committed directly to main)
+
+- Updated `components/DraftPosts.tsx` and `components/ScheduledPosts.tsx` with shared scoped presentation styles in `components/PostLists.module.css`: refined empty states, headings, table borders/spacing, table headers/rows, and action focus affordances. Empty-state CTAs now use Dizito's lime primary action styling.
+- Changes were committed directly to `main`: `ff9c0df30db95b57b63592698092c09c3bb9f0c0`, `94d047aca6815da6c121e20c4bf939dba1121b55`, and `5dbd380ae6538a5d2db36501ebe0b6f0308b5856`.
+- Scope is presentation-only; post filtering, API calls, delete/duplicate/retry/edit/view/details actions, target indicators, and status logic remain in place. Lint, typecheck, tests, build, and browser visual QA have not been run for this change; check current-main CI before treating it as verified.
+
 ## 2026-10-09 — Media completion concurrency hardening (merged; production migration applied)
 
 - PR #59 merged to `main` via squash commit `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`. The change adds a duplicate-preflight migration and unique index on `public.media_library(user_id, cloudinary_public_id)`, and makes repository insertion race-safe with `ON CONFLICT DO NOTHING` followed by loading the winner row. Repository regression tests cover insert, concurrent replay, and fail-closed conflict handling; prior signed-upload and service tests were retained.
