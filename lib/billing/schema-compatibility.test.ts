@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEGACY_PLAN_TO_V1 } from "./catalog";
+import { BILLING_PLAN_CODES } from "./catalog";
 import {
   BILLING_SCHEMA_FALLBACK_ENTITLEMENTS,
   BILLING_SCHEMA_FALLBACK_PLANS,
@@ -9,7 +9,7 @@ import {
 describe("billing schema compatibility fallback", () => {
   it("keeps the fallback plan catalog aligned with the V1 plan codes", () => {
     expect(Object.keys(BILLING_SCHEMA_FALLBACK_PLANS).sort()).toEqual(
-      Object.keys(LEGACY_PLAN_TO_V1).sort(),
+      [...BILLING_PLAN_CODES].sort(),
     );
     expect(BILLING_SCHEMA_FALLBACK_PLANS.growth.price_minor).toBe(79900);
     expect(BILLING_SCHEMA_FALLBACK_PLANS.growth.id).toBeNull();
