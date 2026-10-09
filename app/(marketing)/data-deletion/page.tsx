@@ -1,13 +1,15 @@
+import { DizitoPage, DizitoPageHeader, DizitoCard } from "@/components/dizito/DizitoUI";
+
 export default function DataDeletionPage() {
   return (
-    <main className="max-w-4xl mx-auto py-20 px-6">
-      <h1 className="text-4xl font-bold mb-8">Data Deletion Instructions</h1>
+    <DizitoPage className="max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+      <DizitoPageHeader eyebrow="Dizito policies" title="Data deletion instructions" description="Information about how Dizito operates and the terms that apply to using the service." />
 
-      <div className="space-y-8 text-gray-700 leading-7">
+      <DizitoCard className="space-y-8 text-sm leading-7 text-slate-600 sm:text-base">
         <p>Last Updated: July 2026</p>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-2">
+          <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
             Account and Data Deletion
           </h2>
 
@@ -105,7 +107,7 @@ export default function DataDeletionPage() {
 
           <p className="font-semibold">support@dizito.in</p>
         </section>
-      </div>
-    </main>
+      </DizitoCard>
+    </DizitoPage>
   );
 }
