@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { create, videoPosterUrl } = vi.hoisted(() => ({
+const { create, upload, videoPosterUrl } = vi.hoisted(() => ({
   create: vi.fn(),
+  upload: vi.fn(),
   videoPosterUrl: vi.fn(() => "https://res.cloudinary.com/example/video/upload/poster.jpg"),
 }));
 
@@ -10,15 +11,54 @@ vi.mock("./repository", () => ({
 }));
 
 vi.mock("./cloudinary", () => ({
-  mediaCloudinary: { videoPosterUrl },
+  mediaCloudinary: { upload, videoPosterUrl },
 }));
 
 import { MediaService } from "./service";
+
+describe("MediaService.uploadMedia", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    create.mockResolvedValue({ id: 1 });
+    upload.mockResolvedValue({ publicId: "users/42/image-1", secureUrl: "https://res.cloudinary.com/example/image/upload/image-1.jpg", width: 10, height: 10, bytes: 3, format: "jpg", resourceType: "image", folder: "users/42" });
+  });
+
+  it("rejects unsupported image sizes before calling Cloudinary", async () => {
+    const service = new MediaService();
+    await expect(service.uploadMedia({
+      userId: 42, fileName: "large.jpg", mimeType: "image/jpeg",
+      buffer: Buffer.alloc(25 * 1024 * 1024 + 1),
+    })).rejects.toThrow("25 MB upload limit");
+    expect(upload).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("rejects declared MIME types that do not match the file signature", async () => {
+    const service = new MediaService();
+    await expect(service.uploadMedia({
+      userId: 42, fileName: "fake.jpg", mimeType: "image/jpeg",
+      buffer: Buffer.from("not a jpeg"),
+    })).rejects.toThrow("File content does not match");
+    expect(upload).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("normalizes MIME before calling Cloudinary", async () => {
+    const service = new MediaService();
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
+    await expect(service.uploadMedia({
+      userId: 42, fileName: "image.jpg", mimeType: " IMAGE/JPEG ",
+      buffer: jpeg,
+    })).resolves.toEqual({ id: 1 });
+    expect(upload).toHaveBeenCalledWith(expect.objectContaining({ mimeType: "image/jpeg", buffer: jpeg }));
+  });
+});
 
 describe("MediaService.completeDirectUpload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     create.mockResolvedValue({ id: 1 });
+    upload.mockResolvedValue({ publicId: "users/42/image-1", secureUrl: "https://res.cloudinary.com/example/image/upload/image-1.jpg", width: 10, height: 10, bytes: 3, format: "jpg", resourceType: "image", folder: "users/42" });
   });
 
   const baseInput = {
