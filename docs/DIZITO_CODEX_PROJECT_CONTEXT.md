@@ -665,3 +665,10 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - Product-detail WooCommerce catalog now supports an explicit persistent link to a canonical Dizito product through existing `product_listings`, with tenant-scoped authorization, external-product read verification, transaction-level conflict serialization, and provider metadata snapshot. No schema migration was required.
 - User confirmed linking and persistence in the running application. Both CI workflows passed on commit `e040cb864030c28c1ff26b6389d1f5f8b1e9d506`: Validate run `37970471607`, Quality Checks run `37970471741`.
 - Linking does not write to WooCommerce; listing remains draft/pending. Next continuation is controlled verification of WooCommerce draft/publish/reconcile safeguards, idempotency and failure handling. Keep live writes disabled until an approved safe test case is explicitly authorized.
+
+
+### 2026-10-10 — WooCommerce publish reconciliation checkpoint
+- Reconciliation confirmed WooCommerce product ID `2800` with status `published`.
+- User verified that the Dizito listing maps to external product `2800` and the local listing/publish-attempt records show the reconciled success state.
+- Do not retry publishing this product. Reuse its external ID; verify idempotent replay behavior separately before declaring duplicate-prevention fully tested.
+- Production Neon schema was updated and inspected: `publish_idempotency_key`, `unique_channel_publish_idempotency`, and `commerce_publish_attempts` plus required indexes/constraints are present.
