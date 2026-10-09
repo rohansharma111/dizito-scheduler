@@ -367,7 +367,7 @@ ${result.failed}
     <DizitoPage className="space-y-6">
       <DizitoPageHeader eyebrow="Assets & Distribution" title="Bulk Upload" description="Upload scheduled posts from CSV, validate them before import, and choose connected accounts for distribution." />
 
-      <div className="bg-white border rounded-lg p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="font-semibold mb-4">CSV Format</h2>
 
         <pre
@@ -440,17 +440,17 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
 
       {rows.length > 0 && (
         <>
-          <div className="flex gap-6">
-            <div className="bg-green-50 border border-green-200 rounded p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
               Valid: {validCount}
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded p-4">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800">
               Invalid: {rows.length - validCount}
             </div>
           </div>
 
-          <div className="bg-white border rounded-lg p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="font-semibold mb-4">Publish To Accounts</h2>
 
             {accounts.length === 0 ? (
@@ -475,7 +475,7 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
               </div>
             ) : (
               <>
-                <div className="flex gap-4 mb-4">
+                <div className="mb-4 flex flex-wrap gap-3">
                   <button
                     disabled={importing}
                     type="button"
@@ -567,7 +567,7 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
             )}
           </div>
 
-          <div className="bg-white border rounded-lg overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="p-4 border-b">
               <h2 className="font-semibold">
                 Preview
@@ -578,8 +578,8 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
               </h2>
             </div>
 
-            <div className="overflow-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="p-4">
@@ -691,7 +691,7 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <button
               disabled={importDisabled}
               onClick={importPosts}
