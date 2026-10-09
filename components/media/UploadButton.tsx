@@ -35,7 +35,8 @@ async function uploadVideoDirect(file: File) {
   if (!isRecord(initData)
     || typeof initData.apiKey !== "string"
     || typeof initData.timestamp !== "number"
-    || typeof initData.folder !== "string"
+    || typeof initData.publicId !== "string"
+    || typeof initData.allowedFormats !== "string"
     || typeof initData.signature !== "string"
     || typeof initData.cloudName !== "string"
     || typeof initData.resourceType !== "string"
@@ -47,7 +48,8 @@ async function uploadVideoDirect(file: File) {
   form.append("file", file);
   form.append("api_key", initData.apiKey);
   form.append("timestamp", String(initData.timestamp));
-  form.append("folder", initData.folder);
+  form.append("public_id", initData.publicId);
+  form.append("allowed_formats", initData.allowedFormats);
   form.append("signature", initData.signature);
 
   const uploadResponse = await fetch(

@@ -1,3 +1,10 @@
+## 2026-10-09 — Current media security continuation checkpoint
+
+- Latest media contract implementation is on `v1/media-signed-upload-contract`, branched from `main` at `d8abb386190926f16da9bf9ebc6ee0d94362b378`. The branch signs a server-generated user-scoped video public ID and MIME-specific `allowed_formats`; its client sends the exact signed parameters. Route regression tests cover those contract values. GitHub Actions Validate and Quality Checks passed on PR head `83d24d81203b0b948bc7f0158a12d1018f1b25c9`; real Cloudinary runtime verification remains pending.
+- Production Neon schema read-only check found no unique index for `(user_id, cloudinary_public_id)` in `media_library`; no duplicate pairs were observed. Concurrent completion remains a possible race and needs a separate migration review before adding uniqueness.
+- Byte-size admission remains enforced by Dizito before issuing signatures and against Cloudinary-reported bytes at completion, but no provider-side pre-ingestion size cap has been proven. Do not claim otherwise.
+- No merge, deployment, production write, migration, or external Cloudinary mutation was performed for this branch.
+
 # DIZITO — CODEX PROJECT CONTEXT
 
 **Project:** Dizito — AI Commerce Operating System  

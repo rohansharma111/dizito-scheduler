@@ -54,20 +54,46 @@ describe("POST /api/upload/signature", () => {
     expect(apiSignRequest).not.toHaveBeenCalled();
   });
 
-  it("signs only the authenticated user's folder and timestamp for supported videos", async () => {
+  it("signs a server-generated public ID and allowed formats for supported videos", async () => {
     const response = await POST(jsonRequest({ mimeType: "video/mp4", size: 100 }));
+    const data = await response.json();
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
+    expect(data).toMatchObject({
       success: true,
       cloudName: "cloud-name",
       apiKey: "api-key",
-      folder: "users/42",
       signature: "signed-value",
+      allowedFormats: "mp4",
       resourceType: "video",
       uploadProtocol: "cloudinary_signed_direct",
     });
+    expect(data.publicId).toMatch(/^users\/42\/video-[0-9a-f-]{36}$/);
     expect(apiSignRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ folder: "users/42", timestamp: expect.any(Number) }),
+      {
+        public_id: data.publicId,
+        timestamp: expect.any(Number),
+        allowed_formats: "mp4",
+      },
+      "api-secret",
+    );
+  });
+
+  it("signs only formats compatible with the requested MIME type", async () => {
+    const response = await POST(jsonRequest({ mimeType: "video/quicktime", size: 100 }));
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.allowedFormats).toBe("mov,mp4");
+    expect(apiSignRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ public_id: data.publicId, allowed_formats: "mov,mp4" }),
+      "api-secret",
+    );
+  });
+
+  it("normalizes MIME types before selecting signed format restrictions", async () => {
+    const response = await POST(jsonRequest({ mimeType: " VIDEO/MP4 ", size: 100 }));
+    expect(response.status).toBe(200);
+    expect(apiSignRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ allowed_formats: "mp4" }),
       "api-secret",
     );
   });
