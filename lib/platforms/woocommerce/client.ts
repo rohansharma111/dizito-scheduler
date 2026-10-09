@@ -82,9 +82,9 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
         : null;
     const apiMessage =
       details && typeof details.message === "string"
-        ? details.message.replace(/\\s+/g, " ").slice(0, 240)
+        ? details.message.replace(/\s+/g, " ").slice(0, 240)
         : typeof body === "string"
-          ? body.replace(/\\s+/g, " ").slice(0, 160)
+          ? body.replace(/\s+/g, " ").slice(0, 160)
           : "";
     const apiCode =
       details && typeof details.code === "string"
