@@ -13,19 +13,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const rateLimit = await consumeRateLimit({ bucket: "media:upload-complete", identifier: `user:${session.user.id}`, limit: 30, windowSeconds: 60 });
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid user session" }, { status: 401 });
+    }
+
+    const rateLimit = await consumeRateLimit({ bucket: "media:upload-complete", identifier: `user:${userId}`, limit: 30, windowSeconds: 60 });
     if (!rateLimit.allowed) return NextResponse.json({ success: false, error: "Too many upload completion requests. Please try again shortly." }, { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } });
 
-    const body = (await request.json()) as {
-      publicId?: string;
-      fileName?: string;
-      mimeType?: string;
-    };
-
-    const userId = Number(session.user.id);
-    const publicId = body.publicId?.trim();
-    if (!publicId || !body.fileName || !body.mimeType) {
+    const body: unknown = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || !("publicId" in body) || typeof body.publicId !== "string" || !("fileName" in body) || typeof body.fileName !== "string" || !("mimeType" in body) || typeof body.mimeType !== "string") {
       return NextResponse.json({ success: false, error: "publicId, fileName and mimeType are required" }, { status: 400 });
+    }
+
+    const publicId = body.publicId.trim();
+    const fileName = body.fileName.trim();
+    const mimeType = body.mimeType.trim().toLowerCase();
+    if (!publicId || publicId.length > 500 || !fileName || fileName.length > 255 || !mimeType || mimeType.length > 100) {
+      return NextResponse.json({ success: false, error: "Invalid media completion details" }, { status: 400 });
     }
 
     const expectedPrefix = `users/${userId}/`;
@@ -33,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Invalid media ownership" }, { status: 403 });
     }
 
-    const resourceType = body.mimeType.startsWith("video/") ? "video" : "image";
+    const resourceType = mimeType.startsWith("video/") ? "video" : "image";
     const resource = await cloudinary.api.resource(publicId, {
       resource_type: resourceType,
       type: "upload",
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const policy = getUploadPolicy(body.mimeType, Number(resource.bytes ?? 0));
+    const policy = getUploadPolicy(mimeType, Number(resource.bytes ?? 0));
     if (!policy.allowed || policy.resourceType !== resourceType) {
       return NextResponse.json(
         { success: false, error: policy.allowed ? "Uploaded media type mismatch" : policy.error },
@@ -63,8 +68,8 @@ export async function POST(request: Request) {
     const media = await mediaService.completeDirectUpload({
       userId,
       publicId,
-      fileName: body.fileName,
-      mimeType: body.mimeType,
+      fileName,
+      mimeType,
       uploadProtocol: "cloudinary_signed_direct",
       resource,
     });
@@ -73,7 +78,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Media completion failed:", error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unable to finalize media" },
+      { success: false, error: "Unable to finalize media. Please verify the upload and try again." },
       { status: 400 },
     );
   }
