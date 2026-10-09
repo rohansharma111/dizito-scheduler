@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import DraftPosts from "../../../components/DraftPosts";
+import { Post } from "@/types";
 import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoState, DizitoButton } from "@/components/dizito/DizitoUI";
 
-type DraftPost = { id: number; status: string; [key: string]: unknown };
-
 export default function DraftsPage() {
-  const [drafts, setDrafts] = useState<DraftPost[]>([]);
+  const [drafts, setDrafts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +18,7 @@ export default function DraftsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to load drafts");
       if (!Array.isArray(data)) throw new Error("Unexpected drafts response");
-      setDrafts(data.filter((post: DraftPost) => post.status === "draft"));
+      setDrafts(data.filter((post: Post) => post.status === "draft"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load drafts");
     } finally {
