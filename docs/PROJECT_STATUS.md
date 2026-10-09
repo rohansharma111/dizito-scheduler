@@ -1,3 +1,11 @@
+## 2026-10-09 — Homepage positioning clarified: social media scheduler
+
+- Updated the public homepage copy directly on `main` to position Dizito clearly as a social media scheduling and publishing product, rather than leading with broader “operating system” language.
+- Hero now leads with “Your social media calendar, all in one place” and explicitly names Instagram, Facebook, LinkedIn, Pinterest and Google Business. Reframed the workspace, walkthrough, features, workflow, audience and final CTA around drafts, calendar planning, scheduling, review and publishing.
+- Visual layout, route destinations, session-aware CTA, demo video, feature list, and underlying app behavior are unchanged. Pricing page positioning was not changed in this pass.
+- Commit: `a0f2a1f8854314e36425e9313f2ef5ac6e9ab08c`.
+- Verification boundary: source copy reviewed; CI and desktop/mobile browser screenshots have not yet been run for this follow-up.
+
 ## 2026-10-09 — Public homepage, pricing and footer visual correction (PR pending)
 
 - Branch: `v1/public-pages-visual-polish`.
