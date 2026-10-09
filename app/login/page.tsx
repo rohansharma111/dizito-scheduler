@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Sparkles, CalendarDays, Layers3, RefreshCw, Users } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export default function LoginPage() {
   return (
