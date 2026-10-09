@@ -25,6 +25,7 @@ export default function TablePagination({
   const safePage = Math.min(Math.max(1, page), totalPages);
   const start = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const end = Math.min(safePage * pageSize, totalItems);
+  const visiblePages = Array.from(new Set([1, safePage - 1, safePage, safePage + 1, totalPages].filter((number) => number >= 1 && number <= totalPages))).sort((a, b) => a - b);
 
   return (
     <div className="flex flex-col gap-3 border-t border-slate-100 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -60,29 +61,22 @@ export default function TablePagination({
         >
           <ChevronLeft size={17} />
         </button>
-        {Array.from({ length: totalPages }, (_, index) => index + 1)
-          .filter((number) => number === 1 || number === totalPages || Math.abs(number - safePage) <= 1)
-          .reduce<(number | "ellipsis")[]>((items, number, index, visible) => {
-            if (index > 0 && number - visible[index - 1] > 1) items.push("ellipsis");
-            items.push(number);
-            return items;
-          }, [])
-          .map((item, index) =>
-            item === "ellipsis" ? (
-              <span key={`ellipsis-${index}`} className="px-1 text-sm text-slate-400">…</span>
-            ) : (
-              <button
-                key={item}
-                type="button"
-                aria-label={`Page ${item}`}
-                aria-current={item === safePage ? "page" : undefined}
-                onClick={() => onPageChange(item)}
-                className={`h-9 min-w-9 rounded-lg px-2 text-sm font-semibold transition ${item === safePage ? "bg-violet-600 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-              >
-                {item}
-              </button>
-            ),
-          )}
+        {visiblePages.map((item, index) => (
+          <span key={item} className="contents">
+            {index > 0 && item - visiblePages[index - 1] > 1 && (
+              <span className="px-1 text-sm text-slate-400" aria-hidden="true">…</span>
+            )}
+            <button
+              type="button"
+              aria-label={`Page ${item}`}
+              aria-current={item === safePage ? "page" : undefined}
+              onClick={() => onPageChange(item)}
+              className={`h-9 min-w-9 rounded-lg px-2 text-sm font-semibold transition ${item === safePage ? "bg-violet-600 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+            >
+              {item}
+            </button>
+          </span>
+        ))}
         <button
           type="button"
           aria-label="Next page"
