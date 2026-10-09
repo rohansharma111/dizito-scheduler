@@ -1,0 +1,101 @@
+.root {
+  min-width: 0;
+  color: #101828;
+}
+
+.heading {
+  letter-spacing: -0.025em;
+}
+
+.emptyState {
+  border-color: #e2e8f0;
+  background: linear-gradient(145deg, #ffffff 0%, #fbfaff 100%);
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.035);
+}
+
+.emptyState :global(h4) {
+  color: #101828;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.emptyState :global(p) {
+  color: #667085;
+  line-height: 1.65;
+}
+
+.table {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.035);
+  color: #344054;
+  font-size: 0.875rem;
+}
+
+.table :global(thead tr) {
+  background: #f8f7ff;
+}
+
+.table :global(th) {
+  border-color: #e8e7f0;
+  padding: 0.9rem 1rem;
+  color: #475467;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table :global(td) {
+  border-color: #edf0f5;
+  padding: 0.9rem 1rem;
+  line-height: 1.55;
+  vertical-align: middle;
+}
+
+.table :global(tbody tr) {
+  transition: background 140ms ease;
+}
+
+.table :global(tbody tr:hover) {
+  background: #fbfaff;
+}
+
+.table :global(tbody tr:last-child td) {
+  border-bottom: 0;
+}
+
+.table :global(button) {
+  border-radius: 0.65rem;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.table :global(button:focus-visible),
+.root :global(a:focus-visible),
+.root :global(button:focus-visible) {
+  outline: 2px solid #8b7cff;
+  outline-offset: 2px;
+}
+
+.root :global(.md\:hidden > div) {
+  border-color: #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.035);
+}
+
+@media (max-width: 767px) {
+  .emptyState {
+    padding: 2rem 1.25rem;
+  }
+
+  .table :global(th),
+  .table :global(td) {
+    padding: 0.75rem;
+  }
+}
