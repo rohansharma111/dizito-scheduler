@@ -8,6 +8,7 @@ import { BILLING_ENTITLEMENT_KEYS, LEGACY_PLAN_TO_V1 } from "@/lib/billing/catal
 import {
   BILLING_SCHEMA_FALLBACK_ENTITLEMENTS,
   BILLING_SCHEMA_FALLBACK_PLANS,
+  isMissingBillingRelation,
 } from "@/lib/billing/schema-compatibility";
 
 async function getLegacyCompatibleBillingResponse(userId: number) {
@@ -97,11 +98,13 @@ async function getLegacyCompatibleBillingResponse(userId: number) {
 }
 
 export async function GET() {
+  let authenticatedUserId: number | null = null;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const userId = getBillingUserId(session);
+    authenticatedUserId = userId;
     const schemaCheck = await pool.query(
       `SELECT
          current_database() AS database_name,
@@ -236,6 +239,17 @@ export async function GET() {
       pricingHypothesis: true,
     });
   } catch (error) {
+    if (authenticatedUserId !== null && isMissingBillingRelation(error)) {
+      console.warn(
+        "[billing] Canonical billing relation is missing from the connected database; serving legacy-compatible billing data.",
+        { userId: authenticatedUserId },
+      );
+      try {
+        return await getLegacyCompatibleBillingResponse(authenticatedUserId);
+      } catch (fallbackError) {
+        console.error("Billing compatibility fallback failed:", fallbackError);
+      }
+    }
     console.error("Billing API Error:", error);
     return Response.json({ error: "Failed to load billing" }, { status: 500 });
   }
