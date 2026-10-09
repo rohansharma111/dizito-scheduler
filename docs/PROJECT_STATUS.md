@@ -1,3 +1,10 @@
+## 2026-10-09 — Proxy upload service validation
+
+- Server-proxy image uploads now re-apply the shared MIME/byte-size policy inside `MediaService`, normalize MIME declarations, and validate file signatures before invoking Cloudinary. The service rejects video uploads on this path and requires signed direct upload for video.
+- Added regression coverage for oversize images, MIME/signature mismatch, and MIME normalization. These checks protect the service boundary even when a caller bypasses route-level validation.
+- CI is required to confirm the new service tests and repository-wide checks. Request-body buffering limits remain a separate deployment/runtime boundary; a `Content-Length` check alone would not stop chunked requests.
+- No browser QA, deployment, production database change, or provider mutation was performed.
+
 ## 2026-10-09 — Media service upload-policy defense in depth
 
 - Direct Cloudinary upload completion now re-applies the shared upload policy inside `MediaService`, not only in the HTTP route. This protects the persistence boundary against oversized, fractional, non-safe-integer, or MIME/resource-type-inconsistent provider byte counts.
