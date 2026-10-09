@@ -1082,3 +1082,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Extracted external product snapshot validation from the weekly-plan approval API into a pure helper so malformed provider IDs, oversized metadata, and unsafe links can be regression-tested without database/provider calls.
 - Added unit tests for accepted product snapshots and rejection boundaries; wired the approval route to the shared validator.
 - Commits: `b3b7015`, `91bc97d`, `483e9e5`. CI and browser flow verification pending.
+
+
+## 2026-10-09 — Add WooCommerce catalog to canonical product detail
+
+- Added a WooCommerce section to `app/products/[id]/page.tsx`, matching the existing Shopify and Amazon product workflow placement. It loads the merchant's WooCommerce channels, allows choosing a connected store, and reads its products through the existing authenticated, tenant-scoped, paginated read-only catalog API.
+- Catalog rows show WooCommerce product ID, name, SKU, type, status, price, stock status, and a validated HTTP(S) product permalink. Includes search within the current page, refresh, pagination, loading, empty, and error states. If no store is connected, it links to Commerce Channels.
+- Deliberately does not create a persistent canonical-to-WooCommerce mapping or mutate the store. That needs a separate explicit mapping workflow and must not be implied by simply browsing a similarly named product.
+- Commits: `83bb947` (component), `735bbea` (product page integration). CI and browser verification pending.
