@@ -22,7 +22,18 @@ export default function AIStrategistClient() {
       const response = await fetch("/api/marketing/strategist", { method: "POST" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to generate strategy");
-      setStrategy(data.strategy);
+      const result = data?.strategy;
+      if (
+        !result ||
+        typeof result.strategySummary !== "string" ||
+        !Array.isArray(result.priorities) ||
+        !Array.isArray(result.recommendations) ||
+        !Array.isArray(result.measurementPlan) ||
+        !Array.isArray(result.guardrails)
+      ) {
+        throw new Error("The strategy response was incomplete. Please try again.");
+      }
+      setStrategy(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to generate strategy");
     } finally {
