@@ -32,6 +32,14 @@
 - Commits: `7666e3bc44e904324480020310bd4436d4b9f10a`, `1e6b318d9e36b83b04831c1775679a75fc54e556`, `284a68f00b4203e0b0462f5731caf4956bf2f8ab`, `721f97d5d1d03e1b110927f9a60f630e1099ea20`, `f6222b8802ebd668a9549b4e5ce3f5860f5aa717`.
 - No product, variant, or inventory logic changed. Checks and browser/device visual QA remain pending.
 
+## Follow-up: reusable pagination across data tables (2026-10-09)
+
+- Added `components/dizito/TablePagination.tsx` and applied it to Bulk Upload preview, Products, Variants, Inventory, Inventory Movement History, Draft Posts, and Scheduled/Published Posts.
+- Bulk Upload adds All / Valid / Invalid / Duplicates filters, preserves original CSV row numbers, and scopes the header checkbox to valid rows on the current page while preserving selections across pages.
+- Pagination currently operates client-side on the loaded dataset; server-side query pagination remains necessary for genuinely large datasets.
+- Direct-main commits include `8cbeda7`, `d88c2f2`, `a570ce7`, `b4f93b1`, `21f8294`, `48cfb40`, `4c9272f`, `d849a78`, and `4745503`.
+- Automated checks and browser QA are pending.
+
 ## Screens covered
 
 - Create Post form in `components/CreatePostForm.tsx`
