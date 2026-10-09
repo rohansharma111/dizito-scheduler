@@ -1,3 +1,10 @@
+## 2026-10-09 — Mobile commerce table readability (main)
+
+- Removed global `overflow-wrap: anywhere` from the body, which was splitting normal words into single characters on narrow screens. Kept targeted wrapping for `pre` and `code`.
+- Products, variants, and inventory tables now have intentional minimum widths inside horizontal-scroll containers (640px / 680px / 900px) so headings and cell content remain readable on phones. Product variant header stacks and its Add Variant button becomes full-width on mobile.
+- Commits: `7666e3b`, `1e6b318`, `284a68f`, `721f97d`, `f6222b8`.
+- No business logic/API behavior changed. Automated checks and real browser/device verification remain pending.
+
 ## 2026-10-09 — Narrow-screen Drafts actions (main)
 
 - Reduced action-grid spacing on narrow mobile widths, hid cramped text labels below 360px while retaining title/aria labels, restored compact labels above 360px, and added focus-visible styling.
