@@ -3,16 +3,16 @@
 **Project:** Dizito — AI Commerce Operating System  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Current default branch:** `main`  
-**Latest observed commit:** `7305bd93f654a24329040ece77acb8934852678d`  
-**Last refreshed:** 2026-10-07
+**Latest verified code checkpoint:** `12cac848dea464674f3fb302c0d85170ff1fdf58`  
+**Last refreshed:** 2026-10-09
 
 This document is persistent repository context for Codex and future development sessions. It is a current-state guide, not a substitute for inspecting the actual repository.
 
-## 0. Current validation checkpoint — 2026-10-07
+## 0. Current validation checkpoint — 2026-10-09
 
-- The latest documentation checkpoint commit is `7305bd93f654a24329040ece77acb8934852678d`; the code checkpoint immediately before documentation refresh was `98a1610ee149f3ed33cfacdd42ca0648e7a58a87`.
-- Sequential TypeScript/build errors from the current repair pass are resolved; Vercel reports success for the code checkpoint.
-- The configured GitHub quality workflow remains **test → lint → build**, but no fresh GitHub Actions run is exposed for the direct push, so do not claim test/lint green without runtime evidence.
+- Latest verified code checkpoint: `12cac848dea464674f3fb302c0d85170ff1fdf58` (`fix: pass bounded upload body as ArrayBuffer`).
+- GitHub Actions **Validate** and **Quality Checks** both passed for this commit: [Validate run 37904240619](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240619) and [Quality Checks run 37904240616](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240616).
+- Streamed server-proxy upload bodies are byte-capped before multipart parsing, including requests without `Content-Length`; platform ingress limits remain additional defense. No production deployment, production DB change, or browser QA is implied by CI success.
 - `merge/meesho-into-main` is fully behind current `main` (635 commits behind, 0 ahead).
 - Shopify publish recovery now uses listing sync claims consistently; do not bypass `claimProductListingSync` / `updateProductListingSyncState` ownership checks.
 
