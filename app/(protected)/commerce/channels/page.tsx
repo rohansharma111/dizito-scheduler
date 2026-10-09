@@ -163,6 +163,38 @@ export default function CommerceChannelsPage() {
     }
   }
 
+  async function verifyWooCommerce(channel: CommerceChannel) {
+    setVerifyingId(channel.id);
+    setVerificationMessage(null);
+    setError(null);
+    try {
+      const response = await fetch("/api/commerce/woocommerce/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId: channel.id }),
+      });
+      const data = await response.json() as {
+        success?: boolean;
+        result?: { storeName?: string; productCount?: number; products?: Array<{ id: number; name: string; sku: string; status: string }> };
+        error?: string;
+      };
+      if (!response.ok || !data.success || !data.result) {
+        throw new Error(data.error ?? "WooCommerce verification failed");
+      }
+      const result = data.result;
+      const preview = result.products?.length
+        ? " Sample products: " + result.products.map((product) => product.name).join(", ") + "."
+        : " No products were returned in the preview.";
+      setVerificationMessage(
+        `WooCommerce verified successfully${result.storeName ? ` (${result.storeName})` : ""}. Read-only product check found ${result.productCount ?? 0} product(s) total.${preview}`,
+      );
+    } catch (verificationError) {
+      setError(verificationError instanceof Error ? verificationError.message : "WooCommerce verification failed");
+    } finally {
+      setVerifyingId(null);
+    }
+  }
+
   async function setChannelStatus(channel: CommerceChannel, status: "active" | "inactive") {
     if (status === "inactive" && !window.confirm(`Disconnect ${channel.name}?`)) return;
 
@@ -301,7 +333,7 @@ export default function CommerceChannelsPage() {
           const active = channel.status === "active";
           const updating = updatingId === channel.id;
           const verifying = verifyingId === channel.id;
-          const amazon = channel.provider === "amazon";
+          const amazon = channel.provider === "amazon";\n          const woocommerce = channel.provider === "woocommerce";
 
           return (
             <div key={channel.id} className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
@@ -312,6 +344,16 @@ export default function CommerceChannelsPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="text-sm">{active ? "🟢 Active" : channel.status}</div>
+                  {woocommerce && active && (
+                    <button
+                      type="button"
+                      onClick={() => void verifyWooCommerce(channel)}
+                      disabled={verifying || updating}
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {verifying ? "Verifying..." : "Verify & read products"}
+                    </button>
+                  )}
                   {amazon && active && (
                     <button
                       type="button"
