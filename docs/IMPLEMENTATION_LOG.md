@@ -1,3 +1,9 @@
+## 2026-10-09 — Fix content item SQL grouping error
+
+- Error: `column "c.name" must appear in the GROUP BY clause or be used in an aggregate function` from `listContentItems`, also breaking optimizer context retrieval.
+- Updated both `listContentItems` and `getContentItem` SQL to use `GROUP BY ci.id, c.id, o.id`; PostgreSQL can then infer the joined rows' remaining columns from primary keys. Existing aggregate expressions, filters, and tenant joins are unchanged.
+- Commit: `69d158aa9e2971f6849da89eba3c60eced8c8279`. Runtime verification pending.
+
 ## 2026-10-09 — Apply missing marketing content and attribution schema
 
 - Production lacked migrations 006–016 marketing features and 020 marketing variant/post provenance despite `005_marketing_foundation_v1.sql` being present. This caused missing-relation errors in Strategist, Optimizer, Generate Week, and Content Items.
