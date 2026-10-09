@@ -1335,3 +1335,11 @@ Important rollout boundary:
 - Added an idempotency key for publish attempts and a reconciliation action for uncertain outcomes. UI copy warns users not to retry an uncertain publish before reconciliation.
 - Uses the first canonical variant as the required listing association; products without variants are asked to add one before preparing a listing. Price and SKU are editable before draft preparation.
 - No migration, credentials, or live-store changes were made. The UI is committed to `main`; CI and staging runtime verification must pass before calling the end-to-end workflow tested.
+
+
+## 2026-10-10 — WooCommerce publish reconciliation verified
+
+- User confirmed the local listing is linked to WooCommerce product ID `2800` and the local listing/publish-attempt records reflect the reconciled success state.
+- Reconciliation returned `published`; do not retry or republish this item. Treat WooCommerce product `2800` as the existing external product to avoid duplicate creation.
+- Production Neon schema was updated and verified: `product_listings.publish_idempotency_key`, the channel-scoped unique idempotency index, and `commerce_publish_attempts` with status constraints and indexes are present.
+- The user-verified listing link and success state are recorded; retry/replay behavior and broader end-to-end CI/browser coverage remain separate verification items.
