@@ -1,3 +1,9 @@
+## 2026-10-09 — Add missing Orders page; diagnose local marketing relation error
+
+- Added `app/(protected)/orders/page.tsx` for the existing orders API: tenant-scoped listing, customer/order search, order-status filter, and resilient loading/empty/error states. Commit `4e271ff237ba68e869bb2520d9002bec20bc101c`.
+- `marketing_business_profiles` is created by existing migration `005_marketing_foundation_v1.sql`. The local PostgreSQL error is therefore a schema/migration-state mismatch, not a missing migration definition. Apply repository migrations to the correct local database with `npm run db:migrate`; do not point this fix at production or fabricate a schema-only workaround.
+- Tests and browser verification remain pending.
+
 ## 2026-10-09 — Fix Billing sidebar highlighting and no-subscription plan-change UX
 
 - Sidebar active route checks now require an exact path or slash-delimited descendant, preventing `/settings` from matching `/settings/billing`.
