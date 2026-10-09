@@ -175,18 +175,39 @@ export default function ActivityPage() {
       {error && <DizitoState kind="error" title="Activity could not load" description={error} action={<DizitoButton variant="secondary" onClick={() => void loadActivity()}>Try again</DizitoButton>} />}
 
       {loading && (
-        <DizitoCard><div className="animate-pulse text-sm text-gray-500">Loading activity…</div></DizitoCard>
+        <div className="space-y-6" aria-label="Loading activity" aria-busy="true">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className="h-10 w-10 shrink-0 animate-pulse rounded-full border border-gray-200 bg-gray-100" />
+                {item < 2 && <div className="mt-2 min-h-12 w-px flex-1 bg-gray-200" />}
+              </div>
+              <DizitoCard className="min-w-0 flex-1 !p-4 md:!p-5">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 w-2/5 rounded bg-gray-200" />
+                  <div className="h-3 w-3/4 rounded bg-gray-100" />
+                  <div className="h-3 w-1/4 rounded bg-gray-100" />
+                </div>
+              </DizitoCard>
+            </div>
+          ))}
+        </div>
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <DizitoState kind="empty" title="No activity found" description="Activity will appear here as your channels publish content and account events occur." />
+        <DizitoState
+          kind="empty"
+          title={events.length === 0 ? "No activity yet" : "No matching activity"}
+          description={events.length === 0 ? "Publishing and account events will appear here as your workspace gets active." : "Try a different search term or change the event filter to see more activity."}
+          action={events.length > 0 && (search || filter !== "all") ? <DizitoButton variant="secondary" onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</DizitoButton> : undefined}
+        />
       )}
 
       {!loading && !error &&
         grouped.map((group) => (
           <div key={group.label} className="mb-10">
             {" "}
-            <h2>{group.label}</h2>
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">{group.label}</h2>
             <div className="space-y-6">
               {group.events.map((event, index) => (
                 <div key={event.id} className="flex">
