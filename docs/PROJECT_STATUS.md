@@ -1318,3 +1318,11 @@ Important rollout boundary:
 - Added authenticated `POST /api/commerce/woocommerce/link`. It verifies tenant ownership of the canonical product and WooCommerce channel, confirms the exact external product by reading it from the connected store, rejects cross-product identity conflicts, serializes concurrent attempts for the same channel/external ID, and writes transactionally. Listing remains `draft`/`pending`; this action does not publish or mutate WooCommerce.
 - A different existing external ID for the same canonical product/store is rejected rather than silently replaced. No schema migration or production-store mutation was needed.
 - Commits: `7df3ece` (API), `8ec834c` (UI), `cf44480` (serialize conflicts). CI and browser/API runtime verification pending.
+
+
+## 2026-10-09 — WooCommerce product linking verified
+
+- Persistent canonical-product ↔ WooCommerce product linking is implemented on `main`. The catalog row has an explicit link action; mappings are stored in Dizito's existing `product_listings` table with provider metadata and are reloaded from persisted listings.
+- User confirmed linking and persistence were validated in the running application. GitHub Actions Validate and Quality Checks both passed for commit `e040cb864030c28c1ff26b6389d1f5f8b1e9d506` (runs [37970471607](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37970471607) and [37970471741](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37970471741)).
+- Link endpoint verifies tenant ownership and the external product by read-only WooCommerce API lookup, protects external-ID conflicts with a transaction lock, and stores the mapping as draft/pending. It does not create/update/publish anything in WooCommerce. No migration was needed.
+- Next: continue the controlled WooCommerce workflow with explicit review of draft preparation, validation, publish guards/idempotency, and reconciliation. Keep provider-side mutations disabled unless using an approved test product/store and an explicitly authorized publish test.
