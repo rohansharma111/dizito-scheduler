@@ -1,3 +1,10 @@
+## 2026-10-09 — Workstream B production billing schema applied
+
+- Applied `db/migrations/021_billing_v1_plans_entitlements.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek`.
+- Recorded `021_billing_v1_plans_entitlements.sql` in `public.schema_migrations`. Read-only verification confirms the canonical billing plan/entitlement tables and subscription billing-plan linkage are present.
+- Growth catalog verification confirms 10 entitlement assignments, including social channels 10, commerce channels 2, publishing actions 500/month, AI actions 250/month, Business Brain/Strategist/Creator/Generate My Week/commerce enabled, and Optimizer disabled.
+- This establishes production schema/catalog availability only; it does not verify Razorpay checkout, provider webhooks, payment processing, deployment state, or browser/runtime behavior. Razorpay plan mappings remain a separate configuration/verification dependency.
+
 ## 2026-10-09 — Mobile commerce table readability (committed directly to main)
 
 - Root cause identified in `app/globals.css`: a global `body { overflow-wrap: anywhere; }` caused ordinary words, headings, and table cells to break at arbitrary character boundaries on narrow screens. Changed the global body rule to `overflow-wrap: normal`; the targeted `pre, code` rule still allows long code tokens to wrap.
