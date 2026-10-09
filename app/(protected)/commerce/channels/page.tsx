@@ -224,7 +224,7 @@ export default function CommerceChannelsPage() {
             </div>
           );
         })}
-      </DizitoCard>
+      </div>
     </DizitoPage>
   );
 }
