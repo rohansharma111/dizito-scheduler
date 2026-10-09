@@ -12,6 +12,11 @@ describe("matchesDeclaredMediaType", () => {
     expect(matchesDeclaredMediaType(Buffer.from([0, 0, 0, 0, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20, 0x00]), "video/quicktime")).toBe(true);
   });
 
+  it("normalizes MIME type whitespace and casing", () => {
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
+    expect(matchesDeclaredMediaType(jpeg, " IMAGE/JPEG ")).toBe(true);
+  });
+
   it("rejects mismatched content and unsupported types", () => {
     const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     expect(matchesDeclaredMediaType(png, "image/jpeg")).toBe(false);
