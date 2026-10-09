@@ -1,3 +1,10 @@
+## 2026-10-09 — Fix Billing sidebar highlighting and no-subscription plan-change UX
+
+- Sidebar active route checks now require an exact path or slash-delimited descendant, preventing `/settings` from matching `/settings/billing`.
+- Hide Move to Growth/Move to Pro actions when the billing API reports no provider subscription ID. Show a clear explanation and a Pricing link instead. This prevents the predictable 400 `No active subscription` request from the billing UI; it does not fabricate a provider subscription or alter billing records.
+- Commits: `e4b47d0`, `64a900f`, `577f9f5`.
+- Automated and browser verification remains pending.
+
 ## 2026-10-09 — Fix post-merge billing catalog test assertion (main)
 
 - Diagnosed the post-merge Quality Checks failure: `LEGACY_PLAN_TO_V1` contains legacy key `creator`, but `BILLING_SCHEMA_FALLBACK_PLANS` is keyed by canonical `BillingPlanCode` values, so the old equality assertion tested the wrong contract.
