@@ -7,7 +7,7 @@ import Link from "next/link";
 import { getEventDescription } from "@/lib/eventDescription";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
-import { DizitoBadge, DizitoCard, DizitoMetric, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
+import { DizitoBadge, DizitoButton, DizitoCard, DizitoMetric, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 type PlatformStat = { platform: string; count: number };
 type DailyStat = { day: string; count: number };
@@ -35,14 +35,19 @@ function PlatformIcon({ platform }: { platform: string }) {
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   async function loadAnalytics() {
+    setLoading(true);
+    setLoadError(null);
     try {
       const response = await fetch("/api/analytics");
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to load analytics");
       setAnalytics(data);
     } catch (error) {
-      console.error(error);
+      setLoadError(error instanceof Error ? error.message : "Unable to load analytics");
+      setAnalytics(null);
     } finally {
       setLoading(false);
     }
@@ -79,7 +84,7 @@ export default function AnalyticsPage() {
     return (
       <DizitoPage>
         <DizitoPageHeader eyebrow="Measure" title="Analytics" />
-        <DizitoState kind="error" title="Unable to load analytics" description="Please refresh and try again." />
+        <DizitoState kind="error" title="Unable to load analytics" description={loadError || "Please refresh and try again."} action={<DizitoButton variant="secondary" onClick={() => void loadAnalytics()}>Try again</DizitoButton>} />
       </DizitoPage>
     );
   }
