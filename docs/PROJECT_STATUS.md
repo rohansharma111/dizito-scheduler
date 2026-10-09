@@ -1060,3 +1060,9 @@ Important rollout boundary:
 - Quality Checks still had two Workstream D test-collection failures caused by Vitest mock-hoisting in `lib/security/rate-limit.test.ts` and `lib/media/service.test.ts`. Both mocks have now been converted to `vi.hoisted(...)`.
 - The remaining Quality Checks failures are existing Commerce/Flipkart/WooCommerce lifecycle drift plus the intentional fail-closed legacy credential test mismatch in scheduler coverage; these are not being broadened into Workstream D without evidence that they are regressions from this branch.
 - A fresh CI run is required for the new fixes. PR #55 remains open and unmerged.
+
+## 2026-10-09 — Pricing page missing-migration resilience
+- Production `/pricing` reported PostgreSQL `42P01` (`billing_plans` does not exist), consistent with billing migration `021_billing_v1_plans_entitlements.sql` remaining unapplied to the default/live Neon branch.
+- On `main`, the pricing page now falls back to the established Free/Growth/Pro display catalog when a billing relation is missing, while rethrowing unrelated database errors.
+- Corrected the entitlement lookup to use the actual migration schema: `billing_plan_entitlement_values` joined to `billing_entitlement_definitions`.
+- This is an availability guard, not a substitute for applying/validating migration 021. Live Neon was not modified. Build/runtime verification is still pending.
