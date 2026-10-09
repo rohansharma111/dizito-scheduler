@@ -1,3 +1,11 @@
+## 2026-10-09 — Signed direct-upload scope and completion replay hardening
+
+- Restricted `POST /api/upload/signature` to supported video MIME types. Images must use the server-proxy upload route, where the server validates file signatures before storage; the signed-direct path can no longer issue image-upload signatures.
+- Fixed direct-upload completion idempotency so Cloudinary resource type, exact format/MIME pairing, ownership, and actual byte-size policy are verified before looking up and returning an existing media-library record. Invalid retry payloads cannot bypass validation just because the public ID already exists.
+- Added route tests for unauthenticated/rate-limited signature requests, image signature rejection, and successful video signing; added a service regression test for invalid format on an idempotent retry.
+- Exact code checkpoint: [`8904b46`](https://github.com/rohansharma111/dizito-scheduler/commit/8904b46bd399b677456489ff9dd48473cd0b967b). Both GitHub Actions workflows passed: [Validate run 37910264539](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37910264539) and [Quality Checks run 37910264341](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37910264341). The preceding implementation and regression-test commits also passed both workflows.
+- No production deployment, production database change, external Cloudinary mutation, or browser QA was performed.
+
 ## 2026-10-09 — Streamed multipart request byte cap
 
 - Added `readRequestBodyWithLimit` and applied it to the server-proxy upload route before multipart parsing. The route now enforces a hard maximum request-body byte count even when `Content-Length` is absent, and cancels the stream when the limit is exceeded.
