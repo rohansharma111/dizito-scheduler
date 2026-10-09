@@ -1106,3 +1106,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - GitHub Actions Validate and Quality Checks passed on `e040cb864030c28c1ff26b6389d1f5f8b1e9d506`: [Validate](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37970471607), [Quality Checks](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37970471741).
 - Mapping persistence uses existing `product_listings`; no migration or WooCommerce product mutation was required. The endpoint verifies the external product via a read and prevents conflicting mappings. The mapping remains draft/pending; publishing is a separate workflow.
 - Follow-up focus: audit/validate WooCommerce draft preparation → validation → guarded publish/idempotency → reconciliation using a safe test setup before authorizing any live write.
+
+
+## 2026-10-10 — WooCommerce product-page publish workflow UI
+
+- Added a dedicated WooCommerce publishing panel to the canonical product details page, separate from the read-only store catalog/linking panel.
+- The UI loads connected WooCommerce channels, prepares a draft through the existing authenticated draft API, shows a listing preview, and requires an explicit staging-store confirmation before calling the existing publish API.
+- Added an idempotency key for publish attempts and a reconciliation action for uncertain outcomes. UI copy warns users not to retry an uncertain publish before reconciliation.
+- Uses the first canonical variant as the required listing association; products without variants are asked to add one before preparing a listing. Price and SKU are editable before draft preparation.
+- No migration, credentials, or live-store changes were made. The UI is committed to `main`; CI and staging runtime verification must pass before calling the end-to-end workflow tested.
