@@ -1,3 +1,12 @@
+## 2026-10-09 — Zero-AI-spend marketing workflow implemented
+
+- Added server-side AI availability switch `DIZITO_AI_ENABLED`; AI endpoints for Strategist, Optimizer, AI weekly strategy, and AI copy generation return a clear 503 `AI_COMING_SOON` response unless the env var is explicitly `true`. This is opt-in and prevents these endpoints from calling OpenAI while the feature is disabled. `/api/marketing/ai-status` exposes the switch to authenticated UI surfaces (status only; it does not reveal credentials).
+- Updated AI Strategist, AI Optimizer, Marketing Content, and Generate Week UI to show Coming Soon states and disable AI generation controls while disabled. Manual editing, scheduling, approvals, Business Brain, Business Impact, and the deterministic `/api/marketing/weekly-plans/generate` workflow remain available.
+- Added editable five-post template-week creation to `GenerateWeekClient`, using existing product/offer names when available and factual placeholders for merchant personalization. Added manual copy editing in Marketing Content and a no-AI-credit notice to the current `/generate-my-week` flow.
+- Important operator setting: leave `DIZITO_AI_ENABLED` unset or `false` until a funded AI provider is configured; set it to `true` later to re-enable AI endpoints and controls without removing the manual path. No API key was added or changed.
+- Commits include `969dd33`, `a22b5d8`, `be103d9`, `bfd3962`, `ed6a0a6`, `f301175`, `e8a530f`, `3baae0a`, `b6c0576`, `450b519`, `a4fa70c`, `1ba80d2`, `78ec68e`, `191b93b`, `6c20391`, `ada2be2`, `53d0c52`, `47283b0`, `e199156`, `9c0ff71`, `e6f8970`, `15d7058`.
+- Automated CI and browser verification for the final code state remain pending. Do not claim runtime success until the current runs complete and the manual flow is tested.
+
 ## 2026-10-09 — Homepage positioning clarified: social media scheduler
 
 - Updated the public homepage copy directly on `main` to position Dizito clearly as a social media scheduling and publishing product, rather than leading with broader “operating system” language.
