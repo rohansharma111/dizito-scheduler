@@ -1,3 +1,10 @@
+## 2026-10-09 — Dashboard sidebar visual polish merged; V1 QA preparation next
+
+- PR #60 was squash-merged to main as e4b318575fd50c9ff27c7bcfe8e961c339d69de0. It updates the dashboard Usage and Recent Activity cards and desktop sidebar presentation only; no API, database, migration, or business-logic changes.
+- The changed UI has not yet been verified in a browser at desktop/mobile breakpoints. No combined status or PR-triggered workflow runs were returned for the merge SHA; CI is unknown, not passed.
+- Next work is pre-screen readiness and controlled screen-by-screen merchant-flow QA. Added docs/PRE_SCREEN_QA_READINESS.md with evidence standards, preflight gates, screen order, and stop conditions. Do not run live provider mutations during QA without separate authorization.
+- Active follow-up branch: v1/pre-screen-qa-readiness. This branch is based on the new main head; it is documentation/preparation only, not proof that QA has run.
+
 ## 2026-10-09 — Media completion concurrency hardening (merged; production migration applied)
 
 - PR #59 merged to `main` via squash commit `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`. The change adds a duplicate-preflight migration and unique index on `public.media_library(user_id, cloudinary_public_id)`, and makes repository insertion race-safe with `ON CONFLICT DO NOTHING` followed by loading the winner row. Repository regression tests cover insert, concurrent replay, and fail-closed conflict handling; prior signed-upload and service tests were retained.
