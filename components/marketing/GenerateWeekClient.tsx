@@ -74,7 +74,20 @@ export default function GenerateWeekClient() {
       const response = await fetch("/api/marketing/generate-week", { method: "POST" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to generate this week");
-      setStrategy(data.strategy); setOpenCampaign(0);
+      const result = data?.strategy;
+      if (
+        !result ||
+        typeof result.strategySummary !== "string" ||
+        !Array.isArray(result.campaigns) ||
+        result.campaigns.some((campaign: unknown) => {
+          if (!campaign || typeof campaign !== "object") return true;
+          const item = campaign as Record<string, unknown>;
+          return typeof item.name !== "string" || !Array.isArray(item.contentItems);
+        })
+      ) {
+        throw new Error("The weekly plan response was incomplete. Please try again.");
+      }
+      setStrategy(result); setOpenCampaign(0);
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to generate this week"); }
     finally { setLoading(false); }
   }
@@ -92,6 +105,9 @@ export default function GenerateWeekClient() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to generate copy");
+      if (!data?.copy || typeof data.copy.body !== "string") {
+        throw new Error("The generated copy response was incomplete. Please try again.");
+      }
       updateContent(campaignIndex, contentIndex, { body: data.copy.body });
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to generate copy"); }
     finally { setCreatorIndex(null); }
