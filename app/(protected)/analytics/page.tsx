@@ -44,6 +44,7 @@ export default function AnalyticsPage() {
       const response = await fetch("/api/analytics");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to load analytics");
+      if (!data?.cards || !Array.isArray(data.platforms) || !Array.isArray(data.daily) || !Array.isArray(data.insights) || !Array.isArray(data.recent)) throw new Error("Unexpected analytics response");
       setAnalytics(data);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Unable to load analytics");
@@ -61,7 +62,7 @@ export default function AnalyticsPage() {
     return (
       <DizitoPage>
         <DizitoPageHeader eyebrow="Measure" title="Analytics" description="Track publishing performance across your connected channels." />
-        <DizitoCard><div className="animate-pulse text-sm text-gray-500">Loading analytics…</div></DizitoCard>
+        <DizitoCard><div role="status" aria-label="Loading analytics" className="animate-pulse space-y-4"><div className="h-5 w-40 rounded bg-slate-100"/><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">{[0,1,2,3,4].map((item)=><div key={item} className="h-24 rounded-xl bg-slate-100"/> )}</div><div className="grid gap-4 lg:grid-cols-2"><div className="h-56 rounded-xl bg-slate-100"/><div className="h-56 rounded-xl bg-slate-100"/></div></div></DizitoCard>
       </DizitoPage>
     );
   }
