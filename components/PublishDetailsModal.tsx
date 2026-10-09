@@ -2,6 +2,7 @@
 
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
+import styles from "./PublishDetailsModal.module.css";
 
 type Target = {
   id: number;
@@ -68,37 +69,19 @@ export default function PublishDetailsModal({
 
   return (
     <div
-      className="
-        fixed
-        inset-0
-        bg-black/50
-        flex
-        items-center
-        justify-center
-        z-50
-        p-4
-      "
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-[3px] sm:p-5 ${styles.overlay}`}
       onClick={onClose}
     >
       <div
-        className="
-          bg-white
-          rounded-xl
-          p-6
-          w-[95vw]
-          md:w-[700px]
-          max-h-[90vh]
-          overflow-y-auto
-          shadow-xl
-        "
+        className={`max-h-[min(90vh,820px)] w-[min(95vw,700px)] overflow-y-auto rounded-[24px] border border-white/80 bg-white p-5 shadow-[0_28px_90px_rgba(15,23,42,0.24)] sm:p-6 ${styles.panel}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="flex justify-between items-start mb-6">
+        <div className={`mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4 sm:mb-6 ${styles.header}`}>
           <div>
-            <h2 className="text-xl font-bold">Publish Details</h2>
+            <h2 className="text-xl font-extrabold tracking-tight text-slate-950">Publish Details</h2>
 
-            <div className="text-sm text-gray-500 mt-1">
+            <div className="mt-1.5 text-sm text-slate-500">
               {publishedCount}
               {" Published • "}
               {failedCount}
@@ -109,10 +92,7 @@ export default function PublishDetailsModal({
           </div>
 
           <button
-            className="
-              text-xl
-              hover:text-gray-600
-            "
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500" aria-label="Close publish details"
             onClick={onClose}
           >
             ✕
@@ -120,7 +100,7 @@ export default function PublishDetailsModal({
         </div>
 
         {/* TARGETS */}
-        <div className="space-y-4">
+        <div className={`space-y-3.5 sm:space-y-4 ${styles.targets}`}>
           {targets.map((target) => {
             const canRetry =
               [
@@ -136,13 +116,9 @@ export default function PublishDetailsModal({
             return (
               <div
                 key={target.id}
-                className="
-                    border
-                    rounded-xl
-                    p-5
-                  "
+                className={`rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_5px_18px_rgba(15,23,42,0.025)] transition hover:border-violet-200 sm:p-5 ${styles.targetCard}`}
               >
-                <div className="flex gap-3">
+                <div className="flex min-w-0 gap-3 sm:gap-3.5">
                   {target.platform === "instagram" && (
                     <FaInstagram className="text-pink-500 text-2xl mt-1" />
                   )}
@@ -163,17 +139,17 @@ export default function PublishDetailsModal({
                     <GoogleBusinessIcon className="text-green-600 text-2xl mt-1" />
                   )}
 
-                  <div className="flex-1">
-                    <div className="font-semibold">{target.account_name}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="break-words font-bold tracking-tight text-slate-900">{target.account_name}</div>
 
-                    <div className="text-sm text-gray-500 capitalize">
+                    <div className="mt-0.5 text-sm capitalize text-slate-500">
                       {target.platform}
                     </div>
 
-                    <div className="mt-4 space-y-2 text-sm">
+                    <div className="mt-4 space-y-2.5 text-sm leading-6 text-slate-600">
                       {/* STATUS */}
                       <div>
-                        <span className="font-semibold">Status:</span>{" "}
+                        <span className="font-bold text-slate-800">Status:</span>{" "}
                         {target.status === "published" && "Published"}
                         {target.status === "scheduled" && "Scheduled"}
                         {target.status === "processing" && "Processing"}
@@ -181,7 +157,7 @@ export default function PublishDetailsModal({
                         {target.status === "failure_handler_crashed" &&
                           "System Error"}
                         {target.status === "permanent_failed" && (
-                          <span className="text-red-600 font-semibold">
+                          <span className="font-semibold text-rose-600">
                             Automatic retries exhausted
                           </span>
                         )}
@@ -194,7 +170,7 @@ export default function PublishDetailsModal({
                             (target.manual_retry_count ?? 0) > 0))) && (
                         <>
                           <div>
-                            <span className="font-semibold">
+                            <span className="font-bold text-slate-800">
                               Automatic retries:
                             </span>{" "}
                             {target.status === "permanent_failed"
@@ -234,9 +210,9 @@ export default function PublishDetailsModal({
                       {/* ERROR */}
                       {target.publish_message && (
                         <>
-                          <div className="font-semibold mt-4">Last error:</div>
+                          <div className="mt-4 font-bold text-slate-800">Last error:</div>
 
-                          <div className="text-red-500 break-all">
+                          <div className="break-all rounded-xl bg-rose-50 px-3 py-2 text-rose-700">
                             {target.publish_message}
                           </div>
                         </>
@@ -245,37 +221,23 @@ export default function PublishDetailsModal({
 
                     {needsReconnect(target.publish_message) && (
                       <div
-                        className="
-      mt-4
-      p-3
-      rounded-lg
-      bg-yellow-50
-      border
-      border-yellow-300
-    "
+                        className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5"
                       >
-                        <div className="font-medium text-yellow-800">
+                        <div className="font-bold text-amber-900">
                           ⚠ {target.platform} session expired
                         </div>
 
-                        <div className="text-sm text-yellow-700 mt-1">
+                        <div className="mt-1 text-sm leading-5 text-amber-800">
                           This error cannot be fixed by retrying. Please
                           reconnect your account.
                         </div>
                       </div>
                     )}
 
-                    <div className="flex gap-3 mt-5">
+                    <div className="mt-5 flex flex-wrap gap-2.5">
                       {canRetry && !needsReconnect(target.publish_message) && (
                         <button
-                          className="
-                              bg-yellow-500
-                              hover:bg-yellow-600
-                              text-white
-                              px-4
-                              py-2
-                              rounded
-                            "
+                          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#c7f36b] px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-[#aee94c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
                           onClick={async () => {
                             const response = await fetch(
                               `/api/post-targets/${target.id}/retry`,
@@ -312,14 +274,7 @@ export default function PublishDetailsModal({
 
                       {needsReconnect(target.publish_message) && (
                         <button
-                          className="
-      bg-blue-600
-      hover:bg-blue-700
-      text-white
-      px-4
-      py-2
-      rounded
-    "
+                          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
                           onClick={() => {
                             if (
                               target.platform === "facebook" ||
