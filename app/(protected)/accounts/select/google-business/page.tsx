@@ -1,5 +1,7 @@
 "use client";
 
+import { DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
+
 import { useEffect, useState } from "react";
 
 type GoogleBusinessLocation = {
@@ -96,39 +98,24 @@ export default function GoogleBusinessSelectionPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading Google Business locations...</div>;
+    return <DizitoPage className="px-4 sm:px-6"><DizitoState kind="empty" title="Loading Google Business locations" description="Please wait while available resources are loaded." /></DizitoPage>;
   }
 
   if (locations.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto p-8">
+      <DizitoPage className="max-w-4xl px-4 sm:px-6">
         <div className="border rounded-xl bg-white p-10 text-center">
-          <div className="text-5xl mb-4">📍</div>
-
-          <h1 className="text-2xl font-bold">No Business Locations Found</h1>
-
-          <p className="text-gray-500 mt-3">
-            Make sure your Google account has at least one Business Profile
-            location.
-          </p>
-        </div>
-      </div>
+      </DizitoPage>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-2">
-        Select Google Business Locations
-      </h1>
-
-      <p className="text-gray-500 mb-8">
-        Choose which Google Business locations to connect.
-      </p>
+      <DizitoPageHeader eyebrow="Connected accounts" title="Select Google Business locations" description="Choose which Google Business locations to connect." />
 
       <div className="space-y-4">
         {locations.map((location) => (
-          <div key={location.id} className="border rounded-lg p-5 bg-white">
+          <div key={location.id} className="dizito-card">
             <div className="flex justify-between items-start">
               <div>
                 <div className="font-semibold text-lg">📍 {location.name}</div>
@@ -163,11 +150,11 @@ export default function GoogleBusinessSelectionPage() {
         ))}
       </div>
 
-      <div className="mt-8 flex items-center gap-4">
+      <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
         <button
           disabled={connecting}
           onClick={connectLocations}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg disabled:opacity-50"
+          className="dizito-button dizito-button-primary disabled:opacity-50"
         >
           {connecting
             ? "Connecting..."
@@ -178,6 +165,6 @@ export default function GoogleBusinessSelectionPage() {
           Selected: {selectedCount()} location(s)
         </div>
       </div>
-    </div>
+    </DizitoPage>
   );
 }
