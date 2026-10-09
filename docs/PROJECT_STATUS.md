@@ -1,3 +1,9 @@
+## 2026-10-09 — Fix content item aggregate query
+
+- Fixed PostgreSQL `42803` in `lib/marketing/contentItems.ts` by grouping joined campaign and offer tables by their primary keys (`ci.id, c.id, o.id`) in both list and detail queries. This preserves the existing tenant-scoped joins and distinct aggregations while satisfying PostgreSQL grouping rules.
+- Commit: `69d158aa9e2971f6849da89eba3c60eced8c8279`.
+- GitHub CI for this exact commit has not yet been confirmed. Browser/API smoke tests remain pending.
+
 ## 2026-10-09 — Marketing content/attribution migrations applied to production
 
 - Follow-up runtime errors showed additional marketing schema migrations were absent: `marketing_customer_actions`, `marketing_asset_metadata`, `marketing_content_items`, and related strategy/content/attribution tables.
