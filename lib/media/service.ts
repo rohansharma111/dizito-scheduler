@@ -3,7 +3,6 @@ import { mediaCloudinary } from "./cloudinary";
 import { CreateMediaInput, CompleteDirectUploadInput, UploadMediaInput } from "./types";
 import { getUploadPolicy } from "./upload-policy";
 import { matchesDeclaredMediaType } from "../security/media-signature";
-import { matchesDeclaredMediaType } from "../security/media-signature";
 
 export class MediaService {
   async uploadMedia(input: UploadMediaInput) {
