@@ -35,9 +35,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Reject obviously oversized declared bodies before multipart parsing allocates buffers.
-    // Defense in depth only: requests without Content-Length still need an upstream/runtime
-    // body-size limit because chunked bodies can bypass this check.
+    // Reject obviously oversized declared bodies before reading the stream. The streamed
+    // byte counter below enforces the same limit when Content-Length is absent.
     const contentLength = request.headers.get("content-length");
     if (contentLength !== null) {
       if (!/^\d+$/.test(contentLength)) {
