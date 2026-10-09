@@ -1,6 +1,7 @@
 import { mediaRepository } from "./repository";
 import { mediaCloudinary } from "./cloudinary";
 import { CreateMediaInput, CompleteDirectUploadInput, UploadMediaInput } from "./types";
+import { getUploadPolicy } from "./upload-policy";
 
 export class MediaService {
   async uploadMedia(input: UploadMediaInput) {
@@ -46,7 +47,7 @@ export class MediaService {
       throw new Error("Cloudinary resource ownership verification failed");
     }
 
-    const normalizedMimeType = input.mimeType.toLowerCase();
+    const normalizedMimeType = input.mimeType.trim().toLowerCase();
     const expectedResourceType = normalizedMimeType.startsWith("video/") ? "video" : "image";
     const resourceType = resource.resource_type;
     if (resourceType !== expectedResourceType) {
@@ -67,8 +68,9 @@ export class MediaService {
       throw new Error("Cloudinary resource format does not match the declared media type");
     }
 
-    if (!Number.isFinite(resource.bytes) || Number(resource.bytes) <= 0) {
-      throw new Error("Cloudinary resource size verification failed");
+    const uploadPolicy = getUploadPolicy(normalizedMimeType, resource.bytes as number);
+    if (!uploadPolicy.allowed || uploadPolicy.resourceType !== resourceType) {
+      throw new Error("Cloudinary resource size or upload policy verification failed");
     }
 
     const media: CreateMediaInput = {
