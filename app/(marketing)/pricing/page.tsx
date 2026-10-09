@@ -11,30 +11,48 @@ const fallbackPlans = [
   { code: "pro", name: "Pro", price_minor: 199900, trial_days: 7, description: "For businesses running a serious growth engine.", social: 25, publishing: 2000, ai: 1000 },
 ];
 
+function isMissingBillingRelation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "42P01"
+  );
+}
+
 export default async function PricingPage() {
   const session = await getServerSession(authOptions);
-  const plans = await BillingRepository.listPublicPlans();
+  let planRows: typeof fallbackPlans;
 
-  const planRows = plans.length
-    ? await Promise.all(
-        plans.map(async (plan) => {
-          const values = await pool.query(
-            `SELECT be.key, bpe.value
-             FROM billing_plan_entitlements bpe
-             JOIN billing_entitlements be ON be.id = bpe.entitlement_id
-             WHERE bpe.plan_id = $1`,
-            [plan.id],
-          );
-          const map = Object.fromEntries(values.rows.map((row) => [row.key, row.value]));
-          return {
-            ...plan,
-            social: Number(map["channels.social.max"] ?? 0),
-            publishing: Number(map["publishing.monthly.max"] ?? 0),
-            ai: Number(map["ai.actions.monthly.max"] ?? 0),
-          };
-        }),
-      )
-    : fallbackPlans;
+  try {
+    const plans = await BillingRepository.listPublicPlans();
+    planRows = plans.length
+      ? await Promise.all(
+          plans.map(async (plan) => {
+            const values = await pool.query(
+              `SELECT definition.key, plan_value.value
+               FROM billing_plan_entitlement_values plan_value
+               JOIN billing_entitlement_definitions definition
+                 ON definition.id = plan_value.entitlement_id
+               WHERE plan_value.plan_id = $1`,
+              [plan.id],
+            );
+            const map = Object.fromEntries(values.rows.map((row) => [row.key, row.value]));
+            return {
+              ...plan,
+              social: Number(map["channels.social.max"] ?? 0),
+              publishing: Number(map["publishing.monthly.max"] ?? 0),
+              ai: Number(map["ai.actions.monthly.max"] ?? 0),
+            };
+          }),
+        )
+      : fallbackPlans;
+  } catch (error) {
+    // Keep the public pricing page available before migration 021 is applied.
+    // Do not hide unrelated database failures.
+    if (!isMissingBillingRelation(error)) throw error;
+    planRows = fallbackPlans;
+  }
 
   const currentPlan = session?.user
     ? (await pool.query("SELECT plan FROM users WHERE id = $1", [(session.user as any).id])).rows[0]?.plan ?? "free"
