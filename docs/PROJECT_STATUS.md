@@ -1,3 +1,10 @@
+## 2026-10-09 — Post-merge CI fix: billing fallback catalog test
+
+- The first post-merge Quality Checks run failed one test in `lib/billing/schema-compatibility.test.ts`: it compared fallback plan codes against `Object.keys(LEGACY_PLAN_TO_V1)`, which intentionally includes the legacy alias `creator` in addition to canonical V1 plan codes.
+- Corrected the assertion to compare the fallback catalog keys with `BILLING_PLAN_CODES`. This fixes the test contract without changing billing runtime behavior or the legacy `creator` → `growth` mapping.
+- Direct-main commit: `017d932d4a908f411a6d61ca340664302558a728`.
+- Validate passed on merge commit `66338466bb3512f5caf28219ca249d7d1b143254`; Quality Checks failed only at the test step (189 passed, 1 failed). Fresh CI for this test correction is pending; do not mark it green until new runs finish.
+
 ## 2026-10-09 — Billing API schema mismatch compatibility (main; runtime connection still to verify)
 
 - Added a guarded legacy-compatible response to `GET /api/billing` when the connected database cannot see the canonical V1 billing tables or subscription linkage column. The response uses the legacy plan mirror and matching static catalog/entitlements instead of returning HTTP 500 for missing canonical relations.
