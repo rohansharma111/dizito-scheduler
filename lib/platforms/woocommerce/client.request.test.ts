@@ -49,16 +49,18 @@ describe("wooCommerceRequest", () => {
       ),
     );
 
-    await expect(
-      wooCommerceRequest(
-        {
-          storeUrl: "https://store.example.com",
-          consumerKey: "ck_test",
-          consumerSecret: "cs_test",
-        },
-        "system_status",
-      ),
-    ).rejects.toThrow("WooCommerce request failed with status 401");
+    const error = await wooCommerceRequest(
+      {
+        storeUrl: "https://store.example.com",
+        consumerKey: "ck_test",
+        consumerSecret: "cs_test",
+      },
+      "system_status",
+    ).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("WooCommerce request failed (401)");
+    expect((error as Error).message).not.toContain("Invalid API credentials");
   });
 
   it("rejects DNS resolutions into private networks before calling fetch", async () => {
