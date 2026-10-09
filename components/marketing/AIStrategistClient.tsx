@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 
 type Strategy = {
@@ -11,7 +11,7 @@ type Strategy = {
 };
 
 export default function AIStrategistClient() {
-  const [strategy, setStrategy] = useState<Strategy | null>(null);
+  const [strategy, setStrategy] = useState<Strategy | null>(null);\n  const [aiEnabled, setAiEnabled] = useState(false);\n  useEffect(() => { fetch("/api/marketing/ai-status").then((response) => response.json()).then((data) => setAiEnabled(data.enabled === true)).catch(() => setAiEnabled(false)); }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [planning, setPlanning] = useState(false);
@@ -50,11 +50,11 @@ export default function AIStrategistClient() {
 
   return <main className="dizito-page space-y-5">
     <header className="dizito-card dizito-card-ai">
-      <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-3 text-blue-600"><Sparkles size={22} /></div><div><p className="text-xs font-bold uppercase tracking-widest text-gray-500">AI Marketing Operator</p><h1 className="mt-1 text-2xl font-bold text-gray-900">AI Strategist</h1><p className="mt-1 max-w-3xl text-sm text-gray-500">Turn your Business Brain and measured marketing outcomes into an evidence-aware strategy. Recommendations are advisory only.</p></div></div>
-      <button onClick={generate} disabled={loading || planning} className="dizito-button dizito-button-ai mt-5">{loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}{loading ? "Analyzing…" : "Generate Strategy"}</button>
+      <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-3 text-blue-600"><Sparkles size={22} /></div><div><p className="text-xs font-bold uppercase tracking-widest text-gray-500">Marketing workspace</p><div className="mt-1 flex flex-wrap items-center gap-2"><h1 className="text-2xl font-bold text-gray-900">AI Strategist</h1>{!aiEnabled && <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700">Coming soon</span>}</div><p className="mt-1 max-w-3xl text-sm text-gray-500">Turn your Business Brain and measured marketing outcomes into an evidence-aware strategy. Recommendations are advisory only.</p></div></div>
+      <button onClick={generate} disabled={!aiEnabled || loading || planning} title={!aiEnabled ? "AI features will be enabled when configured" : "Generate strategy"} className="dizito-button dizito-button-ai mt-5 disabled:cursor-not-allowed disabled:opacity-50">{loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}{!aiEnabled ? "AI Strategy · Coming soon" : loading ? "Analyzing…" : "Generate Strategy"}</button>
       {strategy && <button onClick={buildWeek} disabled={planning} className="dizito-button dizito-button-secondary ml-3 mt-5">{planning ? "Opening weekly planner…" : "Build This Week"}</button>}
     </header>
-    {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+    {!aiEnabled && <section className="dizito-card"><h2 className="text-lg font-bold text-gray-900">Keep moving without AI</h2><p className="mt-2 text-sm leading-6 text-gray-600">Your saved business context, goals, products and campaigns are still useful. Build a structured weekly plan from editable templates now; AI strategy will be enabled later without removing the manual workflow.</p><div className="mt-4 flex flex-wrap gap-3"><a href="/generate-my-week" className="dizito-button dizito-button-primary">Build a template week</a><a href="/business-brain" className="dizito-button dizito-button-secondary">Update Business Brain</a><a href="/campaigns" className="dizito-button dizito-button-secondary">Review campaigns</a></div></section>}\n    {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
     {strategy && <>
       <section className="dizito-card"><h2 className="text-lg font-semibold text-gray-900">Strategy</h2><p className="mt-3 text-sm leading-6 text-gray-700">{strategy.strategySummary}</p></section>
       <section className="rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-lg font-semibold text-gray-900">Priorities</h2><div className="mt-4 space-y-3">{strategy.priorities.map((item, index) => <article key={index} className="rounded-xl border p-4"><div className="font-semibold text-gray-900">{item.priority}</div><p className="mt-1 text-sm text-gray-600">{item.rationale}</p><p className="mt-2 text-xs text-gray-500">{item.goalId ? <span>Goal #{item.goalId}</span> : "No specific goal"}{item.campaignId ? <> · <a href={`/campaigns?focus=${item.campaignId}`} className="font-semibold underline">Campaign #{item.campaignId}</a></> : ""}</p></article>)}</div></section>
