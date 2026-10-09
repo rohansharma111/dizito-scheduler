@@ -4,6 +4,7 @@ import { Post } from "../types";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPinterest } from "react-icons/fa";
 import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 import { Eye, Pencil, Trash2, Copy, CalendarPlus } from "lucide-react";
+import styles from "./PostLists.module.css";
 
 export default function DraftPosts({
   posts,
@@ -50,17 +51,11 @@ export default function DraftPosts({
 
   if (drafts.length === 0) {
     return (
-      <div className="mt-8">
-        <h3 className="text-xl font-bold mb-4">Draft Posts</h3>
+      <div className={`mt-8 ${styles.root}`}>
+        <h3 className={`mb-4 text-xl font-extrabold tracking-tight text-slate-950 ${styles.heading}`}>Draft Posts</h3>
 
         <div
-          className="
-          bg-white
-          border
-          rounded-xl
-          p-12
-          text-center
-        "
+          className={`bg-white border rounded-2xl p-12 text-center ${styles.emptyState}`}
         >
           <div className="text-5xl mb-4">📝</div>
 
@@ -72,16 +67,7 @@ export default function DraftPosts({
 
           <a
             href="#draft"
-            className="
-    mt-6
-    bg-blue-600
-    text-white
-    px-5
-    py-3
-    rounded-lg
-    hover:bg-blue-700
-    inline-block
-  "
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-[#c7f36b] px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-[#9fda35]"
           >
             Create Draft
           </a>
@@ -91,8 +77,8 @@ export default function DraftPosts({
   }
 
   return (
-    <div className="mt-8">
-      <h3 className="text-xl font-bold mb-4">Draft Posts</h3>
+    <div className={`mt-8 ${styles.root}`}>
+      <h3 className={`mb-4 text-xl font-extrabold tracking-tight text-slate-950 ${styles.heading}`}>Draft Posts</h3>
 
       {/* MOBILE */}
       <div className="md:hidden space-y-4">
@@ -259,7 +245,7 @@ export default function DraftPosts({
 
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <table className="w-full border">
+        <table className={`w-full border ${styles.table}`}>
           <thead>
             <tr className="bg-gray-100">
               <th className="border p-2">Post</th>
