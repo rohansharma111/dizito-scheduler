@@ -3,16 +3,16 @@
 **Project:** Dizito — AI Commerce Operating System  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Current default branch:** `main`  
-**Latest verified code checkpoint:** `d081d74f841bbd725cfabc7559bb6f55f19f031f`  
+**Latest verified code checkpoint:** `8904b46bd399b677456489ff9dd48473cd0b967b`  
 **Last refreshed:** 2026-10-09
 
 This document is persistent repository context for Codex and future development sessions. It is a current-state guide, not a substitute for inspecting the actual repository.
 
 ## 0. Current validation checkpoint — 2026-10-09
 
-- Latest verified code checkpoint: `d081d74f841bbd725cfabc7559bb6f55f19f031f` (`docs: clarify streamed upload size enforcement`), following streamed-upload route regression coverage in `9f6c159`.
+- Latest verified code checkpoint: `8904b46bd399b677456489ff9dd48473cd0b967b` (`test: cover signed direct upload scope`), after signed-upload scope and completion-replay hardening.
 - GitHub Actions **Validate** and **Quality Checks** passed for the route-test commit: [Validate run 37904899166](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904899166) and [Quality Checks run 37904899183](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904899183). Both workflows also passed on the follow-up comment cleanup: [Validate run 37904920123](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904920123) and [Quality Checks run 37904920004](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904920004).
-- Streamed server-proxy upload bodies are byte-capped before multipart parsing, including requests without `Content-Length`; a route test covers 413 rejection for oversized chunked bodies. Platform ingress limits remain additional defense. No production deployment, production DB change, or browser QA is implied by CI success.
+- Streamed server-proxy upload bodies are byte-capped before multipart parsing, including requests without `Content-Length`; a route test covers 413 rejection for oversized chunked bodies. Signed direct upload is restricted to video; images remain on the server-proxy path with file-signature checks. Direct-upload completion validates provider type/format/ownership/size before idempotent replay. Validate and Quality Checks passed on the latest checkpoint (runs 37910264539 and 37910264341). No production deployment, production DB change, external provider mutation, or browser QA is implied by CI success.
 - `merge/meesho-into-main` is fully behind current `main` (635 commits behind, 0 ahead).
 - Shopify publish recovery now uses listing sync claims consistently; do not bypass `claimProductListingSync` / `updateProductListingSyncState` ownership checks.
 
