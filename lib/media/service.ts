@@ -57,6 +57,11 @@ export class MediaService {
       throw new Error("Cloudinary resource ownership verification failed");
     }
 
+    // Completion callbacks can be retried by clients after a timeout. Reuse the
+    // existing user-owned record rather than inserting duplicate library entries.
+    const existing = await mediaRepository.findByCloudinaryPublicId(input.userId, input.publicId);
+    if (existing) return existing;
+
     const normalizedMimeType = input.mimeType.trim().toLowerCase();
     const expectedResourceType = normalizedMimeType.startsWith("video/") ? "video" : "image";
     const resourceType = resource.resource_type;
