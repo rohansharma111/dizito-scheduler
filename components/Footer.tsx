@@ -40,7 +40,7 @@ export default function Footer() {
               <ul className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 transition hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
+                    <Link href={link.href} className="group inline-flex items-center gap-1 text-sm font-semibold text-slate-600 transition hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
                       {link.label}<ArrowUpRight size={13} className="opacity-0 transition group-hover:opacity-100" />
                     </Link>
                   </li>
