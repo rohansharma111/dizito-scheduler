@@ -92,7 +92,7 @@ Coverage reviewed on 2026-10-09:
 
 Remaining evidence gaps:
 - Run the full current test suite and preserve CI links for the exact code SHA after any test additions.
-- Add/verify a deterministic conflict test for two listings competing for the same external product ID and concurrent reconciliation attempts.
+- CI verification for the new deterministic external-ID conflict and concurrent-reconciliation race-guard tests is pending for the current code SHA.
 - Run provider contract checks against a designated WooCommerce test store or a deterministic HTTP mock for simple/variable products, auth/validation errors, malformed responses, and interrupted responses.
 - Browser/API verification is distinct from unit tests; record it separately.
 
@@ -112,3 +112,10 @@ The WooCommerce publish path must not be labelled production-ready until:
 - Added a publish-service regression test proving a listing already linked to a WooCommerce external ID is rejected with `LISTING_ALREADY_PUBLISHED` before credentials are loaded or a provider mutation is attempted.
 - Existing publish flow reserves an idempotency-scoped attempt before the provider call; started/ambiguous attempts require reconciliation, completed attempts replay without a provider call, and external-ID conflicts are checked under an advisory transaction lock. Reconciliation verifies provider identity/SKU and uses row-count guards with transaction rollback.
 - This is source/test coverage review, not a claim of live-store publish verification. No provider write was triggered.
+
+
+## 2026-10-09 — Reconciliation conflict/race regressions
+
+- Added an integration-style test proving reconciliation rolls back and performs no listing/attempt updates when another listing already owns the WooCommerce external ID.
+- Added a race-guard test proving a reconciliation request that acquires the attempt lock after another request completed returns `PUBLISH_ATTEMPT_ALREADY_RECONCILED` and does not apply a second set of updates.
+- CI for the exact test commit is pending; these mocked database tests do not substitute for provider contract checks or live-store verification.
