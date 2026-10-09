@@ -93,7 +93,7 @@ Coverage reviewed on 2026-10-09:
 Remaining evidence gaps:
 - Run the full current test suite and preserve CI links for the exact code SHA after any test additions.
 - Deterministic external-ID conflict and concurrent-reconciliation race-guard tests are committed; CI verification for the latest test SHA is pending.
-- HTTP contract tests cover simple- and variable-product creation request shapes, external-ID/SKU lookup encoding, REST-route fallback after 404, sanitized authentication and provider validation errors, and aborted requests. Malformed successful responses and real test-store verification remain open.
+- HTTP contract tests cover simple- and variable-product creation request shapes, external-ID/SKU lookup encoding, REST-route fallback after 404, sanitized authentication and provider validation errors, and aborted requests. A malformed 2xx response is now explicitly covered at the client and publish-service boundaries; real test-store verification remains open.
 - Browser/API verification is distinct from unit tests; record it separately.
 
 ## Exit criteria
@@ -133,3 +133,10 @@ The WooCommerce publish path must not be labelled production-ready until:
 - Added HTTP-mock tests for a variable product payload with variation attributes, a provider 400 validation response, and the rule that non-404 errors do not trigger the alternate REST-route request.
 - These are request/response contract tests only; they do not create provider products or validate that every WooCommerce installation accepts a particular payload.
 - CI is pending for the latest test commit.
+
+
+## 2026-10-09 — Malformed successful publish response safety
+
+- Fixed a duplicate-creation risk: once the WooCommerce create request returns successfully, the publish attempt is now treated as potentially mutated before validating the response product ID. Missing/invalid IDs therefore leave the attempt ambiguous and require reconciliation instead of marking it safely failed and permitting a retry.
+- Added regression coverage for a malformed successful HTTP body and for the publish service retaining an ambiguous/reconciliation-required state when the create response has no product ID.
+- No live WooCommerce request or product mutation was performed. Controlled test-store verification remains a release gate.
