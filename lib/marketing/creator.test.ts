@@ -96,4 +96,15 @@ describe("marketing Creator grounding", () => {
       topic: "Topic",
     })).rejects.toThrow("Invalid AI Creator response");
   });
+
+  it("fails closed when the model returns the wrong JSON shape", async () => {
+    queryMock.mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 100, campaign_name: null, campaign_objective: null, campaign_audience: null, campaign_cta: null, product_ids: [], offer_id: null }] });
+    createMock.mockResolvedValueOnce({ output_text: JSON.stringify({ body: 123 }) });
+    const { generateMarketingCopy } = await import("@/lib/marketing/creator");
+    await expect(generateMarketingCopy(42, {
+      contentType: "promotional",
+      format: "post",
+      topic: "Topic",
+    })).rejects.toThrow("Invalid AI Creator response");
+  });
 });
