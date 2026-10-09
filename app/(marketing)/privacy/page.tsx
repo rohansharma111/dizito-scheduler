@@ -1,13 +1,15 @@
+import { DizitoPage, DizitoPageHeader, DizitoCard } from "@/components/dizito/DizitoUI";
+
 export default function PrivacyPage() {
   return (
-    <main className="max-w-4xl mx-auto py-20 px-6">
-      <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
+    <DizitoPage className="max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+      <DizitoPageHeader eyebrow="Dizito policies" title="Privacy policy" description="Information about how Dizito operates and the terms that apply to using the service." />
 
-      <div className="space-y-6 text-gray-700 leading-7">
+      <DizitoCard className="space-y-6 text-sm leading-7 text-slate-600 sm:text-base">
         <p>Last Updated: July 2026</p>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-2">Introduction</h2>
+          <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">Introduction</h2>
 
           <p>
             Dizito is a social media scheduling platform that allows users to
@@ -143,7 +145,7 @@ export default function PrivacyPage() {
 
           <a className="font-medium" href="mailto:contact@dizito.in">contact@dizito.in</a>
         </section>
-      </div>
-    </main>
+      </DizitoCard>
+    </DizitoPage>
   );
 }
