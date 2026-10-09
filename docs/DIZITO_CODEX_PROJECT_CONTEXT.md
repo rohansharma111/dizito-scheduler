@@ -658,3 +658,10 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - Corrected a navigation formatting defect in SidebarClient.tsx during source audit; no product behavior was changed.
 - Workstream remains UI-only: no provider adapters, backend contracts, billing logic, commerce architecture, media implementation, or database schema changes were introduced.
 - Runtime verification remains pending outside this environment.
+
+
+## 2026-10-09 — WooCommerce product linking verification checkpoint
+
+- Product-detail WooCommerce catalog now supports an explicit persistent link to a canonical Dizito product through existing `product_listings`, with tenant-scoped authorization, external-product read verification, transaction-level conflict serialization, and provider metadata snapshot. No schema migration was required.
+- User confirmed linking and persistence in the running application. Both CI workflows passed on commit `e040cb864030c28c1ff26b6389d1f5f8b1e9d506`: Validate run `37970471607`, Quality Checks run `37970471741`.
+- Linking does not write to WooCommerce; listing remains draft/pending. Next continuation is controlled verification of WooCommerce draft/publish/reconcile safeguards, idempotency and failure handling. Keep live writes disabled until an approved safe test case is explicitly authorized.
