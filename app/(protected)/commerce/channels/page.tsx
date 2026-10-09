@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { DizitoCard, DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
 
 interface CommerceChannel {
   id: string;
@@ -131,15 +132,10 @@ export default function CommerceChannelsPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Commerce Channels</h1>
-        <p className="text-gray-600 mt-2">
-          Connect a sales channel without changing the canonical Dizito product catalog.
-        </p>
-      </div>
+    <DizitoPage className="px-4 sm:px-6">
+      <DizitoPageHeader eyebrow="Commerce" title="Commerce channels" description="Connect sales channels without changing your canonical Dizito product catalog." />
 
-      <div className="border rounded-lg p-6 mb-8">
+      <DizitoCard className="mb-5">
         <h2 className="text-xl font-semibold">Connect Shopify</h2>
         <p className="text-sm text-gray-600 mt-1">
           Enter the store&apos;s myshopify.com domain to begin Shopify authorization.
@@ -228,7 +224,7 @@ export default function CommerceChannelsPage() {
             </div>
           );
         })}
-      </div>
-    </div>
+      </DizitoCard>
+    </DizitoPage>
   );
 }
