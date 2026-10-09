@@ -10,6 +10,7 @@ import {
 import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 
 import { Pencil, Trash2, Copy, Eye, RotateCcw } from "lucide-react";
+import styles from "./PostLists.module.css";
 
 type Props = {
   posts: Post[];
@@ -40,17 +41,11 @@ export default function ScheduledPosts({
 
   if (scheduledPosts.length === 0) {
     return (
-      <div className="mt-8">
-        <h3 className="text-xl font-bold mb-4">Scheduled / Published Posts</h3>
+      <div className={`mt-8 ${styles.root}`}>
+        <h3 className={`mb-4 text-xl font-extrabold tracking-tight text-slate-950 ${styles.heading}`}>Scheduled / Published Posts</h3>
 
         <div
-          className="
-          bg-white
-          border
-          rounded-xl
-          p-12
-          text-center
-        "
+          className={`bg-white border rounded-2xl p-12 text-center ${styles.emptyState}`}
         >
           <div className="text-5xl mb-4">🚀</div>
 
@@ -62,16 +57,7 @@ export default function ScheduledPosts({
 
           <a
             href="#draft"
-            className="
-    mt-6
-    bg-blue-600
-    text-white
-    px-5
-    py-3
-    rounded-lg
-    hover:bg-blue-700
-    inline-block
-  "
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-[#c7f36b] px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-[#9fda35]"
           >
             Create Post
           </a>
@@ -81,12 +67,12 @@ export default function ScheduledPosts({
   }
 
   return (
-    <div className="mt-8">
-      <h3 className="text-xl font-bold mb-4">Scheduled / Published Posts</h3>
+    <div className={`mt-8 ${styles.root}`}>
+      <h3 className={`mb-4 text-xl font-extrabold tracking-tight text-slate-950 ${styles.heading}`}>Scheduled / Published Posts</h3>
 
       {/* DESKTOP */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border">
+        <table className={`w-full border ${styles.table}`}>
           <thead>
             <tr className="bg-gray-100">
               <th className="border p-2">Post</th>
