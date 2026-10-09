@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import VariantModal from "./VariantModal";
 import DeleteVariantDialog from "./DeleteVariantDialog";
+import TablePagination from "@/components/dizito/TablePagination";
 
 interface Variant {
   id: number;
@@ -36,6 +37,10 @@ export default function ProductVariants({
   initialVariants,
 }: ProductVariantsProps) {
   const [variants, setVariants] = useState<Variant[]>(initialVariants);
+  const [variantsPage, setVariantsPage] = useState(1);
+  const [variantsPageSize, setVariantsPageSize] = useState(25);
+  const currentVariantsPage = Math.min(variantsPage, Math.max(1, Math.ceil(variants.length / variantsPageSize)));
+  const paginatedVariants = variants.slice((currentVariantsPage - 1) * variantsPageSize, currentVariantsPage * variantsPageSize);
 
   const [showModal, setShowModal] = useState(false);
 
@@ -161,7 +166,7 @@ export default function ProductVariants({
               </thead>
 
               <tbody>
-                {variants.map((variant) => (
+                {paginatedVariants.map((variant) => (
                   <tr key={variant.id} className="border-b last:border-b-0">
                     <td className="px-6 py-4 font-medium">
                       {variant.name || "Default"}
@@ -231,6 +236,14 @@ export default function ProductVariants({
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={currentVariantsPage}
+            pageSize={variantsPageSize}
+            totalItems={variants.length}
+            itemLabel="variants"
+            onPageChange={setVariantsPage}
+            onPageSizeChange={(size) => { setVariantsPageSize(size); setVariantsPage(1); }}
+          />
         )}
 
         {loading && (
