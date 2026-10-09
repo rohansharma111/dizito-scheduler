@@ -1,10 +1,10 @@
-## 2026-10-09 — Signed video upload contract hardening (implementation branch; CI pending)
+## 2026-10-09 — Signed video upload contract hardening (implementation branch; CI passed)
 
 - Branch `v1/media-signed-upload-contract` changes the direct-video signature contract to generate `users/{userId}/video-{UUID}` server-side and sign `public_id`, `timestamp`, and a MIME-specific `allowed_formats` value (`mp4`, `mov,mp4`, or `m4v,mp4`). The client posts the exact signed `public_id` and format restriction to Cloudinary.
 - Added signature route regression tests for the generated user-scoped public ID, signed allowed formats, QuickTime formats, and normalized MIME handling. Existing authentication, rate limit, image rejection and shared upload-policy checks remain intact.
 - Actual production Neon schema was inspected read-only: `media_library` has no unique index on `(user_id, cloudinary_public_id)` and a duplicate scan found no current duplicates. A concurrent completion race remains possible; a unique constraint/index and duplicate-safe rollout require a separate migration review. No schema change was applied.
 - The signature changes do not enforce the requested file size at Cloudinary before ingestion. Completion still validates provider-reported bytes before persistence. Provider-side pre-ingestion size enforcement remains an explicit verification/follow-up item.
-- CI and real Cloudinary upload verification are pending. No merge, deployment, production write, migration, or provider mutation performed.
+- GitHub Actions Validate and Quality Checks passed on PR head `83d24d81203b0b948bc7f0158a12d1018f1b25c9`. Real Cloudinary upload verification remains pending. No merge, deployment, production write, migration, or provider mutation performed.
 
 ## 2026-10-09 — Signed direct-upload scope and completion replay hardening
 
