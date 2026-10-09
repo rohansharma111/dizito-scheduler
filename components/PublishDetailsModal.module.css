@@ -1,0 +1,41 @@
+.overlay {
+  animation: publish-overlay-in 150ms ease-out both;
+}
+
+.panel {
+  animation: publish-panel-in 180ms ease-out both;
+  overscroll-behavior: contain;
+}
+
+.header {
+  position: sticky;
+  top: -1.5rem;
+  z-index: 2;
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(12px);
+}
+
+.targetCard {
+  overflow-wrap: anywhere;
+}
+
+.targetCard :global(svg) {
+  flex-shrink: 0;
+}
+
+@keyframes publish-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes publish-panel-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel {
+    animation: none;
+  }
+}
