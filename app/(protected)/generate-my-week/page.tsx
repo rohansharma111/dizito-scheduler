@@ -124,6 +124,14 @@ export default function GenerateMyWeekPage() {
             supportingExperimentIds: Array.isArray(item.supportingExperimentIds)
               ? item.supportingExperimentIds.map(Number).filter((id: number) => Number.isFinite(id))
               : [],
+            externalProductReferences: selectedWooProducts.map((product) => ({
+              id: product.id,
+              name: product.name,
+              ...(product.sku ? { sku: product.sku } : {}),
+              ...(product.price ? { price: product.price } : {}),
+              ...(product.stockStatus ? { stockStatus: product.stockStatus } : {}),
+              ...(product.permalink ? { permalink: product.permalink } : {}),
+            })),
           })),
         },
       ],
