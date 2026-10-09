@@ -186,7 +186,7 @@ export default function CommerceChannelsPage() {
         ? " Sample products: " + result.products.map((product) => product.name).join(", ") + "."
         : " No products were returned in the preview.";
       setVerificationMessage(
-        `WooCommerce verified successfully${result.storeName ? ` (${result.storeName})` : ""}. Read-only product check found ${result.productCount ?? 0} product(s) total.${preview}`,
+        `WooCommerce verified successfully${result.storeName ? ` (${result.storeName})` : ""}. Read-only product check retrieved ${result.productCount ?? 0} recent product(s) (up to 5 shown).${preview}`,
       );
     } catch (verificationError) {
       setError(verificationError instanceof Error ? verificationError.message : "WooCommerce verification failed");
