@@ -1,3 +1,10 @@
+## 2026-10-09 — Media completion concurrency hardening (implementation branch)
+
+- Added `db/migrations/20261009_media_library_unique_cloudinary_public_id.sql`. It raises an exception if duplicate `(user_id, cloudinary_public_id)` pairs exist and creates a unique index only when the preflight is clean. The migration runner wraps migration files in a transaction, so the guard and index are atomic.
+- Changed `MediaRepository.create` to use the unique identity as an `ON CONFLICT DO NOTHING` boundary and return the already-created row when a concurrent request wins. It throws if the conflict occurs but the row cannot be read.
+- Added `lib/media/repository.test.ts` for insert, concurrent conflict replay, and fail-closed behavior; kept the existing signed-upload route and media-service tests intact.
+- Added `docs/MEDIA_UPLOAD_VERIFICATION.md` with controlled Cloudinary test steps and production migration gates. No production migration, provider mutation, or deployment performed. CI and real Cloudinary verification pending.
+
 ## 2026-10-09 — Signed video upload contract hardening (implementation branch; CI passed)
 
 - Branch `v1/media-signed-upload-contract` changes the direct-video signature contract to generate `users/{userId}/video-{UUID}` server-side and sign `public_id`, `timestamp`, and a MIME-specific `allowed_formats` value (`mp4`, `mov,mp4`, or `m4v,mp4`). The client posts the exact signed `public_id` and format restriction to Cloudinary.

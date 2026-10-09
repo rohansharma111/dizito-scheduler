@@ -32,6 +32,7 @@ export class MediaRepository {
       VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20
       )
+      ON CONFLICT (user_id, cloudinary_public_id) DO NOTHING
       RETURNING *
       `,
       [
@@ -58,10 +59,14 @@ export class MediaRepository {
       ],
     );
 
-     console.log("G. Query finished");
-  console.log(result.rows[0]);
+    if (result.rows[0]) return result.rows[0];
 
-    return result.rows[0];
+    // Another request may have inserted this asset after the service's
+    // idempotency lookup. The unique index turns that race into a safe replay.
+    const existing = await this.findByCloudinaryPublicId(data.userId, data.cloudinaryPublicId);
+    if (existing) return existing;
+
+    throw new Error("Media asset insert conflicted but the existing record could not be loaded.");
   }
 
   async findByCloudinaryPublicId(userId: number, publicId: string) {
