@@ -342,7 +342,6 @@ export default function PaymentTestPage() {
               {loadingPayment
                 ? "Starting..."
                 : `Pay ${formatMoney(remainingAmount, order.currency)}`}
-            </button>
             </DizitoButton>
           </>
         )}
