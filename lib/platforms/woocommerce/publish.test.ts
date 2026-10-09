@@ -180,6 +180,35 @@ describe("publishWooCommerceProduct", () => {
     expect(query).toHaveBeenCalledWith("COMMIT");
   });
 
+  it("treats a successful provider response without an ID as ambiguous to prevent duplicate creation", async () => {
+    mockOwnedWooCommerceChannel();
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "listing-1", external_id: null, publish_idempotency_key: null }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1" }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
+    const client = makeReservationClient(query);
+    mocks.pool.connect.mockResolvedValue(client);
+    mocks.getWooCommerceChannelConfig.mockResolvedValue({ config: { baseUrl: "https://shop.example" } });
+    mocks.createWooCommerceProduct.mockResolvedValue("unexpected non-JSON response");
+    mocks.pool.query.mockResolvedValue({});
+
+    await expect(publishWooCommerceProduct(7, input)).resolves.toEqual({
+      error: "PUBLISH_REQUIRES_RECONCILIATION",
+      reconciliationRequired: true,
+      message: "WooCommerce publish reached the provider but local confirmation failed",
+    });
+
+    expect(mocks.createWooCommerceProduct).toHaveBeenCalledTimes(1);
+    expect(mocks.pool.query).toHaveBeenCalledTimes(2);
+    expect(mocks.pool.query.mock.calls[1][0]).toContain("status = $1");
+    expect(mocks.pool.query.mock.calls[1][1][0]).toBe("ambiguous");
+    expect(mocks.markWooCommerceChannelError).not.toHaveBeenCalled();
+  });
+
   it("marks a network failure ambiguous without marking the channel failed", async () => {
     mockOwnedWooCommerceChannel();
 
