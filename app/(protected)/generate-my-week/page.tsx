@@ -158,7 +158,9 @@ export default function GenerateMyWeekPage() {
         }
       />
 
-      <DizitoCard tone="soft" className="mb-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Template-assisted planning is available now</h2><p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Dizito can organize your existing business data into a weekly plan without calling a paid AI provider. Review every recommendation, edit the copy manually in Marketing Content, and approve only what fits your business. AI-assisted strategy and writing are coming soon.</p></div><DizitoBadge tone="neutral">AI · Coming soon</DizitoBadge></div></DizitoCard>\n\n      {(strategyHandoff || optimizerHandoff) && (
+      <DizitoCard tone="soft" className="mb-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Template-assisted planning is available now</h2><p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Dizito can organize your existing business data into a weekly plan without calling a paid AI provider. Review every recommendation, edit the copy manually in Marketing Content, and approve only what fits your business. AI-assisted strategy and writing are coming soon.</p></div><DizitoBadge tone="neutral">AI · Coming soon</DizitoBadge></div></DizitoCard>
+
+      {(strategyHandoff || optimizerHandoff) && (
         <DizitoCard tone="ai" className="mb-5">
           <div className="flex flex-wrap items-center gap-2">
             <DizitoBadge tone="ai"><Sparkles size={13} /> AI handoff</DizitoBadge>
