@@ -9,6 +9,7 @@ import ReleaseStockModal from "./ReleaseStockModal";
 import InventoryActionsMenu from "./InventoryActionsMenu";
 import InventoryMovementHistory from "./InventoryMovementHistory";
 import { DizitoCard, DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
+import TablePagination from "@/components/dizito/TablePagination";
 
 interface InventoryItem {
   id: number;
@@ -57,6 +58,8 @@ export default function InventoryClient({
   const [search, setSearch] = useState("");
 
   const [locationId, setLocationId] = useState("all");
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const [inventoryPageSize, setInventoryPageSize] = useState(25);
 
   const filteredInventory = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -74,6 +77,8 @@ export default function InventoryClient({
       return matchesSearch && matchesLocation;
     });
   }, [inventory, search, locationId]);
+
+  const paginatedInventory = filteredInventory.slice((inventoryPage - 1) * inventoryPageSize, inventoryPage * inventoryPageSize);
 
   const totalOnHand = filteredInventory.reduce(
     (sum, item) => sum + Number(item.quantity_on_hand),
@@ -177,7 +182,7 @@ export default function InventoryClient({
           <div className="flex-1">
             <input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => { setSearch(event.target.value); setInventoryPage(1); }}
               placeholder="Search product or SKU..."
               className="
                 w-full
@@ -194,7 +199,7 @@ export default function InventoryClient({
 
           <select
             value={locationId}
-            onChange={(event) => setLocationId(event.target.value)}
+            onChange={(event) => { setLocationId(event.target.value); setInventoryPage(1); }}
             className="
               border
               rounded-lg
@@ -268,7 +273,7 @@ export default function InventoryClient({
                   </td>
                 </tr>
               ) : (
-                filteredInventory.map((item) => (
+                paginatedInventory.map((item) => (
                   <tr
                     key={item.id}
                     className="
@@ -338,6 +343,14 @@ export default function InventoryClient({
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={inventoryPage}
+          pageSize={inventoryPageSize}
+          totalItems={filteredInventory.length}
+          itemLabel="inventory items"
+          onPageChange={setInventoryPage}
+          onPageSizeChange={(size) => { setInventoryPageSize(size); setInventoryPage(1); }}
+        />
       </div>
 
       <InventoryMovementHistory locationId={locationId} />
