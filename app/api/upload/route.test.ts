@@ -66,16 +66,16 @@ describe("POST /api/upload", () => {
     expect(uploadMedia).not.toHaveBeenCalled();
   });
 
-  it("returns a safe error for malformed multipart bodies", async () => {
+  it("returns a client error for malformed multipart bodies", async () => {
     const response = await POST(new Request("http://localhost/api/upload", {
       method: "POST",
       headers: { "content-type": "multipart/form-data; boundary=missing-boundary" },
       body: "not a multipart body",
     }));
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       success: false,
-      error: "Media upload failed. Please check the file and try again.",
+      error: "Invalid multipart upload request",
     });
   });
 });
