@@ -136,6 +136,7 @@ export default function ProductVariants({
             </button>
           </div>
         ) : (
+          <>
           <div className="max-w-full overflow-x-auto overscroll-x-contain"><table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-t border-b bg-gray-50">
@@ -244,6 +245,7 @@ export default function ProductVariants({
             onPageChange={setVariantsPage}
             onPageSizeChange={(size) => { setVariantsPageSize(size); setVariantsPage(1); }}
           />
+          </>
         )}
 
         {loading && (
