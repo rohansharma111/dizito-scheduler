@@ -88,6 +88,32 @@ describe("MediaService.completeDirectUpload", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it("rejects direct uploads outside the shared byte-size policy", async () => {
+    const service = new MediaService();
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
+        resource_type: "video", format: "mp4", bytes: 1024 * 1024 * 1024 + 1,
+      },
+    })).rejects.toThrow("upload policy verification failed");
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("rejects fractional Cloudinary byte counts", async () => {
+    const service = new MediaService();
+    await expect(service.completeDirectUpload({
+      ...baseInput,
+      resource: {
+        public_id: baseInput.publicId,
+        secure_url: "https://res.cloudinary.com/example/video/upload/video-1.mp4",
+        resource_type: "video", format: "mp4", bytes: 1.5,
+      },
+    })).rejects.toThrow("upload policy verification failed");
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it("rejects a resource with a missing or invalid size", async () => {
     const service = new MediaService();
     await expect(service.completeDirectUpload({
