@@ -48,7 +48,8 @@ function prettyDate(value: string | null) {
 export default function GenerateWeekClient() {
   const [strategy, setStrategy] = useState<Strategy | null>(null);
   const [brain, setBrain] = useState<Brain>({});
-  const [loading, setLoading] = useState(false);\n  const [aiEnabled, setAiEnabled] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(false);
   const [loadingBrain, setLoadingBrain] = useState(true);
   const [approving, setApproving] = useState(false);
   const [creatorIndex, setCreatorIndex] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function GenerateWeekClient() {
   const week = useMemo(() => getWeekRange(), []);
 
   useEffect(() => {
+    fetch("/api/marketing/ai-status").then((response) => response.json()).then((data) => setAiEnabled(data.enabled === true)).catch(() => setAiEnabled(false));
     fetch("/api/marketing/business-brain")
       .then(async (response) => {
         if (!response.ok) throw new Error("Failed to load business context");
@@ -67,6 +69,32 @@ export default function GenerateWeekClient() {
       .catch(() => undefined)
       .finally(() => setLoadingBrain(false));
   }, []);
+
+  function buildTemplateWeek() {
+    setError(null);
+    setApproved(false);
+    const product = brain.products?.[0];
+    const offer = brain.offers?.find((item) => item.name);
+    const businessName = brain.profile?.businessName || "your business";
+    const slots = [
+      { topic: product ? `Meet ${product.name}` : "Introduce your business", angle: "Awareness", hook: product ? `Get to know ${product.name}` : "Here is what makes our business different", body: product ? `Meet ${product.name}\n\n[Add one verified benefit, who it helps, and what makes it useful.]` : `We are ${businessName}.\n\n[Share what you do, who you help, and what customers can expect.]`, cta: "Learn more" },
+      { topic: "Helpful tip or mini-guide", angle: "Education", hook: "A simple tip you can use today", body: "Try this: [Add one practical tip related to your product or industry.]\n\n[Explain why it helps in one or two sentences.]", cta: "Save this tip" },
+      { topic: offer ? `Highlight ${offer.name}` : "Behind the scenes", angle: "Trust", hook: offer ? `A little more about ${offer.name}` : "A look behind the scenes", body: offer ? `Here is the detail on ${offer.name}: [Add the accurate terms and who it is for.]` : "Here is a look behind the scenes: [Share a real process, team moment, or useful detail customers may not know.]", cta: "Ask us a question" },
+      { topic: "Frequently asked question", angle: "Consideration", hook: "A question we often hear", body: "Question: [Add a real customer question.]\n\nAnswer: [Write a clear, factual answer in your own words.]", cta: "Send us your question" },
+      { topic: product ? `How to use ${product.name}` : "Customer problem and solution", angle: "Action", hook: "Need help with [customer need]?", body: product ? `Here is one way to use ${product.name}: [Add simple steps and a relevant use case.]` : "If you are trying to [customer need], we can help by [describe your real service or process].", cta: "Get in touch" },
+    ];
+    const start = new Date(`${week.start}T12:00:00`);
+    const contentItems = slots.map((slot, index) => {
+      const date = new Date(start);
+      date.setDate(date.getDate() + index);
+      return { contentType: "social", format: "post", topic: slot.topic, angle: slot.angle, hook: slot.hook, body: slot.body, cta: slot.cta, plannedFor: date.toISOString().slice(0, 10) };
+    });
+    setStrategy({
+      strategySummary: `A practical, editable five-post plan for ${businessName}. These are reusable starting templates, not AI-generated copy. Personalize every bracketed instruction and verify all claims before approval.`,
+      campaigns: [{ name: `${businessName} weekly content plan`, objective: "Maintain a consistent, useful social presence", audience: "Your existing and prospective customers", offerId: offer?.id ?? null, productIds: product ? [product.id] : [], cta: "Learn more", channelStrategy: {}, contentItems }],
+    });
+    setOpenCampaign(0);
+  }
 
   async function generate() {
     setLoading(true); setApproved(false); setError(null);
@@ -92,7 +120,7 @@ export default function GenerateWeekClient() {
     finally { setLoading(false); }
   }
 
-  async function generateCopy(campaignIndex: number, contentIndex: number) {
+  async function generateCopy(campaignIndex: number, contentIndex: number) {\n    if (!aiEnabled) { setError("AI copy generation is coming soon. Edit the starter copy manually."); return; }
     if (!strategy) return;
     const item = strategy.campaigns[campaignIndex].contentItems[contentIndex];
     const campaign = strategy.campaigns[campaignIndex];
