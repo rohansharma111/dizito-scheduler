@@ -4,27 +4,10 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, Check, X } from "lucide-react";
 
 type Usage = {
-  plan: {
-    id: string;
-    name: string;
-    price: number;
-  };
-  accounts: {
-    used: number;
-    limit: number;
-    remaining: number;
-  };
-  posts: {
-    created: number;
-    published: number;
-    limit: number;
-    remaining: number | null;
-  };
-  ai: {
-    imagesGenerated: number;
-    imageLimit: number;
-    remaining: number | null;
-  };
+  plan: { id: string; name: string; price: number };
+  accounts: { used: number; limit: number; remaining: number };
+  posts: { created: number; published: number; limit: number; remaining: number | null };
+  ai: { imagesGenerated: number; imageLimit: number; remaining: number | null };
   features: {
     bulkUpload: boolean;
     retrySystem: boolean;
@@ -34,6 +17,48 @@ type Usage = {
     prioritySupport: boolean;
   };
 };
+
+function ProgressRow({
+  label,
+  value,
+  percent,
+  fillClass,
+}: {
+  label: string;
+  value: string;
+  percent: number;
+  fillClass: string;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-[13px] font-semibold text-slate-800">{label}</span>
+        <span className="shrink-0 text-[13px] font-medium tabular-nums text-slate-500">{value}</span>
+      </div>
+      <div
+        className="h-2 overflow-hidden rounded-full bg-slate-100"
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percent)}
+      >
+        <div className={`h-full rounded-full transition-all duration-300 ${fillClass}`} style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function FeatureStatus({ enabled }: { enabled: boolean }) {
+  return (
+    <span
+      aria-label={enabled ? "Included" : "Not included"}
+      className={`inline-flex h-5 w-5 items-center justify-center rounded-md ${enabled ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-500"}`}
+    >
+      {enabled ? <Check size={13} strokeWidth={2.5} /> : <X size={13} strokeWidth={2.5} />}
+    </span>
+  );
+}
 
 export default function UsageCard() {
   const [usage, setUsage] = useState<Usage | null>(null);
@@ -77,65 +102,24 @@ export default function UsageCard() {
     );
   }
 
-  const accountPercent =
-    usage.accounts.limit === 0
-      ? 0
-      : Math.min(100, (usage.accounts.used / usage.accounts.limit) * 100);
-  const postPercent =
-    usage.posts.limit === Number.MAX_SAFE_INTEGER
-      ? 0
-      : Math.min(100, (usage.posts.created / usage.posts.limit) * 100);
-  const aiPercent =
-    usage.ai.imageLimit === Number.MAX_SAFE_INTEGER
-      ? 0
-      : Math.min(100, (usage.ai.imagesGenerated / usage.ai.imageLimit) * 100);
-
-  const ProgressRow = ({
-    label,
-    value,
-    percent,
-    fillClass,
-  }: {
-    label: string;
-    value: string;
-    percent: number;
-    fillClass: string;
-  }) => (
-    <div>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="text-[13px] font-semibold text-slate-800">{label}</span>
-        <span className="shrink-0 text-[13px] font-medium tabular-nums text-slate-500">{value}</span>
-      </div>
-      <div
-        className="h-2 overflow-hidden rounded-full bg-slate-100"
-        role="progressbar"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(percent)}
-      >
-        <div className={`h-full rounded-full transition-all duration-300 ${fillClass}`} style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-  );
-
-  const FeatureStatus = ({ enabled }: { enabled: boolean }) => (
-    <span
-      aria-label={enabled ? "Included" : "Not included"}
-      className={`inline-flex h-5 w-5 items-center justify-center rounded-md ${enabled ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-500"}`}
-    >
-      {enabled ? <Check size={13} strokeWidth={2.5} /> : <X size={13} strokeWidth={2.5} />}
-    </span>
-  );
+  const accountPercent = usage.accounts.limit === 0
+    ? 0
+    : Math.min(100, (usage.accounts.used / usage.accounts.limit) * 100);
+  const postPercent = usage.posts.limit === Number.MAX_SAFE_INTEGER
+    ? 0
+    : Math.min(100, (usage.posts.created / usage.posts.limit) * 100);
+  const aiPercent = usage.ai.imageLimit === Number.MAX_SAFE_INTEGER
+    ? 0
+    : Math.min(100, (usage.ai.imagesGenerated / usage.ai.imageLimit) * 100);
 
   return (
     <section className="overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(17,24,39,0.05)]">
-      <div className="p-5 sm:p-5">
+      <div className="p-5">
         <div className="mb-7 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                <span aria-hidden="true" className="text-base leading-none">↗</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-600" aria-hidden="true">
+                <ArrowUpRight size={17} />
               </span>
               <h2 className="text-base font-extrabold tracking-tight text-slate-900">Usage</h2>
             </div>
@@ -147,25 +131,10 @@ export default function UsageCard() {
         </div>
 
         <div className="space-y-6">
-          <ProgressRow
-            label="Accounts"
-            value={`${usage.accounts.used} / ${usage.accounts.limit}`}
-            percent={accountPercent}
-            fillClass="bg-violet-500"
-          />
-          <ProgressRow
-            label="Monthly Posts"
-            value={`${usage.posts.created} / ${usage.posts.limit === Number.MAX_SAFE_INTEGER ? "∞" : usage.posts.limit}`}
-            percent={postPercent}
-            fillClass="bg-lime-500"
-          />
+          <ProgressRow label="Accounts" value={`${usage.accounts.used} / ${usage.accounts.limit}`} percent={accountPercent} fillClass="bg-violet-500" />
+          <ProgressRow label="Monthly Posts" value={`${usage.posts.created} / ${usage.posts.limit === Number.MAX_SAFE_INTEGER ? "∞" : usage.posts.limit}`} percent={postPercent} fillClass="bg-lime-500" />
           <div>
-            <ProgressRow
-              label="AI Images"
-              value={`${usage.ai.imagesGenerated} / ${usage.ai.imageLimit === Number.MAX_SAFE_INTEGER ? "∞" : usage.ai.imageLimit}`}
-              percent={aiPercent}
-              fillClass="bg-violet-500"
-            />
+            <ProgressRow label="AI Images" value={`${usage.ai.imagesGenerated} / ${usage.ai.imageLimit === Number.MAX_SAFE_INTEGER ? "∞" : usage.ai.imageLimit}`} percent={aiPercent} fillClass="bg-violet-500" />
             <p className="mt-2 text-[11px] leading-5 text-slate-500">
               {usage.ai.remaining === null
                 ? "Unlimited AI image generations"
