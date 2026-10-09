@@ -5,6 +5,7 @@ import { mediaService } from "@/lib/media/service";
 import { getUploadPolicy, IMAGE_MAX_BYTES } from "@/lib/media/upload-policy";
 import { matchesDeclaredMediaType } from "@/lib/security/media-signature";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { readRequestBodyWithLimit } from "@/lib/security/request-body";
 
 // Multipart framing and per-part headers need room beyond the 25 MiB image payload.
 const MAX_MULTIPART_BODY_BYTES = IMAGE_MAX_BYTES + 1024 * 1024;
@@ -54,9 +55,27 @@ export async function POST(request: Request) {
       }
     }
 
+    // Enforce the same cap on streamed requests that omit Content-Length.
+    const boundedBody = await readRequestBodyWithLimit(request, MAX_MULTIPART_BODY_BYTES);
+    if (!boundedBody.ok) {
+      return NextResponse.json(
+        { success: false, error: "Upload request exceeds the maximum request size. Use signed direct upload for large media." },
+        { status: 413 },
+      );
+    }
+
+    // Parse only after the complete body has passed the hard byte limit. Remove a potentially
+    // stale Content-Length header because the body is now represented by a bounded byte array.
+    const boundedHeaders = new Headers(request.headers);
+    boundedHeaders.delete("content-length");
     let formData: FormData;
     try {
-      formData = await request.formData();
+      const boundedRequest = new Request(request.url, {
+        method: "POST",
+        headers: boundedHeaders,
+        body: boundedBody.body,
+      });
+      formData = await boundedRequest.formData();
     } catch {
       return NextResponse.json({ success: false, error: "Invalid multipart upload request" }, { status: 400 });
     }
