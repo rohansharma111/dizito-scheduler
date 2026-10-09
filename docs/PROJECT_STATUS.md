@@ -1,3 +1,10 @@
+## 2026-10-09 — Billing API schema mismatch compatibility (main; runtime connection still to verify)
+
+- Added a guarded legacy-compatible response to `GET /api/billing` when the connected database cannot see the canonical V1 billing tables or subscription linkage column. The response uses the legacy plan mirror and matching static catalog/entitlements instead of returning HTTP 500 for missing canonical relations.
+- Added diagnostic logging for current database, schema, search path and missing canonical relation flags; no connection string or credential values are logged.
+- Neon production branch `br-empty-rice-ayeuugek`, database `neondb`, has migration 021 applied and was verified to contain the canonical billing plan/entitlement tables. If the deployed endpoint still reports `billing_plans` missing, inspect the deployment's `DATABASE_URL` and PostgreSQL search path; they likely do not match the migrated Neon branch/schema.
+- Regression tests are committed but not run in this session. GitHub Actions and live `GET /api/billing` verification are pending. This is a compatibility mitigation, not proof that deployment database configuration is correct.
+
 ## 2026-10-09 — Shared table pagination and bulk validation filters (committed directly to main)
 
 - Added `components/dizito/TablePagination.tsx`, a shared accessible pagination footer with 25/50/100 page sizes, previous/next controls, bounded page-number rendering, item counts, and no navigation clutter for single-page tables.
