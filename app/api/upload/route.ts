@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
-import { getUploadPolicy } from "@/lib/media/upload-policy";
+import { getUploadPolicy, IMAGE_MAX_BYTES } from "@/lib/media/upload-policy";
 import { matchesDeclaredMediaType } from "@/lib/security/media-signature";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
+
+// Multipart framing and per-part headers need room beyond the 25 MiB image payload.
+const MAX_MULTIPART_BODY_BYTES = IMAGE_MAX_BYTES + 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
@@ -29,6 +32,26 @@ export async function POST(request: Request) {
         { success: false, error: "Too many upload requests. Please try again shortly." },
         { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } },
       );
+    }
+
+    // Reject obviously oversized declared bodies before multipart parsing allocates buffers.
+    // Defense in depth only: requests without Content-Length still need an upstream/runtime
+    // body-size limit because chunked bodies can bypass this check.
+    const contentLength = request.headers.get("content-length");
+    if (contentLength !== null) {
+      if (!/^\\d+$/.test(contentLength)) {
+        return NextResponse.json({ success: false, error: "Invalid Content-Length header" }, { status: 400 });
+      }
+      const declaredLength = Number(contentLength);
+      if (!Number.isSafeInteger(declaredLength)) {
+        return NextResponse.json({ success: false, error: "Invalid Content-Length header" }, { status: 400 });
+      }
+      if (declaredLength > MAX_MULTIPART_BODY_BYTES) {
+        return NextResponse.json(
+          { success: false, error: "Upload request exceeds the maximum request size. Use signed direct upload for large media." },
+          { status: 413 },
+        );
+      }
     }
 
     const formData = await request.formData();
