@@ -81,6 +81,59 @@ describe("reconcileWooCommercePublish", () => {
     expect(dbQuery).toHaveBeenCalledWith("COMMIT");
   });
 
+  it("rolls back when another listing already owns the provider external ID", async () => {
+    mockReadyState();
+    mocks.getWooCommerceProduct.mockResolvedValue({ id: 101, sku: "SKU-1", name: "Demo" });
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "ambiguous", provider: "woocommerce" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "listing-1", channel_id: "channel-1", external_id: null }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "listing-2" }] })
+      .mockResolvedValueOnce({});
+    const client = { query, release: vi.fn() };
+    mocks.pool.connect.mockResolvedValue(client);
+
+    await expect(
+      reconcileWooCommercePublish(7, input),
+    ).resolves.toEqual({
+      error: "RECONCILIATION_FAILED",
+      message: "LISTING_EXTERNAL_ID_CONFLICT",
+      reconciliationRequired: true,
+      ambiguous: true,
+    });
+
+    expect(query).toHaveBeenCalledWith("ROLLBACK");
+    expect(query).not.toHaveBeenCalledWith("COMMIT");
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("UPDATE product_listings"))).toBe(false);
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("UPDATE commerce_publish_attempts"))).toBe(false);
+    expect(client.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not double-apply reconciliation when a concurrent request already completed the attempt", async () => {
+    mockReadyState();
+    mocks.getWooCommerceProduct.mockResolvedValue({ id: 101, sku: "SKU-1", name: "Demo" });
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "attempt-1", status: "succeeded", provider: "woocommerce" }] })
+      .mockResolvedValueOnce({});
+    const client = { query, release: vi.fn() };
+    mocks.pool.connect.mockResolvedValue(client);
+
+    await expect(
+      reconcileWooCommercePublish(7, input),
+    ).resolves.toEqual({ error: "PUBLISH_ATTEMPT_ALREADY_RECONCILED" });
+
+    expect(query).toHaveBeenCalledWith("BEGIN");
+    expect(query).toHaveBeenCalledWith("ROLLBACK");
+    expect(query).not.toHaveBeenCalledWith("COMMIT");
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("UPDATE product_listings"))).toBe(false);
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("UPDATE commerce_publish_attempts"))).toBe(false);
+    expect(client.release).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects a provider product whose SKU does not match the durable listing identity", async () => {
     mockReadyState();
     mocks.getWooCommerceProduct.mockResolvedValue({ id: 101, sku: "WRONG-SKU" });
