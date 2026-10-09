@@ -1,3 +1,10 @@
+## 2026-10-09 — Production Marketing Foundation migration applied
+
+- Applied `db/migrations/005_marketing_foundation_v1.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek` (`production`).
+- Used a temporary Neon branch to execute and validate the migration first; verified all three tables (`marketing_business_profiles`, `marketing_goals`, `marketing_offers`) and the three expected indexes before applying to production.
+- Verified the three relations exist on production and recorded `005_marketing_foundation_v1.sql` in `schema_migrations` at `2026-10-09T13:31:29.072Z`.
+- No existing business, goals, or offer rows were seeded or altered by this schema migration. Retest `GET /api/marketing/business-brain` and `/orders` from the running application; browser/API smoke verification has not been performed from this session.
+
 ## 2026-10-09 — Orders route and local marketing schema diagnosis
 
 - Added the missing protected `/orders` page, using the existing tenant-scoped `GET /api/orders` endpoint with search/status filters and loading/empty/error states. Commit: `4e271ff237ba68e869bb2520d9002bec20bc101c`.
