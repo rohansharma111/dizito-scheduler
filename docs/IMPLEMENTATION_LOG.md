@@ -1,3 +1,10 @@
+## 2026-10-09 — Media upload API regression coverage
+
+- Added `app/api/upload/route.test.ts` covering unauthenticated and invalid-user sessions, rate-limit rejection, malformed and unsafe `Content-Length`, declared oversized request bodies, and malformed multipart input.
+- Added `app/api/media/complete/route.test.ts` covering authentication, rate limiting, malformed/incomplete JSON payloads, cross-user public-ID rejection before Cloudinary lookup, and the successful provider-verification handoff.
+- Hardened malformed multipart parsing to return HTTP 400. The early content-length guard remains defense-in-depth and does not replace an enforced upstream/runtime body limit for chunked/no-length requests.
+- CI is pending for these commits. No deployment, production DB change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Multipart upload request preflight
 
 - Added an early `Content-Length` validation to `app/api/upload/route.ts` before multipart parsing. Invalid or unsafe declared lengths return 400; declared request bodies above `IMAGE_MAX_BYTES + 1 MiB` return 413 to reserve multipart framing overhead.
