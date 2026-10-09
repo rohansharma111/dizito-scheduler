@@ -626,18 +626,16 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
                   <tr className="bg-gray-50">
                     <th className="p-4">
                       <input
-                        disabled={importing}
+                        disabled={importing || visibleValidRows.length === 0}
                         type="checkbox"
-                        checked={selectedValidCount === validCount}
+                        aria-label="Select all valid rows on this page"
+                        title="Select all valid rows on this page"
+                        checked={allVisibleValidSelected}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedRows(
-                              rows
-                                .map((_, i) => i)
-                                .filter((i) => validations[i]?.valid),
-                            );
+                            setSelectedRows(Array.from(new Set([...selectedRows, ...visibleValidRows])));
                           } else {
-                            setSelectedRows([]);
+                            setSelectedRows(selectedRows.filter((index) => !visibleValidRows.includes(index)));
                           }
                         }}
                       />
@@ -655,8 +653,7 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
                 </thead>
 
                 <tbody>
-                  {rows.map((row, index) => {
-                    const validation = validations[index];
+                  {paginatedPreviewRows.map(({ row, index, validation }) => {
 
                     return (
                       <tr
