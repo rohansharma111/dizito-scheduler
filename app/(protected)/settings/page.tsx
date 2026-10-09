@@ -10,7 +10,7 @@ export default function SettingsPage(){
  const [settings,setSettings]=useState<SettingsResponse|null>(null),[loading,setLoading]=useState(true),[loadError,setLoadError]=useState<string|null>(null);
  async function loadSettings(){
   setLoading(true);setLoadError(null);
-  try{const r=await fetch("/api/settings");const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to load settings");setSettings(d);}
+  try{const r=await fetch("/api/settings");const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to load settings");if(!d.account||!d.subscription||!Array.isArray(d.connectedAccounts)||!d.preferences)throw new Error("Unexpected settings response");setSettings(d);}
   catch(error){setLoadError(error instanceof Error?error.message:"Unable to load settings");setSettings(null);}
   finally{setLoading(false);}
  }
