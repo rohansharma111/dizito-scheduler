@@ -75,6 +75,64 @@ describe("WooCommerce HTTP provider contract", () => {
     expect(new Headers(init.headers).get("Accept")).toBe("application/json");
   });
 
+  it("creates a variable product with attributes and variation options", async () => {
+    dnsMocks.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+    const payload = {
+      name: "Cotton T-Shirt",
+      type: "variable",
+      sku: "TEE-BASE",
+      attributes: [
+        { name: "Color", visible: true, variation: true, options: ["Black", "White"] },
+        { name: "Size", visible: true, variation: true, options: ["S", "M"] },
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ id: 202, name: "Cotton T-Shirt", sku: "TEE-BASE", type: "variable", attributes: payload.attributes }),
+      { status: 201, headers: { "Content-Type": "application/json" } },
+    ));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(createWooCommerceProduct(config, payload)).resolves.toMatchObject({
+      id: 202,
+      type: "variable",
+      attributes: payload.attributes,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://store.example.com/wp-json/wc/v3/products");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual(payload);
+  });
+
+  it("returns a sanitized error for provider product validation failures", async () => {
+    dnsMocks.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({
+        code: "woocommerce_rest_invalid_product",
+        message: "Invalid product payload: private validation detail",
+        data: { status: 400 },
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    ));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(createWooCommerceProduct(config, { type: "unsupported" })).rejects.toThrow(
+      "WooCommerce request failed (400) at https://store.example.com/wp-json/wc/v3/products",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a non-404 provider validation error through the REST fallback", async () => {
+    dnsMocks.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+    const fetchMock = vi.fn().mockResolvedValue(new Response("bad request", { status: 400 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(wooCommerceRequest(config, "products", { method: "POST", body: "{}" })).rejects.toThrow(
+      "WooCommerce request failed (400) at https://store.example.com/wp-json/wc/v3/products",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("looks up products by encoded external ID and SKU", async () => {
     dnsMocks.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
     const fetchMock = vi.fn()
