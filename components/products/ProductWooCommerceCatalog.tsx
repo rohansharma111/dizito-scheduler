@@ -23,7 +23,7 @@ interface WooProduct {
   image: string;
 }
 interface Props { productId: string; }
-interface Listing { channel_id: string; product_id: string; external_id: string | null; provider_metadata?: Record<string, unknown>; }
+interface Listing { channel_id: string; product_id: string; external_id: string | null; provider: string; provider_metadata?: Record<string, unknown>; }
 
 export default function ProductWooCommerceCatalog({ productId }: Props) {
   const [channels, setChannels] = useState<Channel[]>([]);
