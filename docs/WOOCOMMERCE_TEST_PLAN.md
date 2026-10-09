@@ -77,15 +77,24 @@ Use a controlled WooCommerce test store or deterministic HTTP mock.
 - External product lookup by ID.
 - Product lookup by SKU.
 
-## Required test tooling decision
+## Current test tooling and coverage
 
-The repository currently has no test script or test framework. Before implementing these tests:
+The repository uses Vitest (`npm test` runs `vitest run`) and GitHub Actions Validate / Quality Checks. Existing WooCommerce coverage includes publish service tests, publish-state decision tests, reconciliation identity tests, reconciliation integration-style tests with mocked provider/database boundaries, adapter/provider tests, and publish API error mapping.
 
-1. Select a TypeScript-compatible runner that works with the Next.js repository.
-2. Add the runner and required type packages to `package.json`.
-3. Update `package-lock.json` using the selected package manager.
-4. Add a `test` script and a CI test step.
-5. Start with pure validation and publish-service tests before adding provider contract tests.
+Coverage reviewed on 2026-10-09:
+- explicit confirmation and idempotency key requirements;
+- tenant-scoped channel ownership;
+- successful provider creation and no duplicate provider call on a completed replay;
+- unresolved attempt blocks another provider request;
+- transport timeout is marked ambiguous;
+- already-linked listing blocks duplicate creation;
+- reconciliation verifies provider ID/SKU identity, rejects multiple SKU matches, prevents a second reconciliation, and rolls back on persistence failures.
+
+Remaining evidence gaps:
+- Run the full current test suite and preserve CI links for the exact code SHA after any test additions.
+- Add/verify a deterministic conflict test for two listings competing for the same external product ID and concurrent reconciliation attempts.
+- Run provider contract checks against a designated WooCommerce test store or a deterministic HTTP mock for simple/variable products, auth/validation errors, malformed responses, and interrupted responses.
+- Browser/API verification is distinct from unit tests; record it separately.
 
 ## Exit criteria
 
@@ -96,3 +105,10 @@ The WooCommerce publish path must not be labelled production-ready until:
 - build, lint, type-check, and tests have recorded results;
 - a controlled provider verification has been completed;
 - failures and ambiguous outcomes are demonstrably reconciled safely.
+
+
+## 2026-10-09 — Linking/publish safety audit continuation
+
+- Added a publish-service regression test proving a listing already linked to a WooCommerce external ID is rejected with `LISTING_ALREADY_PUBLISHED` before credentials are loaded or a provider mutation is attempted.
+- Existing publish flow reserves an idempotency-scoped attempt before the provider call; started/ambiguous attempts require reconciliation, completed attempts replay without a provider call, and external-ID conflicts are checked under an advisory transaction lock. Reconciliation verifies provider identity/SKU and uses row-count guards with transaction rollback.
+- This is source/test coverage review, not a claim of live-store publish verification. No provider write was triggered.
