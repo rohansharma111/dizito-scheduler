@@ -120,7 +120,8 @@ export default function GenerateWeekClient() {
     finally { setLoading(false); }
   }
 
-  async function generateCopy(campaignIndex: number, contentIndex: number) {\n    if (!aiEnabled) { setError("AI copy generation is coming soon. Edit the starter copy manually."); return; }
+  async function generateCopy(campaignIndex: number, contentIndex: number) {
+    if (!aiEnabled) { setError("AI copy generation is coming soon. Edit the starter copy manually."); return; }
     if (!strategy) return;
     const item = strategy.campaigns[campaignIndex].contentItems[contentIndex];
     const campaign = strategy.campaigns[campaignIndex];
@@ -198,7 +199,8 @@ export default function GenerateWeekClient() {
             <div className="mt-3 text-sm text-gray-500">Week of <span className="font-medium text-gray-700">{week.start}</span> → <span className="font-medium text-gray-700">{week.end}</span></div>
           </div>
           <div className="flex gap-2">
-            <button onClick={buildTemplateWeek} disabled={loading || approving} className="dizito-button dizito-button-primary"><CalendarClock size={18} />{strategy ? "Rebuild from templates" : "Build a week from templates"}</button>\n            <button onClick={generate} disabled={!aiEnabled || loading || approving} title={!aiEnabled ? "AI generation is coming soon" : "Generate an AI-assisted weekly plan"} className="dizito-button dizito-button-ai disabled:cursor-not-allowed disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}{loading ? "Generating..." : "AI plan · Coming soon"}</button>
+            <button onClick={buildTemplateWeek} disabled={loading || approving} className="dizito-button dizito-button-primary"><CalendarClock size={18} />{strategy ? "Rebuild from templates" : "Build a week from templates"}</button>
+            <button onClick={generate} disabled={!aiEnabled || loading || approving} title={!aiEnabled ? "AI generation is coming soon" : "Generate an AI-assisted weekly plan"} className="dizito-button dizito-button-ai disabled:cursor-not-allowed disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}{loading ? "Generating..." : "AI plan · Coming soon"}</button>
             {strategy && <button onClick={approve} disabled={approving || approved} className="dizito-button dizito-button-secondary">{approving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}{approved ? "Week Approved" : "Approve Week"}</button>}
           </div>
         </div>
