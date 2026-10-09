@@ -823,3 +823,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Corrected entitlement table names to match migration 021 (`billing_plan_entitlement_values` and `billing_entitlement_definitions`), replacing mismatched names that would have caused a second database error after the plan table existed.
 - Commit on `main`: `8cef64fb23d7a51f63db5bed3577394daece6f35`.
 - No live database migration or schema change was executed. Build and runtime verification remain pending.
+
+
+### 2026-10-09 — Design-system continuation checkpoint
+
+- Applied existing Dizito shared components/tokens to remaining legacy-style surfaces on `main`: product detail, inventory, commerce channels and listings, account connection errors, Meta/Pinterest/Google Business selection, notification layout, billing developer console, payment test UI, and public policy pages.
+- Added responsive CSS guardrails in `app/globals.css`; retained the existing APIs, selection flows, inventory operations, subscription test calls and Razorpay checkout flow.
+- Improved empty/loading states and marked developer/payment-test surfaces as internal/test workflows. Policy page content was retained while the presentation was aligned.
+- CI initially caught JSX closing-tag issues in the iterative commerce/channel and selection-page edits; fixes were committed directly to `main`. The latest runs must be checked before calling this work verified.
+- Browser-based visual checks and narrow-screen viewport testing have not yet been performed; this is a continuation checkpoint, not a claim of full application-wide completion.
