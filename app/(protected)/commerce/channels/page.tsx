@@ -333,7 +333,8 @@ export default function CommerceChannelsPage() {
           const active = channel.status === "active";
           const updating = updatingId === channel.id;
           const verifying = verifyingId === channel.id;
-          const amazon = channel.provider === "amazon";\n          const woocommerce = channel.provider === "woocommerce";
+          const amazon = channel.provider === "amazon";
+          const woocommerce = channel.provider === "woocommerce";
 
           return (
             <div key={channel.id} className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
