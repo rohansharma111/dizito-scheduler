@@ -36,7 +36,9 @@ describe("social credential encryption", () => {
       ciphertext: string;
     };
 
-    encrypted.ciphertext = encrypted.ciphertext.slice(0, -1) + "A";
+    encrypted.ciphertext =
+      (encrypted.ciphertext.startsWith("A") ? "B" : "A") +
+      encrypted.ciphertext.slice(1);
 
     expect(() => decryptSocialCredential(JSON.stringify(encrypted))).toThrow();
   });
