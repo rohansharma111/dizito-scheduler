@@ -1066,3 +1066,14 @@ Important rollout boundary:
 - On `main`, the pricing page now falls back to the established Free/Growth/Pro display catalog when a billing relation is missing, while rethrowing unrelated database errors.
 - Corrected the entitlement lookup to use the actual migration schema: `billing_plan_entitlement_values` joined to `billing_entitlement_definitions`.
 - This is an availability guard, not a substitute for applying/validating migration 021. Live Neon was not modified. Build/runtime verification is still pending.
+
+
+## 2026-10-09 — Dizito design-system continuation on main
+
+- Continued the existing UI consistency work directly on `main`; no new theme or design direction was introduced.
+- Aligned product detail, inventory, commerce channel/listing pages, login, contact/how-it-works, notification, account-connection error and provider account-selection screens with the shared Dizito primitives and responsive layout patterns.
+- Restyled the internal billing developer console and Razorpay payment test page while retaining their existing API calls and test-only intent.
+- Updated Privacy Policy, Terms of Service and Data Deletion page layout to match the established typography, spacing and card language; legal copy was retained.
+- Added shared CSS responsive guardrails for narrow widths, long content and controls.
+- Verification boundary: GitHub Actions is running for the latest direct-to-main commits. Earlier runs identified JSX wrapper mistakes during iterative edits; follow-up fixes were pushed. Do not treat this checkpoint as complete until the latest `Validate` and `Quality Checks` runs pass, and do not claim visual/browser validation at 320/360/390/430px without executing it.
+- Scope still outstanding: route-by-route visual/browser QA across all remaining application pages and modal/component surfaces, plus any issues exposed by the current CI run.
