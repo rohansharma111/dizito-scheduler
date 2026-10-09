@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Code2, RefreshCw } from "lucide-react";
+import { DizitoBadge, DizitoCard, DizitoPage, DizitoPageHeader, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
 
 export default function DevBillingPage() {
   const [loading, setLoading] = useState(false);
@@ -41,18 +43,15 @@ export default function DevBillingPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Billing Dev Console</h1>
+    <DizitoPage className="max-w-4xl px-4 sm:px-6">
+      <DizitoPageHeader eyebrow="Internal tools" title="Billing dev console" description="Internal-only API testing. Actions can create or cancel subscriptions; use test credentials and non-production accounts." />
+      <div className="mb-5"><DizitoBadge tone="warning"><Code2 size={13} /> Developer tool — not customer-facing</DizitoBadge></div>
 
-        <p className="text-gray-500 mt-2">Internal testing page.</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <button
           disabled={loading}
           onClick={() => callApi("/api/billing/create-subscription", "POST")}
-          className="bg-blue-600 text-white rounded-lg p-4"
+          className="dizito-button dizito-button-primary min-h-14 justify-start whitespace-normal text-left"
         >
           Create Creator Subscription
         </button>
@@ -60,7 +59,7 @@ export default function DevBillingPage() {
         <button
           disabled={loading}
           onClick={() => callApi("/api/billing", "GET")}
-          className="bg-green-600 text-white rounded-lg p-4"
+          className="dizito-button dizito-button-secondary min-h-14 justify-start whitespace-normal text-left"
         >
           Get Billing Status
         </button>
@@ -68,19 +67,19 @@ export default function DevBillingPage() {
         <button
           disabled={loading}
           onClick={() => callApi("/api/billing/cancel", "POST")}
-          className="bg-red-600 text-white rounded-lg p-4"
+          className="dizito-button dizito-button-danger min-h-14 justify-start whitespace-normal text-left"
         >
           Cancel Subscription
         </button>
       </div>
 
-      <div className="border rounded-xl p-6 bg-gray-50">
-        <div className="font-semibold mb-3">API Response</div>
+      <DizitoCard tone="soft">
+        <DizitoSectionHeader title="API response" description="The raw response from the last request." action={<RefreshCw size={17} className="text-violet-600" />} />
 
-        <pre className="text-sm whitespace-pre-wrap overflow-auto">
+        <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-xs sm:text-sm">
           {JSON.stringify(response, null, 2)}
         </pre>
-      </div>
-    </div>
+      </DizitoCard>
+    </DizitoPage>
   );
 }
