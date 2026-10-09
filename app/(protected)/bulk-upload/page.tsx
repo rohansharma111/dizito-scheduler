@@ -92,19 +92,20 @@ export default function BulkUploadPage() {
           fetch("/api/accounts"),
         ]);
 
-        const session = await planResponse.json();
+        const [session, accountData] = await Promise.all([planResponse.json(), accountResponse.json()]);
+        if (!planResponse.ok) throw new Error(session?.error || "Failed to load account plan");
+        if (!accountResponse.ok) throw new Error(accountData?.error || "Failed to load connected accounts");
+        if (!Array.isArray(accountData.accounts)) throw new Error("Unexpected connected accounts response");
 
         setPlan(session?.user?.plan || "free");
 
-        const accountData = await accountResponse.json();
-
-        const accountList = Array.isArray(accountData.accounts)
-          ? accountData.accounts
-          : [];
+        const accountList = accountData.accounts;
 
         setAccounts(accountList);
 
         setSelectedAccounts(accountList.map((a: SocialAccount) => a.id));
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Failed to initialize bulk upload");
       } finally {
         setPlanLoading(false);
       }
