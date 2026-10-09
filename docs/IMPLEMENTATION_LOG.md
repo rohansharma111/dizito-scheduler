@@ -1,3 +1,10 @@
+## 2026-10-09 — Draft and scheduled post list visual polish (main)
+
+- Polished draft empty state and draft table, plus scheduled/published empty state and list table, using a shared CSS module.
+- Preserved the existing data flow and action handlers; no API, schema, migration, or provider changes.
+- Direct-main commits: `ff9c0df30db95b57b63592698092c09c3bb9f0c0`, `94d047aca6815da6c121e20c4bf939dba1121b55`, `5dbd380ae6538a5d2db36501ebe0b6f0308b5856`.
+- Verification boundary: no local lint/typecheck/test/build or browser QA was run for this change. Confirm fresh CI results and inspect desktop/mobile rendering.
+
 ## 2026-10-09 — Media completion concurrency hardening (merged; production migration applied)
 
 - Merged PR #59 as `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`. The repository now handles concurrent duplicate completion inserts with `ON CONFLICT (user_id, cloudinary_public_id) DO NOTHING`, then reads the winning media row; it fails closed if the winner cannot be loaded. Added repository tests for normal insert, conflict replay, and missing winner. Existing signed-upload route and media-service tests remain in place.
