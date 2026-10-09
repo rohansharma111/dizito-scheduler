@@ -1,3 +1,10 @@
+## 2026-10-09 — Fix post-merge billing catalog test assertion (main)
+
+- Diagnosed the post-merge Quality Checks failure: `LEGACY_PLAN_TO_V1` contains legacy key `creator`, but `BILLING_SCHEMA_FALLBACK_PLANS` is keyed by canonical `BillingPlanCode` values, so the old equality assertion tested the wrong contract.
+- Updated `lib/billing/schema-compatibility.test.ts` to compare fallback catalog keys with `BILLING_PLAN_CODES`. Runtime catalog, entitlements, and legacy mapping are unchanged.
+- Direct-main commit: `017d932d4a908f411a6d61ca340664302558a728`.
+- The failing run reported 189 passed and 1 failed; Validate passed. Verification of the correction awaits a fresh Quality Checks run.
+
 ## 2026-10-09 — Billing API missing-schema compatibility fix (main)
 
 - Fixed `GET /api/billing` to detect whether the canonical V1 billing relations and `subscriptions.billing_plan_id` are available before querying the canonical model.
