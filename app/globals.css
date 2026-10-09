@@ -81,7 +81,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* Responsive guardrails shared by legacy and Dizito-native screens. */
 html, body { min-width: 0; max-width: 100%; }
-body { overflow-wrap: anywhere; }
+body { overflow-wrap: normal; }
 img, video, canvas, iframe, svg { max-width: 100%; }
 main, section, article, aside, header, footer { min-width: 0; }
 input, textarea, select { max-width: 100%; min-width: 0; }
