@@ -99,14 +99,12 @@ export default function PinterestBoardSelectionPage() {
 
   if (boards.length === 0) {
     return (
-      <DizitoPage className="max-w-4xl px-4 sm:px-6">
-        <div className="border rounded-xl bg-white p-10 text-center">
-      </DizitoPage>
+      <DizitoPage className="max-w-4xl px-4 sm:px-6"><DizitoState kind="empty" title="No Pinterest boards found" description="Create a board in Pinterest first." /></DizitoPage>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
+    <DizitoPage className="max-w-4xl px-4 sm:px-6">
       <DizitoPageHeader eyebrow="Connected accounts" title="Select Pinterest boards" description="Choose which Pinterest boards to connect." />
 
       <div className="space-y-4">
