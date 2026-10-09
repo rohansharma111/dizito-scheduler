@@ -1,3 +1,10 @@
+## 2026-10-09 — Focus homepage on social media scheduling
+
+- Updated `app/(marketing)/page.tsx` directly on `main` so the public landing page leads with the concrete social media scheduler value proposition instead of broad operating-system positioning.
+- Hero, workspace preview, demo section, feature intro, workflow, audience section, review messaging and final CTA now consistently describe drafts, planning, multi-channel scheduling, review and publishing across Instagram, Facebook, LinkedIn, Pinterest and Google Business.
+- Preserved visual styling, route destinations, session-aware CTA, demo video, feature cards and all behavior. Pricing page intentionally unchanged.
+- Commit: `a0f2a1f8854314e36425e9313f2ef5ac6e9ab08c`. CI and browser verification remain pending.
+
 ## 2026-10-09 — Public marketing pages visual correction
 
 - Updated the canonical marketing homepage, pricing page, public header and footer to align with the existing Dizito visual language (violet accents, lime primary actions, soft borders, rounded cards, restrained shadows, responsive spacing).
