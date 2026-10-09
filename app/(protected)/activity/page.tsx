@@ -5,7 +5,7 @@ import { getEventIcon } from "@/lib/eventIcons";
 import { timeAgo } from "@/lib/timeAgo";
 import { groupEvents } from "@/lib/groupEvents";
 import PlatformBadge from "@/components/PlatformBadge";
-import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
+import { DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 type ActivityEvent = {
   id: number;
@@ -19,20 +19,23 @@ type ActivityEvent = {
 export default function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
 
   const [filter, setFilter] = useState("all");
 
   async function loadActivity() {
+    setLoading(true);
+    setError(null);
     try {
       const response = await fetch("/api/activity");
-
       const data = await response.json();
-
+      if (!response.ok) throw new Error(data.error || "Failed to load activity");
+      if (!Array.isArray(data)) throw new Error("Unexpected activity response");
       setEvents(data);
-    } catch (error) {
-      console.error(error);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Failed to load activity");
     } finally {
       setLoading(false);
     }
@@ -128,7 +131,7 @@ export default function ActivityPage() {
 
   return (
     <DizitoPage>
-      <DizitoPageHeader eyebrow="Measure" title="Activity feed" description="Recent publishing and account activity across your Dizito workspace." />
+      <DizitoPageHeader eyebrow="Measure" title="Activity feed" description="Recent publishing and account activity across your Dizito workspace." action={<DizitoButton variant="secondary" onClick={() => void loadActivity()} disabled={loading}>Refresh activity</DizitoButton>} />
 
       <DizitoCard className="mb-6" tone="soft"><div className="flex flex-col gap-3 sm:flex-row">
         <input
@@ -169,15 +172,17 @@ export default function ActivityPage() {
         </select>
       </div></DizitoCard>
 
+      {error && <DizitoState kind="error" title="Activity could not load" description={error} action={<DizitoButton variant="secondary" onClick={() => void loadActivity()}>Try again</DizitoButton>} />}
+
       {loading && (
         <DizitoCard><div className="animate-pulse text-sm text-gray-500">Loading activity…</div></DizitoCard>
       )}
 
-      {!loading && filtered.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <DizitoState kind="empty" title="No activity found" description="Activity will appear here as your channels publish content and account events occur." />
       )}
 
-      {!loading &&
+      {!loading && !error &&
         grouped.map((group) => (
           <div key={group.label} className="mb-10">
             {" "}
