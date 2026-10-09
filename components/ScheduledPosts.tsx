@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Post } from "../types";
 import {
   FaInstagram,
@@ -11,6 +13,7 @@ import GoogleBusinessIcon from "@/components/icons/GoogleBusinessIcon";
 
 import { Pencil, Trash2, Copy, Eye, RotateCcw } from "lucide-react";
 import styles from "./PostLists.module.css";
+import TablePagination from "@/components/dizito/TablePagination";
 
 type Props = {
   posts: Post[];
@@ -30,6 +33,9 @@ export default function ScheduledPosts({
   setSelectedPostId,
   setShowTargetsModal,
 }: Props) {
+  const [scheduledPage, setScheduledPage] = useState(1);
+  const [scheduledPageSize, setScheduledPageSize] = useState(25);
+
   async function refreshPosts() {
     const response = await fetch("/api/posts");
 
@@ -38,6 +44,9 @@ export default function ScheduledPosts({
     setPosts(data);
   }
   const scheduledPosts = posts.filter((item) => item.status !== "draft");
+
+  const currentScheduledPage = Math.min(scheduledPage, Math.max(1, Math.ceil(scheduledPosts.length / scheduledPageSize)));
+  const paginatedScheduledPosts = scheduledPosts.slice((currentScheduledPage - 1) * scheduledPageSize, currentScheduledPage * scheduledPageSize);
 
   if (scheduledPosts.length === 0) {
     return (
@@ -88,8 +97,7 @@ export default function ScheduledPosts({
           </thead>
 
           <tbody>
-            {posts
-              .filter((item: Post) => item.status !== "draft")
+            {paginatedScheduledPosts
               .map((item: Post) => {
                 const canRetry =
                   [
@@ -416,9 +424,8 @@ export default function ScheduledPosts({
 
       {/* MOBILE */}
       <div className="md:hidden space-y-4">
-        {posts
-          .filter((item: Post) => item.status !== "draft")
-          .map((item: Post) => {
+        {paginatedScheduledPosts
+              .map((item: Post) => {
             const canRetry =
               [
                 "retry_scheduled",
@@ -715,6 +722,14 @@ export default function ScheduledPosts({
             );
           })}
       </div>
+      <TablePagination
+        page={currentScheduledPage}
+        pageSize={scheduledPageSize}
+        totalItems={scheduledPosts.length}
+        itemLabel="posts"
+        onPageChange={setScheduledPage}
+        onPageSizeChange={(size) => { setScheduledPageSize(size); setScheduledPage(1); }}
+      />
     </div>
   );
 }
