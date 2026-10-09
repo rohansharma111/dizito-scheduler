@@ -1,9 +1,16 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import { getUploadPolicy } from "@/lib/media/upload-policy";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
+
+const ALLOWED_VIDEO_FORMATS: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/quicktime": "mov,mp4",
+  "video/x-m4v": "m4v,mp4",
+};
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +32,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "A valid mimeType and positive file size are required" }, { status: 400 });
     }
 
-    const policy = getUploadPolicy(body.mimeType, body.size);
+    const mimeType = body.mimeType.trim().toLowerCase();
+    const policy = getUploadPolicy(mimeType, body.size);
 
     if (!policy.allowed) {
       return NextResponse.json({ success: false, error: policy.error }, { status: 400 });
@@ -36,20 +44,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Direct uploads are only supported for video files" }, { status: 400 });
     }
 
+    const allowedFormats = ALLOWED_VIDEO_FORMATS[mimeType];
+    if (!allowedFormats) {
+      return NextResponse.json({ success: false, error: "Unsupported video MIME type" }, { status: 400 });
+    }
+
     if (!process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_SECRET) {
       return NextResponse.json({ success: false, error: "Cloudinary direct upload is not configured" }, { status: 503 });
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
-    const folder = `users/${userId}`;
-    const signature = cloudinary.utils.api_sign_request({ folder, timestamp }, process.env.CLOUDINARY_API_SECRET);
+    // Use a server-generated asset identity. Signing the complete public_id
+    // prevents the browser from choosing or overwriting another asset path.
+    const publicId = `users/${userId}/video-${randomUUID()}`;
+    const signatureParams = { public_id: publicId, timestamp, allowed_formats: allowedFormats };
+    const signature = cloudinary.utils.api_sign_request(signatureParams, process.env.CLOUDINARY_API_SECRET);
 
     return NextResponse.json({
       success: true,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,
       apiKey: process.env.CLOUDINARY_API_KEY,
       timestamp,
-      folder,
+      publicId,
+      allowedFormats,
       signature,
       resourceType: policy.resourceType,
       uploadProtocol: "cloudinary_signed_direct",
