@@ -1,3 +1,10 @@
+## 2026-10-09 — Billing navigation and subscription-action guard (main)
+
+- Fixed sidebar active matching to use exact route boundaries. `/settings/billing` now activates Billing without also activating the parent `/settings` item.
+- Billing plan-change buttons are now shown only when a provider subscription ID is present. For accounts without a provider-managed subscription, the screen explains why in-place plan changes are unavailable and links to pricing instead of sending a request that fails with `No active subscription`.
+- Main commits: `e4b47d0453d9c57513167e1901f7f903ba568682` (sidebar), `64a900feabee506e2569172331fff5fd506bf1c8` and `577f9f5377201d83c4f420223aebd6434dee922b` (billing UI guard).
+- Verification pending: no local tests/browser run for these changes yet; fresh GitHub Actions status should be checked before treating the fix as validated. The underlying subscription state is not modified and no payment record is created.
+
 ## 2026-10-09 — Post-merge CI fix: billing fallback catalog test
 
 - The first post-merge Quality Checks run failed one test in `lib/billing/schema-compatibility.test.ts`: it compared fallback plan codes against `Object.keys(LEGACY_PLAN_TO_V1)`, which intentionally includes the legacy alias `creator` in addition to canonical V1 plan codes.
