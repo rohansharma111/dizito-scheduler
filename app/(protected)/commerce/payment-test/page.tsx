@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ShieldAlert } from "lucide-react";
+import { DizitoBadge, DizitoCard, DizitoPage, DizitoPageHeader, DizitoButton } from "@/components/dizito/DizitoUI";
 
 const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
 
@@ -255,29 +257,13 @@ export default function PaymentTestPage() {
   const remainingAmount = order ? calculateRemainingAmount(order) : 0;
 
   return (
-    <main
-      style={{
-        maxWidth: 650,
-        margin: "60px auto",
-        padding: 24,
-      }}
-    >
-      <h1>Dizito Commerce Payment Test</h1>
+    <DizitoPage className="max-w-3xl px-4 sm:px-6">
+      <DizitoPageHeader eyebrow="Commerce · Developer tools" title="Payment test" description="Test the Razorpay Commerce payment flow against an order in your account." />
+      <div className="mb-5"><DizitoBadge tone="warning"><ShieldAlert size={13} /> Test workflow — verify environment before charging</DizitoBadge></div>
 
-      <p>
-        Enter any order ID belonging to your account to test the Razorpay
-        Commerce payment flow.
-      </p>
-
-      <div
-        style={{
-          display: "grid",
-          gap: 16,
-          marginTop: 30,
-        }}
-      >
+      <DizitoCard className="space-y-4">
         <label>
-          <div style={{ marginBottom: 6 }}>Order ID</div>
+          <div className="mb-1.5 text-sm font-semibold text-slate-700">Order ID</div>
 
           <input
             type="number"
@@ -290,34 +276,16 @@ export default function PaymentTestPage() {
               setMessage("");
             }}
             placeholder="e.g. 25"
-            style={{
-              width: "100%",
-              padding: 10,
-              boxSizing: "border-box",
-            }}
+            className="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
           />
         </label>
 
-        <button
-          type="button"
-          onClick={loadOrder}
-          disabled={loadingOrder}
-          style={{
-            padding: "12px 20px",
-            cursor: loadingOrder ? "not-allowed" : "pointer",
-          }}
-        >
+        <DizitoButton type="button" onClick={loadOrder} disabled={loadingOrder}>
           {loadingOrder ? "Loading..." : "Load Order"}
-        </button>
+        </DizitoButton>
 
         {order && (
-          <section
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              padding: 16,
-            }}
-          >
+          <DizitoCard tone="soft">
             <h2 style={{ marginTop: 0 }}>Order #{order.id}</h2>
 
             {order.order_number && (
@@ -350,21 +318,18 @@ export default function PaymentTestPage() {
             <p>
               <strong>Fulfillment:</strong> {order.fulfillment_status}
             </p>
-          </section>
+          </DizitoCard>
         )}
 
         {order && remainingAmount > 0 && (
           <>
             <label>
-              <div style={{ marginBottom: 6 }}>Payment Method</div>
+              <div className="mb-1.5 text-sm font-semibold text-slate-700">Payment method</div>
 
               <select
                 value={paymentMethod}
                 onChange={(event) => setPaymentMethod(event.target.value)}
-                style={{
-                  width: "100%",
-                  padding: 10,
-                }}
+                className="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               >
                 <option value="card">Card</option>
                 <option value="upi">UPI</option>
@@ -373,38 +338,23 @@ export default function PaymentTestPage() {
               </select>
             </label>
 
-            <button
-              type="button"
-              onClick={startPayment}
-              disabled={loadingPayment}
-              style={{
-                padding: "14px 20px",
-                cursor: loadingPayment ? "not-allowed" : "pointer",
-                fontSize: 16,
-              }}
-            >
+            <DizitoButton type="button" onClick={startPayment} disabled={loadingPayment} className="w-full justify-center sm:w-auto">
               {loadingPayment
                 ? "Starting..."
                 : `Pay ${formatMoney(remainingAmount, order.currency)}`}
             </button>
+            </DizitoButton>
           </>
         )}
 
-        {message && <p style={{ marginTop: 10 }}>{message}</p>}
+        {message && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
 
         {error && (
-          <p
-            style={{
-              marginTop: 10,
-              padding: 12,
-              border: "1px solid #f00",
-              borderRadius: 6,
-            }}
-          >
+          <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
           </p>
         )}
-      </div>
-    </main>
+      </DizitoCard>
+    </DizitoPage>
   );
 }
