@@ -31,6 +31,7 @@ export type ApprovedWeeklyStrategy = {
       sourceCampaignId?: number | null;
       evidence?: { sourceType: "content_item" | "variant"; sourceId: number; actionType: string; count: number; value: number; platform: string | null } | null;
       supportingExperimentIds?: number[];
+      externalProductReferences?: Array<{ id: number; name: string; sku?: string; price?: string; stockStatus?: string; permalink?: string }>;
     }>;
   }>;
 };
@@ -177,6 +178,15 @@ export async function persistApprovedWeek(
               sourceCampaignId: item.sourceCampaignId ?? null,
               evidence: item.evidence ?? null,
               supportingExperimentIds: item.supportingExperimentIds ?? [],
+              externalProductReferences: (item.externalProductReferences ?? []).map((product) => ({
+                provider: "woocommerce",
+                externalProductId: product.id,
+                name: product.name,
+                sku: product.sku ?? null,
+                priceSnapshot: product.price ?? null,
+                stockStatusSnapshot: product.stockStatus ?? null,
+                permalink: product.permalink ?? null,
+              })),
               planningSource: "generate_my_week",
             },
             item.plannedFor ?? null,
