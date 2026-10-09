@@ -34,7 +34,11 @@ export default function Page() {
       >
         {/* Collapse Button */}
         <button
-          onClick={() => setUsageCollapsed(!usageCollapsed)}
+          type="button"
+          aria-label={usageCollapsed ? "Expand usage and recent activity" : "Collapse usage and recent activity"}
+          aria-expanded={!usageCollapsed}
+          aria-controls="dashboard-usage-panel"
+          onClick={() => setUsageCollapsed((collapsed) => !collapsed)}
           className="
             absolute
             -left-5
@@ -57,6 +61,8 @@ export default function Page() {
 
         {/* Keep the panel mounted */}
         <div
+          id="dashboard-usage-panel"
+          aria-hidden={usageCollapsed}
           className={`
             overflow-hidden transition-all duration-300
             ${usageCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"}
