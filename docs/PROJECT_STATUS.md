@@ -1302,3 +1302,11 @@ Important rollout boundary:
 - Extracted bounded validation for provider-owned external product references into `lib/marketing/externalProductReferences.ts` and added Vitest coverage for valid snapshots, optional fields, empty lists, invalid IDs/names, list/field limits, and HTTPS-only permalinks.
 - Weekly-plan approval route now calls the tested helper and returns its validation errors as HTTP 400. External WooCommerce identifiers remain planning metadata, separate from canonical product IDs.
 - Commits: `b3b7015` (helper), `91bc97d` (tests), `483e9e5` (route integration). CI was triggered; confirm results before treating this checkpoint as verified. Browser/runtime end-to-end QA remains pending.
+
+
+## 2026-10-09 — Add WooCommerce catalog to canonical product detail
+
+- Added a WooCommerce section to `app/products/[id]/page.tsx`, matching the existing Shopify and Amazon product workflow placement. It loads the merchant's WooCommerce channels, allows choosing a connected store, and reads its products through the existing authenticated, tenant-scoped, paginated read-only catalog API.
+- Catalog rows show WooCommerce product ID, name, SKU, type, status, price, stock status, and a validated HTTP(S) product permalink. Includes search within the current page, refresh, pagination, loading, empty, and error states. If no store is connected, it links to Commerce Channels.
+- Deliberately does not create a persistent canonical-to-WooCommerce mapping or mutate the store. That needs a separate explicit mapping workflow and must not be implied by simply browsing a similarly named product.
+- Commits: `83bb947` (component), `735bbea` (product page integration). CI and browser verification pending.
