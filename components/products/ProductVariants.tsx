@@ -91,7 +91,7 @@ export default function ProductVariants({
   return (
     <>
       <section className="bg-white border rounded-xl overflow-hidden">
-        <div className="p-6 flex items-center justify-between">
+        <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <h2 className="text-lg font-semibold">Variants</h2>
 
@@ -103,16 +103,7 @@ export default function ProductVariants({
           <button
             type="button"
             onClick={openAdd}
-            className="
-              bg-blue-600
-              text-white
-              px-4
-              py-2.5
-              rounded-lg
-              text-sm
-              font-medium
-              hover:bg-blue-700
-            "
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#c7f36b] px-4 py-2.5 text-sm font-extrabold text-slate-950 transition hover:bg-[#9fda35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 sm:w-auto"
           >
             + Add Variant
           </button>
