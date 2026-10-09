@@ -1,3 +1,10 @@
+## 2026-10-09 — Media upload API guard regression tests
+
+- Added route-level Vitest coverage for upload authentication, invalid session IDs, rate limiting, malformed/unsafe/oversized declared content lengths, malformed multipart bodies, completion payload validation, and cross-user Cloudinary public-ID rejection.
+- Malformed multipart bodies now return a client-facing 400 response instead of falling through to the generic server-error handler.
+- The earlier request-size preflight still only validates declared `Content-Length`; an upstream/runtime request-body cap remains required for requests that omit it. CI for the new API tests is pending.
+- No deployment, production database change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Multipart upload size preflight
 
 - The server-proxy upload route now checks a valid declared `Content-Length` before calling `request.formData()`, rejecting malformed lengths and bodies above the 25 MiB image allowance plus 1 MiB multipart overhead.
