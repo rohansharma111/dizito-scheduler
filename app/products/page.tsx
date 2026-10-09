@@ -136,7 +136,7 @@ export default async function ProductsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b bg-gray-50">
                   <th className="text-left px-6 py-4 text-sm font-semibold">
