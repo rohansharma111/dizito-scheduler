@@ -1,3 +1,10 @@
+## 2026-10-09 — Publish Details modal visual polish (committed directly to main)
+
+- Restyled `components/PublishDetailsModal.tsx` with a softer overlay, rounded elevated panel, clearer heading/summary, refined platform cards, readable error/reconnect callouts, consistent action buttons, and responsive spacing. Added scoped animation/layout rules in `components/PublishDetailsModal.module.css`, respecting reduced-motion preferences.
+- Direct-main commits: `a5e0bffb38184f1dbf81c96810519bc99968850b` (component) and `f57b1a2ae4a06b27d2cd85f96c379a9762146e8e` (styles).
+- Publish/retry counts, status display logic, API endpoints, retry/reconnect handlers, and modal open/close behavior were preserved. No API, database, migration, or provider behavior changed.
+- Lint, typecheck, automated tests, build, and browser visual QA have not been run for this change; latest-main CI is unconfirmed.
+
 ## 2026-10-09 — Draft and scheduled post list visual polish (committed directly to main)
 
 - Updated `components/DraftPosts.tsx` and `components/ScheduledPosts.tsx` with shared scoped presentation styles in `components/PostLists.module.css`: refined empty states, headings, table borders/spacing, table headers/rows, and action focus affordances. Empty-state CTAs now use Dizito's lime primary action styling.
