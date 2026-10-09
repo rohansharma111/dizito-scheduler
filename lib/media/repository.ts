@@ -64,6 +64,21 @@ export class MediaRepository {
     return result.rows[0];
   }
 
+  async findByCloudinaryPublicId(userId: number, publicId: string) {
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM media_library
+      WHERE user_id = $1
+        AND cloudinary_public_id = $2
+      LIMIT 1
+      `,
+      [userId, publicId],
+    );
+
+    return result.rows[0] ?? null;
+  }
+
   async findById(id: number, userId: number) {
     const result = await pool.query(
       `
