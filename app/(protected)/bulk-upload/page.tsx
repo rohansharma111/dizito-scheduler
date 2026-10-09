@@ -8,6 +8,7 @@ import Link from "next/link";
 import { hasFeature } from "@/lib/plans";
 import { useDropzone } from "react-dropzone";
 import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
+import TablePagination from "@/components/dizito/TablePagination";
 
 type CsvRow = {
   content?: string;
@@ -57,6 +58,9 @@ export default function BulkUploadPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [previewFilter, setPreviewFilter] = useState<"all" | "valid" | "invalid" | "duplicate">("all");
+  const [previewPage, setPreviewPage] = useState(1);
+  const [previewPageSize, setPreviewPageSize] = useState(25);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [plan, setPlan] = useState("free");
   const [selectedFileName, setSelectedFileName] = useState("");
@@ -231,6 +235,8 @@ export default function BulkUploadPage() {
 
         setRows(parsedRows);
         setValidations(nextValidations);
+        setPreviewFilter("all");
+        setPreviewPage(1);
 
         setSelectedRows(
           parsedRows.map((_, i) => i).filter((i) => nextValidations[i].valid),
@@ -314,6 +320,8 @@ ${result.failed}
         setRows([]);
         setValidations([]);
         setSelectedRows([]);
+        setPreviewFilter("all");
+        setPreviewPage(1);
       }
       if (result.errors?.length) {
         console.log("Bulk Errors:", result.errors);
@@ -327,6 +335,17 @@ ${result.failed}
   }
 
   const validCount = validations.filter((v) => v.valid).length;
+  const invalidCount = rows.length - validCount;
+  const duplicateCount = validations.filter((validation) => validation.errors.includes("Duplicate row")).length;
+  const filteredPreviewRows = rows.map((row, index) => ({ row, index, validation: validations[index] })).filter(({ validation }) => {
+    if (previewFilter === "valid") return validation?.valid;
+    if (previewFilter === "invalid") return !validation?.valid;
+    if (previewFilter === "duplicate") return validation?.errors.includes("Duplicate row");
+    return true;
+  });
+  const paginatedPreviewRows = filteredPreviewRows.slice((previewPage - 1) * previewPageSize, previewPage * previewPageSize);
+  const visibleValidRows = paginatedPreviewRows.filter(({ validation }) => validation?.valid).map(({ index }) => index);
+  const allVisibleValidSelected = visibleValidRows.length > 0 && visibleValidRows.every((index) => selectedRows.includes(index));
 
   if (planLoading) {
     return (
