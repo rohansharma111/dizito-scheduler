@@ -212,7 +212,14 @@ export default function GenerateMyWeekPage() {
             <CheckCircle2 size={16} /> {saving ? "Approving…" : "Approve Week"}
           </DizitoButton>
         )}
-        {approved && <DizitoBadge tone="success"><CheckCircle2 size={14} /> Approved for review</DizitoBadge>}
+        {approved && (
+          <>
+            <DizitoBadge tone="success"><CheckCircle2 size={14} /> Approved for review</DizitoBadge>
+            <DizitoButton variant="secondary" onClick={() => { window.location.href = "/marketing-content"; }}>
+              Review content items <ArrowRight size={16} />
+            </DizitoButton>
+          </>
+        )}
       </div>
 
       {message && (
