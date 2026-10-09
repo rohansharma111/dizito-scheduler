@@ -1,3 +1,10 @@
+## 2026-10-09 — Media service upload-policy defense in depth
+
+- `MediaService.completeDirectUpload` now enforces `getUploadPolicy` immediately before persistence, so the service boundary independently rejects unsupported MIME types, out-of-policy byte counts, and resource-type mismatches even if a caller bypasses the route-level check.
+- Normalized direct-upload MIME declarations with trim/lowercase before resource/format policy validation.
+- Added regression tests for oversized direct video uploads and fractional Cloudinary byte counts. CI remains the required validation signal for these commits.
+- No deployment, production database change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Workstream E CI-green remediation checkpoint
 
 - Branch: `feature/lint-remediation-2026-10-09`.
