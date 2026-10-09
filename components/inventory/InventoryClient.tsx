@@ -8,6 +8,7 @@ import ReserveStockModal from "./ReserveStockModal";
 import ReleaseStockModal from "./ReleaseStockModal";
 import InventoryActionsMenu from "./InventoryActionsMenu";
 import InventoryMovementHistory from "./InventoryMovementHistory";
+import { DizitoCard, DizitoMetric, DizitoPage, DizitoPageHeader, DizitoButton } from "@/components/dizito/DizitoUI";
 
 interface InventoryItem {
   id: number;
@@ -125,30 +126,17 @@ export default function InventoryClient({
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <DizitoPage className="px-4 sm:px-6 space-y-5">
       {/* HEADER */}
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Inventory</h1>
+      <DizitoPageHeader eyebrow="Commerce" title="Inventory" description="Manage stock levels, reservations, and availability across locations." />
 
-          <p className="text-gray-500 mt-1">
-            Manage your stock across locations.
-          </p>
-        </div>
+      <div className="flex justify-start">
 
         <button
           type="button"
           onClick={handleOpenAddStock}
-          className="
-    bg-blue-600
-    text-white
-    px-5
-    py-2.5
-    rounded-lg
-    font-medium
-    hover:bg-blue-700
-  "
+          className="dizito-button dizito-button-primary"
         >
           + Add Stock
         </button>
@@ -156,8 +144,8 @@ export default function InventoryClient({
 
       {/* SUMMARY */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border rounded-xl p-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <DizitoCard>
           <div className="text-sm text-gray-500">On Hand</div>
 
           <div className="text-3xl font-bold mt-2">{totalOnHand}</div>
@@ -179,12 +167,12 @@ export default function InventoryClient({
           <div className="text-3xl font-bold mt-2">{totalAvailable}</div>
 
           <div className="text-xs text-gray-500 mt-1">Available to sell</div>
-        </div>
+        </DizitoCard>
       </div>
 
       {/* FILTERS */}
 
-      <div className="bg-white border rounded-xl p-4">
+      <DizitoCard tone="soft">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1">
             <input
