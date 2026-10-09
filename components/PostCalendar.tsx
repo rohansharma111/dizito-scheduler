@@ -70,11 +70,11 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
   */
   if (mobile) {
     return (
-      <div className="bg-white p-4 rounded-xl shadow my-6">
-        <h2 className="text-xl font-bold mb-4">Upcoming Posts</h2>
+      <div className="my-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:my-6 sm:p-5">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900 sm:text-xl">Upcoming Posts</h2>
 
         {upcomingPosts.length === 0 ? (
-          <div className="text-gray-500">No scheduled posts</div>
+          <div className="rounded-xl bg-slate-50 px-4 py-6 text-sm text-slate-500">No scheduled posts</div>
         ) : (
           <div className="space-y-4">
             {upcomingPosts.map((post: any) => (
@@ -87,13 +87,13 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
                     shadow-sm
                   "
               >
-                <div className="font-semibold">{post.post}</div>
+                <div className="break-words font-semibold text-slate-900">{post.post}</div>
 
                 <div className="mt-2 text-sm text-gray-500">
                   {new Date(post.schedule_time).toLocaleString()}
                 </div>
 
-                <div className="mt-3 flex gap-3">
+                <div className="mt-3 flex flex-wrap items-center gap-3">
                   {post.targets?.map((target: any) => (
                     <div key={target.id}>
                       {target.platform === "instagram" && (
@@ -157,10 +157,10 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
     DESKTOP VIEW
   */
   return (
-    <div className="bg-white p-6 rounded-xl shadow my-6">
-      <h2 className="text-2xl font-bold mb-4">Content Calendar</h2>
+    <div className="my-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:my-6 sm:p-6">
+      <h2 className="mb-4 text-xl font-semibold text-slate-900 sm:text-2xl">Content Calendar</h2>
 
-      <div className="overflow-x-auto">
+      <div className="min-w-0 overflow-x-auto rounded-xl border border-slate-100 p-2 sm:p-3">
         <Calendar
           value={selectedDate}
           onChange={(date: any) => setSelectedDate(date)}
@@ -181,10 +181,10 @@ export default function PostCalendar({ posts }: { posts: Post[] }) {
       </div>
 
       <div className="mt-6">
-        <h3 className="text-xl font-bold mb-4">Posts For Selected Day</h3>
+        <h3 className="mb-4 text-lg font-semibold text-slate-900 sm:text-xl">Posts For Selected Day</h3>
 
         {dayPosts.length === 0 ? (
-          <div className="text-gray-500">No posts scheduled</div>
+          <div className="rounded-xl bg-slate-50 px-4 py-6 text-sm text-slate-500">No posts scheduled for this day</div>
         ) : (
           dayPosts.map((post: any) => (
             <div
