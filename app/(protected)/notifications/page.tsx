@@ -197,7 +197,7 @@ export default function NotificationsPage() {
                 {/* Content */}
                 <div className="flex-1">
                   <div className="flex min-w-0 items-start justify-between gap-3">
-                    <h2 className="font-semibold text-sm sm:text-lg">
+                    <h2 className="min-w-0 break-words font-semibold text-sm sm:text-lg">
                       {notification.title}
                     </h2>
 
