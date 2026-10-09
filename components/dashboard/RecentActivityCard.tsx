@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight, Inbox } from "lucide-react";
 
 import { getEventIcon } from "@/lib/eventIcons";
 import { getEventTitle } from "@/lib/eventFormatter";
@@ -21,13 +22,10 @@ export default function RecentActivityCard() {
   async function load() {
     try {
       const response = await fetch("/api/activity");
-
       if (!response.ok) {
         throw new Error("Failed to load activity");
       }
-
       const data = await response.json();
-
       setEvents(data.slice(0, 5));
     } catch (error) {
       console.error(error);
@@ -40,102 +38,83 @@ export default function RecentActivityCard() {
     load();
   }, []);
 
-
-
   return (
-    <div className="bg-white border rounded-xl shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="font-semibold text-lg">Recent Activity</h2>
-
+    <section className="overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(17,24,39,0.05)]">
+      <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+        <div className="min-w-0">
+          <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Recent Activity</h2>
+          <p className="mt-1 text-[11px] text-slate-500">Latest changes across your workspace</p>
+        </div>
         <Link
           href="/activity"
-          className="
-            text-sm
-            text-blue-600
-            hover:text-blue-700
-          "
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-violet-700 transition hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
         >
-          View all
+          View all <ArrowRight size={13} />
         </Link>
-      </div>
+      </header>
 
-      {/* Loading */}
       {loading && (
-        <div className="p-6 text-center text-gray-500">Loading activity...</div>
-      )}
-
-      {/* Empty */}
-      {!loading && events.length === 0 && (
-        <div className="p-6 text-center">
-          <div className="text-3xl mb-2">📭</div>
-
-          <div className="font-medium">No activity yet</div>
-
-          <div className="text-sm text-gray-500 mt-1">
-            Publish your first post to see activity.
-          </div>
-        </div>
-      )}
-
-      {/* Events */}
-      {!loading && events.length > 0 && (
-        <div>
-          {events.map((event, index) => (
-            <div
-              key={event.id}
-              className={`
-                flex
-                gap-3
-                p-4
-                hover:bg-gray-50
-                transition
-                ${index !== events.length - 1 ? "border-b" : ""}
-              `}
-            >
-              {/* Icon */}
-              <div
-                className="
-                  flex-shrink-0
-                  w-9
-                  h-9
-                  rounded-full
-                  bg-gray-100
-                  flex
-                  items-center
-                  justify-center
-                  text-lg
-                "
-              >
-                {getEventIcon(event.event_type)}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm">
-                  {getEventTitle(event)}
-                </div>
-
-                {event.payload?.accountName && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {event.payload.accountName}
-                  </div>
-                )}
-
-                {event.payload?.error && (
-                  <div className="text-xs text-red-500 mt-1 truncate">
-                    {event.payload.error}
-                  </div>
-                )}
-
-                <div className="text-xs text-gray-400 mt-2">
-                  {timeAgo(event.created_at)}
-                </div>
+        <div className="space-y-4 p-5" role="status" aria-label="Loading activity">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="flex items-start gap-3">
+              <div className="h-9 w-9 shrink-0 animate-pulse rounded-xl bg-slate-100" />
+              <div className="min-w-0 flex-1 space-y-2 pt-1">
+                <div className="h-3 w-3/4 animate-pulse rounded bg-slate-100" />
+                <div className="h-2.5 w-1/2 animate-pulse rounded bg-slate-50" />
               </div>
             </div>
           ))}
         </div>
       )}
-    </div>
+
+      {!loading && events.length === 0 && (
+        <div className="flex flex-col items-center px-5 py-8 text-center">
+          <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+            <Inbox size={20} />
+          </span>
+          <p className="text-sm font-bold text-slate-800">No activity yet</p>
+          <p className="mt-1 max-w-[220px] text-xs leading-5 text-slate-500">
+            Publish your first post to see activity.
+          </p>
+        </div>
+      )}
+
+      {!loading && events.length > 0 && (
+        <div className="divide-y divide-slate-100">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="flex gap-3 px-5 py-4 transition-colors hover:bg-slate-50/80"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-base">
+                {getEventIcon(event.event_type)}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[12px] font-bold leading-5 text-slate-800">
+                  {getEventTitle(event)}
+                </p>
+
+                {event.payload?.accountName && (
+                  <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                    {event.payload.accountName}
+                  </p>
+                )}
+
+                {event.payload?.error && (
+                  <p className="mt-1 truncate text-[11px] text-rose-600">
+                    {event.payload.error}
+                  </p>
+                )}
+
+                <p className="mt-2 text-[10px] font-medium text-slate-400">
+                  {timeAgo(event.created_at)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
