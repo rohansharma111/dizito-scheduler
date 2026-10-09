@@ -41,6 +41,23 @@ describe("wooCommerceRequest", () => {
     expect(init.cache).toBe("no-store");
   });
 
+  it("falls back to the WordPress rest_route query when pretty REST routes return 404", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("Not found", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ namespaces: ["wc/v3"] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      wooCommerceRequest(
+        { storeUrl: "https://store.example.com", consumerKey: "ck_test", consumerSecret: "cs_test" },
+        "system_status",
+      ),
+    ).resolves.toEqual({ namespaces: ["wc/v3"] });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://store.example.com/?rest_route=%2Fwc%2Fv3%2Fsystem_status");
+  });
+
   it("does not surface provider-controlled error messages", async () => {
     vi.stubGlobal(
       "fetch",
