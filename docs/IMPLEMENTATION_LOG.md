@@ -1,3 +1,10 @@
+## 2026-10-09 — Narrow-screen Drafts actions (main)
+
+- Reduced action-grid spacing on narrow mobile widths, hid cramped text labels below 360px while retaining title/aria labels, restored compact labels above 360px, and added focus-visible styling.
+- Existing draft action handlers and routes are unchanged.
+- Commit: `637b2769fae283cc28d1854a31ae995401dbb99e`.
+- No local checks or browser/device verification run. The mobile product/variant table screenshots require source-component discovery before targeted correction.
+
 ## 2026-10-09 — Publish Details modal visual polish (main)
 
 - Refined the publish-details modal overlay, panel, account/platform cards, status/error information, and retry/reconnect actions with scoped CSS and responsive styling.
