@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { DizitoPage, DizitoPageHeader, DizitoButton, DizitoCard, DizitoState, DizitoBadge } from "@/components/dizito/DizitoUI";
 import {
   getNotificationIcon,
   getNotificationColor,
@@ -110,38 +111,16 @@ export default function NotificationsPage() {
     [notifications],
   );
   return (
-    <div className="p-6">
+    <DizitoPage className="px-4 sm:px-6">
       {/* Header */}
-      <div
-        className="
-    flex
-    flex-col
-    sm:flex-row
-    sm:justify-between
-    sm:items-center
-    gap-4
-    mb-8
-  "
-      >
-        <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
+      <DizitoPageHeader eyebrow="Workspace" title="Notifications" description={`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`} />
 
-          <p className="text-gray-500 mt-2">
-            {unreadCount} unread notification
-            {unreadCount !== 1 ? "s" : ""}
-          </p>
-        </div>
+      <div className="mb-5 flex justify-start">
 
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="
-              bg-blue-600
-              text-white
-              px-4
-              py-2
-              rounded-lg
-            "
+            className="dizito-button dizito-button-primary"
           >
             Mark all read
           </button>
