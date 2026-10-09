@@ -1,3 +1,9 @@
+## 2026-10-09 — Orders route and local marketing schema diagnosis
+
+- Added the missing protected `/orders` page, using the existing tenant-scoped `GET /api/orders` endpoint with search/status filters and loading/empty/error states. Commit: `4e271ff237ba68e869bb2520d9002bec20bc101c`.
+- Local runtime also reports `marketing_business_profiles` missing. The repository already defines that table in `db/migrations/005_marketing_foundation_v1.sql`; this points to a local `DATABASE_URL` whose database has not had the repository migrations applied, or to a different database than expected. Run `npm run db:migrate` with the intended local `.env`/`DATABASE_URL`, then restart the dev server and verify the marketing tables. Do not apply migrations to production merely to fix a localhost error.
+- Browser/local DB verification has not been performed from this session.
+
 ## 2026-10-09 — Billing navigation and subscription-action guard (main)
 
 - Fixed sidebar active matching to use exact route boundaries. `/settings/billing` now activates Billing without also activating the parent `/settings` item.
