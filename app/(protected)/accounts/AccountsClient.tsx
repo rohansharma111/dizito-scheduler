@@ -16,17 +16,39 @@ export default function AccountsPage() {
   const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [limits, setLimits] = useState({ used: 0, allowed: 1 });
 
+  async function loadAccounts() {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/accounts", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load connected accounts");
+      if (
+        !data ||
+        !Array.isArray(data.accounts) ||
+        !data.user ||
+        typeof data.user.plan !== "string" ||
+        !data.limits ||
+        typeof data.limits.used !== "number" ||
+        typeof data.limits.allowed !== "number"
+      ) {
+        throw new Error("Unexpected accounts response. Please try again.");
+      }
+      setAccounts(data.accounts);
+      setPlan(data.user.plan);
+      setLimits(data.limits);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load connected accounts");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    fetch("/api/accounts")
-      .then((res) => res.json())
-      .then((data) => {
-        setAccounts(data.accounts);
-        setPlan(data.user.plan);
-        setLimits(data.limits);
-      })
-      .finally(() => setLoading(false));
+    void loadAccounts();
   }, []);
 
   if (loading) {
@@ -50,6 +72,24 @@ export default function AccountsPage() {
     );
   }
 
+
+  if (error && !loading) {
+    return (
+      <DizitoPage>
+        <DizitoPageHeader
+          eyebrow="Distribution"
+          title="Channels & accounts"
+          description="Connect the destinations where approved Dizito content will reach customers."
+        />
+        <DizitoState
+          kind="error"
+          title="Accounts could not load"
+          description={error}
+          action={<DizitoButton variant="secondary" onClick={() => void loadAccounts()}>Try again</DizitoButton>}
+        />
+      </DizitoPage>
+    );
+  }
   const accountLimitReached = limits.used >= limits.allowed;
   const connect = (url: string) => {
     if (!accountLimitReached) window.location.assign(url);
@@ -65,6 +105,17 @@ export default function AccountsPage() {
       if (!response.ok) throw new Error("Unable to load accounts");
 
       const data = await response.json();
+      if (
+        !data ||
+        !Array.isArray(data.accounts) ||
+        !data.user ||
+        typeof data.user.plan !== "string" ||
+        !data.limits ||
+        typeof data.limits.used !== "number" ||
+        typeof data.limits.allowed !== "number"
+      ) {
+        throw new Error("Unexpected accounts response");
+      }
       setAccounts(data.accounts);
       setPlan(data.user.plan);
       setLimits(data.limits);
@@ -97,17 +148,21 @@ export default function AccountsPage() {
     const confirmed = confirm("Disconnect this account?");
     if (!confirmed) return;
 
-    const response = await fetch(`/api/accounts/${account.id}`, { method: "DELETE" });
-    const data = await response.json();
+    try {
+      const response = await fetch(`/api/accounts/${account.id}`, { method: "DELETE" });
+      const data = await response.json();
 
-    if (!response.ok) {
-      alert(`${data.error}${data.scheduledPosts ? ` (${data.scheduledPosts} scheduled posts)` : ""}`);
-      return;
+      if (!response.ok) {
+        alert(`${data.error || "Unable to disconnect account"}${data.scheduledPosts ? ` (${data.scheduledPosts} scheduled posts)` : ""}`);
+        return;
+      }
+
+      setAccounts((current) => current.filter((item) => item.id !== account.id));
+      setLimits((current) => ({ ...current, used: Math.max(0, current.used - 1) }));
+      alert("Account disconnected");
+    } catch {
+      alert("Unable to disconnect account. Please check your connection and try again.");
     }
-
-    setAccounts((current) => current.filter((item) => item.id !== account.id));
-    setLimits((current) => ({ ...current, used: Math.max(0, current.used - 1) }));
-    alert("Account disconnected");
   }
 
   return (
