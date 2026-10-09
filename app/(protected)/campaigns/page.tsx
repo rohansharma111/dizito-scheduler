@@ -118,12 +118,12 @@ export default function CampaignsPage() {
   }
 
   return (
-    <DizitoPage>
-      <DizitoPageHeader eyebrow="Marketing strategy" title="Campaigns" description="Connect goals, offers and products to Content Items. Campaigns do not publish by themselves." />
-      {message && <DizitoCard tone="soft"><div className="text-sm font-medium">{message}</div></DizitoCard>}
+    <DizitoPage className="space-y-5">
+      <DizitoPageHeader eyebrow="Marketing strategy" title="Campaigns" description="Connect goals, offers and products to Content Items. Campaigns do not publish by themselves." action={<DizitoButton variant="secondary" onClick={() => void load()} disabled={loading}>Refresh</DizitoButton>} />
+      {message && <DizitoCard tone="soft"><div role="status" aria-live="polite" className="break-words text-sm font-medium">{message}</div></DizitoCard>}
 
-      <DizitoCard>
-        <h2 style={{ marginTop: 0 }}>Create campaign</h2>
+      <DizitoCard className="min-w-0">
+        <h2 className="mb-4 mt-0 text-lg font-semibold">Create campaign</h2>
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
           <input placeholder="Campaign name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm" />
           <select value={form.goalId} onChange={(e) => setForm({ ...form, goalId: e.target.value })} style={{ padding: 10 }}><option value="">No goal</option>{(brain?.goals || []).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
@@ -141,9 +141,9 @@ export default function CampaignsPage() {
 
       <section style={{ display: "grid", gap: 12 }}>
         <h2 style={{ marginBottom: 0 }}>Campaign workspace</h2>
-        {loading ? <p>Loading campaigns…</p> : campaigns.length === 0 ? <DizitoState kind="empty" title="No campaigns yet" description="Create one above or approve a generated week to start organizing strategy." /> :
+        {loading ? <DizitoCard><div role="status" className="animate-pulse space-y-3"><div className="h-5 w-1/3 rounded bg-slate-100" /><div className="h-20 rounded-xl bg-slate-100" /><div className="h-20 rounded-xl bg-slate-100" /></div></DizitoCard> : campaigns.length === 0 ? <DizitoState kind="empty" title="No campaigns yet" description="Create one above or approve a generated week to start organizing strategy." /> :
           campaigns.map((campaign) => <DizitoCard key={campaign.id}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><div><strong>{campaign.name}</strong><div style={{ marginTop: 4, fontSize: 13, opacity: 0.65 }}>Campaign #{campaign.id}</div></div><div style={{ display: "flex", alignItems: "center", gap: 8 }}><DizitoBadge tone={campaign.status === "active" ? "success" : campaign.status === "paused" ? "warning" : "neutral"}>{campaign.status}</DizitoBadge>{campaign.status === "draft" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "planned")} className="dizito-button dizito-button-secondary !min-h-8 !px-3 !text-xs">Plan</button>}{campaign.status === "planned" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "active")} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb" }}>Activate</button>}{campaign.status === "active" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "paused")} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb" }}>Pause</button>}{campaign.status === "paused" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "active")} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb" }}>Resume</button>}</div></div>
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div className="min-w-0 break-words"><strong>{campaign.name}</strong><div style={{ marginTop: 4, fontSize: 13, opacity: 0.65 }}>Campaign #{campaign.id}</div></div><div className="flex flex-wrap items-center gap-2"><DizitoBadge tone={campaign.status === "active" ? "success" : campaign.status === "paused" ? "warning" : "neutral"}>{campaign.status}</DizitoBadge>{campaign.status === "draft" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "planned")} className="dizito-button dizito-button-secondary !min-h-8 !px-3 !text-xs">Plan</button>}{campaign.status === "planned" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "active")} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb" }}>Activate</button>}{campaign.status === "active" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "paused")} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb" }}>Pause</button>}{campaign.status === "paused" && <button type="button" disabled={saving} onClick={() => updateStatus(campaign, "active")} style={{ padding: "5px 8px", borderRadius: 7, border: "1px solid #bbb" }}>Resume</button>}</div></div>
             <div style={{ marginTop: 12, display: "grid", gap: 6, fontSize: 14 }}>
               {campaign.objective && <div><strong>Objective:</strong> {campaign.objective}</div>}
               {campaign.audience && <div><strong>Audience:</strong> {campaign.audience}</div>}
