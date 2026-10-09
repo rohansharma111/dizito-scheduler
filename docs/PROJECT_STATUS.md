@@ -1295,3 +1295,10 @@ Important rollout boundary:
 
 - After a weekly plan is approved, Generate My Week now exposes a direct “Review content items” action to open Marketing Content. Approval still does not publish posts.
 - Both Validate and Quality Checks passed for the previous WooCommerce planning-context UI/doc commits. This navigation follow-up is awaiting CI; browser/runtime testing has not been performed.
+
+
+## 2026-10-09 — WooCommerce product-reference regression coverage
+
+- Extracted bounded validation for provider-owned external product references into `lib/marketing/externalProductReferences.ts` and added Vitest coverage for valid snapshots, optional fields, empty lists, invalid IDs/names, list/field limits, and HTTPS-only permalinks.
+- Weekly-plan approval route now calls the tested helper and returns its validation errors as HTTP 400. External WooCommerce identifiers remain planning metadata, separate from canonical product IDs.
+- Commits: `b3b7015` (helper), `91bc97d` (tests), `483e9e5` (route integration). CI was triggered; confirm results before treating this checkpoint as verified. Browser/runtime end-to-end QA remains pending.
