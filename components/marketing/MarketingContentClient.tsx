@@ -56,13 +56,17 @@ export default function MarketingContentClient() {
       const contentData = await contentResponse.json(); const accountData = await accountResponse.json();
       if (!contentResponse.ok) throw new Error(contentData.error || "Failed to load content");
       if (!accountResponse.ok) throw new Error(accountData.error || "Failed to load accounts");
-      const rawItems: ContentItem[] = contentData.contentItems || [];
+      if (!Array.isArray(contentData.contentItems)) throw new Error("Unexpected marketing content response");
+      if (!Array.isArray(accountData)) throw new Error("Unexpected connected accounts response");
+      const rawItems: ContentItem[] = [...contentData.contentItems];
       if (selectedContentId) {
         const focusedItem = rawItems.find((item) => item.id === selectedContentId);
         if (focusedItem && !selectedCampaignId && focusedItem.campaignId) {
           const focusedResponse = await fetch(`/api/marketing/content-items?campaignId=${focusedItem.campaignId}`);
           const focusedData = await focusedResponse.json();
-          if (focusedResponse.ok) rawItems.splice(0, rawItems.length, ...(focusedData.contentItems || []));
+          if (!focusedResponse.ok) throw new Error(focusedData.error || "Failed to load focused campaign content");
+          if (!Array.isArray(focusedData.contentItems)) throw new Error("Unexpected focused content response");
+          rawItems.splice(0, rawItems.length, ...focusedData.contentItems);
         }
       }
       const enriched = await Promise.all(rawItems.map(async (item) => {
@@ -70,8 +74,8 @@ export default function MarketingContentClient() {
         if (!response.ok) return item;
         const data = await response.json(); return { ...item, variants: data.variants || [] };
       }));
-      setItems(enriched); setAccounts(accountData || []);
-      setSelectedAccounts((current) => current.length ? current : (accountData || []).map((a: Account) => a.id));
+      setItems(enriched); setAccounts(accountData);
+      setSelectedAccounts((current) => current.length ? current : accountData.map((a: Account) => a.id));
       const nextSchedule: Record<number, string> = {}; for (const item of rawItems) nextSchedule[item.id] = defaultSchedule(item.plannedFor); setSchedule(nextSchedule);
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to load marketing content"); }
     finally { setLoading(false); }
