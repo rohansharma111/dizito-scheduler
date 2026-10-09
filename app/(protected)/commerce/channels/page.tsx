@@ -35,6 +35,7 @@ export default function CommerceChannelsPage() {
   const [shop, setShop] = useState("");
   const [wooName, setWooName] = useState("WooCommerce Staging");
   const [wooStoreUrl, setWooStoreUrl] = useState("");
+  const [wooSettingsOpened, setWooSettingsOpened] = useState(false);
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
   const [wooTestStoreConfirmed, setWooTestStoreConfirmed] = useState(false);
@@ -73,6 +74,24 @@ export default function CommerceChannelsPage() {
     window.location.href = `/api/commerce/shopify/connect?shop=${encodeURIComponent(normalized)}`;
   }
 
+  function openWooCommerceApiSettings() {
+    try {
+      const parsed = new URL(wooStoreUrl.trim());
+      if (parsed.protocol !== "https:" || parsed.username || parsed.password || !parsed.hostname) {
+        setError("Enter your staging store's full HTTPS URL before opening WooCommerce settings.");
+        return;
+      }
+      parsed.pathname = "/wp-admin/admin.php";
+      parsed.search = new URLSearchParams({ page: "wc-settings", tab: "advanced", section: "keys" }).toString();
+      parsed.hash = "";
+      window.open(parsed.toString(), "_blank", "noopener,noreferrer");
+      setWooSettingsOpened(true);
+      setError(null);
+    } catch {
+      setError("Enter a valid staging store URL, such as https://staging.example.com.");
+    }
+  }
+
   async function connectWooCommerce(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -92,6 +111,7 @@ export default function CommerceChannelsPage() {
       if (!response.ok || !data.success || !data.channel) throw new Error(data.error ?? "Unable to connect WooCommerce store");
       setWooMessage("WooCommerce staging connection verified: " + data.channel.name);
       setWooStoreUrl("");
+      setWooSettingsOpened(false);
       setWooConsumerKey("");
       setWooConsumerSecret("");
       setWooTestStoreConfirmed(false);
@@ -193,27 +213,56 @@ export default function CommerceChannelsPage() {
       </DizitoCard>
 
       <DizitoCard className="mb-5">
-        <h2 className="text-xl font-semibold">Connect WooCommerce staging store</h2>
-        <p className="mt-1 text-sm text-gray-600">Connect a dedicated staging/test store to verify product creation and reconciliation. Use a WooCommerce REST API key with product read/write permissions.</p>
-        <form onSubmit={connectWooCommerce} className="mt-4 grid gap-3">
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Connection name
+        <h2 className="text-xl font-semibold">Connect WooCommerce</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Connect a dedicated staging/test store. WooCommerce REST API keys are created in your store admin, so this guided flow opens the right settings page before you return here to verify the connection.
+        </p>
+
+        <form onSubmit={connectWooCommerce} className="mt-4 grid gap-4">
+          <label className="grid gap-1 text-sm font-medium text-slate-700">
+            Connection name
             <input value={wooName} onChange={(event) => setWooName(event.target.value)} required maxLength={100} className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Staging store URL
-            <input value={wooStoreUrl} onChange={(event) => setWooStoreUrl(event.target.value)} type="url" required placeholder="https://staging.example.com" autoComplete="url" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
-          </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">WooCommerce consumer key
-            <input value={wooConsumerKey} onChange={(event) => setWooConsumerKey(event.target.value)} required autoComplete="off" spellCheck={false} className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
-          </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">WooCommerce consumer secret
-            <input value={wooConsumerSecret} onChange={(event) => setWooConsumerSecret(event.target.value)} type="password" required autoComplete="new-password" spellCheck={false} className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
-          </label>
+
+          <div className="grid gap-2">
+            <div className="text-sm font-semibold text-slate-900">Step 1 · Enter your staging store</div>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              Staging store URL
+              <input value={wooStoreUrl} onChange={(event) => { setWooStoreUrl(event.target.value); setWooSettingsOpened(false); }} type="url" required placeholder="https://staging.example.com" autoComplete="url" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+            </label>
+            <p className="text-xs text-slate-500">Use the full HTTPS URL for your test store, not your live production store.</p>
+            <div>
+              <button type="button" onClick={openWooCommerceApiSettings} disabled={!wooStoreUrl.trim()} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+                Open WooCommerce API settings ↗
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">In the new tab, go to WooCommerce → Settings → Advanced → REST API, select Add key, choose Dizito as the description, and set permissions to Read/Write. Copy the consumer key and secret; WooCommerce may show the secret only once.</p>
+          </div>
+
+          <div className="grid gap-3 rounded-xl border border-slate-200 p-3 sm:p-4">
+            <div className="text-sm font-semibold text-slate-900">Step 2 · Verify and connect</div>
+            <p className="text-sm text-slate-600">Paste the API credentials generated for this staging store. Dizito verifies access before saving the connection.</p>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              Consumer key
+              <input value={wooConsumerKey} onChange={(event) => setWooConsumerKey(event.target.value)} required autoComplete="off" spellCheck={false} placeholder="ck_…" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+            </label>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              Consumer secret
+              <input value={wooConsumerSecret} onChange={(event) => setWooConsumerSecret(event.target.value)} type="password" required autoComplete="new-password" spellCheck={false} placeholder="cs_…" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+            </label>
+          </div>
+
           <label className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <input type="checkbox" checked={wooTestStoreConfirmed} onChange={(event) => setWooTestStoreConfirmed(event.target.checked)} className="mt-1" />
             <span>I confirm this is a staging/test store, not production, and it is safe to use for test product creation.</span>
           </label>
-          <div><button type="submit" disabled={connectingWoo || !wooTestStoreConfirmed} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">{connectingWoo ? "Verifying connection..." : "Connect staging store"}</button></div>
+          <div>
+            <button type="submit" disabled={connectingWoo || !wooTestStoreConfirmed} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
+              {connectingWoo ? "Verifying connection..." : "Verify & connect WooCommerce"}
+            </button>
+          </div>
         </form>
+        {wooSettingsOpened && <p className="mt-3 text-sm text-slate-600">WooCommerce settings opened in a new tab. After creating your Read/Write key, return here and enter both credentials.</p>}
         {wooMessage && <div role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{wooMessage}</div>}
       </DizitoCard>
 
