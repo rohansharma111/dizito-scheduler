@@ -25,6 +25,13 @@
 - Draft action handlers remain unchanged. Verification pending.
 - The supplied commerce screenshots also reveal product/variant tables collapsing into narrow columns. The exact component routes must be identified before making a safe targeted fix; no broad global table override was added.
 
+## Follow-up: mobile commerce table readability (2026-10-09)
+
+- Root cause: global `body { overflow-wrap: anywhere; }` split normal words and table headings into individual characters on narrow viewports. Changed the global body rule to `overflow-wrap: normal` while retaining code-token wrapping.
+- Added min-widths within horizontal scroll containers to products (640px), variants (680px), and inventory (900px). Product variant header stacks on mobile with a full-width Add Variant action.
+- Commits: `7666e3bc44e904324480020310bd4436d4b9f10a`, `1e6b318d9e36b83b04831c1775679a75fc54e556`, `284a68f00b4203e0b0462f5731caf4956bf2f8ab`, `721f97d5d1d03e1b110927f9a60f630e1099ea20`, `f6222b8802ebd668a9549b4e5ce3f5860f5aa717`.
+- No product, variant, or inventory logic changed. Checks and browser/device visual QA remain pending.
+
 ## Screens covered
 
 - Create Post form in `components/CreatePostForm.tsx`
