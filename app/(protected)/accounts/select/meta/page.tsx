@@ -128,6 +128,10 @@ export default function SelectAccountsPage() {
     return <DizitoPage className="px-4 sm:px-6"><DizitoState kind="empty" title="Loading accounts" description="Please wait while available resources are loaded." /></DizitoPage>;
   }
 
+  if (pages.length === 0) {
+    return <DizitoPage className="max-w-4xl px-4 sm:px-6"><DizitoState kind="empty" title="No Meta pages found" description="The selected Meta account did not return any pages or Instagram accounts available to connect." /></DizitoPage>;
+  }
+
   return (
     <DizitoPage className="max-w-4xl px-4 sm:px-6">
       <DizitoPageHeader eyebrow="Connected accounts" title="Select accounts" description="Choose which Facebook and Instagram accounts to connect." />
