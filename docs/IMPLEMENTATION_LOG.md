@@ -1,3 +1,11 @@
+## 2026-10-09 — Apply Marketing Foundation v1 to production Neon
+
+- Target verified: project `purple-wildflower-87394884`, production/default branch `br-empty-rice-ayeuugek`, database `neondb`.
+- Preflight confirmed `marketing_business_profiles`, `marketing_goals`, and `marketing_offers` were absent and the migration ledger did not contain version `005_marketing_foundation_v1.sql`.
+- Prepared migration on temporary branch `br-shy-haze-ayjgmewp`, verified all three tables and indexes, then applied the exact repository migration to production. Temporary branch was deleted by the migration completion flow.
+- Postflight confirmed all three tables exist; migration ledger entry recorded at `2026-10-09T13:31:29.072Z`. No application data was inserted or updated.
+- Next: smoke-test Business Brain from the app and review any subsequent errors.
+
 ## 2026-10-09 — Add missing Orders page; diagnose local marketing relation error
 
 - Added `app/(protected)/orders/page.tsx` for the existing orders API: tenant-scoped listing, customer/order search, order-status filter, and resilient loading/empty/error states. Commit `4e271ff237ba68e869bb2520d9002bec20bc101c`.
