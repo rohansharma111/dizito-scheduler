@@ -121,122 +121,67 @@ export default function DraftPosts({
             </div>
 
             <div
-              className="
-    grid
-    grid-cols-5
-    gap-2
-    mt-4
-  "
+              className="mt-4 grid grid-cols-5 gap-1.5 min-[360px]:gap-2"
             >
               {/* VIEW */}
               <button
                 title="View"
-                className="
-      flex
-      flex-col
-      items-center
-      justify-center
-      gap-1
-      p-3
-      rounded-lg
-      bg-gray-100
-      hover:bg-gray-200
-    "
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-slate-100 p-2 transition hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 min-[360px]:p-2.5" aria-label="View draft"
                 onClick={() => {
                   window.location.href = `/posts/${item.id}/edit?view=true`;
                 }}
               >
                 <Eye size={18} className="text-gray-700" />
 
-                <span className="text-xs">View</span>
+                <span className="hidden text-[10px] font-semibold leading-none min-[360px]:inline min-[420px]:text-xs">View</span>
               </button>
 
               {/* EDIT */}
               <button
                 title="Edit"
-                className="
-      flex
-      flex-col
-      items-center
-      justify-center
-      gap-1
-      p-3
-      rounded-lg
-      bg-yellow-50
-      hover:bg-yellow-100
-    "
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-amber-50 p-2 transition hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 min-[360px]:p-2.5" aria-label="Edit draft"
                 onClick={() => {
                   window.location.href = `/posts/${item.id}/edit`;
                 }}
               >
                 <Pencil size={18} className="text-yellow-600" />
 
-                <span className="text-xs">Edit</span>
+                <span className="hidden text-[10px] font-semibold leading-none min-[360px]:inline min-[420px]:text-xs">Edit</span>
               </button>
 
               {/* DELETE */}
               <button
                 title="Delete"
-                className="
-      flex
-      flex-col
-      items-center
-      justify-center
-      gap-1
-      p-3
-      rounded-lg
-      bg-red-50
-      hover:bg-red-100
-    "
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-rose-50 p-2 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 min-[360px]:p-2.5" aria-label="Delete draft"
                 onClick={() => deletePost(item.id)}
               >
                 <Trash2 size={18} className="text-red-600" />
 
-                <span className="text-xs">Delete</span>
+                <span className="hidden text-[10px] font-semibold leading-none min-[360px]:inline min-[420px]:text-xs">Delete</span>
               </button>
 
               {/* DUPLICATE */}
               <button
                 title="Duplicate"
-                className="
-      flex
-      flex-col
-      items-center
-      justify-center
-      gap-1
-      p-3
-      rounded-lg
-      bg-green-50
-      hover:bg-green-100
-    "
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-emerald-50 p-2 transition hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 min-[360px]:p-2.5" aria-label="Duplicate draft"
                 onClick={() => duplicatePost(item.id)}
               >
                 <Copy size={18} className="text-green-600" />
 
-                <span className="text-xs">Copy</span>
+                <span className="hidden text-[10px] font-semibold leading-none min-[360px]:inline min-[420px]:text-xs">Copy</span>
               </button>
 
               {/* SCHEDULE */}
               <button
                 title="Schedule"
-                className="
-      flex
-      flex-col
-      items-center
-      justify-center
-      gap-1
-      p-3
-      rounded-lg
-      bg-blue-50
-      hover:bg-blue-100
-    "
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-violet-50 p-2 transition hover:bg-violet-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 min-[360px]:p-2.5" aria-label="Schedule draft"
                 onClick={() => {
                   window.location.href = `/posts/${item.id}/edit?schedule=true`;
                 }}
               >
                 <CalendarPlus size={18} className="text-blue-600" />
 
-                <span className="text-xs">Schedule</span>
+                <span className="hidden text-[10px] font-semibold leading-none min-[360px]:inline min-[420px]:text-xs">Schedule</span>
               </button>
             </div>
           </div>
