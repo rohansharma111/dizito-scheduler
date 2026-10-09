@@ -372,7 +372,20 @@ export default function CommerceChannelsPage() {
                 >
                   Copy product brief
                 </button>
-                <a href="/generate-my-week" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">Open Generate My Week</a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selected = catalogProducts.filter((product) => selectedWooProductIds.includes(product.id));
+                    try {
+                      sessionStorage.setItem("dizito-woocommerce-product-handoff", JSON.stringify(selected.map(({ id, name, sku, price, stockStatus, permalink }) => ({ id, name, sku, price, stockStatus, permalink }))));
+                      window.location.href = "/generate-my-week";
+                    } catch {
+                      setProductBriefMessage("Unable to hand off selected products in this browser. Use Copy product brief instead.");
+                    }
+                  }}
+                  disabled={selectedWooProductIds.length === 0}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >Use in weekly plan</button>
               </div>
             </div>
           )}
