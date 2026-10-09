@@ -1,3 +1,11 @@
+## 2026-10-09 — Shared table pagination and bulk validation filters (committed directly to main)
+
+- Added `components/dizito/TablePagination.tsx`, a shared accessible pagination footer with 25/50/100 page sizes, previous/next controls, bounded page-number rendering, item counts, and no navigation clutter for single-page tables.
+- Applied it to the Bulk Upload CSV preview, Products, Product Variants, Inventory, Inventory Movement History, Draft Posts, and Scheduled/Published Posts. Pagination is currently client-side over each screen's existing loaded dataset; this is a consistent presentation/interaction layer, not a claim of server-side query pagination.
+- Bulk Upload now has All / Valid / Invalid / Duplicates filters and retains original CSV row numbering. The header checkbox selects/deselects valid rows on the current page only; selections across other pages are preserved. Existing import validation and import request behavior remain in place.
+- Direct-main commits include `8cbeda7a949d699202056a6b94735e14e6eeabf8` (shared pagination), `d88c2f26138a973b784394e49f103adf742aca2b` (bulk preview pagination), `a570ce78f953e817602e1741b8b7e0dc77aa23ac` (inventory), `b4f93b12bec44a368eef8e0c17555ed05dc8cfaf` (drafts), `21f8294a6cc6860eb8399ee370ecb7b958b4ba93` (scheduled/published), `48cfb403bb6b22c821e4b6e7cac558787db5f06d` (products table), `4c9272f4904c31a109abc9fe5efb35c4979353ab` (variants), `d849a786086ea572c40562f9c0a2dbb6b12089e0` (movement history), and `47455031200dc046b2e5195f6805bc65292d407e` (pagination rendering optimization).
+- Verification boundary: no local lint, typecheck, tests, build, or browser checks have been run. Workflow lookup has not yet confirmed CI. Inspect the final diffs and validate row selection/filter/page transitions before calling this verified. For large datasets, move the query and total count to server-side pagination in a follow-up rather than relying indefinitely on loading all rows into the browser.
+
 ## 2026-10-09 — Workstream B production billing schema applied
 
 - Applied `db/migrations/021_billing_v1_plans_entitlements.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek`.
