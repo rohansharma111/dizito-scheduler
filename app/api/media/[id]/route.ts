@@ -4,45 +4,41 @@ import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
 
 interface Params {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
 
-export async function DELETE(request: Request, { params }: Params) {
+export async function DELETE(_request: Request, { params }: Params) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
-        {
-          status: 401,
-        },
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid user session" }, { status: 401 });
+    }
 
-    await mediaService.deleteMedia(Number(id), Number(session.user.id));
+    const { id: rawId } = await params;
+    if (!/^\\d+$/.test(rawId)) {
+      return NextResponse.json({ success: false, error: "Invalid media ID" }, { status: 400 });
+    }
+    const id = Number(rawId);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid media ID" }, { status: 400 });
+    }
 
-    return NextResponse.json({
-      success: true,
-    });
+    const deleted = await mediaService.deleteMedia(id, userId);
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: "Media not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
-
+    console.error("Media deletion failed:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      {
-        status: 500,
-      },
+      { success: false, error: "Unable to delete this media. Please try again." },
+      { status: 500 },
     );
   }
 }
