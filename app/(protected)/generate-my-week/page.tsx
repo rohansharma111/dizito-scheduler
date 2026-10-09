@@ -24,8 +24,18 @@ export default function GenerateMyWeekPage() {
   const [approved, setApproved] = useState(false);
   const [strategyHandoff, setStrategyHandoff] = useState<any>(null);
   const [optimizerHandoff, setOptimizerHandoff] = useState<any>(null);
+  const [selectedWooProducts, setSelectedWooProducts] = useState<Array<{ id: number; name: string; sku: string; price: string; stockStatus: string; permalink: string }>>([]);
 
   useEffect(() => {
+    const productRaw = sessionStorage.getItem("dizito-woocommerce-product-handoff");
+    try {
+      if (productRaw) {
+        const parsed = JSON.parse(productRaw);
+        if (Array.isArray(parsed)) setSelectedWooProducts(parsed.filter((item) => item && typeof item.name === "string").slice(0, 20));
+      }
+    } catch {
+      sessionStorage.removeItem("dizito-woocommerce-product-handoff");
+    }
     const strategyRaw = sessionStorage.getItem("dizito-strategy-handoff");
     const optimizerRaw = sessionStorage.getItem("dizito-optimizer-handoff");
     try {
@@ -53,11 +63,11 @@ export default function GenerateMyWeekPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           weekStart,
-          strategy: strategyHandoff
-            ? { ...strategyHandoff, optimization: optimizerHandoff ?? undefined }
-            : optimizerHandoff
-              ? { optimization: optimizerHandoff }
-              : undefined,
+          strategy: {
+            ...(strategyHandoff ?? {}),
+            ...(optimizerHandoff ? { optimization: optimizerHandoff } : {}),
+            ...(selectedWooProducts.length ? { selectedProducts: selectedWooProducts } : {}),
+          },
         }),
       });
       const data = await response.json();
@@ -157,6 +167,21 @@ export default function GenerateMyWeekPage() {
           </label>
         }
       />
+
+      {selectedWooProducts.length > 0 && (
+        <DizitoCard className="mb-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-slate-900">Selected WooCommerce products</h2>
+              <p className="mt-1 text-sm text-slate-600">These products will guide the template topics and hooks. Provider product IDs are kept separate from Dizito's canonical product IDs.</p>
+            </div>
+            <button type="button" onClick={() => { setSelectedWooProducts([]); sessionStorage.removeItem("dizito-woocommerce-product-handoff"); }} className="text-sm font-medium text-slate-600 underline">Clear</button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {selectedWooProducts.map((product) => <span key={product.id} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700">{product.name}</span>)}
+          </div>
+        </DizitoCard>
+      )}
 
       <DizitoCard tone="soft" className="mb-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Template-assisted planning is available now</h2><p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Dizito can organize your existing business data into a weekly plan without calling a paid AI provider. Review every recommendation, edit the copy manually in Marketing Content, and approve only what fits your business. AI-assisted strategy and writing are coming soon.</p></div><DizitoBadge tone="neutral">AI · Coming soon</DizitoBadge></div></DizitoCard>
 
