@@ -1068,3 +1068,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Shows product name, external product ID, optional SKU, price and stock snapshots, and an HTTPS product permalink. UI copy clearly warns that snapshots are captured during planning and that current price/availability must be rechecked before publishing.
 - Keeps WooCommerce IDs outside the canonical product relation tables and does not modify the live WooCommerce store.
 - CI for the preceding approval metadata commits passed; CI for this UI/doc follow-up is pending. Browser/runtime verification not performed.
+
+
+## 2026-10-09 — Add weekly approval follow-through
+
+- Added a direct post-approval action from Generate My Week to Marketing Content so merchants can continue reviewing newly created content items without hunting through navigation.
+- No data model, provider integration, publishing behavior, or WooCommerce store changes.
+- Previous product-context UI/doc changes passed both CI workflows. CI for this follow-up is pending; browser verification remains outstanding.
