@@ -817,3 +817,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Converted the rate-limit and media-service test dependency mocks to `vi.hoisted(...)` so Vitest cannot evaluate them before initialization.
 - Repository-wide existing Commerce/Flipkart/WooCommerce lifecycle failures remain outside the focused security changes; no unrelated behavior was changed.
 - Fresh CI is required after these fixes; no green CI or production-ready claim is made.
+
+## 2026-10-09 — Pricing page missing billing schema fix
+- Fixed `/pricing` crashing before billing migration 021 is applied: PostgreSQL missing-relation errors now use the existing public Free/Growth/Pro fallback catalog; unrelated errors still surface.
+- Corrected entitlement table names to match migration 021 (`billing_plan_entitlement_values` and `billing_entitlement_definitions`), replacing mismatched names that would have caused a second database error after the plan table existed.
+- Commit on `main`: `8cef64fb23d7a51f63db5bed3577394daece6f35`.
+- No live database migration or schema change was executed. Build and runtime verification remain pending.
