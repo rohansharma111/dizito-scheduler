@@ -81,6 +81,25 @@ describe("publishWooCommerceProduct", () => {
     expect(mocks.pool.connect).not.toHaveBeenCalled();
   });
 
+  it("rejects an already-linked WooCommerce product without a provider mutation", async () => {
+    mockOwnedWooCommerceChannel();
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: "listing-1", external_id: "wc-existing-55", publish_idempotency_key: "request-1" }] })
+      .mockResolvedValueOnce({});
+    const client = makeReservationClient(query);
+    mocks.pool.connect.mockResolvedValue(client);
+
+    await expect(
+      publishWooCommerceProduct(7, input),
+    ).resolves.toEqual({ error: "LISTING_ALREADY_PUBLISHED" });
+
+    expect(query).toHaveBeenCalledWith("ROLLBACK");
+    expect(mocks.createWooCommerceProduct).not.toHaveBeenCalled();
+    expect(mocks.getWooCommerceChannelConfig).not.toHaveBeenCalled();
+  });
+
   it("replays a completed attempt without calling WooCommerce", async () => {
     mockOwnedWooCommerceChannel();
 
