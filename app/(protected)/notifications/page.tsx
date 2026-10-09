@@ -77,6 +77,7 @@ export default function NotificationsPage() {
       window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (error) {
       console.error(error);
+      setError(error instanceof Error ? error.message : "Could not mark notification as read");
     }
   }
 
@@ -104,6 +105,7 @@ export default function NotificationsPage() {
       window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (error) {
       console.error(error);
+      setError(error instanceof Error ? error.message : "Could not mark notifications as read");
     }
   }
 
