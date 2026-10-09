@@ -66,6 +66,30 @@ describe("POST /api/upload", () => {
     expect(uploadMedia).not.toHaveBeenCalled();
   });
 
+  it("rejects an oversized streamed body without Content-Length before multipart parsing", async () => {
+    const chunk = new Uint8Array(1024 * 1024);
+    let remainingChunks = 27;
+    const request = new Request("http://localhost/api/upload", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=unused" },
+      body: new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (remainingChunks === 0) {
+            controller.close();
+            return;
+          }
+          remainingChunks -= 1;
+          controller.enqueue(chunk);
+        },
+      }),
+      duplex: "half",
+    } as RequestInit);
+
+    const response = await POST(request);
+    expect(response.status).toBe(413);
+    expect(uploadMedia).not.toHaveBeenCalled();
+  });
+
   it("returns a client error for malformed multipart bodies", async () => {
     const response = await POST(new Request("http://localhost/api/upload", {
       method: "POST",
