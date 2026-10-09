@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
+import { DizitoBadge, DizitoCard, DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
 
 type Props = {
   searchParams: Promise<{
@@ -108,22 +110,10 @@ export default async function ConnectErrorPage({ searchParams }: Props) {
   const error = getErrorDetails(params.code);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
-      <div className="max-w-xl w-full bg-white rounded-2xl border shadow-sm p-10">
-        <div className="text-center">
-          <div className="text-6xl">{error.icon}</div>
-
-          <h1 className="mt-6 text-3xl font-bold">{error.title}</h1>
-
-          <p className="mt-5 text-gray-600 leading-7">{error.description}</p>
-
-          <div className="mt-8 inline-flex items-center rounded-full bg-gray-100 px-4 py-2 text-sm">
-            Platform:
-            <span className="ml-2 font-semibold capitalize">{platform}</span>
-          </div>
-        </div>
-
-        <div className="mt-10 rounded-xl bg-blue-50 border border-blue-100 p-5">
+    <DizitoPage className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
+        <DizitoPageHeader eyebrow="Account connection" title={error.title} description={error.description} />
+        <div className="mb-5 flex flex-wrap items-center gap-2"><DizitoBadge tone="danger"><AlertTriangle size={13} /> Connection needs attention</DizitoBadge><DizitoBadge>{platform}</DizitoBadge></div>
+        <DizitoCard tone="soft">
           <div className="font-semibold">What can you do?</div>
 
           <ul className="mt-3 space-y-2 text-sm text-gray-700 list-disc list-inside">
@@ -138,24 +128,23 @@ export default async function ConnectErrorPage({ searchParams }: Props) {
 
             <li>If the issue persists, reconnect the account.</li>
           </ul>
-        </div>
+        </DizitoCard>
 
-        <div className="mt-10 flex flex-col sm:flex-row gap-4">
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/accounts"
-            className="flex-1 text-center rounded-lg border px-5 py-3 hover:bg-gray-100 transition"
+            className="dizito-button dizito-button-secondary flex-1 justify-center"
           >
-            Back to Accounts
+            <ArrowLeft size={16} /> Back to Accounts
           </Link>
 
           <Link
             href="/accounts"
-            className="flex-1 text-center rounded-lg bg-blue-600 text-white px-5 py-3 hover:bg-blue-700 transition"
+            className="dizito-button dizito-button-primary flex-1 justify-center"
           >
-            Try Again
+            <RefreshCw size={16} /> Try Again
           </Link>
         </div>
-      </div>
-    </div>
+    </DizitoPage>
   );
 }
