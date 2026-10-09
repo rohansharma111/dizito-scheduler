@@ -34,7 +34,9 @@ export default function CampaignsPage() {
       const brainData = await brainResponse.json();
       if (!campaignResponse.ok) throw new Error(campaignData.error || "Failed to load campaigns");
       if (!brainResponse.ok) throw new Error(brainData.error || "Failed to load Business Brain");
-      setCampaigns(campaignData.campaigns || []);
+      if (!Array.isArray(campaignData.campaigns)) throw new Error("Unexpected campaigns response");
+      if (!Array.isArray(brainData.goals) || !Array.isArray(brainData.offers) || !Array.isArray(brainData.products)) throw new Error("Unexpected Business Brain response");
+      setCampaigns(campaignData.campaigns);
       setBrain(brainData);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Failed to load campaigns"); }
     finally { setLoading(false); }
@@ -45,7 +47,8 @@ export default function CampaignsPage() {
     const response = await fetch("/api/marketing/content-items?campaignId=" + campaignId);
     const data = await response.json();
     if (!response.ok) { setMessage(data.error || "Failed to load content items"); return; }
-    setItems(data.contentItems || []);
+    if (!Array.isArray(data.contentItems)) { setMessage("Unexpected content items response"); return; }
+    setItems(data.contentItems);
   }
 
   useEffect(() => {
