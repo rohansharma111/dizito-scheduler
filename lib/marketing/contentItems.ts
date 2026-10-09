@@ -115,7 +115,7 @@ export async function listContentItems(userId: number, campaignId?: number) {
         ON cipost.content_item_id = ci.id
       WHERE ci.user_id = $1
       ${campaignFilter}
-      GROUP BY ci.id
+      GROUP BY ci.id, c.id, o.id
       ORDER BY ci.planned_for NULLS LAST, ci.id DESC
     `,
     params,
@@ -166,7 +166,7 @@ export async function getContentItem(userId: number, contentItemId: number) {
         ON cipost.content_item_id = ci.id
       WHERE ci.id = $1
         AND ci.user_id = $2
-      GROUP BY ci.id
+      GROUP BY ci.id, c.id, o.id
     `,
     [contentItemId, userId],
   );
