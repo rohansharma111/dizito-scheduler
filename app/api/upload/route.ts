@@ -68,12 +68,14 @@ export async function POST(request: Request) {
     // stale Content-Length header because the body is now represented by a bounded byte array.
     const boundedHeaders = new Headers(request.headers);
     boundedHeaders.delete("content-length");
+    const boundedBuffer = new ArrayBuffer(boundedBody.body.byteLength);
+    new Uint8Array(boundedBuffer).set(boundedBody.body);
     let formData: FormData;
     try {
       const boundedRequest = new Request(request.url, {
         method: "POST",
         headers: boundedHeaders,
-        body: boundedBody.body,
+        body: boundedBuffer,
       });
       formData = await boundedRequest.formData();
     } catch {
