@@ -832,3 +832,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Improved empty/loading states and marked developer/payment-test surfaces as internal/test workflows. Policy page content was retained while the presentation was aligned.
 - CI initially caught JSX closing-tag issues in the iterative commerce/channel and selection-page edits; fixes were committed directly to `main`. The latest runs must be checked before calling this work verified.
 - Browser-based visual checks and narrow-screen viewport testing have not yet been performed; this is a continuation checkpoint, not a claim of full application-wide completion.
+
+
+## 2026-10-09 — Direct media API validation continuation
+
+- Hardened `/api/upload/signature` with positive safe-integer session identity validation and runtime validation of the signed-upload request's MIME type and positive safe-integer file size before generating a Cloudinary signature.
+- Hardened `/api/media/complete` with safe session identity validation, malformed/non-object JSON handling, bounded public ID/file-name/MIME fields, normalized MIME input, and a stable user-facing failure response rather than forwarding provider/database exception messages.
+- Preserved per-user rate limits, Cloudinary resource lookup, user-folder ownership checks, supported format checks, upload policy limits, and MediaService's final resource verification.
+- Commits: `69fb6861b8c65520ab52b763eada8a77da2e10fb` (signature request validation), `bc2d1f61021e3062cf5e257d4164c3d46f7ec333` (completion request validation).
+- Verification boundary: source reviewed after commit; fresh GitHub Actions for both commits is pending. No production migration, provider mutation, deployment, or browser/runtime verification was performed.
