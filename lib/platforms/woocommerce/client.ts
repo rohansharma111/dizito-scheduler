@@ -68,7 +68,7 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
     // rewrite rules for /wp-json/ are unavailable. Retry only on 404.
     if (response.status === 404) {
       const fallbackUrl = new URL(normalizeWooCommerceStoreUrl(config.storeUrl));
-      fallbackUrl.searchParams.set("rest_route", `/wc/v3/${path.replace(/^\\//, "")}`);
+      fallbackUrl.searchParams.set("rest_route", `/wc/v3/${path.startsWith("/") ? path.slice(1) : path}`);
       endpointUrl = fallbackUrl.toString();
       response = await fetch(endpointUrl, requestInit);
     }
