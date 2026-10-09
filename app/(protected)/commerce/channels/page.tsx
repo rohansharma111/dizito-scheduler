@@ -325,7 +325,7 @@ export default function CommerceChannelsPage() {
                   <button
                     type="button"
                     onClick={() => void setChannelStatus(channel, active ? "inactive" : "active")}
-                    disabled={updating || verifying || channel.status === "error"}
+                    disabled={updating || verifying}
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                   >
                     {updating ? "Updating..." : active ? "Disconnect" : "Reconnect"}
