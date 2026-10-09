@@ -18,6 +18,13 @@
 - Direct-main commits: `a5e0bffb38184f1dbf81c96810519bc99968850b`, `f57b1a2ae4a06b27d2cd85f96c379a9762146e8e`.
 - Existing publish/retry/reconnect logic is unchanged. Automated checks and browser verification are pending.
 
+## Follow-up: narrow-screen Drafts action row (2026-10-09)
+
+- Tightened the five-action mobile grid and switched action labels to compact responsive visibility so words do not wrap character-by-character on very narrow devices. Added accessible action names and visible keyboard focus.
+- Commit: `637b2769fae283cc28d1854a31ae995401dbb99e`.
+- Draft action handlers remain unchanged. Verification pending.
+- The supplied commerce screenshots also reveal product/variant tables collapsing into narrow columns. The exact component routes must be identified before making a safe targeted fix; no broad global table override was added.
+
 ## Screens covered
 
 - Create Post form in `components/CreatePostForm.tsx`
