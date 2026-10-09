@@ -1310,3 +1310,11 @@ Important rollout boundary:
 - Catalog rows show WooCommerce product ID, name, SKU, type, status, price, stock status, and a validated HTTP(S) product permalink. Includes search within the current page, refresh, pagination, loading, empty, and error states. If no store is connected, it links to Commerce Channels.
 - Deliberately does not create a persistent canonical-to-WooCommerce mapping or mutate the store. That needs a separate explicit mapping workflow and must not be implied by simply browsing a similarly named product.
 - Commits: `83bb947` (component), `735bbea` (product page integration). CI and browser verification pending.
+
+
+## 2026-10-09 — Persist explicit WooCommerce product links
+
+- Extended the product-page WooCommerce catalog with an explicit “Link to this product” action. It persists the selected WooCommerce external ID on the existing provider-neutral `product_listings` row and stores a bounded provider snapshot in listing metadata; the UI reloads and displays the current link.
+- Added authenticated `POST /api/commerce/woocommerce/link`. It verifies tenant ownership of the canonical product and WooCommerce channel, confirms the exact external product by reading it from the connected store, rejects cross-product identity conflicts, serializes concurrent attempts for the same channel/external ID, and writes transactionally. Listing remains `draft`/`pending`; this action does not publish or mutate WooCommerce.
+- A different existing external ID for the same canonical product/store is rejected rather than silently replaced. No schema migration or production-store mutation was needed.
+- Commits: `7df3ece` (API), `8ec834c` (UI), `cf44480` (serialize conflicts). CI and browser/API runtime verification pending.
