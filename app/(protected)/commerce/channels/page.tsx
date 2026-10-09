@@ -153,9 +153,9 @@ export default function CommerceChannelsPage() {
             Connect Shopify
           </button>
         </form>
-      </div>
+      </DizitoCard>
 
-      <div className="border rounded-lg p-6 mb-8">
+      <DizitoCard className="mb-5">
         <h2 className="text-xl font-semibold">Connect Amazon India</h2>
         <p className="text-sm text-gray-600 mt-1">
           Authorize Dizito to access your Amazon Seller Central account through SP-API.
@@ -167,7 +167,7 @@ export default function CommerceChannelsPage() {
         >
           Connect Amazon India
         </button>
-      </div>
+      </DizitoCard>
 
       {verificationMessage && (
         <div className="border border-green-300 rounded p-4 mb-6 text-green-700">
