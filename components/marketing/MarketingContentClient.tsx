@@ -23,7 +23,8 @@ function displayCopy(item: ContentItem) { return [item.hook, item.body, item.top
 function platformLabel(platform: string) { return platform === "google_business" ? "Google Business" : platform.charAt(0).toUpperCase() + platform.slice(1); }
 
 export default function MarketingContentClient() {
-  const [items, setItems] = useState<ContentItem[]>([]);\n  const [aiEnabled, setAiEnabled] = useState(false);
+  const [items, setItems] = useState<ContentItem[]>([]);
+  const [aiEnabled, setAiEnabled] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
