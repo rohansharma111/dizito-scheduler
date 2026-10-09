@@ -77,3 +77,30 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .dizito-page-header { align-items:flex-start; flex-direction:column; gap:14px; }
   .dizito-card { border-radius:18px; padding:17px; }
 }
+
+
+/* Responsive guardrails shared by legacy and Dizito-native screens. */
+html, body { min-width: 0; max-width: 100%; }
+body { overflow-wrap: anywhere; }
+img, video, canvas, iframe, svg { max-width: 100%; }
+main, section, article, aside, header, footer { min-width: 0; }
+input, textarea, select { max-width: 100%; min-width: 0; }
+button, a { touch-action: manipulation; }
+pre, code { overflow-wrap: anywhere; }
+table { max-width: 100%; }
+@media (max-width: 767px) {
+  .dizito-page { padding-left: 16px; padding-right: 16px; }
+  .dizito-page-header > :last-child { max-width: 100%; }
+  .dizito-page-header > :last-child .dizito-button { max-width: 100%; }
+  .dizito-section-header { flex-direction: column; }
+  .dizito-card { min-width: 0; }
+}
+@media (max-width: 380px) {
+  .dizito-page { padding-left: 12px; padding-right: 12px; }
+  .dizito-card { padding: 14px; border-radius: 16px; }
+  .dizito-title { font-size: 27px; }
+  .dizito-subtitle { font-size: 14px; }
+  .dizito-state { padding: 16px; gap: 10px; }
+  .dizito-metric { padding: 14px; }
+  .dizito-metric-value { font-size: 24px; }
+}
