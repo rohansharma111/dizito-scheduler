@@ -849,3 +849,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added `lib/media/upload-policy.test.ts` coverage for supported image/video MIME types, size boundaries, invalid sizes, and unsupported MIME types.
 - Commits: `bd0cca3beeb37f5baf48229ae6d8726a78bc8057` (policy validation), `59d79ecc272e5c3dfb73290abdd1a6436c48a56e` (tests).
 - The preceding direct upload API and documentation commits have both Validate and Quality Checks passing. CI for this policy/test addition is pending; no production migration, deployment, or provider mutation was performed.
+
+
+## 2026-10-09 — Media signature normalization
+
+- Normalized declared MIME strings by trimming whitespace and lowercasing before checking media magic-byte signatures. The accepted signature map remains unchanged, so this does not expand supported upload formats.
+- Added regression coverage for MIME whitespace/casing normalization.
+- Commits: `c34577e3347526d41f514fe9474e84d7cec4f83f` (normalization), `ddd68e850f903319d5fc15f965428f43c286a553` (test).
+- Earlier upload policy, policy-boundary tests and documentation CI runs passed. CI for signature normalization is pending. No deployment, production database change, or provider mutation was performed.
