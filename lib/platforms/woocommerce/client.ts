@@ -73,7 +73,29 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
   let body: unknown = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
   if (!response.ok) {
-    throw new Error(`WooCommerce request failed with status ${response.status}`);
+    // WooCommerce and hosting layers often return useful REST error codes/messages
+    // in JSON bodies. Keep diagnostics bounded and never include request headers
+    // or credential values in the error surfaced to the caller.
+    const details =
+      body && typeof body === "object"
+        ? body as Record<string, unknown>
+        : null;
+    const apiMessage =
+      details && typeof details.message === "string"
+        ? details.message.replace(/\\s+/g, " ").slice(0, 240)
+        : typeof body === "string"
+          ? body.replace(/\\s+/g, " ").slice(0, 160)
+          : "";
+    const apiCode =
+      details && typeof details.code === "string"
+        ? details.code.replace(/[^a-zA-Z0-9_:-]/g, "").slice(0, 100)
+        : "";
+    const endpoint = new URL(getApiUrl(config.storeUrl, path));
+    const endpointLabel = `${endpoint.origin}${endpoint.pathname}`;
+    const suffix = [apiCode, apiMessage].filter(Boolean).join(": ");
+    throw new Error(
+      `WooCommerce request failed (${response.status}) at ${endpointLabel}${suffix ? ` — ${suffix}` : ""}`,
+    );
   }
   return body as T;
 }
