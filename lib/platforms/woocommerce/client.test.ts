@@ -110,10 +110,11 @@ describe("WooCommerce HTTP provider contract", () => {
     ));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(wooCommerceRequest(config, "products")).rejects.toThrow(
+    const request = wooCommerceRequest(config, "products");
+    await expect(request).rejects.toThrow(
       "WooCommerce request failed (401) at https://store.example.com/wp-json/wc/v3/products",
     );
-    await expect(wooCommerceRequest(config, "products")).rejects.not.toThrow("should-not-leak");
+    await expect(request).rejects.not.toThrow("should-not-leak");
   });
 
   it("maps aborted provider requests to an explicit timeout error", async () => {
