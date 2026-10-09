@@ -140,8 +140,7 @@ export default function ProductVariants({
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="max-w-full overflow-x-auto overscroll-x-contain"><table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-t border-b bg-gray-50">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">
