@@ -10,7 +10,7 @@ export default function AIOptimizerClient() {
   const [error, setError] = useState("");
   function buildWeek() {    if (!optimization) return;    sessionStorage.setItem("dizito-optimizer-handoff", JSON.stringify(optimization));    window.location.href = "/generate-my-week?from=optimizer";  }  async function generate() {
     setLoading(true); setError("");
-    try { const response = await fetch("/api/marketing/optimizer", { method: "POST" }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Unable to generate optimization"); setOptimization(data.optimization); }
+    try { const response = await fetch("/api/marketing/optimizer", { method: "POST" }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Unable to generate optimization"); const result = data?.optimization; if (!result || typeof result.summary !== "string" || !Array.isArray(result.completedExperimentEvidence) || !Array.isArray(result.opportunities) || !Array.isArray(result.experiments) || !Array.isArray(result.measurement) || !Array.isArray(result.guardrails)) throw new Error("The optimization response was incomplete. Please try again."); setOptimization(result); }
     catch (err) { setError(err instanceof Error ? err.message : "Unable to generate optimization"); }
     finally { setLoading(false); }
   }
