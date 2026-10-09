@@ -1,8 +1,5 @@
-import {
-  BILLING_ENTITLEMENT_KEYS,
-  BillingEntitlementKey,
-  BillingPlanCode,
-} from "./catalog";
+import { BILLING_ENTITLEMENT_KEYS } from "./catalog";
+import type { BillingEntitlementKey, BillingPlanCode } from "./catalog";
 
 export type BillingPlanFallback = {
   id: null;
