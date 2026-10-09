@@ -42,6 +42,7 @@ function isoDate(date: Date) {
 
 export type StrategyHint = {
   strategySummary?: string;
+  selectedProducts?: Array<{ id?: number; name: string; sku?: string; price?: string; stockStatus?: string; permalink?: string }>;
   recommendations?: Array<{ action?: string; why?: string; channels?: string[]; goalId?: number | null; campaignId?: number | null; productIds?: number[]; offerId?: number | null }>;
   optimization?: {
     summary?: string;
@@ -101,7 +102,8 @@ export async function generateWeeklyPlan(userId: number, weekStart: string, stra
   const goalType = strategyGoal?.goalType ?? primaryGoal?.goalType ?? "awareness";
   const selectedProduct = strategyProduct ?? product;
   const selectedOffer = strategyOffer ?? offer;
-  const productName = selectedProduct?.name ?? "your business";
+  const selectedWooProduct = Array.isArray(strategyHint?.selectedProducts) ? strategyHint.selectedProducts.find((item) => typeof item?.name === "string" && item.name.trim()) : null;
+  const productName = selectedWooProduct?.name.trim() ?? selectedProduct?.name ?? "your business";
   const businessName = brain.profile?.businessName ?? "your business";
   const offerText = selectedOffer ? ` with ${selectedOffer.name}` : "";
 
