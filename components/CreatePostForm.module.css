@@ -1,0 +1,37 @@
+.mediaPicker :global(> div.rounded-xl) {
+  border-color: #e2e8f0;
+  border-radius: 1rem;
+  background: #fbfcfa;
+  box-shadow: none;
+  padding: 1rem;
+}
+
+.mediaPicker :global(button.bg-blue-600) {
+  min-height: 2.75rem;
+  border-radius: 0.8rem;
+  background: #c7f36b;
+  padding: 0.7rem 1rem;
+  color: #111827;
+  font-size: 0.875rem;
+  font-weight: 800;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.mediaPicker :global(button.bg-blue-600:hover) {
+  background: #9fda35;
+  transform: translateY(-1px);
+}
+
+.mediaPicker :global(button.rounded-lg.border) {
+  min-height: 2.5rem;
+  border-color: #e2e8f0;
+  border-radius: 0.8rem;
+  background: #fff;
+  padding: 0.6rem 1rem;
+  color: #344054;
+  font-weight: 700;
+}
+
+.mediaPicker :global(button.rounded-lg.border:hover) {
+  background: #f8fafc;
+}
