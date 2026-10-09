@@ -46,6 +46,11 @@ export default function CommerceChannelsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [catalogChannelId, setCatalogChannelId] = useState<string | null>(null);
+  const [catalogProducts, setCatalogProducts] = useState<Array<{ id: number; name: string; sku: string; status: string; price: string; stockStatus: string; image: string; permalink: string }>>([]);
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [catalogHasMore, setCatalogHasMore] = useState(false);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadChannels() {
@@ -195,6 +200,24 @@ export default function CommerceChannelsPage() {
     }
   }
 
+  async function loadWooCommerceCatalog(channel: CommerceChannel, page = 1) {
+    setCatalogLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/commerce/woocommerce/products?channelId=${encodeURIComponent(channel.id)}&page=${page}&perPage=20`);
+      const data = await response.json() as { success?: boolean; products?: Array<{ id: number; name: string; sku: string; status: string; price: string; stockStatus: string; image: string; permalink: string }>; hasMore?: boolean; error?: string };
+      if (!response.ok || !data.success || !data.products) throw new Error(data.error ?? "Unable to load product catalog");
+      setCatalogChannelId(channel.id);
+      setCatalogPage(page);
+      setCatalogHasMore(Boolean(data.hasMore));
+      setCatalogProducts((current) => page === 1 ? data.products! : [...current, ...data.products!]);
+    } catch (catalogError) {
+      setError(catalogError instanceof Error ? catalogError.message : "Unable to load product catalog");
+    } finally {
+      setCatalogLoading(false);
+    }
+  }
+
   async function setChannelStatus(channel: CommerceChannel, status: "active" | "inactive") {
     if (status === "inactive" && !window.confirm(`Disconnect ${channel.name}?`)) return;
 
@@ -312,6 +335,42 @@ export default function CommerceChannelsPage() {
         </button>
       </DizitoCard>
 
+      {catalogChannelId && (
+        <DizitoCard className="mb-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">WooCommerce product catalog</h2>
+              <p className="mt-1 text-sm text-slate-600">Read-only preview. Loads 20 products per page; no store data is changed.</p>
+            </div>
+            <span className="text-sm text-slate-500">Page {catalogPage}</span>
+          </div>
+          {catalogProducts.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-600">No products were returned.</p>
+          ) : (
+            <div className="mt-4 divide-y divide-slate-100">
+              {catalogProducts.map((product) => (
+                <div key={product.id} className="flex items-center gap-3 py-3">
+                  {product.image ? <img src={product.image} alt="" className="h-12 w-12 rounded-lg border border-slate-200 object-cover" loading="lazy" /> : <div className="h-12 w-12 rounded-lg bg-slate-100" aria-hidden="true" />}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
+                    <p className="text-xs text-slate-500">ID {product.id}{product.sku ? ` · SKU ${product.sku}` : ""} · {product.stockStatus}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{product.price || "Price not set"}</p>
+                    <p className="text-xs text-slate-500">{product.status}</p>
+                  </div>
+                  {product.permalink && <a href={product.permalink} target="_blank" rel="noreferrer" className="text-xs font-medium text-violet-700 underline">View</a>}
+                </div>
+              ))}
+            </div>
+          )}
+          {catalogHasMore && (
+            <button type="button" onClick={() => { const channel = channels.find((item) => item.id === catalogChannelId); if (channel) void loadWooCommerceCatalog(channel, catalogPage + 1); }} disabled={catalogLoading} className="mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold disabled:opacity-50">
+              {catalogLoading ? "Loading..." : "Load next 20"}
+            </button>
+          )}
+        </DizitoCard>
+      )}
       {verificationMessage && (
         <div role="status" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           {verificationMessage}
@@ -353,6 +412,16 @@ export default function CommerceChannelsPage() {
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                     >
                       {verifying ? "Verifying..." : "Verify & read products"}
+                    </button>
+                  )}
+                  {channel.provider === "woocommerce" && active && (
+                    <button
+                      type="button"
+                      onClick={() => void loadWooCommerceCatalog(channel, 1)}
+                      disabled={catalogLoading}
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {catalogLoading && catalogChannelId === channel.id ? "Loading catalog..." : "Load read-only catalog"}
                     </button>
                   )}
                   {amazon && active && (
