@@ -1,3 +1,10 @@
+## 2026-10-09 — Enforce request-body cap before multipart parsing
+
+- Added `lib/security/request-body.ts` with a streaming byte counter and cancellation when a configured request-body limit is exceeded.
+- `app/api/upload/route.ts` now applies the helper before calling `formData()`, including when the request omits `Content-Length`; only a body already bounded to the image allowance plus multipart overhead is passed to the multipart parser.
+- Added `lib/security/request-body.test.ts` for body-at-limit, over-limit stream without a declared length, and empty-body cases. CI has not yet validated these commits.
+- Platform ingress limits remain an additional defense; no deployment, production DB change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Media upload API regression coverage
 
 - Added `app/api/upload/route.test.ts` covering unauthenticated and invalid-user sessions, rate-limit rejection, malformed and unsafe `Content-Length`, declared oversized request bodies, and malformed multipart input.
