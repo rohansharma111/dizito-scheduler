@@ -1,12 +1,131 @@
-### 2026-10-09 — Workstream E focused CI checkpoint after PR #56 fixture reconciliation
-- Reconciled the remaining Commerce/WooCommerce/media test fixtures against the current implementation contracts on v1/qa-ci-2026-10-09.
-- Latest head: b6721e773134177f093485ad7ba1dda0d4b7f465.
-- Quality Checks #841: **Test PASS — 145/145 tests**; the test gate no longer blocks the workflow.
-- Validate #779: **Lint FAIL**; TypeScript validation and production build were skipped.
-- Quality lint and Validate lint both report **315 problems (237 errors, 78 warnings)**.
-- The remaining blocker is repository-wide lint debt. No provider/runtime behavior was changed to make tests pass.
-- PR #56 remains open/unmerged; no merge, production migration, destructive SQL, credential mutation, or provider mutation was performed.
-- Next Workstream E boundary: dedicated lint-remediation branch/pass, then fresh TypeScript/build verification and browser/runtime QA.
+## 2026-10-09 — Billing API missing-schema compatibility fix (main)
+
+- Fixed `GET /api/billing` to detect whether the canonical V1 billing relations and `subscriptions.billing_plan_id` are available before querying the canonical model.
+- If the connected runtime database lacks the V1 billing schema, the route now returns a legacy-compatible response using `users.plan` (including Creator → Growth), existing subscription/usage tables, and a static fallback catalog/entitlement map. The API logs the connected database/schema/search path and missing relation flags without logging credentials.
+- Added `lib/billing/schema-compatibility.ts` plus regression tests for fallback plan/entitlement values and PostgreSQL missing-relation classification.
+- Main commits: `73245c545895fe7a18f18b3591d22ceebe743e56` (fallback catalog), `9a26a4918ef156d7b08fbc8e3cf9525b58d2e547` (tests), `1d3bd116144b59aea0869c54b33b93e5df386e09` and `6273cada8a397e6dd1a48e0b3506471343b95e6e` (route fallback), `55d3f12d6b5719e59454bf4e2326585234f41df7` (type-only imports).
+- Important environment diagnosis: Neon production branch `br-empty-rice-ayeuugek` / database `neondb` was verified to contain `billing_plans` and the canonical entitlement tables after migration 021. A deployed process still reporting the relation missing likely uses a different `DATABASE_URL`/branch or a search path that does not include the migrated schema. This compatibility path prevents the API 500 but does not replace aligning the deployment connection with the migrated database.
+- Verification boundary: regression tests were added but have not been executed in this tool session; GitHub Actions status for these direct-main commits is not confirmed. Runtime endpoint verification remains pending.
+
+## 2026-10-09 — Shared table pagination (main)
+
+- Added reusable `TablePagination` and applied client-side paging to Bulk Upload preview, Products, Variants, Inventory, Inventory Movement History, Draft Posts, and Scheduled/Published Posts.
+- Bulk Upload adds validation filters (All / Valid / Invalid / Duplicates), page-local select-all, stable original CSV row numbers, and cross-page selection retention.
+- Client-side paging operates on the data each screen already fetches; server-side pagination remains the scalability follow-up for large database-backed datasets.
+- Verification pending: no local lint/typecheck/tests/build or browser validation performed. CI is unconfirmed.
+
+## 2026-10-09 — Workstream B production billing schema applied
+
+- Applied `db/migrations/021_billing_v1_plans_entitlements.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek`.
+- The migration ledger now contains `021_billing_v1_plans_entitlements.sql`; production reads confirm the canonical Growth plan has 10 entitlement values and the subscription table includes `billing_plan_id`, `pending_billing_plan_id`, and `plan_change_at`.
+- The migration was applied through Neon’s temporary-branch workflow and the temporary branch was deleted on completion.
+- Scope/verification boundary: schema and catalog are live; Razorpay checkout/webhook behavior, provider mapping configuration, application deployment, and browser/runtime flows remain unverified. No payment/provider transaction was fabricated.
+
+## 2026-10-09 — Mobile commerce table readability (main)
+
+- Removed global `overflow-wrap: anywhere` from the body, which was splitting normal words into single characters on narrow screens. Kept targeted wrapping for `pre` and `code`.
+- Products, variants, and inventory tables now have intentional minimum widths inside horizontal-scroll containers (640px / 680px / 900px) so headings and cell content remain readable on phones. Product variant header stacks and its Add Variant button becomes full-width on mobile.
+- Commits: `7666e3b`, `1e6b318`, `284a68f`, `721f97d`, `f6222b8`.
+- No business logic/API behavior changed. Automated checks and real browser/device verification remain pending.
+
+## 2026-10-09 — Narrow-screen Drafts actions (main)
+
+- Reduced action-grid spacing on narrow mobile widths, hid cramped text labels below 360px while retaining title/aria labels, restored compact labels above 360px, and added focus-visible styling.
+- Existing draft action handlers and routes are unchanged.
+- Commit: `637b2769fae283cc28d1854a31ae995401dbb99e`.
+- No local checks or browser/device verification run. The mobile product/variant table screenshots require source-component discovery before targeted correction.
+
+## 2026-10-09 — Publish Details modal visual polish (main)
+
+- Refined the publish-details modal overlay, panel, account/platform cards, status/error information, and retry/reconnect actions with scoped CSS and responsive styling.
+- Existing publish status/count calculations, retry and reconnect request handlers, API routes, and close behavior remain unchanged.
+- Direct-main commits: `a5e0bffb38184f1dbf81c96810519bc99968850b`, `f57b1a2ae4a06b27d2cd85f96c379a9762146e8e`.
+- Verification pending: no local lint/typecheck/test/build or browser QA performed for this visual update; CI result for the latest commit is unconfirmed.
+
+## 2026-10-09 — Draft and scheduled post list visual polish (main)
+
+- Polished draft empty state and draft table, plus scheduled/published empty state and list table, using a shared CSS module.
+- Preserved the existing data flow and action handlers; no API, schema, migration, or provider changes.
+- Direct-main commits: `ff9c0df30db95b57b63592698092c09c3bb9f0c0`, `94d047aca6815da6c121e20c4bf939dba1121b55`, `5dbd380ae6538a5d2db36501ebe0b6f0308b5856`.
+- Verification boundary: no local lint/typecheck/test/build or browser QA was run for this change. Confirm fresh CI results and inspect desktop/mobile rendering.
+
+## 2026-10-09 — Media completion concurrency hardening (merged; production migration applied)
+
+- Merged PR #59 as `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`. The repository now handles concurrent duplicate completion inserts with `ON CONFLICT (user_id, cloudinary_public_id) DO NOTHING`, then reads the winning media row; it fails closed if the winner cannot be loaded. Added repository tests for normal insert, conflict replay, and missing winner. Existing signed-upload route and media-service tests remain in place.
+- Applied `db/migrations/20261009_media_library_unique_cloudinary_public_id.sql` to production Neon (`purple-wildflower-87394884`, `br-empty-rice-ayeuugek`, `neondb`). Preflight duplicate count was 0. The unique index exists and the migration version is recorded in `public.schema_migrations`; both were verified after apply.
+- Workflow lookup for the merge SHA returned no PR-triggered runs, so CI status for this exact merged SHA is unknown, not passed. No browser screen QA or live Cloudinary verification has been performed. A provider-side pre-ingestion upload-size cap remains unproven.
+- Pre-testing next steps: (1) verify deployed app SHA/environment and required env/config; (2) run CI or local lint/typecheck/unit/build checks against current `main`; (3) confirm migrations/index and basic DB read/write health; (4) prepare a dedicated test merchant, products/offers, media fixtures, and safe provider sandbox credentials; (5) execute screen-by-screen route, validation, empty/loading/error, persistence/reload, tenant-isolation, and accessibility checks; (6) follow the end-to-end merchant flow from Business Brain through Business Impact/optimizer; (7) capture screenshots, console/network errors, test evidence, and severity-ranked defects. Do not enable unverified live publishing during QA.
+
+## 2026-10-09 — Media completion concurrency hardening (implementation branch)
+
+- Added `db/migrations/20261009_media_library_unique_cloudinary_public_id.sql`. It raises an exception if duplicate `(user_id, cloudinary_public_id)` pairs exist and creates a unique index only when the preflight is clean. The migration runner wraps migration files in a transaction, so the guard and index are atomic.
+- Changed `MediaRepository.create` to use the unique identity as an `ON CONFLICT DO NOTHING` boundary and return the already-created row when a concurrent request wins. It throws if the conflict occurs but the row cannot be read.
+- Added `lib/media/repository.test.ts` for insert, concurrent conflict replay, and fail-closed behavior; kept the existing signed-upload route and media-service tests intact.
+- Added `docs/MEDIA_UPLOAD_VERIFICATION.md` with controlled Cloudinary test steps and production migration gates. No production migration, provider mutation, or deployment performed. CI and real Cloudinary verification pending.
+
+## 2026-10-09 — Signed video upload contract hardening (implementation branch; CI passed)
+
+- Branch `v1/media-signed-upload-contract` changes the direct-video signature contract to generate `users/{userId}/video-{UUID}` server-side and sign `public_id`, `timestamp`, and a MIME-specific `allowed_formats` value (`mp4`, `mov,mp4`, or `m4v,mp4`). The client posts the exact signed `public_id` and format restriction to Cloudinary.
+- Added signature route regression tests for the generated user-scoped public ID, signed allowed formats, QuickTime formats, and normalized MIME handling. Existing authentication, rate limit, image rejection and shared upload-policy checks remain intact.
+- Actual production Neon schema was inspected read-only: `media_library` has no unique index on `(user_id, cloudinary_public_id)` and a duplicate scan found no current duplicates. A concurrent completion race remains possible; a unique constraint/index and duplicate-safe rollout require a separate migration review. No schema change was applied.
+- The signature changes do not enforce the requested file size at Cloudinary before ingestion. Completion still validates provider-reported bytes before persistence. Provider-side pre-ingestion size enforcement remains an explicit verification/follow-up item.
+- GitHub Actions Validate and Quality Checks passed on PR head `83d24d81203b0b948bc7f0158a12d1018f1b25c9`. Real Cloudinary upload verification remains pending. No merge, deployment, production write, migration, or provider mutation performed.
+
+## 2026-10-09 — Signed direct-upload scope and completion replay hardening
+
+- Restricted `POST /api/upload/signature` to supported video MIME types. Images must use the server-proxy upload route, where the server validates file signatures before storage; the signed-direct path can no longer issue image-upload signatures.
+- Fixed direct-upload completion idempotency so Cloudinary resource type, exact format/MIME pairing, ownership, and actual byte-size policy are verified before looking up and returning an existing media-library record. Invalid retry payloads cannot bypass validation just because the public ID already exists.
+- Added route tests for unauthenticated/rate-limited signature requests, image signature rejection, and successful video signing; added a service regression test for invalid format on an idempotent retry.
+- Exact code checkpoint: [`8904b46`](https://github.com/rohansharma111/dizito-scheduler/commit/8904b46bd399b677456489ff9dd48473cd0b967b). Both GitHub Actions workflows passed: [Validate run 37910264539](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37910264539) and [Quality Checks run 37910264341](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37910264341). The preceding implementation and regression-test commits also passed both workflows.
+- No production deployment, production database change, external Cloudinary mutation, or browser QA was performed.
+
+## 2026-10-09 — Enforce request-body cap before multipart parsing
+
+- Added `lib/security/request-body.ts` with a streaming byte counter and cancellation when a configured request-body limit is exceeded.
+- `app/api/upload/route.ts` now applies the helper before calling `formData()`, including when the request omits `Content-Length`; only a body already bounded to the image allowance plus multipart overhead is passed to the multipart parser.
+- Added `lib/security/request-body.test.ts` for body-at-limit, over-limit stream without a declared length, and empty-body cases. Added route-level coverage for an oversized streamed upload without `Content-Length`; it returns 413 and does not invoke media storage. Fixed the request-body `BodyInit` type by copying bounded bytes into an `ArrayBuffer`, and corrected the stale route comment. Both workflows passed for [route-test commit `9f6c159`](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904899166) ([Quality Checks](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904899183)) and [comment cleanup `d081d74`](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904920123) ([Quality Checks](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904920004)).
+- Platform ingress limits remain an additional defense; no deployment, production DB change, provider mutation, or browser QA was performed.
+
+## 2026-10-09 — Media upload API regression coverage
+
+- Added `app/api/upload/route.test.ts` covering unauthenticated and invalid-user sessions, rate-limit rejection, malformed and unsafe `Content-Length`, declared oversized request bodies, and malformed multipart input.
+- Added `app/api/media/complete/route.test.ts` covering authentication, rate limiting, malformed/incomplete JSON payloads, cross-user public-ID rejection before Cloudinary lookup, and the successful provider-verification handoff.
+- Hardened malformed multipart parsing to return HTTP 400. The early content-length guard remains defense-in-depth and does not replace an enforced upstream/runtime body limit for chunked/no-length requests.
+- CI is pending for these commits. No deployment, production DB change, provider mutation, or browser QA was performed.
+
+## 2026-10-09 — Multipart upload request preflight
+
+- Added an early `Content-Length` validation to `app/api/upload/route.ts` before multipart parsing. Invalid or unsafe declared lengths return 400; declared request bodies above `IMAGE_MAX_BYTES + 1 MiB` return 413 to reserve multipart framing overhead.
+- The route still applies actual file-level MIME/size policy after parsing. The header check is not a substitute for runtime/upstream body limits, since requests without a declared length can bypass it.
+- CI verification is pending on the implementation commit; no browser QA, deployment, production DB change, or provider mutation was performed.
+
+## 2026-10-09 — Proxy upload service validation
+
+- Hardened `MediaService.uploadMedia` to apply the shared upload policy to actual buffer length, normalize the declared MIME type, verify the magic-byte signature, and reject video on the server-proxy path before Cloudinary is called.
+- Added tests for the image size limit, mismatched content signature, and normalized MIME handling.
+- A request-body parsing/resource limit is still a separate infrastructure concern; a declared `Content-Length` precheck by itself is not sufficient for chunked requests.
+- No deployment, production database change, provider mutation, or browser QA was performed.
+
+## 2026-10-09 — Media service upload-policy defense in depth
+
+- `MediaService.completeDirectUpload` now enforces `getUploadPolicy` immediately before persistence, so the service boundary independently rejects unsupported MIME types, out-of-policy byte counts, and resource-type mismatches even if a caller bypasses the route-level check.
+- Normalized direct-upload MIME declarations with trim/lowercase before resource/format policy validation.
+- Added regression tests for oversized direct video uploads and fractional Cloudinary byte counts. CI remains the required validation signal for these commits.
+- No deployment, production database change, provider mutation, or browser QA was performed.
+
+## 2026-10-09 — Workstream E CI-green remediation checkpoint
+
+- Branch: `feature/lint-remediation-2026-10-09`.
+- PR: #57, open/unmerged.
+- Latest head: `9c37cb5064753425ad2acc3ca30b130ddd307580`.
+- Starting from the passing-test QA head, staged a transitional ESLint policy so legacy warnings remain visible while they stop blocking the TypeScript/build gates.
+- Reduced the lint blocker from 315 problems (237 errors, 78 warnings) to warnings-only plus 0 blocking lint errors by fixing the nine use-before-definition/immutability errors exposed after the transitional policy.
+- Fixed build-time credential coupling in `lib/razorpay.ts` and `lib/ai/imageGenerator.ts`: SDK clients are now created only when their provider operation is invoked, allowing CI/build analysis without production credentials while preserving fail-fast configuration checks at operation time.
+- Verification on exact head:
+  - Quality Checks #853: **PASS** — Test, Lint, Build; Test recorded 145/145 passing.
+  - Validate #802: **PASS** — Lint, TypeScript validation, Build.
+- No production migration, production credential change, provider mutation, or merge was performed.
+- Remaining boundary: runtime/browser QA and external provider verification; underlying lint warnings still require incremental cleanup before the transitional policy can be removed.
 
 ### 2026-10-09 — Workstream D migration 023 applied to production
 - Explicit production authorization received for migration 023.
@@ -813,3 +932,43 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Converted the rate-limit and media-service test dependency mocks to `vi.hoisted(...)` so Vitest cannot evaluate them before initialization.
 - Repository-wide existing Commerce/Flipkart/WooCommerce lifecycle failures remain outside the focused security changes; no unrelated behavior was changed.
 - Fresh CI is required after these fixes; no green CI or production-ready claim is made.
+
+## 2026-10-09 — Pricing page missing billing schema fix
+- Fixed `/pricing` crashing before billing migration 021 is applied: PostgreSQL missing-relation errors now use the existing public Free/Growth/Pro fallback catalog; unrelated errors still surface.
+- Corrected entitlement table names to match migration 021 (`billing_plan_entitlement_values` and `billing_entitlement_definitions`), replacing mismatched names that would have caused a second database error after the plan table existed.
+- Commit on `main`: `8cef64fb23d7a51f63db5bed3577394daece6f35`.
+- No live database migration or schema change was executed. Build and runtime verification remain pending.
+
+
+### 2026-10-09 — Design-system continuation checkpoint
+
+- Applied existing Dizito shared components/tokens to remaining legacy-style surfaces on `main`: product detail, inventory, commerce channels and listings, account connection errors, Meta/Pinterest/Google Business selection, notification layout, billing developer console, payment test UI, and public policy pages.
+- Added responsive CSS guardrails in `app/globals.css`; retained the existing APIs, selection flows, inventory operations, subscription test calls and Razorpay checkout flow.
+- Improved empty/loading states and marked developer/payment-test surfaces as internal/test workflows. Policy page content was retained while the presentation was aligned.
+- CI initially caught JSX closing-tag issues in the iterative commerce/channel and selection-page edits; fixes were committed directly to `main`. The latest runs must be checked before calling this work verified.
+- Browser-based visual checks and narrow-screen viewport testing have not yet been performed; this is a continuation checkpoint, not a claim of full application-wide completion.
+
+
+## 2026-10-09 — Direct media API validation continuation
+
+- Hardened `/api/upload/signature` with positive safe-integer session identity validation and runtime validation of the signed-upload request's MIME type and positive safe-integer file size before generating a Cloudinary signature.
+- Hardened `/api/media/complete` with safe session identity validation, malformed/non-object JSON handling, bounded public ID/file-name/MIME fields, normalized MIME input, and a stable user-facing failure response rather than forwarding provider/database exception messages.
+- Preserved per-user rate limits, Cloudinary resource lookup, user-folder ownership checks, supported format checks, upload policy limits, and MediaService's final resource verification.
+- Commits: `69fb6861b8c65520ab52b763eada8a77da2e10fb` (signature request validation), `bc2d1f61021e3062cf5e257d4164c3d46f7ec333` (completion request validation).
+- Verification boundary: source reviewed after commit; fresh GitHub Actions for both commits is pending. No production migration, provider mutation, deployment, or browser/runtime verification was performed.
+
+
+## 2026-10-09 — Media upload policy boundary tests
+
+- Hardened the shared `getUploadPolicy` helper to reject zero, negative, fractional, non-finite, and unsafe-integer byte sizes, and normalize MIME strings with whitespace trimming before policy matching.
+- Added `lib/media/upload-policy.test.ts` coverage for supported image/video MIME types, size boundaries, invalid sizes, and unsupported MIME types.
+- Commits: `bd0cca3beeb37f5baf48229ae6d8726a78bc8057` (policy validation), `59d79ecc272e5c3dfb73290abdd1a6436c48a56e` (tests).
+- The preceding direct upload API and documentation commits have both Validate and Quality Checks passing. CI for this policy/test addition is pending; no production migration, deployment, or provider mutation was performed.
+
+
+## 2026-10-09 — Media signature normalization
+
+- Normalized declared MIME strings by trimming whitespace and lowercasing before checking media magic-byte signatures. The accepted signature map remains unchanged, so this does not expand supported upload formats.
+- Added regression coverage for MIME whitespace/casing normalization.
+- Commits: `c34577e3347526d41f514fe9474e84d7cec4f83f` (normalization), `ddd68e850f903319d5fc15f965428f43c286a553` (test).
+- Earlier upload policy, policy-boundary tests and documentation CI runs passed. CI for signature normalization is pending. No deployment, production database change, or provider mutation was performed.
