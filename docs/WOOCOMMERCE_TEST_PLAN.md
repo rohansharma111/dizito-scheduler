@@ -93,7 +93,7 @@ Coverage reviewed on 2026-10-09:
 Remaining evidence gaps:
 - Run the full current test suite and preserve CI links for the exact code SHA after any test additions.
 - Deterministic external-ID conflict and concurrent-reconciliation race-guard tests are committed; CI verification for the latest test SHA is pending.
-- HTTP contract tests now cover simple-product creation request shape, external-ID/SKU lookup encoding, REST-route fallback after 404, sanitized authentication errors, and aborted requests. Variable-product payload validation, provider validation-error cases, malformed successful responses, and real test-store verification remain open.
+- HTTP contract tests cover simple- and variable-product creation request shapes, external-ID/SKU lookup encoding, REST-route fallback after 404, sanitized authentication and provider validation errors, and aborted requests. Malformed successful responses and real test-store verification remain open.
 - Browser/API verification is distinct from unit tests; record it separately.
 
 ## Exit criteria
@@ -126,3 +126,10 @@ The WooCommerce publish path must not be labelled production-ready until:
 - Added deterministic HTTP-mock coverage for WooCommerce simple-product creation, product ID/SKU lookups, 404 REST-route fallback, sanitized 401 errors, and abort/timeout mapping.
 - These tests do not contact a WooCommerce store and do not prove real-store credentials, permissions, product validation, or variable-product behavior.
 - CI is pending for the latest code and documentation commits.
+
+
+## 2026-10-09 — Variable-product and validation-error cases
+
+- Added HTTP-mock tests for a variable product payload with variation attributes, a provider 400 validation response, and the rule that non-404 errors do not trigger the alternate REST-route request.
+- These are request/response contract tests only; they do not create provider products or validate that every WooCommerce installation accepts a particular payload.
+- CI is pending for the latest test commit.
