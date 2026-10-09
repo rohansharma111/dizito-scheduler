@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import TablePagination from "@/components/dizito/TablePagination";
 
 interface Movement {
   id: number;
@@ -64,12 +65,17 @@ export default function InventoryMovementHistory({
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [movementPage, setMovementPage] = useState(1);
+  const [movementPageSize, setMovementPageSize] = useState(25);
+  const currentMovementPage = Math.min(movementPage, Math.max(1, Math.ceil(movements.length / movementPageSize)));
+  const paginatedMovements = movements.slice((currentMovementPage - 1) * movementPageSize, currentMovementPage * movementPageSize);
 
   useEffect(() => {
     async function loadMovements() {
       try {
         setLoading(true);
         setError("");
+        setMovementPage(1);
 
         const params = new URLSearchParams();
 
@@ -179,7 +185,7 @@ export default function InventoryMovementHistory({
             </thead>
 
             <tbody>
-              {movements.map((movement) => (
+              {paginatedMovements.map((movement) => (
                 <tr
                   key={movement.id}
                   className="border-b last:border-b-0 hover:bg-gray-50"
@@ -243,6 +249,14 @@ export default function InventoryMovementHistory({
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={currentMovementPage}
+          pageSize={movementPageSize}
+          totalItems={movements.length}
+          itemLabel="movements"
+          onPageChange={setMovementPage}
+          onPageSizeChange={(size) => { setMovementPageSize(size); setMovementPage(1); }}
+        />
       )}
     </div>
   );
