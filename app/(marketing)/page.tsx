@@ -15,30 +15,16 @@ import {
 import { authOptions } from "@/lib/auth";
 
 const features = [
-  {
-    icon: Layers3,
-    title: "Instagram Publishing",
-    description: "Plan and publish content across Instagram, Facebook, LinkedIn, Pinterest and Google Business from one place.",
-    tone: "violet",
-  },
-  {
-    icon: CalendarClock,
-    title: "Calendar Scheduling",
-    description: "Visualize all scheduled posts in one place and keep your publishing rhythm organized.",
-    tone: "lime",
-  },
-  {
-    icon: Clapperboard,
-    title: "Bulk CSV Upload",
-    description: "Schedule hundreds of posts in seconds with a workflow that keeps review in your hands.",
-    tone: "cyan",
-  },
-  {
-    icon: RefreshCw,
-    title: "Smart Retry System",
-    description: "Understand publishing status and recover from retryable failures without losing track.",
-    tone: "violet",
-  },
+  { icon: Layers3, title: "Instagram Publishing", tone: "violet" },
+  { icon: Layers3, title: "Facebook Publishing", tone: "cyan" },
+  { icon: Layers3, title: "LinkedIn Publishing", tone: "violet" },
+  { icon: Layers3, title: "Pinterest Publishing", tone: "lime" },
+  { icon: Layers3, title: "Google Business Publishing", tone: "cyan" },
+  { icon: Clapperboard, title: "Bulk CSV Upload", tone: "violet" },
+  { icon: Users, title: "Multi Account Support", tone: "lime" },
+  { icon: CalendarClock, title: "Calendar Scheduling", tone: "cyan" },
+  { icon: RefreshCw, title: "Smart Retry System", tone: "violet" },
+  { icon: CheckCircle2, title: "Draft Management", tone: "lime" },
 ];
 
 const steps = [
