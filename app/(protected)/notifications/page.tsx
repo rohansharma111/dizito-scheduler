@@ -82,7 +82,7 @@ export default function NotificationsPage() {
 
   async function markAllRead() {
     try {
-      await fetch("/api/notifications/read", {
+      const response = await fetch("/api/notifications/read", {
         method: "POST",
 
         headers: {
