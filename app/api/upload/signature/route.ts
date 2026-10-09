@@ -12,11 +12,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const rateLimit = await consumeRateLimit({ bucket: "media:upload-signature", identifier: `user:${session.user.id}`, limit: 30, windowSeconds: 60 });
+    const userId = Number(session.user.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid user session" }, { status: 401 });
+    }
+
+    const rateLimit = await consumeRateLimit({ bucket: "media:upload-signature", identifier: `user:${userId}`, limit: 30, windowSeconds: 60 });
     if (!rateLimit.allowed) return NextResponse.json({ success: false, error: "Too many upload initialization requests. Please try again shortly." }, { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000))) } });
 
-    const body = (await request.json().catch(() => ({}))) as { mimeType?: string; size?: number };
-    const policy = getUploadPolicy(body.mimeType ?? "", body.size ?? 0);
+    const body: unknown = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || !("mimeType" in body) || typeof body.mimeType !== "string" || !("size" in body) || typeof body.size !== "number" || !Number.isSafeInteger(body.size) || body.size <= 0) {
+      return NextResponse.json({ success: false, error: "A valid mimeType and positive file size are required" }, { status: 400 });
+    }
+
+    const policy = getUploadPolicy(body.mimeType, body.size);
 
     if (!policy.allowed) {
       return NextResponse.json({ success: false, error: policy.error }, { status: 400 });
@@ -27,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
-    const folder = `users/${Number(session.user.id)}`;
+    const folder = `users/${userId}`;
     const signature = cloudinary.utils.api_sign_request({ folder, timestamp }, process.env.CLOUDINARY_API_SECRET);
 
     return NextResponse.json({
