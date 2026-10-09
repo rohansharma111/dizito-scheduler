@@ -39,6 +39,7 @@ export default function MarketingContentClient() {
   const [contentFocus, setContentFocus] = useState<number | null>(null);
 
   useEffect(() => {
+    fetch("/api/marketing/ai-status").then((response) => response.json()).then((data) => setAiEnabled(data.enabled === true)).catch(() => setAiEnabled(false));
     const params = new URLSearchParams(window.location.search);
     const value = params.get("campaignId");
     const nextCampaign = value && /^\d+$/.test(value) ? Number(value) : null;
