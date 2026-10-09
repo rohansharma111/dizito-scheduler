@@ -6,6 +6,7 @@ import { consumeRateLimit } from "@/lib/security/rate-limit";
 export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (process.env.DIZITO_AI_ENABLED !== "true") return Response.json({ error: "AI-powered strategy is coming soon. Use your saved goals and campaign templates in the meantime.", code: "AI_COMING_SOON" }, { status: 503 });
   const userId = Number((session.user as any).id);
   if (!Number.isInteger(userId) || userId <= 0) return Response.json({ error: "Invalid user" }, { status: 401 });
   const rateLimit = await consumeRateLimit({ bucket: "ai:strategist", identifier: `user:${userId}`, limit: 10, windowSeconds: 60 });
