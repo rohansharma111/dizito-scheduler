@@ -5,7 +5,11 @@ const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const VIDEO_MIME_TYPES = new Set(["video/mp4", "video/quicktime", "video/x-m4v"]);
 
 export function getUploadPolicy(mimeType: string, size: number) {
-  const normalized = mimeType.toLowerCase();
+  if (!Number.isSafeInteger(size) || size <= 0) {
+    return { allowed: false as const, error: "File size must be a positive whole number of bytes." };
+  }
+
+  const normalized = mimeType.toLowerCase().trim();
 
   if (IMAGE_MIME_TYPES.has(normalized)) {
     return size > IMAGE_MAX_BYTES
