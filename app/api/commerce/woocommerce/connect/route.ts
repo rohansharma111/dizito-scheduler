@@ -26,18 +26,36 @@ export async function POST(request: Request) {
 
     const storeUrl = normalizeWooCommerceStoreUrl(storeUrlInput);
     const existingChannel = await getCommerceChannelByExternalAccount(userId, "woocommerce", storeUrl);
+    const config = { storeUrl, consumerKey, consumerSecret };
+
+    // Always verify the submitted credentials before creating or repairing a channel.
+    await getWooCommerceSystemStatus(config);
+    const verifiedAt = new Date().toISOString();
+
     if (existingChannel) {
-      return NextResponse.json({ success: false, error: "This WooCommerce store is already connected", channel: { id: existingChannel.id, status: existingChannel.status } }, { status: 409 });
+      // Reconnect in place: do not create a duplicate channel for the same store.
+      await saveWooCommerceCredentials({ channelId: existingChannel.id, userId, consumerKey, consumerSecret });
+      const channel = await updateCommerceChannel(existingChannel.id, userId, {
+        name,
+        status: "active",
+        metadata: {
+          storeUrl,
+          connection: { status: "verified", verifiedAt },
+          woocommerceHealth: { status: "healthy", verifiedAt },
+        },
+      });
+      if (!channel || "error" in channel) {
+        throw new Error("WooCommerce connection was verified, but the existing channel could not be updated");
+      }
+      return NextResponse.json({ success: true, channel: { id: channel.id, provider: channel.provider, name: channel.name, external_account_id: channel.external_account_id, status: channel.status, metadata: channel.metadata }, reconnected: true }, { status: 200 });
     }
 
-    const config = { storeUrl, consumerKey, consumerSecret };
-    await getWooCommerceSystemStatus(config);
     const channel = await createCommerceChannel(userId, {
       provider: "woocommerce",
       name,
       externalAccountId: storeUrl,
       status: "active",
-      metadata: { storeUrl, connection: { status: "verified", verifiedAt: new Date().toISOString() } },
+      metadata: { storeUrl, connection: { status: "verified", verifiedAt } },
     });
 
     try {
