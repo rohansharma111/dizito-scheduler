@@ -141,15 +141,15 @@ export default function CommerceChannelsPage() {
           Enter the store&apos;s myshopify.com domain to begin Shopify authorization.
         </p>
 
-        <form onSubmit={connectShopify} className="mt-4 flex flex-col sm:flex-row gap-3">
+        <form onSubmit={connectShopify} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input
             value={shop}
             onChange={(event) => setShop(event.target.value)}
             placeholder="your-store.myshopify.com"
-            className="border rounded px-3 py-2 flex-1"
+            className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             autoComplete="url"
           />
-          <button type="submit" className="bg-blue-600 text-white rounded px-5 py-2">
+          <button type="submit" className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">
             Connect Shopify
           </button>
         </form>
@@ -163,27 +163,27 @@ export default function CommerceChannelsPage() {
         <button
           type="button"
           onClick={connectAmazon}
-          className="mt-4 bg-orange-600 text-white rounded px-5 py-2"
+          className="mt-4 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
         >
           Connect Amazon India
         </button>
       </DizitoCard>
 
       {verificationMessage && (
-        <div className="border border-green-300 rounded p-4 mb-6 text-green-700">
+        <div role="status" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           {verificationMessage}
         </div>
       )}
 
-      {error && <div className="border border-red-300 rounded p-4 mb-6 text-red-700">{error}</div>}
+      {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
       <div>
         <h2 className="text-xl font-semibold mb-4">Connected Commerce Channels</h2>
 
-        {loading && <div className="text-gray-600">Loading...</div>}
+        {loading && <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 text-sm text-slate-500" role="status">Loading commerce channels…</div>}
 
         {!loading && channels.length === 0 && (
-          <div className="border rounded p-6 text-gray-600">No commerce channels connected yet.</div>
+          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">No commerce channels connected yet. Connect Shopify or Amazon above to get started.</div>
         )}
 
         {!loading && channels.map((channel) => {
@@ -193,20 +193,20 @@ export default function CommerceChannelsPage() {
           const amazon = channel.provider === "amazon";
 
           return (
-            <div key={channel.id} className="border rounded p-4 mb-3">
-              <div className="flex items-center justify-between gap-4">
+            <div key={channel.id} className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="font-semibold">{channel.name}</div>
                   <div className="text-sm text-gray-600 capitalize">{channel.provider}</div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="text-sm">{active ? "🟢 Active" : channel.status}</div>
                   {amazon && active && (
                     <button
                       type="button"
                       onClick={() => void verifyAmazon(channel)}
                       disabled={verifying || updating}
-                      className="border rounded px-3 py-1.5 text-sm disabled:opacity-50"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                     >
                       {verifying ? "Verifying..." : "Verify"}
                     </button>
