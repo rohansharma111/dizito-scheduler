@@ -108,7 +108,7 @@ export default function BillingPage() {
         {error ? (
           <DizitoState kind="error" title="Billing is unavailable" description={error} action={<DizitoButton variant="secondary" onClick={() => { setError(null); loadBilling().catch((e) => setError(e instanceof Error ? e.message : "Failed to load billing")); }}>Try again</DizitoButton>} />
         ) : (
-          <DizitoState kind="loading" title="Loading billing" description="Retrieving your subscription and usage details." />
+          <DizitoState kind="empty" title="Loading billing" description="Retrieving your subscription and usage details." />
         )}
       </DizitoPage>
     );
