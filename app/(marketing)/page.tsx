@@ -143,15 +143,14 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">Less busywork, more momentum</p>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-5xl">Everything works better when it works together.</h2>
-            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">A consistent workflow from the first idea to the published post.</p>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-5xl">Everything you need to manage social media.</h2>
+            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">Powerful scheduling and publishing tools built for creators, businesses and agencies.</p>
           </div>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map(({ icon: Icon, title, description, tone }) => (
+            {features.map(({ icon: Icon, title, tone }) => (
               <article key={title} className="group rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_6px_24px_rgba(17,24,39,0.035)] transition duration-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_38px_rgba(17,24,39,0.08)]">
                 <div className={`flex size-12 items-center justify-center rounded-2xl ${tone === "lime" ? "bg-lime-100 text-slate-900" : tone === "cyan" ? "bg-teal-50 text-teal-700" : "bg-violet-50 text-violet-700"}`}><Icon size={22} /></div>
                 <h3 className="mt-5 text-lg font-extrabold tracking-tight">{title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
               </article>
             ))}
           </div>
