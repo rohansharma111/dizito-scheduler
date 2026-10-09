@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { DizitoPage, DizitoPageHeader, DizitoButton, DizitoCard, DizitoState, DizitoBadge } from "@/components/dizito/DizitoUI";
+import { DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
 import {
   getNotificationIcon,
   getNotificationColor,
