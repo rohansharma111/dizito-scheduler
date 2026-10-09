@@ -8,7 +8,7 @@ import ReserveStockModal from "./ReserveStockModal";
 import ReleaseStockModal from "./ReleaseStockModal";
 import InventoryActionsMenu from "./InventoryActionsMenu";
 import InventoryMovementHistory from "./InventoryMovementHistory";
-import { DizitoCard, DizitoMetric, DizitoPage, DizitoPageHeader, DizitoButton } from "@/components/dizito/DizitoUI";
+import { DizitoCard, DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
 
 interface InventoryItem {
   id: number;
@@ -151,17 +151,17 @@ export default function InventoryClient({
           <div className="text-3xl font-bold mt-2">{totalOnHand}</div>
 
           <div className="text-xs text-gray-500 mt-1">Physical units</div>
-        </div>
+        </DizitoCard>
 
-        <div className="bg-white border rounded-xl p-5">
+        <DizitoCard>
           <div className="text-sm text-gray-500">Reserved</div>
 
           <div className="text-3xl font-bold mt-2">{totalReserved}</div>
 
           <div className="text-xs text-gray-500 mt-1">Allocated to orders</div>
-        </div>
+        </DizitoCard>
 
-        <div className="bg-white border rounded-xl p-5">
+        <DizitoCard>
           <div className="text-sm text-gray-500">Available</div>
 
           <div className="text-3xl font-bold mt-2">{totalAvailable}</div>
@@ -216,7 +216,7 @@ export default function InventoryClient({
             ))}
           </select>
         </div>
-      </div>
+      </DizitoCard>
 
       {/* TABLE */}
 
@@ -395,6 +395,6 @@ export default function InventoryClient({
           }}
         />
       )}
-    </div>
+    </DizitoPage>
   );
 }
