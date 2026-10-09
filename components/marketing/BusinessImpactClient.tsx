@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BarChart3, Loader2 } from "lucide-react";
+import { DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 type Impact = {
   actionSummary: Array<{ actionType:string; count:number; value:number }>;
@@ -16,10 +17,11 @@ function label(value:string){ return value.replaceAll("_"," ").replace(/\b\w/g,(
 
 export default function BusinessImpactClient(){
  const [impact,setImpact]=useState<Impact|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState<string|null>(null);
- useEffect(()=>{ fetch("/api/marketing/business-impact").then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Failed to load business impact");setImpact(d.businessImpact)}).catch(e=>setError(e instanceof Error?e.message:"Failed to load business impact")).finally(()=>setLoading(false)); },[]);
- if(loading)return <div className="py-16 text-center text-gray-500"><Loader2 className="mx-auto animate-spin" size={20}/><div className="mt-2">Loading business impact...</div></div>;
- if(error)return <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>;
- if(!impact)return null;
+ async function load(){try{setLoading(true);setError(null);const response=await fetch("/api/marketing/business-impact");const data=await response.json();if(!response.ok)throw new Error(data.error||"Failed to load business impact");if(!data.businessImpact)throw new Error("Unexpected business impact response");setImpact(data.businessImpact);}catch(e){setError(e instanceof Error?e.message:"Failed to load business impact");}finally{setLoading(false);}}
+ useEffect(()=>{void load();},[]);
+ if(loading)return <DizitoPage><DizitoPageHeader eyebrow="Measure" title="Business Impact" description="Separate observed customer outcomes from explicitly attributed marketing outcomes."/><DizitoCard><div role="status" className="animate-pulse space-y-3"><div className="h-5 w-1/3 rounded bg-slate-100"/><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[0,1,2,3].map((item)=><div key={item} className="h-20 rounded-xl bg-slate-100"/> )}</div><div className="h-36 rounded-xl bg-slate-100"/></div></DizitoCard></DizitoPage>;
+ if(error)return <DizitoPage><DizitoPageHeader eyebrow="Measure" title="Business Impact" description="Separate observed customer outcomes from explicitly attributed marketing outcomes."/><DizitoState kind="error" title="Business impact could not be loaded" description={error} action={<DizitoButton variant="secondary" onClick={() => void load()}>Try again</DizitoButton>}/></DizitoPage>;
+ if(!impact)return <DizitoPage><DizitoState kind="empty" title="No business impact data" description="There is no business impact summary to display yet."/></DizitoPage>;
  return <div className="dizito-page space-y-5">
   <header className="dizito-card dizito-card-ai"><div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-3 text-blue-600"><BarChart3 size={22}/></div><div><h1 className="text-2xl font-bold text-gray-900">Business Impact</h1><p className="mt-1 text-sm text-gray-500">Separate observed customer outcomes from explicitly attributed marketing outcomes.</p></div></div></header>
   <section className="grid gap-4 md:grid-cols-4">
