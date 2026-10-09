@@ -108,7 +108,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
       if (!response.ok || !data.success) throw new Error(data.error || "Unable to link WooCommerce product");
       setListings((current) => {
         const filtered = current.filter((listing) => !(String(listing.channel_id) === channelId && String(listing.product_id) === productId));
-        return [...filtered, { channel_id: channelId, product_id: productId, external_id: String(item.id), provider_metadata: data.listing?.provider_metadata }];
+        return [...filtered, { channel_id: channelId, product_id: productId, external_id: String(item.id), provider: "woocommerce", provider_metadata: data.listing?.provider_metadata }];
       });
       setLinkMessage(`Linked “${item.name}” (WooCommerce ID ${item.id}) to this Dizito product. No store changes were made.`);
     } catch (e) {
@@ -171,7 +171,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
                     <p className="mt-1 break-words text-xs text-slate-500">ID {item.id}{item.sku ? ` · SKU ${item.sku}` : ""} · {item.type} · {item.status}</p>
                     <p className="mt-1 text-xs text-slate-600">{item.price ? `${item.currency ? item.currency + " " : ""}${item.price}` : "Price not provided"} · Stock: {item.stockStatus || "unknown"}</p>
                   </div>
-                  {item.permalink && /^https?:\/\//i.test(item.permalink) && <a href={item.permalink} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900">View <ExternalLink size={13} /></a>}
+                  {<div className="flex shrink-0 flex-col items-end gap-2">{item.permalink && /^https?:\/\//i.test(item.permalink) && <a href={item.permalink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900">View <ExternalLink size={13} /></a>}<button type="button" onClick={() => void linkProduct(item)} disabled={linkingId !== null || (Boolean(linkedExternalId) && linkedExternalId !== String(item.id))} className="rounded-lg border border-violet-200 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40">{linkingId === item.id ? "Linking…" : linkedExternalId === String(item.id) ? "Linked" : "Link to product"}</button></div>}
                 </div>
               ))}
             </div>
@@ -183,7 +183,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
               <button type="button" onClick={() => void loadProducts(page + 1)} disabled={!hasMore || loadingProducts} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium disabled:opacity-40">Next</button>
             </div>
           </div>
-          <p className="text-xs leading-5 text-slate-500">This catalog browser does not link, publish, or edit products. A persistent canonical-to-WooCommerce mapping needs a separate explicit workflow; no store changes are made here.</p>
+          <p className="text-xs leading-5 text-slate-500">Linking saves only the mapping inside Dizito. It does not publish, edit, or otherwise change products in your WooCommerce store.</p>
         </div>
       )}
     </DizitoCard>
