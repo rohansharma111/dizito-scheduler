@@ -1,5 +1,7 @@
 "use client";
 
+import { DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
+
 import { useEffect, useState } from "react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 
@@ -123,20 +125,16 @@ export default function SelectAccountsPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading accounts...</div>;
+    return <DizitoPage className="px-4 sm:px-6"><DizitoState kind="empty" title="Loading accounts" description="Please wait while available resources are loaded." /></DizitoPage>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-2">Select Accounts</h1>
-
-      <p className="text-gray-500 mb-8">
-        Choose which Facebook and Instagram accounts to connect.
-      </p>
+    <DizitoPage className="max-w-4xl px-4 sm:px-6">
+      <DizitoPageHeader eyebrow="Connected accounts" title="Select accounts" description="Choose which Facebook and Instagram accounts to connect." />
 
       <div className="space-y-4">
         {pages.map((page) => (
-          <div key={page.pageId} className="border rounded-lg p-5 bg-white">
+          <div key={page.pageId} className="dizito-card">
             <div className="font-semibold text-lg mb-4">{page.pageName}</div>
 
             <div className="flex flex-wrap gap-4">
@@ -194,11 +192,11 @@ export default function SelectAccountsPage() {
         ))}
       </div>
 
-      <div className="mt-8 flex items-center gap-4">
+      <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
         <button
           disabled={connecting}
           onClick={connectAccounts}
-          className="bg-blue-600 text-white px-6 py-3 rounded"
+          className="dizito-button dizito-button-primary"
         >
           {connecting
             ? "Connecting..."
@@ -209,6 +207,6 @@ export default function SelectAccountsPage() {
           Selected: {selectedCount()} account(s)
         </div>
       </div>
-    </div>
+    </DizitoPage>
   );
 }
