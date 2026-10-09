@@ -51,6 +51,8 @@ export default function CommerceChannelsPage() {
   const [catalogPage, setCatalogPage] = useState(1);
   const [catalogHasMore, setCatalogHasMore] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(false);
+  const [selectedWooProductIds, setSelectedWooProductIds] = useState<number[]>([]);
+  const [productBriefMessage, setProductBriefMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadChannels() {
@@ -210,6 +212,7 @@ export default function CommerceChannelsPage() {
       setCatalogChannelId(channel.id);
       setCatalogPage(page);
       setCatalogHasMore(Boolean(data.hasMore));
+      if (page === 1) { setSelectedWooProductIds([]); setProductBriefMessage(null); }
       setCatalogProducts((current) => page === 1 ? data.products! : [...current, ...data.products!]);
     } catch (catalogError) {
       setError(catalogError instanceof Error ? catalogError.message : "Unable to load product catalog");
@@ -344,12 +347,49 @@ export default function CommerceChannelsPage() {
             </div>
             <span className="text-sm text-slate-500">Page {catalogPage}</span>
           </div>
+          {catalogProducts.length > 0 && (
+            <div className="mt-4 flex flex-col gap-3 rounded-xl border border-violet-100 bg-violet-50/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{selectedWooProductIds.length} product{selectedWooProductIds.length === 1 ? "" : "s"} selected</p>
+                <p className="text-xs text-slate-600">Select catalog items to prepare a product-aware marketing brief. This does not change WooCommerce.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={selectedWooProductIds.length === 0}
+                  onClick={() => {
+                    const selected = catalogProducts.filter((product) => selectedWooProductIds.includes(product.id));
+                    const brief = selected.map((product) => [
+                      product.name,
+                      product.price ? `Price: ${product.price}` : "",
+                      product.sku ? `SKU: ${product.sku}` : "",
+                      product.stockStatus ? `Stock: ${product.stockStatus}` : "",
+                      product.permalink ? `Product URL: ${product.permalink}` : "",
+                    ].filter(Boolean).join("\\n")).join("\\n\\n");
+                    void navigator.clipboard.writeText(brief).then(() => setProductBriefMessage("Product brief copied. Paste it into your marketing content or weekly plan.")).catch(() => setProductBriefMessage("Clipboard access was blocked. Select products and copy their details manually."));
+                  }}
+                  className="rounded-lg bg-violet-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Copy product brief
+                </button>
+                <a href="/generate-my-week" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">Open Generate My Week</a>
+              </div>
+            </div>
+          )}
+          {productBriefMessage && <p role="status" className="mt-2 text-sm text-violet-800">{productBriefMessage}</p>}
           {catalogProducts.length === 0 ? (
             <p className="mt-4 text-sm text-slate-600">No products were returned.</p>
           ) : (
             <div className="mt-4 divide-y divide-slate-100">
               {catalogProducts.map((product) => (
                 <div key={product.id} className="flex items-center gap-3 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${product.name}`}
+                    checked={selectedWooProductIds.includes(product.id)}
+                    onChange={(event) => setSelectedWooProductIds((current) => event.target.checked ? [...current, product.id] : current.filter((id) => id !== product.id))}
+                    className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-600"
+                  />
                   {product.image ? <img src={product.image} alt="" className="h-12 w-12 rounded-lg border border-slate-200 object-cover" loading="lazy" /> : <div className="h-12 w-12 rounded-lg bg-slate-100" aria-hidden="true" />}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
