@@ -92,8 +92,8 @@ Coverage reviewed on 2026-10-09:
 
 Remaining evidence gaps:
 - Run the full current test suite and preserve CI links for the exact code SHA after any test additions.
-- CI verification for the new deterministic external-ID conflict and concurrent-reconciliation race-guard tests is pending for the current code SHA.
-- Run provider contract checks against a designated WooCommerce test store or a deterministic HTTP mock for simple/variable products, auth/validation errors, malformed responses, and interrupted responses.
+- Deterministic external-ID conflict and concurrent-reconciliation race-guard tests are committed; CI verification for the latest test SHA is pending.
+- HTTP contract tests now cover simple-product creation request shape, external-ID/SKU lookup encoding, REST-route fallback after 404, sanitized authentication errors, and aborted requests. Variable-product payload validation, provider validation-error cases, malformed successful responses, and real test-store verification remain open.
 - Browser/API verification is distinct from unit tests; record it separately.
 
 ## Exit criteria
@@ -119,3 +119,10 @@ The WooCommerce publish path must not be labelled production-ready until:
 - Added an integration-style test proving reconciliation rolls back and performs no listing/attempt updates when another listing already owns the WooCommerce external ID.
 - Added a race-guard test proving a reconciliation request that acquires the attempt lock after another request completed returns `PUBLISH_ATTEMPT_ALREADY_RECONCILED` and does not apply a second set of updates.
 - CI for the exact test commit is pending; these mocked database tests do not substitute for provider contract checks or live-store verification.
+
+
+## 2026-10-09 — HTTP provider contract tests
+
+- Added deterministic HTTP-mock coverage for WooCommerce simple-product creation, product ID/SKU lookups, 404 REST-route fallback, sanitized 401 errors, and abort/timeout mapping.
+- These tests do not contact a WooCommerce store and do not prove real-store credentials, permissions, product validation, or variable-product behavior.
+- CI is pending for the latest code and documentation commits.
