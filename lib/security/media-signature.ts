@@ -36,6 +36,7 @@ const SIGNATURES = {
 } satisfies Record<string, (buffer: Buffer) => boolean>;
 
 export function matchesDeclaredMediaType(buffer: Buffer, mimeType: string): boolean {
-  const matcher = SIGNATURES[mimeType as keyof typeof SIGNATURES];
+  const normalizedMimeType = mimeType.trim().toLowerCase();
+  const matcher = SIGNATURES[normalizedMimeType as keyof typeof SIGNATURES];
   return matcher ? matcher(buffer) : false;
 }
