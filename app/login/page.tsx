@@ -1,15 +1,16 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { Sparkles, CalendarDays, Layers3, RefreshCw, Users } from "lucide-react";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--dizito-canvas)]">
       <div className="grid min-h-screen lg:grid-cols-2">
         {/* LEFT SIDE */}
-        <div className="hidden lg:flex flex-col justify-center bg-gradient-to-br from-blue-600 to-indigo-700 p-16 text-white">
+        <div className="hidden lg:flex flex-col justify-center bg-[#171a22] p-10 text-white xl:p-16">
           <div className="max-w-lg">
-            <h1 className="text-5xl font-bold mb-6">Dizito</h1>
+            <div className="mb-8 inline-flex items-center gap-2 text-4xl font-extrabold tracking-tight"><span className="flex size-11 items-center justify-center rounded-2xl bg-[var(--dizito-lime)] text-slate-900"><Sparkles size={23} /></span>Dizito</div>
 
             <h2 className="text-3xl font-semibold leading-tight mb-6">
               Schedule Instagram, Facebook, LinkedIn, Pinterest & Google Business Profile posts from one dashboard.
@@ -21,7 +22,7 @@ export default function LoginPage() {
 
             <div className="space-y-5">
               <div className="flex items-center gap-3">
-                <span className="text-xl">✓</span>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[var(--dizito-lime)]">✓</span>
                 <span>Multi-platform publishing</span>
               </div>
 
@@ -53,7 +54,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md">
             {/* Mobile Logo */}
             <div className="text-center lg:hidden mb-10">
-              <h1 className="text-4xl font-bold">Dizito</h1>
+              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Dizito</h1>
 
               <p className="mt-4 text-gray-600">
                 Schedule social media posts from one dashboard
@@ -69,28 +70,14 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="bg-white border rounded-2xl shadow-sm p-6 sm:p-8">
+            <div className="dizito-card p-6 sm:p-8">
               <button
                 onClick={() =>
                   signIn("google", {
                     callbackUrl: "/dashboard",
                   })
                 }
-                className="
-                  w-full
-                  flex
-                  items-center
-                  justify-center
-                  gap-3
-                  border
-                  border-gray-300
-                  rounded-xl
-                  py-4
-                  px-4
-                  font-medium
-                  transition
-                  hover:bg-gray-50
-                "
+                className="dizito-button dizito-button-secondary min-h-14 w-full rounded-2xl text-sm sm:text-base"
               >
                 <svg width="22" height="22" viewBox="0 0 48 48">
                   <path
@@ -124,7 +111,7 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-sm text-gray-500">
               By continuing, you agree to our{" "}
-              <a href="/terms" className="font-medium text-black">
+              <a href="/terms" className="font-semibold text-slate-900 underline decoration-violet-300 underline-offset-4">
                 Terms
               </a>{" "}
               and{" "}
