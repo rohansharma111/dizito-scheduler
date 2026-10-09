@@ -588,14 +588,36 @@ Another Post,2026-07-02T15:00:00,https://picsum.photos/210`}
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="p-4 border-b">
-              <h2 className="font-semibold">
-                Preview
-                <span className="ml-2 text-gray-500">
-                  ({selectedValidCount} posts,{" "}
-                  {selectedValidCount * selectedAccounts.length} targets)
-                </span>
-              </h2>
+            <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-semibold text-slate-900">
+                  Preview
+                  <span className="ml-2 text-sm font-normal text-slate-500">
+                    ({selectedValidCount} selected posts, {selectedValidCount * selectedAccounts.length} targets)
+                  </span>
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  {rows.length} rows · {validCount} valid · {invalidCount} invalid
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2" aria-label="Filter preview rows">
+                {([
+                  ["all", "All", rows.length],
+                  ["valid", "Valid", validCount],
+                  ["invalid", "Invalid", invalidCount],
+                  ["duplicate", "Duplicates", duplicateCount],
+                ] as const).map(([filter, label, count]) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    aria-pressed={previewFilter === filter}
+                    onClick={() => { setPreviewFilter(filter); setPreviewPage(1); }}
+                    className={`min-h-9 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${previewFilter === filter ? "border-violet-600 bg-violet-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    {label} ({count})
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="overflow-x-auto">
