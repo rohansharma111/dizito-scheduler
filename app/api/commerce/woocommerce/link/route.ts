@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [channelId, externalProductId]);
       const conflict = await client.query(
         `SELECT id, product_id FROM product_listings
          WHERE user_id = $1 AND channel_id = $2 AND external_id = $3 AND product_id <> $4
