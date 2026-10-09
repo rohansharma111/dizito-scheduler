@@ -1,3 +1,9 @@
+## 2026-10-09 — Streamed multipart request byte cap
+
+- Added `readRequestBodyWithLimit` and applied it to the server-proxy upload route before multipart parsing. The route now enforces a hard maximum request-body byte count even when `Content-Length` is absent, and cancels the stream when the limit is exceeded.
+- Declared-length preflight remains an early rejection optimization; the stream reader is the authoritative application-level cap before multipart parsing. This does not replace platform ingress limits or remove the bounded buffer required to parse the request.
+- Added unit tests for bounded, oversized streamed, and empty request bodies. CI is pending for the latest implementation. No deployment, production database change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Media upload API guard regression tests
 
 - Added route-level Vitest coverage for upload authentication, invalid session IDs, rate limiting, malformed/unsafe/oversized declared content lengths, malformed multipart bodies, completion payload validation, and cross-user Cloudinary public-ID rejection.
