@@ -58,9 +58,20 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
   await assertPublicDnsResolution(config.storeUrl);
   const controller = init.signal ? null : new AbortController();
   const timeout = controller ? setTimeout(() => controller.abort(), 15_000) : null;
+  const requestInit: RequestInit = { ...init, headers, signal: init.signal ?? controller?.signal, cache: "no-store" };
+  const standardUrl = getApiUrl(config.storeUrl, path);
   let response: Response;
+  let endpointUrl = standardUrl;
   try {
-    response = await fetch(getApiUrl(config.storeUrl, path), { ...init, headers, signal: init.signal ?? controller?.signal, cache: "no-store" });
+    response = await fetch(standardUrl, requestInit);
+    // Some WordPress hosts expose REST routes through rest_route even when
+    // rewrite rules for /wp-json/ are unavailable. Retry only on 404.
+    if (response.status === 404) {
+      const fallbackUrl = new URL(normalizeWooCommerceStoreUrl(config.storeUrl));
+      fallbackUrl.searchParams.set("rest_route", `/wc/v3/${path.replace(/^\\//, "")}`);
+      endpointUrl = fallbackUrl.toString();
+      response = await fetch(endpointUrl, requestInit);
+    }
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("WooCommerce request timed out after 15000ms");
@@ -75,7 +86,7 @@ export async function wooCommerceRequest<T>(config: WooCommerceClientConfig, pat
   if (!response.ok) {
     // Provider response bodies are untrusted and may contain sensitive or
     // attacker-controlled text. Keep diagnostics to status and our request URL.
-    const endpoint = new URL(getApiUrl(config.storeUrl, path));
+    const endpoint = new URL(endpointUrl);
     const endpointLabel = `${endpoint.origin}${endpoint.pathname}`;
     throw new Error(
       `WooCommerce request failed (${response.status}) at ${endpointLabel}`,
