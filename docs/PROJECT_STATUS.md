@@ -6,7 +6,7 @@
 - Updated `components/billing/PricingButton.tsx`, `app/(marketing)/layout.tsx`, and `components/Footer.tsx` for the public-page button/header/footer visual system and responsive layout.
 - Removed duplicate `app/page.tsx`, which and `app/(marketing)/page.tsx` both resolve to the root URL in the App Router. The marketing route is now the single canonical homepage; its primary CTA uses the session and does not need a separate users.plan lookup to render the page.
 - Commits on the branch include `ebb7acfd2ddb835d007845d6a534adaf5d235ff4`, `759e770fe73582961f37599ba8abbdeaf761d488`, `d75176190b84d3c9dd5073c55cc85342c47abc56`, `35ed689dca3a2ee33054bb572484c74f54ca3df3`, `24d92f7a43e7f7fc3eda5fa6a04382cd1e8e680d`, and `1d9ff7d7324a3ea6724341805693ed949a07c0b3`.
-- Verification boundary: source-level review only so far. Local lint/typecheck/tests/build and browser screenshots have not been run. CI must be checked on the PR; do not claim the localhost blank page is fixed until the canonical route is rendered and verified.
+- Verification: GitHub Actions Validate and Quality Checks passed on code commit `871200b9f894db6a1066165dedd12577266a69e4` (tests, lint, TypeScript, and production build). Browser screenshot verification has not been run, so confirm `/` and `/pricing` visually in the local app before calling the blank-page issue runtime-verified.
 
 ## 2026-10-09 — Fix content item aggregate query
 
