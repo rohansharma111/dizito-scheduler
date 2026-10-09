@@ -1,3 +1,12 @@
+## 2026-10-09 — Billing API missing-schema compatibility fix (main)
+
+- Fixed `GET /api/billing` to detect whether the canonical V1 billing relations and `subscriptions.billing_plan_id` are available before querying the canonical model.
+- If the connected runtime database lacks the V1 billing schema, the route now returns a legacy-compatible response using `users.plan` (including Creator → Growth), existing subscription/usage tables, and a static fallback catalog/entitlement map. The API logs the connected database/schema/search path and missing relation flags without logging credentials.
+- Added `lib/billing/schema-compatibility.ts` plus regression tests for fallback plan/entitlement values and PostgreSQL missing-relation classification.
+- Main commits: `73245c545895fe7a18f18b3591d22ceebe743e56` (fallback catalog), `9a26a4918ef156d7b08fbc8e3cf9525b58d2e547` (tests), `1d3bd116144b59aea0869c54b33b93e5df386e09` and `6273cada8a397e6dd1a48e0b3506471343b95e6e` (route fallback), `55d3f12d6b5719e59454bf4e2326585234f41df7` (type-only imports).
+- Important environment diagnosis: Neon production branch `br-empty-rice-ayeuugek` / database `neondb` was verified to contain `billing_plans` and the canonical entitlement tables after migration 021. A deployed process still reporting the relation missing likely uses a different `DATABASE_URL`/branch or a search path that does not include the migrated schema. This compatibility path prevents the API 500 but does not replace aligning the deployment connection with the migrated database.
+- Verification boundary: regression tests were added but have not been executed in this tool session; GitHub Actions status for these direct-main commits is not confirmed. Runtime endpoint verification remains pending.
+
 ## 2026-10-09 — Shared table pagination (main)
 
 - Added reusable `TablePagination` and applied client-side paging to Bulk Upload preview, Products, Variants, Inventory, Inventory Movement History, Draft Posts, and Scheduled/Published Posts.
