@@ -60,6 +60,7 @@ describe("MediaService.completeDirectUpload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     create.mockResolvedValue({ id: 1 });
+    findByCloudinaryPublicId.mockResolvedValue(null);
     upload.mockResolvedValue({ publicId: "users/42/image-1", secureUrl: "https://res.cloudinary.com/example/image/upload/image-1.jpg", width: 10, height: 10, bytes: 3, format: "jpg", resourceType: "image", folder: "users/42" });
   });
 
