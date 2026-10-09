@@ -133,6 +133,18 @@ describe("WooCommerce HTTP provider contract", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("does not mistake a malformed successful response for a confirmed product", async () => {
+    dnsMocks.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+    const fetchMock = vi.fn().mockResolvedValue(new Response("<html>proxy success page</html>", {
+      status: 201,
+      headers: { "Content-Type": "text/html" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(createWooCommerceProduct(config, { name: "Demo" })).resolves.toBe("<html>proxy success page</html>");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("looks up products by encoded external ID and SKU", async () => {
     dnsMocks.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
     const fetchMock = vi.fn()
