@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { FlaskConical } from "lucide-react";
+import { DizitoCard, DizitoPage, DizitoPageHeader, DizitoButton } from "@/components/dizito/DizitoUI";
 
 type Scenario = "valid" | "missing-required" | "catalog-mismatch" | "amazon-invalid";
 
@@ -40,13 +42,11 @@ export default function AmazonValidationMockPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Amazon validation mock</h1>
-        <p className="mt-2 text-sm text-gray-600">Local-only validation scenarios. This page never calls Amazon and never creates a listing.</p>
-      </div>
+    <DizitoPage className="max-w-3xl px-4 sm:px-6 space-y-5">
+      <DizitoPageHeader eyebrow="Developer tools" title="Amazon validation mock" description="Local-only validation scenarios. This page never calls Amazon and never creates a listing." />
+      <DizitoCard tone="soft"><p className="flex items-start gap-2 text-sm text-slate-600"><FlaskConical size={16} className="mt-0.5 shrink-0 text-violet-600" /> Test harness only — results from this page do not represent a live Amazon listing operation.</p></DizitoCard>
 
-      <section className="space-y-4 rounded-xl border p-5">
+      <DizitoCard className="space-y-4">
         <label className="block text-sm font-medium">Scenario
           <select className="mt-1 block w-full rounded-lg border px-3 py-2" value={scenario} onChange={(event) => setScenario(event.target.value as Scenario)}>
             <option value="valid">Schema-aware validation</option>
@@ -84,10 +84,10 @@ export default function AmazonValidationMockPage() {
           </label>
         </div>
 
-        <button type="button" disabled={loading} onClick={run} className="rounded-lg border px-4 py-2 font-medium disabled:opacity-50">{loading ? "Running…" : "Run mock validation"}</button>
-      </section>
+        <DizitoButton type="button" disabled={loading} onClick={run}>{loading ? "Running…" : "Run mock validation"}</DizitoButton>
+      </DizitoCard>
 
-      {result !== null && <section className="rounded-xl border p-5"><h2 className="font-semibold">Response</h2><pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs">{JSON.stringify(result, null, 2)}</pre></section>}
-    </main>
+      {result !== null && <DizitoCard><h2 className="font-semibold">Response</h2><pre className="mt-3 max-w-full overflow-x-auto whitespace-pre-wrap text-xs">{JSON.stringify(result, null, 2)}</pre></DizitoCard>}
+    </DizitoPage>
   );
 }
