@@ -30,6 +30,11 @@ export async function POST(request: Request) {
     if (!policy.allowed) {
       return NextResponse.json({ success: false, error: policy.error }, { status: 400 });
     }
+    // This endpoint is exclusively for direct video uploads. Images must use
+    // the server-proxy path, where file signatures are checked before storage.
+    if (policy.resourceType !== "video") {
+      return NextResponse.json({ success: false, error: "Direct uploads are only supported for video files" }, { status: 400 });
+    }
 
     if (!process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_SECRET) {
       return NextResponse.json({ success: false, error: "Cloudinary direct upload is not configured" }, { status: 503 });
