@@ -1,3 +1,11 @@
+## 2026-10-09 — Public marketing pages visual correction
+
+- Updated the canonical marketing homepage, pricing page, public header and footer to align with the existing Dizito visual language (violet accents, lime primary actions, soft borders, rounded cards, restrained shadows, responsive spacing).
+- Pricing plan cards now reserve a consistent badge row so Free/Growth/Pro titles and pricing align. Existing billing plan retrieval/fallback, current-plan display, login/dashboard destinations, and Razorpay subscription handler are retained.
+- Removed duplicate `app/page.tsx` so only `app/(marketing)/page.tsx` owns `/`; this also removes the redundant plan lookup from the legacy duplicate page. The canonical landing page keeps a session-aware CTA and styled product walkthrough.
+- Branch: `v1/public-pages-visual-polish`. Commits: `ebb7acf`, `759e770`, `d751761`, `35ed689`, `24d92f7`, `1d9ff7d`.
+- Lint, TypeScript, unit tests, production build and browser verification are pending.
+
 ## 2026-10-09 — Fix content item SQL grouping error
 
 - Error: `column "c.name" must appear in the GROUP BY clause or be used in an aggregate function` from `listContentItems`, also breaking optimizer context retrieval.
