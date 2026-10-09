@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  DizitoBadge,
+  DizitoButton,
+  DizitoCard,
+  DizitoMetric,
+  DizitoPage,
+  DizitoPageHeader,
+  DizitoSectionHeader,
+  DizitoState,
+} from "@/components/dizito/DizitoUI";
 
 type BillingData = {
   plan: string;
@@ -92,126 +102,119 @@ export default function BillingPage() {
   }
 
   if (!billing) {
-    return <div className="p-8">{error ? `Billing unavailable: ${error}` : "Loading billing..."}</div>;
+    return (
+      <DizitoPage>
+        <DizitoPageHeader eyebrow="Account" title="Billing" description="Manage your plan, usage and subscription." />
+        {error ? (
+          <DizitoState kind="error" title="Billing is unavailable" description={error} action={<DizitoButton variant="secondary" onClick={() => { setError(null); loadBilling().catch((e) => setError(e instanceof Error ? e.message : "Failed to load billing")); }}>Try again</DizitoButton>} />
+        ) : (
+          <DizitoState kind="loading" title="Loading billing" description="Retrieving your subscription and usage details." />
+        )}
+      </DizitoPage>
+    );
   }
 
   const cards = [
-    ["Social channels", billing.usage.socialChannels, billing.usage.socialChannelsLimit],
-    ["Commerce channels", billing.usage.commerceChannels, billing.usage.commerceChannelsLimit],
-    ["Publishing / month", billing.usage.publishing, billing.usage.publishingLimit],
-    ["AI actions / month", billing.usage.aiActions, billing.usage.aiActionsLimit],
+    { label: "Social channels", used: billing.usage.socialChannels, limit: billing.usage.socialChannelsLimit },
+    { label: "Commerce channels", used: billing.usage.commerceChannels, limit: billing.usage.commerceChannelsLimit },
+    { label: "Publishing / month", used: billing.usage.publishing, limit: billing.usage.publishingLimit },
+    { label: "AI actions / month", used: billing.usage.aiActions, limit: billing.usage.aiActionsLimit },
   ];
 
   return (
-    <div className="space-y-8 p-8">
-      <div className="rounded-2xl border bg-white p-8">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Current plan</p>
-            <h1 className="mt-1 text-4xl font-bold">{billing.planDetails.name}</h1>
-            <p className="mt-2 max-w-2xl text-gray-600">{billing.planDetails.description}</p>
+    <DizitoPage>
+      <DizitoPageHeader
+        eyebrow="Account"
+        title="Billing & plan"
+        description="Understand your current subscription, monitor usage, and manage plan changes."
+        action={<Link href="/pricing"><DizitoButton variant="secondary">View pricing</DizitoButton></Link>}
+      />
+
+      {error && <DizitoState kind="error" title="Billing action failed" description={error} />}
+
+      <DizitoCard>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <DizitoBadge tone="ai">Current plan</DizitoBadge>
+              <DizitoBadge>{billing.subscription.status ?? "free"}</DizitoBadge>
+              {billing.pricingHypothesis && <DizitoBadge tone="warning">V1 pricing hypothesis</DizitoBadge>}
+            </div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{billing.planDetails.name}</h2>
+            {billing.planDetails.description && <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{billing.planDetails.description}</p>}
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold">
-              ₹{Math.round(billing.planDetails.priceMinor / 100)}
-              <span className="text-base font-normal text-gray-500">/month</span>
-            </div>
-            <div className="mt-2 text-sm text-gray-500">
-              {billing.subscription.status ?? "free"}
-            </div>
+          <div className="shrink-0 sm:text-right">
+            <p className="text-3xl font-black tracking-tight text-slate-950">
+              {new Intl.NumberFormat("en-IN", { style: "currency", currency: billing.planDetails.currency || "INR", maximumFractionDigits: 0 }).format(billing.planDetails.priceMinor / 100)}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">per {billing.planDetails.interval || "month"}</p>
+            {billing.subscription.renewalDate && <p className="mt-2 text-xs text-slate-500">Renewal: {new Date(billing.subscription.renewalDate).toLocaleDateString()}</p>}
           </div>
         </div>
 
-        {billing.subscription.trialDaysLeft > 0 && (
-          <div className="mt-6 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-900">
-            Trial ends in {billing.subscription.trialDaysLeft} day(s).
-          </div>
-        )}
+        {billing.subscription.trialDaysLeft > 0 && <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Trial ends in {billing.subscription.trialDaysLeft} day(s).</div>}
+        {billing.subscription.gracePeriodUntil && <div className="mt-5 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">Payment issue detected. Access is retained through {new Date(billing.subscription.gracePeriodUntil).toLocaleDateString()}.</div>}
+        {billing.subscription.cancelAtPeriodEnd && <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Cancellation is scheduled at the end of the current billing period.</div>}
+      </DizitoCard>
 
-        {billing.subscription.gracePeriodUntil && (
-          <div className="mt-6 rounded-lg bg-orange-50 p-4 text-sm text-orange-900">
-            Payment issue detected. Access is retained through{" "}
-            {new Date(billing.subscription.gracePeriodUntil).toLocaleDateString()}.
-          </div>
-        )}
-
-        {billing.subscription.cancelAtPeriodEnd && (
-          <div className="mt-6 rounded-lg bg-gray-100 p-4 text-sm text-gray-700">
-            Cancellation is scheduled at the end of the current billing period.
-          </div>
-        )}
-      </div>
-
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map(([label, used, limit]) => (
-          <div key={label} className="rounded-xl border bg-white p-5">
-            <p className="text-sm text-gray-500">{label}</p>
-            <p className="mt-2 text-2xl font-bold">{used} / {limit}</p>
-            <div className="mt-3 h-2 rounded-full bg-gray-100">
-              <div
-                className="h-2 rounded-full bg-blue-600"
-                style={{ width: `${Math.min(100, limit ? (Number(used) / Number(limit)) * 100 : 0)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-2xl border bg-white p-7">
-        <h2 className="text-xl font-semibold">Dizito capabilities</h2>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {Object.entries(billing.features).map(([key, enabled]) => (
-            <div key={key} className="rounded-lg bg-gray-50 px-4 py-3">
-              {enabled ? "✓" : "—"} {key.replaceAll("_", " ")}
-            </div>
+      <section className="mt-5">
+        <DizitoSectionHeader title="Usage this period" description="Usage is shown against the limits returned by your current plan." />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {cards.map(({ label, used, limit }) => (
+            <DizitoCard key={label}>
+              <DizitoMetric label={label} value={`${used} / ${limit}`} />
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(1, Number(limit))} aria-valuenow={Math.min(Number(used), Number(limit))}>
+                <div className="h-full rounded-full bg-lime-500" style={{ width: `${Math.min(100, limit ? (Number(used) / Number(limit)) * 100 : 0)}%` }} />
+              </div>
+            </DizitoCard>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-2xl border bg-white p-7">
-        <div className="flex flex-wrap gap-3">
-          {billing.plan !== "growth" && billing.plan !== "pro" && (
-            <button disabled={!!busy} onClick={() => changePlan("growth")} className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white disabled:opacity-50">
-              {busy === "growth" ? "Updating…" : "Move to Growth"}
-            </button>
-          )}
-          {billing.plan !== "pro" && (
-            <button disabled={!!busy} onClick={() => changePlan("pro")} className="rounded-lg bg-gray-900 px-5 py-3 font-medium text-white disabled:opacity-50">
-              {busy === "pro" ? "Updating…" : "Move to Pro"}
-            </button>
-          )}
-          {billing.subscription.id && !billing.subscription.cancelAtPeriodEnd && (
-            <button disabled={!!busy} onClick={cancel} className="rounded-lg border border-red-200 px-5 py-3 font-medium text-red-700 disabled:opacity-50">
-              {busy === "cancel" ? "Scheduling…" : "Cancel at period end"}
-            </button>
-          )}
-          <Link href="/pricing" className="rounded-lg border px-5 py-3 font-medium">View pricing</Link>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border bg-white p-7">
-        <h2 className="text-xl font-semibold">Billing history</h2>
-        <div className="mt-5 space-y-3">
-          {billing.billingHistory.length === 0 ? (
-            <p className="text-gray-500">No billing events yet.</p>
-          ) : (
-            billing.billingHistory.map((item, index) => (
-              <div key={index} className="flex justify-between border-b pb-3 text-sm">
-                <span>{item.event}</span>
-                <span>{item.amount == null ? "—" : `₹${item.amount}`} · {new Date(item.created_at).toLocaleDateString()}</span>
+      <section className="mt-7">
+        <DizitoSectionHeader title="Plan capabilities" description="Availability of features for the active subscription." />
+        <DizitoCard>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {Object.entries(billing.features).map(([key, enabled]) => (
+              <div key={key} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
+                <span className="break-words text-sm capitalize text-slate-700">{key.replaceAll("_", " ")}</span>
+                <DizitoBadge tone={enabled ? "success" : "neutral"}>{enabled ? "Included" : "Not included"}</DizitoBadge>
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+        </DizitoCard>
+      </section>
 
-      {billing.pricingHypothesis && (
-        <p className="text-xs text-gray-500">
-          Pricing, limits and trial durations shown here are V1 product hypotheses, not final commercial commitments.
-        </p>
-      )}
-    </div>
+      <section className="mt-7">
+        <DizitoSectionHeader title="Manage subscription" description="Plan changes are applied through the existing billing API." />
+        <DizitoCard>
+          <div className="flex flex-wrap gap-3">
+            {billing.plan !== "growth" && billing.plan !== "pro" && <DizitoButton disabled={!!busy} onClick={() => changePlan("growth")}>{busy === "growth" ? "Updating…" : "Move to Growth"}</DizitoButton>}
+            {billing.plan !== "pro" && <DizitoButton variant="secondary" disabled={!!busy} onClick={() => changePlan("pro")}>{busy === "pro" ? "Updating…" : "Move to Pro"}</DizitoButton>}
+            {billing.subscription.id && !billing.subscription.cancelAtPeriodEnd && <DizitoButton variant="secondary" disabled={!!busy} onClick={cancel}>{busy === "cancel" ? "Scheduling…" : "Cancel at period end"}</DizitoButton>}
+          </div>
+        </DizitoCard>
+      </section>
+
+      <section className="mt-7">
+        <DizitoSectionHeader title="Billing history" description="Recorded billing events for this account." />
+        <DizitoCard>
+          {billing.billingHistory.length === 0 ? (
+            <DizitoState kind="empty" title="No billing events yet" description="Billing events will appear here when available." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {billing.billingHistory.map((item, index) => (
+                <div key={`${item.created_at}-${index}`} className="flex flex-col gap-1 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <span className="break-words font-medium text-slate-800">{item.event}</span>
+                  <span className="text-slate-500">{item.amount == null ? "—" : `₹${item.amount}`} · {new Date(item.created_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </DizitoCard>
+      </section>
+
+      {billing.pricingHypothesis && <p className="mt-5 text-xs leading-5 text-slate-500">Pricing, limits and trial durations shown here are V1 product hypotheses, not final commercial commitments.</p>}
+    </DizitoPage>
   );
 }
