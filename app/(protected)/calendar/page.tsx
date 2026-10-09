@@ -47,7 +47,7 @@ export default function CalendarPage() {
       )}
       <DizitoCard>
         {loading ? (
-          <DizitoState kind="loading" title="Loading calendar" description="Fetching your publishing activity." />
+          <DizitoState kind="empty" title="Loading calendar" description="Fetching your publishing activity." />
         ) : posts.length === 0 ? (
           <DizitoState
             kind="empty"
