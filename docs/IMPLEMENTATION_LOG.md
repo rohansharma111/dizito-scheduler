@@ -1115,3 +1115,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added an idempotency key for publish attempts and a reconciliation action for uncertain outcomes. UI copy warns users not to retry an uncertain publish before reconciliation.
 - Uses the first canonical variant as the required listing association; products without variants are asked to add one before preparing a listing. Price and SKU are editable before draft preparation.
 - No migration, credentials, or live-store changes were made. The UI is committed to `main`; CI and staging runtime verification must pass before calling the end-to-end workflow tested.
+
+
+## 2026-10-10 — WooCommerce publish reconciliation verified
+
+- Reconciliation completed with WooCommerce product ID `2800`; external status is `published`.
+- User confirmed (1) the local listing is linked to product `2800`, and (2) the local listing and publish-attempt records reflect the reconciled successful state.
+- Do not republish or retry this item; use the reconciled external ID to prevent duplicate creation. Idempotent replay behavior still needs separate verification.
+- Production Neon schema now contains `product_listings.publish_idempotency_key`, `unique_channel_publish_idempotency`, and `commerce_publish_attempts` with its constraints and indexes; production schema inspection verified these objects.
