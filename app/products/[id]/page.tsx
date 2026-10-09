@@ -7,6 +7,7 @@ import ProductMediaManager from "@/components/products/ProductMediaManager";
 import ProductShopifyPublish from "@/components/products/ProductShopifyPublish";
 import ProductAmazonListing from "@/components/products/ProductAmazonListing";
 import ProductWooCommerceCatalog from "@/components/products/ProductWooCommerceCatalog";
+import ProductWooCommercePublish from "@/components/products/ProductWooCommercePublish";
 import AmazonOfferLayer from "@/components/products/AmazonOfferLayerDynamic";
 import { DizitoBadge, DizitoCard, DizitoPage, DizitoPageHeader, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
 import { authOptions } from "@/lib/auth";
@@ -36,6 +37,7 @@ export default async function ProductPage({ params }: Params) {
       </DizitoCard>
       <div className="mt-5 space-y-5">
         <ProductShopifyPublish productId={String(product.id)} hasVariants={product.variants.length > 0} />
+        <ProductWooCommercePublish product={product} />
         <ProductWooCommerceCatalog productId={String(product.id)} />
         <ProductAmazonListing productId={String(product.id)} />
         <AmazonOfferLayer productId={String(product.id)} />
