@@ -1053,3 +1053,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - UI commit: `04c8c4a70b87e0103a51204ce299f48723d54ba7`.
 - Verification boundary: source changes were committed, but build, lint, browser interaction, deployed UI, real provider connection, and product create/readback tests have not been run/confirmed. No WooCommerce credentials were supplied and no store/product was mutated.
 
+## 2026-10-09 — WooCommerce REST API 404 diagnostics
+
+- Updated `lib/platforms/woocommerce/client.ts` to include the failing REST endpoint and bounded WooCommerce/hosting error code and message in non-2xx errors.
+- Error diagnostics do not include request headers or consumer credentials. This should distinguish an unknown REST route from a WooCommerce permission/error response or a hosting-generated 404 page.
+- Commits: `4f6331b790adf0516449270d92e3ec363e2ac771` (diagnostics), `25986f3ade7020d72a862ec53b4eb37e6080ade5` (message normalization correction).
+- Verification boundary: source re-fetched from `main`; no build/lint run or live store request performed. No credentials were accessed and no store data was changed.
+
