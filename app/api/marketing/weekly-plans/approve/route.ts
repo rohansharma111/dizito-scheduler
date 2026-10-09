@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { persistApprovedWeek } from "@/lib/marketing/approveWeek";
+import { validateExternalProductReferences } from "@/lib/marketing/externalProductReferences";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -74,24 +75,8 @@ export async function POST(request: Request) {
         return Response.json({ error: "Invalid supporting experiment references" }, { status: 400 });
       }
       if (item.externalProductReferences != null) {
-        if (!Array.isArray(item.externalProductReferences) || item.externalProductReferences.length > 20) {
-          return Response.json({ error: "Invalid external product references" }, { status: 400 });
-        }
-        for (const product of item.externalProductReferences) {
-          if (!product || typeof product !== "object" || !Number.isInteger(product.id) || product.id <= 0 || typeof product.name !== "string" || product.name.trim().length === 0 || product.name.length > 200) {
-            return Response.json({ error: "Invalid external product reference" }, { status: 400 });
-          }
-          if (["sku", "price", "stockStatus", "permalink"].some((key) => product[key] != null && (typeof product[key] !== "string" || product[key].length > (key === "permalink" ? 2048 : 200)))) {
-            return Response.json({ error: "External product fields exceed allowed limits" }, { status: 400 });
-          }
-          if (product.permalink != null) {
-            try {
-              if (new URL(product.permalink).protocol !== "https:") throw new Error("Invalid URL");
-            } catch {
-              return Response.json({ error: "Invalid external product URL" }, { status: 400 });
-            }
-          }
-        }
+        const validationError = validateExternalProductReferences(item.externalProductReferences);
+        if (validationError) return Response.json({ error: validationError }, { status: 400 });
       }
     }
   }
