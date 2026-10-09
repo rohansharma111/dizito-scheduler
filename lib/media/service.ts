@@ -3,6 +3,7 @@ import { mediaCloudinary } from "./cloudinary";
 import { CreateMediaInput, CompleteDirectUploadInput, UploadMediaInput } from "./types";
 import { getUploadPolicy } from "./upload-policy";
 import { matchesDeclaredMediaType } from "../security/media-signature";
+import { matchesDeclaredMediaType } from "../security/media-signature";
 
 export class MediaService {
   async uploadMedia(input: UploadMediaInput) {
@@ -90,7 +91,7 @@ export class MediaService {
       fileName: input.fileName,
       secureUrl: resource.secure_url,
       format: format,
-      mimeType: input.mimeType,
+      mimeType: normalizedMimeType,
       width: resource.width ?? null,
       height: resource.height ?? null,
       bytes: resource.bytes ?? 0,
