@@ -1,3 +1,10 @@
+## 2026-10-09 — Narrow-screen Drafts actions (committed directly to main)
+
+- Updated the mobile draft-card action row in `components/DraftPosts.tsx`: reduced narrow-screen padding/gaps, prevented button labels from breaking into one letter per line, retained readable labels from 360px upward, and added explicit accessible action names and keyboard-focus styles.
+- Commit: `637b2769fae283cc28d1854a31ae995401dbb99e`.
+- This is presentation/accessibility-only; draft view/edit/delete/duplicate/schedule handlers are unchanged. Lint, typecheck, tests, build, and device/browser visual checks have not been run.
+- Additional supplied mobile screenshots show product/variant tables collapsing into vertically stacked characters. Their source components still need to be identified from the repository's actual route/component tree before changing layout; do not guess at those paths or apply broad global table rules.
+
 ## 2026-10-09 — Publish Details modal visual polish (committed directly to main)
 
 - Restyled `components/PublishDetailsModal.tsx` with a softer overlay, rounded elevated panel, clearer heading/summary, refined platform cards, readable error/reconnect callouts, consistent action buttons, and responsive spacing. Added scoped animation/layout rules in `components/PublishDetailsModal.module.css`, respecting reduced-motion preferences.
