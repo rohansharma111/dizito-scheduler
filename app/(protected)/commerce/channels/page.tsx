@@ -33,6 +33,13 @@ interface AmazonVerificationResult {
 
 export default function CommerceChannelsPage() {
   const [shop, setShop] = useState("");
+  const [wooName, setWooName] = useState("WooCommerce Staging");
+  const [wooStoreUrl, setWooStoreUrl] = useState("");
+  const [wooConsumerKey, setWooConsumerKey] = useState("");
+  const [wooConsumerSecret, setWooConsumerSecret] = useState("");
+  const [wooTestStoreConfirmed, setWooTestStoreConfirmed] = useState(false);
+  const [connectingWoo, setConnectingWoo] = useState(false);
+  const [wooMessage, setWooMessage] = useState<string | null>(null);
   const [channels, setChannels] = useState<CommerceChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -64,6 +71,36 @@ export default function CommerceChannelsPage() {
     if (!normalized) return;
 
     window.location.href = `/api/commerce/shopify/connect?shop=${encodeURIComponent(normalized)}`;
+  }
+
+  async function connectWooCommerce(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setWooMessage(null);
+    if (!wooTestStoreConfirmed) {
+      setError("Confirm that this is a staging/test WooCommerce store before connecting.");
+      return;
+    }
+    setConnectingWoo(true);
+    try {
+      const response = await fetch("/api/commerce/woocommerce/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: wooName.trim(), storeUrl: wooStoreUrl.trim(), consumerKey: wooConsumerKey.trim(), consumerSecret: wooConsumerSecret.trim() }),
+      });
+      const data = await response.json() as { success?: boolean; error?: string; channel?: CommerceChannel };
+      if (!response.ok || !data.success || !data.channel) throw new Error(data.error ?? "Unable to connect WooCommerce store");
+      setWooMessage("WooCommerce staging connection verified: " + data.channel.name);
+      setWooStoreUrl("");
+      setWooConsumerKey("");
+      setWooConsumerSecret("");
+      setWooTestStoreConfirmed(false);
+      await loadChannels();
+    } catch (connectError) {
+      setError(connectError instanceof Error ? connectError.message : "Unable to connect WooCommerce store");
+    } finally {
+      setConnectingWoo(false);
+    }
   }
 
   function connectAmazon() {
@@ -156,6 +193,31 @@ export default function CommerceChannelsPage() {
       </DizitoCard>
 
       <DizitoCard className="mb-5">
+        <h2 className="text-xl font-semibold">Connect WooCommerce staging store</h2>
+        <p className="mt-1 text-sm text-gray-600">Connect a dedicated staging/test store to verify product creation and reconciliation. Use a WooCommerce REST API key with product read/write permissions.</p>
+        <form onSubmit={connectWooCommerce} className="mt-4 grid gap-3">
+          <label className="grid gap-1 text-sm font-medium text-slate-700">Connection name
+            <input value={wooName} onChange={(event) => setWooName(event.target.value)} required maxLength={100} className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+          </label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">Staging store URL
+            <input value={wooStoreUrl} onChange={(event) => setWooStoreUrl(event.target.value)} type="url" required placeholder="https://staging.example.com" autoComplete="url" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+          </label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">WooCommerce consumer key
+            <input value={wooConsumerKey} onChange={(event) => setWooConsumerKey(event.target.value)} required autoComplete="off" spellCheck={false} className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+          </label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">WooCommerce consumer secret
+            <input value={wooConsumerSecret} onChange={(event) => setWooConsumerSecret(event.target.value)} type="password" required autoComplete="new-password" spellCheck={false} className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+          </label>
+          <label className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <input type="checkbox" checked={wooTestStoreConfirmed} onChange={(event) => setWooTestStoreConfirmed(event.target.checked)} className="mt-1" />
+            <span>I confirm this is a staging/test store, not production, and it is safe to use for test product creation.</span>
+          </label>
+          <div><button type="submit" disabled={connectingWoo || !wooTestStoreConfirmed} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">{connectingWoo ? "Verifying connection..." : "Connect staging store"}</button></div>
+        </form>
+        {wooMessage && <div role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{wooMessage}</div>}
+      </DizitoCard>
+
+      <DizitoCard className="mb-5">
         <h2 className="text-xl font-semibold">Connect Amazon India</h2>
         <p className="text-sm text-gray-600 mt-1">
           Authorize Dizito to access your Amazon Seller Central account through SP-API.
@@ -183,7 +245,7 @@ export default function CommerceChannelsPage() {
         {loading && <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 text-sm text-slate-500" role="status">Loading commerce channels…</div>}
 
         {!loading && channels.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">No commerce channels connected yet. Connect Shopify or Amazon above to get started.</div>
+          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">No commerce channels connected yet. Connect WooCommerce, Shopify, or Amazon above to get started.</div>
         )}
 
         {!loading && channels.map((channel) => {
