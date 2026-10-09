@@ -1077,3 +1077,12 @@ Important rollout boundary:
 - Added shared CSS responsive guardrails for narrow widths, long content and controls.
 - Verification boundary: GitHub Actions is running for the latest direct-to-main commits. Earlier runs identified JSX wrapper mistakes during iterative edits; follow-up fixes were pushed. Do not treat this checkpoint as complete until the latest `Validate` and `Quality Checks` runs pass, and do not claim visual/browser validation at 320/360/390/430px without executing it.
 - Scope still outstanding: route-by-route visual/browser QA across all remaining application pages and modal/component surfaces, plus any issues exposed by the current CI run.
+
+
+## 2026-10-09 — Direct media API validation continuation
+
+- Hardened `/api/upload/signature` with positive safe-integer session identity validation and runtime validation of the signed-upload request's MIME type and positive safe-integer file size before generating a Cloudinary signature.
+- Hardened `/api/media/complete` with safe session identity validation, malformed/non-object JSON handling, bounded public ID/file-name/MIME fields, normalized MIME input, and a stable user-facing failure response rather than forwarding provider/database exception messages.
+- Preserved per-user rate limits, Cloudinary resource lookup, user-folder ownership checks, supported format checks, upload policy limits, and MediaService's final resource verification.
+- Commits: `69fb6861b8c65520ab52b763eada8a77da2e10fb` (signature request validation), `bc2d1f61021e3062cf5e257d4164c3d46f7ec333` (completion request validation).
+- Verification boundary: source reviewed after commit; fresh GitHub Actions for both commits is pending. No production migration, provider mutation, deployment, or browser/runtime verification was performed.
