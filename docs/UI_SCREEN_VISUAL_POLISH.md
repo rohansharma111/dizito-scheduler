@@ -1,8 +1,15 @@
 # UI Screen Visual Polish — Create Post + Content Calendar
 
 **Date:** 2026-10-09  
-**Branch:** `v1/calendar-create-post-visual-polish`  
+**Branch:** `main` (follow-up committed directly to main)  
 **Scope:** presentation-only changes based on the supplied screenshots.
+
+## Follow-up: Draft Posts + Scheduled / Published Posts (2026-10-09)
+
+- Added shared scoped styling in `components/PostLists.module.css` and applied it to `components/DraftPosts.tsx` and `components/ScheduledPosts.tsx`.
+- Improved empty-state surfaces, section headings, table headers/rows/borders, action focus states, and lime primary empty-state links.
+- Direct-main commits: `ff9c0df30db95b57b63592698092c09c3bb9f0c0`, `94d047aca6815da6c121e20c4bf939dba1121b55`, `5dbd380ae6538a5d2db36501ebe0b6f0308b5856`.
+- Automated checks and browser visual verification for this follow-up are pending.
 
 ## Screens covered
 
