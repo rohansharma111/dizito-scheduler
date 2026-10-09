@@ -3,16 +3,16 @@
 **Project:** Dizito — AI Commerce Operating System  
 **Repository:** `rohansharma111/dizito-scheduler`  
 **Current default branch:** `main`  
-**Latest verified code checkpoint:** `12cac848dea464674f3fb302c0d85170ff1fdf58`  
+**Latest verified code checkpoint:** `d081d74f841bbd725cfabc7559bb6f55f19f031f`  
 **Last refreshed:** 2026-10-09
 
 This document is persistent repository context for Codex and future development sessions. It is a current-state guide, not a substitute for inspecting the actual repository.
 
 ## 0. Current validation checkpoint — 2026-10-09
 
-- Latest verified code checkpoint: `12cac848dea464674f3fb302c0d85170ff1fdf58` (`fix: pass bounded upload body as ArrayBuffer`).
-- GitHub Actions **Validate** and **Quality Checks** both passed for this commit: [Validate run 37904240619](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240619) and [Quality Checks run 37904240616](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240616).
-- Streamed server-proxy upload bodies are byte-capped before multipart parsing, including requests without `Content-Length`; platform ingress limits remain additional defense. No production deployment, production DB change, or browser QA is implied by CI success.
+- Latest verified code checkpoint: `d081d74f841bbd725cfabc7559bb6f55f19f031f` (`docs: clarify streamed upload size enforcement`), following streamed-upload route regression coverage in `9f6c159`.
+- GitHub Actions **Validate** and **Quality Checks** passed for the route-test commit: [Validate run 37904899166](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904899166) and [Quality Checks run 37904899183](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904899183). Both workflows also passed on the follow-up comment cleanup: [Validate run 37904920123](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904920123) and [Quality Checks run 37904920004](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904920004).
+- Streamed server-proxy upload bodies are byte-capped before multipart parsing, including requests without `Content-Length`; a route test covers 413 rejection for oversized chunked bodies. Platform ingress limits remain additional defense. No production deployment, production DB change, or browser QA is implied by CI success.
 - `merge/meesho-into-main` is fully behind current `main` (635 commits behind, 0 ahead).
 - Shopify publish recovery now uses listing sync claims consistently; do not bypass `claimProductListingSync` / `updateProductListingSyncState` ownership checks.
 
