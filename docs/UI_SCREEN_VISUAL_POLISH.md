@@ -40,6 +40,14 @@
 - Direct-main commits include `8cbeda7`, `d88c2f2`, `a570ce7`, `b4f93b1`, `21f8294`, `48cfb40`, `4c9272f`, `d849a78`, and `4745503`.
 - Automated checks and browser QA are pending.
 
+## Follow-up: public homepage, pricing and footer (2026-10-09)
+
+- Reworked the marketing homepage with a responsive hero, clear CTAs, channel chips, feature cards, workflow steps, product walkthrough and final CTA, using Dizito's violet/lime/soft-neutral design language.
+- Refined the public header and footer for alignment, responsive layout, and accessible focus states.
+- Rebalanced pricing cards with a fixed Recommended-badge row, aligned headings/prices, clearer feature states, and consistent CTA styling. Billing logic and prices remain data-driven.
+- Removed the duplicate root page route (`app/page.tsx`) so `app/(marketing)/page.tsx` is the single canonical route for `/`.
+- Branch `v1/public-pages-visual-polish`; Validate and Quality Checks passed on code commit `871200b9f894db6a1066165dedd12577266a69e4` (tests, lint, TypeScript, build). Browser visual verification remains pending.
+
 ## Screens covered
 
 - Create Post form in `components/CreatePostForm.tsx`

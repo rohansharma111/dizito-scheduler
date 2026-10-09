@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, Minus, Sparkles } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
@@ -48,7 +49,7 @@ export default async function PricingPage() {
         )
       : fallbackPlans;
   } catch (error) {
-    // Keep the public pricing page available before migration 021 is applied.
+    // Keep public pricing available before the canonical billing schema is present.
     // Do not hide unrelated database failures.
     if (!isMissingBillingRelation(error)) throw error;
     planRows = fallbackPlans;
@@ -59,70 +60,107 @@ export default async function PricingPage() {
     : null;
 
   return (
-    <main className="min-h-screen bg-gray-50 px-6 py-16">
-      <section className="mx-auto max-w-6xl text-center">
-        <div className="inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
-          V1 pricing hypothesis — subject to beta validation
+    <main className="relative isolate min-h-[70vh] overflow-hidden bg-[#f8f9f6] px-5 py-14 text-[#171923] sm:px-8 sm:py-20">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -right-40 -top-44 size-[32rem] rounded-full bg-[#c7f36b]/20 blur-3xl" />
+        <div className="absolute -left-40 top-44 size-[28rem] rounded-full bg-[#6d5dfc]/10 blur-3xl" />
+      </div>
+
+      <section className="mx-auto max-w-4xl text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white/85 px-4 py-2 text-xs font-extrabold text-violet-700 shadow-sm sm:text-sm">
+          <Sparkles size={15} />
+          V1 pricing hypothesis · subject to beta validation
         </div>
-        <h1 className="mt-6 text-5xl font-bold tracking-tight">Plans built around the Dizito operating loop.</h1>
-        <p className="mx-auto mt-5 max-w-3xl text-lg text-gray-600">
+        <h1 className="mt-6 text-4xl font-extrabold leading-tight tracking-[-0.05em] sm:text-5xl lg:text-6xl">
+          Plans built around the <span className="text-violet-700">Dizito operating loop.</span>
+        </h1>
+        <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
           Business Brain, strategy, creation, weekly planning, optimization and commerce capabilities scale with your plan.
         </p>
       </section>
 
-      <section className="mx-auto mt-14 grid max-w-6xl gap-6 lg:grid-cols-3">
+      <section aria-label="Pricing plans" className="mx-auto mt-10 grid max-w-6xl items-stretch gap-5 md:mt-14 md:grid-cols-3 md:gap-6">
         {planRows.map((plan: any) => {
           const isCurrent = currentPlan === plan.code || (currentPlan === "creator" && ["growth", "pro"].includes(plan.code));
           const paid = plan.code !== "free";
           const price = Math.round(Number(plan.price_minor) / 100);
+          const recommended = plan.code === "growth";
 
           return (
-            <article key={plan.code} className={`rounded-2xl border bg-white p-7 shadow-sm ${plan.code === "growth" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}>
-              {plan.code === "growth" && (
-                <div className="mb-5 inline-flex rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">Recommended</div>
-              )}
-              <h2 className="text-2xl font-bold">{plan.name}</h2>
-              <p className="mt-2 min-h-12 text-gray-500">{plan.description}</p>
-              <div className="mt-7 flex items-end gap-2">
-                <span className="text-5xl font-bold">₹{price}</span>
-                <span className="pb-2 text-gray-500">{price === 0 ? "forever" : "/month"}</span>
-              </div>
-              {plan.trial_days > 0 && <p className="mt-2 text-sm font-medium text-green-700">{plan.trial_days}-day trial hypothesis</p>}
-
-              <div className="mt-8 space-y-3 text-sm">
-                <div>✓ {plan.social} social channels</div>
-                <div>✓ {plan.publishing} publishing actions / month</div>
-                <div>✓ {plan.ai} AI actions / month</div>
-                <div>✓ Business Brain</div>
-                <div>{plan.code === "free" ? "—" : "✓"} Strategy + Generate My Week</div>
-                <div>{plan.code === "pro" ? "✓" : "—"} Optimizer</div>
-                <div>{plan.code === "free" ? "—" : "✓"} Commerce</div>
+            <article key={plan.code} className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-[0_12px_34px_rgba(17,24,39,0.055)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_46px_rgba(17,24,39,0.10)] sm:p-7 ${recommended ? "border-violet-300 ring-2 ring-violet-100" : "border-slate-200"}`}>
+              <div className="mb-4 flex h-7 items-center">
+                {recommended ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-700 px-3 py-1 text-[11px] font-extrabold text-white">
+                    <Sparkles size={12} /> Recommended
+                  </span>
+                ) : (
+                  <span aria-hidden="true" className="invisible rounded-full px-3 py-1 text-[11px]">Recommended</span>
+                )}
               </div>
 
-              {isCurrent ? (
-                <div className="mt-9 rounded-lg bg-gray-100 px-6 py-3 text-center font-medium">Current plan</div>
-              ) : (
-                <PricingButton
-                  plan={plan.code as "free" | "growth" | "pro"}
-                  href={session ? "/dashboard" : "/login"}
-                  label={!session ? "Start Free" : paid ? `Choose ${plan.name}` : "Start Free"}
-                  popular={plan.code === "growth"}
-                />
-              )}
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-tight">{plan.name}</h2>
+                <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{plan.description}</p>
+              </div>
+
+              <div className="mt-6 flex min-h-[68px] items-end gap-2">
+                <span className="text-4xl font-extrabold tracking-[-0.05em] sm:text-5xl">₹{price.toLocaleString("en-IN")}</span>
+                <span className="pb-2 text-sm text-slate-500">{price === 0 ? "forever" : "/ month"}</span>
+              </div>
+              <div className="mt-2 min-h-6">
+                {plan.trial_days > 0 ? (
+                  <p className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">{plan.trial_days}-day trial hypothesis</p>
+                ) : (
+                  <p className="text-xs font-medium text-slate-400">No subscription required</p>
+                )}
+              </div>
+
+              <div className="my-6 border-t border-slate-100" />
+              <ul className="flex-1 space-y-4 text-sm">
+                {[
+                  { label: `${plan.social} social channels`, included: true },
+                  { label: `${plan.publishing.toLocaleString("en-IN")} publishing actions / month`, included: true },
+                  { label: `${plan.ai.toLocaleString("en-IN")} AI actions / month`, included: true },
+                  { label: "Business Brain", included: true },
+                  { label: "Strategy + Generate My Week", included: plan.code !== "free" },
+                  { label: "Optimizer", included: plan.code === "pro" },
+                  { label: "Commerce", included: plan.code !== "free" },
+                ].map((feature) => (
+                  <li key={feature.label} className={`flex items-start gap-3 leading-5 ${feature.included ? "text-slate-700" : "text-slate-400"}`}>
+                    <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${feature.included ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                      {feature.included ? <Check size={12} strokeWidth={3} /> : <Minus size={12} />}
+                    </span>
+                    <span>{feature.label}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-8">
+                {isCurrent ? (
+                  <div className="flex min-h-12 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 px-5 text-sm font-extrabold text-violet-800">Your current plan</div>
+                ) : (
+                  <PricingButton
+                    plan={plan.code as "free" | "growth" | "pro"}
+                    href={session ? "/dashboard" : "/login"}
+                    label={!session ? "Get started" : paid ? `Choose ${plan.name}` : "Start free"}
+                    popular={recommended}
+                  />
+                )}
+              </div>
             </article>
           );
         })}
       </section>
 
-      <section className="mx-auto mt-10 max-w-6xl rounded-2xl border bg-white p-7 text-sm text-gray-600">
-        Agency (₹4,999+ hypothesis) and Founding Beta (₹499 hypothesis) remain controlled catalog entries rather than public checkout plans.
-      </section>
-
-      <div className="mx-auto mt-8 max-w-6xl text-center">
-        <Link href={session ? "/settings/billing" : "/login"} className="text-sm font-medium text-blue-700">
-          {session ? "Manage your subscription →" : "Sign in to manage billing →"}
+      <section className="mx-auto mt-8 flex max-w-6xl flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <p className="font-bold text-slate-900">Looking for a different fit?</p>
+          <p className="mt-1 text-sm leading-6 text-slate-500">Agency (₹4,999+ hypothesis) and Founding Beta (₹499 hypothesis) remain controlled catalog entries, not public checkout plans.</p>
+        </div>
+        <Link href={session ? "/settings/billing" : "/login"} className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-violet-200 hover:bg-violet-50">
+          {session ? "Manage billing" : "Sign in to manage billing"}
         </Link>
-      </div>
+      </section>
     </main>
   );
 }
