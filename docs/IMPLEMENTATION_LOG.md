@@ -1043,3 +1043,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - No provider product was created or modified. This only exposes the existing connection flow so the operator can connect the intended staging store.
 - Commit: `77591000e0c6cc1f4f7f198563c01b5c50f7f56f`.
 - Verification boundary: commit diff reviewed; automated CI/build and browser verification have not yet been confirmed. Live WooCommerce connection and controlled product create/read-back/retry tests remain pending until the staging store is connected.
+
+## 2026-10-09 — WooCommerce guided staging connection
+
+- Updated `app/(protected)/commerce/channels/page.tsx` on `main` to make WooCommerce setup a guided, first-class channel flow.
+- Added a safe HTTPS-only action that opens the entered store's WooCommerce REST API key settings page in a new tab. URL credentials are rejected and the URL is constructed with the expected WordPress admin path and query parameters.
+- Added clear steps for creating a REST API key with Read/Write permissions, entering the key/secret, and confirming the store is staging/test before submitting.
+- Existing authenticated `POST /api/commerce/woocommerce/connect` remains responsible for verifying the supplied credentials and persisting the connection; this does not implement OAuth, because WooCommerce REST API keys are generated in the store admin.
+- UI commit: `04c8c4a70b87e0103a51204ce299f48723d54ba7`.
+- Verification boundary: source changes were committed, but build, lint, browser interaction, deployed UI, real provider connection, and product create/readback tests have not been run/confirmed. No WooCommerce credentials were supplied and no store/product was mutated.
+
