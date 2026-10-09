@@ -1,3 +1,10 @@
+## 2026-10-09 — Media service upload-policy defense in depth
+
+- Direct Cloudinary upload completion now re-applies the shared upload policy inside `MediaService`, not only in the HTTP route. This protects the persistence boundary against oversized, fractional, non-safe-integer, or MIME/resource-type-inconsistent provider byte counts.
+- MIME declarations are trimmed and lowercased before service-level validation; allowed formats, per-user Cloudinary public-ID ownership checks, and repository user scoping remain enforced.
+- Added service regression tests for uploads over the 1 GB video limit and fractional byte counts. CI must complete on the resulting commits before this checkpoint is considered validated.
+- No browser QA, deployment, production database change, or provider mutation was performed.
+
 ## 2026-10-09 — Workstream E repository validation green on lint-remediation head
 
 - PR #57 is open and unmerged on `feature/lint-remediation-2026-10-09`, latest head `9c37cb5064753425ad2acc3ca30b130ddd307580`.
