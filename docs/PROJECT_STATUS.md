@@ -1,3 +1,11 @@
+## 2026-10-09 — Marketing content/attribution migrations applied to production
+
+- Follow-up runtime errors showed additional marketing schema migrations were absent: `marketing_customer_actions`, `marketing_asset_metadata`, `marketing_content_items`, and related strategy/content/attribution tables.
+- Applied repository marketing migrations 006–016 (marketing files only; excluding the unrelated `016_commerce_tenant_integrity.sql`) plus `020_marketing_content_item_variant_posts_v1.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek`.
+- Used temporary branch `br-misty-king-ay3jl62h` for preflight; verified core tables on the temporary branch, then applied the migration bundle to production. Verified production relations and all 12 corresponding `schema_migrations` ledger entries at `2026-10-09T13:40:50.555Z`.
+- No content, customer-action, attribution, campaign, or business records were seeded. The bundle includes the repository planning-metadata column/comment; the comment text was adjusted from a semicolon to a comma solely to accommodate the migration runner's statement splitting, with no schema/behavior change.
+- API/browser smoke testing is still pending. Retry Strategist, Generate Week, Optimizer, and Content Items and capture any new errors.
+
 ## 2026-10-09 — Production Marketing Foundation migration applied
 
 - Applied `db/migrations/005_marketing_foundation_v1.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek` (`production`).
