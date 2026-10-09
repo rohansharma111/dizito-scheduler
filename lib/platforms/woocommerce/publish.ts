@@ -156,12 +156,17 @@ export async function publishWooCommerceProduct(userId: number, input: PublishWo
   try {
     const { config } = await getWooCommerceChannelConfig(input.channelId, userId);
     const result = await createWooCommerceProduct(config, { ...input.payload, status: "publish" });
+    // A successful HTTP response means the provider may have created the product,
+    // even if its response body is malformed or omits the product ID. Treat all
+    // subsequent failures as ambiguous so a retry cannot create a duplicate.
+    providerMutationSucceeded = true;
     const externalId = result && typeof result === "object" && "id" in result
+      && (typeof (result as { id: unknown }).id === "number" || typeof (result as { id: unknown }).id === "string")
+      && String((result as { id: number | string }).id).trim() !== ""
       ? String((result as { id: number | string }).id)
       : null;
 
     if (!externalId) throw new Error("WooCommerce publish response did not include a product id");
-    providerMutationSucceeded = true;
 
     await pool.query(
       `UPDATE product_listings
