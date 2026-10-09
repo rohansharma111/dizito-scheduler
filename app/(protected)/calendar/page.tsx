@@ -17,7 +17,8 @@ export default function CalendarPage() {
       const response = await fetch("/api/posts");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to load calendar");
-      setPosts(data || []);
+      if (!Array.isArray(data)) throw new Error("Unexpected calendar response");
+      setPosts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load calendar");
     } finally {
@@ -47,7 +48,7 @@ export default function CalendarPage() {
       )}
       <DizitoCard>
         {loading ? (
-          <DizitoState kind="empty" title="Loading calendar" description="Fetching your publishing activity." />
+          <div role="status" aria-label="Loading calendar" className="animate-pulse space-y-4 py-2"><div className="h-5 w-40 rounded-lg bg-slate-100"/><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{[0,1,2].map((item)=><div key={item} className="h-28 rounded-2xl border border-slate-100 bg-slate-50"/>)}</div><div className="h-56 rounded-2xl bg-slate-50"/></div>
         ) : posts.length === 0 ? (
           <DizitoState
             kind="empty"
