@@ -23,18 +23,21 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   async function loadNotifications() {
     try {
       setLoading(true);
+      setError(null);
 
       const response = await fetch("/api/notifications");
-
       const data = await response.json();
-
+      if (!response.ok) throw new Error(data.error || "Failed to load notifications");
+      if (!Array.isArray(data)) throw new Error("Unexpected notifications response");
       setNotifications(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Failed to load notifications");
     } finally {
       setLoading(false);
     }
@@ -48,7 +51,7 @@ export default function NotificationsPage() {
 
   async function markRead(id: number) {
     try {
-      await fetch("/api/notifications/read", {
+      const response = await fetch("/api/notifications/read", {
         method: "POST",
 
         headers: {
@@ -59,6 +62,7 @@ export default function NotificationsPage() {
           id,
         }),
       });
+      if (!response.ok) throw new Error("Could not mark notification as read");
 
       setNotifications((prev) =>
         prev.map((n) =>
@@ -89,6 +93,7 @@ export default function NotificationsPage() {
           markAll: true,
         }),
       });
+      if (!response.ok) throw new Error("Could not mark notifications as read");
 
       setNotifications((prev) =>
         prev.map((n) => ({
@@ -115,6 +120,8 @@ export default function NotificationsPage() {
       {/* Header */}
       <DizitoPageHeader eyebrow="Workspace" title="Notifications" description={`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`} />
 
+      {error && <div role="alert" className="mb-4 flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 sm:flex-row sm:items-center sm:justify-between"><span>{error}</span><button type="button" onClick={loadNotifications} className="dizito-button dizito-button-secondary self-start sm:self-auto">Retry</button></div>}
+
       <div className="mb-5 flex justify-start">
 
         {unreadCount > 0 && (
@@ -129,7 +136,7 @@ export default function NotificationsPage() {
 
       {/* Loading */}
       {loading && (
-        <div className="text-center py-20">Loading notifications...</div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-16 text-center text-sm text-slate-500" role="status">Loading notifications...</div>
       )}
 
       {/* Empty */}
@@ -176,7 +183,7 @@ export default function NotificationsPage() {
                 }
               }}
             >
-              <div className="flex gap-4">
+              <div className="flex min-w-0 gap-3 sm:gap-4">
                 {/* Icon */}
                 <div
                   className={`
@@ -189,7 +196,7 @@ export default function NotificationsPage() {
 
                 {/* Content */}
                 <div className="flex-1">
-                  <div className="flex justify-between">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
                     <h2 className="font-semibold text-sm sm:text-lg">
                       {notification.title}
                     </h2>
