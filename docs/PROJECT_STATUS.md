@@ -1289,3 +1289,9 @@ Important rollout boundary:
 - Marketing Content now displays linked WooCommerce product name, external ID, optional SKU, price snapshot, stock-status snapshot, and a product link. The UI labels these as planning-time snapshots and reminds users to verify current price and availability before publishing.
 - Approval API validates external references and enforces field/array limits plus HTTPS-only permalinks. No WooCommerce write calls, publishing, or production data mutations were introduced.
 - CI for implementation commits 23868b5, 3775698, and 6570cf9: both Validate and Quality Checks passed on the latest approval-flow commit. This UI follow-up is awaiting CI; browser/runtime validation remains pending.
+
+
+## 2026-10-09 — Close the weekly approval-to-review loop
+
+- After a weekly plan is approved, Generate My Week now exposes a direct “Review content items” action to open Marketing Content. Approval still does not publish posts.
+- Both Validate and Quality Checks passed for the previous WooCommerce planning-context UI/doc commits. This navigation follow-up is awaiting CI; browser/runtime testing has not been performed.
