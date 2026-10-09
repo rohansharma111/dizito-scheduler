@@ -7,10 +7,16 @@ type ConnectedAccount={id:number;platform:string;account_name:string;status:stri
 type SettingsResponse={account:{id:number;name:string;email:string};subscription:{plan:string;status:string;subscriptionId:string|null;currentPeriodStart:string|null;currentPeriodEnd:string|null;trialEnd:string|null;cancelAtPeriodEnd:boolean};connectedAccounts:ConnectedAccount[];preferences:{emailNotifications:boolean;publishSuccess:boolean;publishFailure:boolean}};
 
 export default function SettingsPage(){
- const [settings,setSettings]=useState<SettingsResponse|null>(null),[loading,setLoading]=useState(true);
- useEffect(()=>{(async()=>{try{const r=await fetch("/api/settings");const d=await r.json();if(r.ok)setSettings(d);}catch(error){console.error(error);}finally{setLoading(false);}})();},[]);
- if(loading)return <DizitoPage><DizitoState kind="empty" title="Loading settings" description="Preparing your account configuration." /></DizitoPage>;
- if(!settings)return <DizitoPage><DizitoState kind="error" title="Settings could not be loaded" description="We could not retrieve your account settings. Refresh and try again."/></DizitoPage>;
+ const [settings,setSettings]=useState<SettingsResponse|null>(null),[loading,setLoading]=useState(true),[loadError,setLoadError]=useState<string|null>(null);
+ async function loadSettings(){
+  setLoading(true);setLoadError(null);
+  try{const r=await fetch("/api/settings");const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to load settings");setSettings(d);}
+  catch(error){setLoadError(error instanceof Error?error.message:"Unable to load settings");setSettings(null);}
+  finally{setLoading(false);}
+ }
+ useEffect(()=>{void loadSettings();},[]);
+ if(loading)return <DizitoPage><DizitoPageHeader eyebrow="Account" title="Settings" description="Preparing your account configuration."/><DizitoCard><div role="status" className="animate-pulse text-sm text-slate-500">Loading settings…</div></DizitoCard></DizitoPage>;
+ if(!settings)return <DizitoPage><DizitoPageHeader eyebrow="Account" title="Settings" description="Manage your account and connected distribution identities."/><DizitoState kind="error" title="Settings could not be loaded" description={loadError||"We could not retrieve your account settings. Refresh and try again."} action={<DizitoButton variant="secondary" onClick={()=>void loadSettings()}>Try again</DizitoButton>}/></DizitoPage>;
  const s=settings.subscription,plan=s.plan;
  const upgradeLabel=plan==="free"?"Upgrade":plan==="creator"?"Upgrade to Agency":"Current Plan";
  const statusTone=s.status==="active"?"success":s.status==="trialing"?"ai":s.status==="past_due"||s.status==="cancelled"?"warning":"neutral";
