@@ -5,6 +5,7 @@ import { generateMarketingOptimization } from "@/lib/marketing/optimizer";
 export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (process.env.DIZITO_AI_ENABLED !== "true") return Response.json({ error: "AI-powered optimization is coming soon. Review your measured results and use manual planning in the meantime.", code: "AI_COMING_SOON" }, { status: 503 });
   const userId = Number((session.user as any).id);
   if (!Number.isInteger(userId) || userId <= 0) return Response.json({ error: "Invalid user" }, { status: 401 });
   try { return Response.json({ optimization: await generateMarketingOptimization(userId) }); }
