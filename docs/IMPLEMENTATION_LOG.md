@@ -1,3 +1,10 @@
+## 2026-10-09 — Publish Details modal visual polish (main)
+
+- Refined the publish-details modal overlay, panel, account/platform cards, status/error information, and retry/reconnect actions with scoped CSS and responsive styling.
+- Existing publish status/count calculations, retry and reconnect request handlers, API routes, and close behavior remain unchanged.
+- Direct-main commits: `a5e0bffb38184f1dbf81c96810519bc99968850b`, `f57b1a2ae4a06b27d2cd85f96c379a9762146e8e`.
+- Verification pending: no local lint/typecheck/test/build or browser QA performed for this visual update; CI result for the latest commit is unconfirmed.
+
 ## 2026-10-09 — Draft and scheduled post list visual polish (main)
 
 - Polished draft empty state and draft table, plus scheduled/published empty state and list table, using a shared CSS module.
