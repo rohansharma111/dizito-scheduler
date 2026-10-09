@@ -1,3 +1,9 @@
+## 2026-10-09 — Dashboard sidebar visual polish merged; QA handoff
+
+- PR #60 squash-merged to main as e4b318575fd50c9ff27c7bcfe8e961c339d69de0. Presentation-only updates to UsageCard, RecentActivityCard, and dashboard sidebar layout; existing API calls, displayed data, routes, and collapse behavior remain.
+- Source/diff review was completed, but lint, TypeScript, Vitest, production build, and browser viewport checks were not run in this environment. GitHub combined status and PR-triggered workflow lookup returned no results for this exact merge SHA; report CI as unknown.
+- Added docs/PRE_SCREEN_QA_READINESS.md and updated PROJECT_STATUS.md to establish preflight gates and the screen-by-screen merchant journey. Runtime QA, visual acceptance, and Cloudinary test-cloud verification remain outstanding.
+
 ## 2026-10-09 — Media completion concurrency hardening (merged; production migration applied)
 
 - Merged PR #59 as `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`. The repository now handles concurrent duplicate completion inserts with `ON CONFLICT (user_id, cloudinary_public_id) DO NOTHING`, then reads the winning media row; it fails closed if the winner cannot be loaded. Added repository tests for normal insert, conflict replay, and missing winner. Existing signed-upload route and media-service tests remain in place.
