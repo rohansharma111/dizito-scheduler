@@ -126,6 +126,22 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="px-5 pb-16 sm:px-8 sm:pb-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8 text-center">
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">A quick walkthrough</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">See Dizito in action.</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Watch how to schedule and publish posts across platforms in under two minutes.</p>
+          </div>
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-2 shadow-[0_24px_70px_rgba(17,24,39,0.09)] sm:p-3">
+            <video controls preload="metadata" poster="/uploads/logo.png" className="aspect-video w-full rounded-2xl bg-slate-950 object-contain">
+              <source src="/uploads/demo.mp4" type="video/mp4" />
+              Your browser does not support the video element.
+            </video>
+          </div>
+        </div>
+      </section>
+
       <section className="border-y border-slate-200/80 bg-white/75 px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-6xl">
           <p className="text-center text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">Designed for your existing channels</p>
