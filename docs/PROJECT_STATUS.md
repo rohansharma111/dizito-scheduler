@@ -2,7 +2,7 @@
 
 - Added `readRequestBodyWithLimit` and applied it to the server-proxy upload route before multipart parsing. The route now enforces a hard maximum request-body byte count even when `Content-Length` is absent, and cancels the stream when the limit is exceeded.
 - Declared-length preflight remains an early rejection optimization; the stream reader is the authoritative application-level cap before multipart parsing. This does not replace platform ingress limits or remove the bounded buffer required to parse the request.
-- Added unit tests for bounded, oversized streamed, and empty request bodies. CI is pending for the latest implementation. No deployment, production database change, provider mutation, or browser QA was performed.
+- Added unit tests for bounded, oversized streamed, and empty request bodies. After correcting the request-body type to `ArrayBuffer`, both GitHub Actions workflows passed on code commit `12cac848dea464674f3fb302c0d85170ff1fdf58`: [Validate](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240619) and [Quality Checks](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240616). No deployment, production database change, provider mutation, or browser QA was performed.
 
 ## 2026-10-09 — Media upload API guard regression tests
 
