@@ -841,3 +841,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Preserved per-user rate limits, Cloudinary resource lookup, user-folder ownership checks, supported format checks, upload policy limits, and MediaService's final resource verification.
 - Commits: `69fb6861b8c65520ab52b763eada8a77da2e10fb` (signature request validation), `bc2d1f61021e3062cf5e257d4164c3d46f7ec333` (completion request validation).
 - Verification boundary: source reviewed after commit; fresh GitHub Actions for both commits is pending. No production migration, provider mutation, deployment, or browser/runtime verification was performed.
+
+
+## 2026-10-09 — Media upload policy boundary tests
+
+- Hardened the shared `getUploadPolicy` helper to reject zero, negative, fractional, non-finite, and unsafe-integer byte sizes, and normalize MIME strings with whitespace trimming before policy matching.
+- Added `lib/media/upload-policy.test.ts` coverage for supported image/video MIME types, size boundaries, invalid sizes, and unsupported MIME types.
+- Commits: `bd0cca3beeb37f5baf48229ae6d8726a78bc8057` (policy validation), `59d79ecc272e5c3dfb73290abdd1a6436c48a56e` (tests).
+- The preceding direct upload API and documentation commits have both Validate and Quality Checks passing. CI for this policy/test addition is pending; no production migration, deployment, or provider mutation was performed.
