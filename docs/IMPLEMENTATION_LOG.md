@@ -1060,3 +1060,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Commits: `4f6331b790adf0516449270d92e3ec363e2ac771` (diagnostics), `25986f3ade7020d72a862ec53b4eb37e6080ade5` (message normalization correction).
 - Verification boundary: source re-fetched from `main`; no build/lint run or live store request performed. No credentials were accessed and no store data was changed.
 
+
+
+## 2026-10-09 — Show linked WooCommerce products in Marketing Content
+
+- Updated components/marketing/MarketingContentClient.tsx to render external WooCommerce product references already stored in each content item's planning_metadata.
+- Shows product name, external product ID, optional SKU, price and stock snapshots, and an HTTPS product permalink. UI copy clearly warns that snapshots are captured during planning and that current price/availability must be rechecked before publishing.
+- Keeps WooCommerce IDs outside the canonical product relation tables and does not modify the live WooCommerce store.
+- CI for the preceding approval metadata commits passed; CI for this UI/doc follow-up is pending. Browser/runtime verification not performed.
