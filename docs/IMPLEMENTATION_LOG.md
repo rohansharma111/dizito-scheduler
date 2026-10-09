@@ -1,3 +1,10 @@
+## 2026-10-09 — Workstream B production billing schema applied
+
+- Applied `db/migrations/021_billing_v1_plans_entitlements.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek`.
+- The migration ledger now contains `021_billing_v1_plans_entitlements.sql`; production reads confirm the canonical Growth plan has 10 entitlement values and the subscription table includes `billing_plan_id`, `pending_billing_plan_id`, and `plan_change_at`.
+- The migration was applied through Neon’s temporary-branch workflow and the temporary branch was deleted on completion.
+- Scope/verification boundary: schema and catalog are live; Razorpay checkout/webhook behavior, provider mapping configuration, application deployment, and browser/runtime flows remain unverified. No payment/provider transaction was fabricated.
+
 ## 2026-10-09 — Mobile commerce table readability (main)
 
 - Removed global `overflow-wrap: anywhere` from the body, which was splitting normal words into single characters on narrow screens. Kept targeted wrapping for `pre` and `code`.
