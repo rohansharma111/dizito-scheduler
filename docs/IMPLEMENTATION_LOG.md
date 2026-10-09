@@ -1,3 +1,10 @@
+## 2026-10-09 — Shared table pagination (main)
+
+- Added reusable `TablePagination` and applied client-side paging to Bulk Upload preview, Products, Variants, Inventory, Inventory Movement History, Draft Posts, and Scheduled/Published Posts.
+- Bulk Upload adds validation filters (All / Valid / Invalid / Duplicates), page-local select-all, stable original CSV row numbers, and cross-page selection retention.
+- Client-side paging operates on the data each screen already fetches; server-side pagination remains the scalability follow-up for large database-backed datasets.
+- Verification pending: no local lint/typecheck/tests/build or browser validation performed. CI is unconfirmed.
+
 ## 2026-10-09 — Workstream B production billing schema applied
 
 - Applied `db/migrations/021_billing_v1_plans_entitlements.sql` to Neon production project `purple-wildflower-87394884`, database `neondb`, branch `br-empty-rice-ayeuugek`.
