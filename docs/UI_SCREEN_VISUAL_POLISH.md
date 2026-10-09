@@ -11,6 +11,13 @@
 - Direct-main commits: `ff9c0df30db95b57b63592698092c09c3bb9f0c0`, `94d047aca6815da6c121e20c4bf939dba1121b55`, `5dbd380ae6538a5d2db36501ebe0b6f0308b5856`.
 - Automated checks and browser visual verification for this follow-up are pending.
 
+## Follow-up: Publish Details modal (2026-10-09)
+
+- Polished the publish-details modal with a softened overlay, elevated rounded panel, clearer summary, refined account cards, status/error callouts, and consistent retry/reconnect buttons.
+- Added `components/PublishDetailsModal.module.css` for subtle entry motion and responsive details; reduced-motion preference is respected.
+- Direct-main commits: `a5e0bffb38184f1dbf81c96810519bc99968850b`, `f57b1a2ae4a06b27d2cd85f96c379a9762146e8e`.
+- Existing publish/retry/reconnect logic is unchanged. Automated checks and browser verification are pending.
+
 ## Screens covered
 
 - Create Post form in `components/CreatePostForm.tsx`
