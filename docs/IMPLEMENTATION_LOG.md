@@ -1098,3 +1098,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added authenticated `POST /api/commerce/woocommerce/link`. It verifies tenant ownership of the canonical product and WooCommerce channel, confirms the exact external product by reading it from the connected store, rejects cross-product identity conflicts, serializes concurrent attempts for the same channel/external ID, and writes transactionally. Listing remains `draft`/`pending`; this action does not publish or mutate WooCommerce.
 - A different existing external ID for the same canonical product/store is rejected rather than silently replaced. No schema migration or production-store mutation was needed.
 - Commits: `7df3ece` (API), `8ec834c` (UI), `cf44480` (serialize conflicts). CI and browser/API runtime verification pending.
+
+
+## 2026-10-09 — Verify persistent WooCommerce product links
+
+- User confirmed the product-linking flow and persistence were validated in the running application.
+- GitHub Actions Validate and Quality Checks passed on `e040cb864030c28c1ff26b6389d1f5f8b1e9d506`: [Validate](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37970471607), [Quality Checks](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37970471741).
+- Mapping persistence uses existing `product_listings`; no migration or WooCommerce product mutation was required. The endpoint verifies the external product via a read and prevents conflicting mappings. The mapping remains draft/pending; publishing is a separate workflow.
+- Follow-up focus: audit/validate WooCommerce draft preparation → validation → guarded publish/idempotency → reconciliation using a safe test setup before authorizing any live write.
