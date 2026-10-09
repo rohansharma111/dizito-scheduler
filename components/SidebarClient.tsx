@@ -57,7 +57,7 @@ export default function SidebarClient({ user, plan, mobileOpen=false, onClose }:
         {sections.map(section=><div key={section.title}>
           {!collapsed && <div className="mb-2 px-2 text-[10px] font-bold tracking-[.16em] text-slate-500">{section.title}</div>}
           <div className="space-y-1">
-            {section.items.map(item=>{ const Icon=item.icon; const active=item.href==="/dashboard"?pathname==="/dashboard":pathname.startsWith(item.href); return <Link key={item.href} href={item.href} onClick={()=>onClose?.()} title={collapsed?item.label:undefined} className={`relative flex items-center rounded-xl px-3 py-2.5 text-sm transition ${collapsed?"lg:justify-center":"gap-3"} ${active?"bg-white text-slate-900 shadow-lg shadow-black/10":"text-slate-300 hover:bg-white/7 hover:text-white"}`}>
+            {section.items.map(item=>{ const Icon=item.icon; const active=item.href==="/dashboard"?pathname==="/dashboard":pathname===item.href||pathname.startsWith(`${item.href}/`); return <Link key={item.href} href={item.href} onClick={()=>onClose?.()} title={collapsed?item.label:undefined} className={`relative flex items-center rounded-xl px-3 py-2.5 text-sm transition ${collapsed?"lg:justify-center":"gap-3"} ${active?"bg-white text-slate-900 shadow-lg shadow-black/10":"text-slate-300 hover:bg-white/7 hover:text-white"}`}>
               <Icon size={18}/>{!collapsed&&<><span className="font-semibold">{item.label}</span>{item.premium&&<span className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-bold ${active?"bg-slate-100 text-slate-600":"bg-white/10 text-slate-400"}`}><Crown size={10}/>PRO</span>}</>}
             </Link>;})}
           </div>
