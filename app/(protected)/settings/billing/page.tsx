@@ -189,7 +189,7 @@ export default function BillingPage() {
         <DizitoSectionHeader title="Manage subscription" description="Plan changes are applied through the existing billing API." />
         <DizitoCard>
           <div className="flex flex-wrap gap-3">
-            {billing.plan !== "growth" && billing.plan !== "pro" && <DizitoButton disabled={!!busy} onClick={() => changePlan("growth")}>{busy === "growth" ? "Updating…" : "Move to Growth"}</DizitoButton>}
+            {billing.subscription.id && billing.plan !== "growth" && billing.plan !== "pro" && <DizitoButton disabled={!!busy} onClick={() => changePlan("growth")}>{busy === "growth" ? "Updating…" : "Move to Growth"}</DizitoButton>}
             {billing.subscription.id ? (billing.plan !== "pro" && <DizitoButton variant="secondary" disabled={!!busy} onClick={() => changePlan("pro")}>{busy === "pro" ? "Updating…" : "Move to Pro"}</DizitoButton>) : <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><p className="font-semibold">No provider-managed subscription is linked to this account.</p><p className="mt-1">Plan changes cannot be applied until a billing-provider subscription exists. If you intend to purchase a plan, review the available options on the pricing page.</p><Link href="/pricing" className="mt-3 inline-flex font-semibold underline underline-offset-4">View pricing</Link></div>}
             {billing.subscription.id && !billing.subscription.cancelAtPeriodEnd && <DizitoButton variant="secondary" disabled={!!busy} onClick={cancel}>{busy === "cancel" ? "Scheduling…" : "Cancel at period end"}</DizitoButton>}
           </div>
