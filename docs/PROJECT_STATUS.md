@@ -1,3 +1,9 @@
+## 2026-10-09 — Multipart upload size preflight
+
+- The server-proxy upload route now checks a valid declared `Content-Length` before calling `request.formData()`, rejecting malformed lengths and bodies above the 25 MiB image allowance plus 1 MiB multipart overhead.
+- This is an early-rejection safeguard only. Requests without `Content-Length` (including chunked transfer) still require an enforced upstream/runtime request-body cap; this route check alone does not bound all multipart parser memory use.
+- CI for the implementation commit is pending. No deployment, production database change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Proxy upload service validation
 
 - Server-proxy image uploads now re-apply the shared MIME/byte-size policy inside `MediaService`, normalize MIME declarations, and validate file signatures before invoking Cloudinary. The service rejects video uploads on this path and requires signed direct upload for video.
