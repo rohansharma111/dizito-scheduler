@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     // body-size limit because chunked bodies can bypass this check.
     const contentLength = request.headers.get("content-length");
     if (contentLength !== null) {
-      if (!/^\\d+$/.test(contentLength)) {
+      if (!/^\d+$/.test(contentLength)) {
         return NextResponse.json({ success: false, error: "Invalid Content-Length header" }, { status: 400 });
       }
       const declaredLength = Number(contentLength);
