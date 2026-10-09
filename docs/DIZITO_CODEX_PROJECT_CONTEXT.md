@@ -1,3 +1,9 @@
+## 2026-10-09 — Public homepage positioning correction
+
+- Direct-to-main follow-up at `a0f2a1f8854314e36425e9313f2ef5ac6e9ab08c`: the homepage should clearly communicate Dizito's current user-facing product as a social media scheduler/publishing workspace, not lead with broad “operating system” language.
+- Copy now centers on the social calendar, drafts, weekly planning, multi-channel scheduling, review and publishing. The design, functionality, routes and session-aware CTA remain intact; pricing page copy was not changed.
+- CI and browser screenshot verification for this follow-up are pending.
+
 ## 2026-10-09 — Current continuation checkpoint: media migration applied; pre-screen QA next
 
 - PR #59 merged to `main` as `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`. It introduces race-safe media completion persistence and tests. Existing signature-route and media-service regression tests were preserved.
