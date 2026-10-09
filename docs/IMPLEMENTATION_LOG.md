@@ -1035,3 +1035,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added regression coverage for MIME whitespace/casing normalization.
 - Commits: `c34577e3347526d41f514fe9474e84d7cec4f83f` (normalization), `ddd68e850f903319d5fc15f965428f43c286a553` (test).
 - Earlier upload policy, policy-boundary tests and documentation CI runs passed. CI for signature normalization is pending. No deployment, production database change, or provider mutation was performed.
+
+## 2026-10-09 — Add WooCommerce staging connection form to Commerce Channels
+
+- Added a WooCommerce staging/test connection form directly to `app/(protected)/commerce/channels/page.tsx` on `main`, using the existing authenticated `POST /api/commerce/woocommerce/connect` route and existing encrypted credential persistence.
+- The form collects a connection label, store URL, consumer key, and masked consumer secret; requires explicit staging/test confirmation before submission; clears credential fields after successful connection; and refreshes the tenant's connected commerce channels.
+- No provider product was created or modified. This only exposes the existing connection flow so the operator can connect the intended staging store.
+- Commit: `77591000e0c6cc1f4f7f198563c01b5c50f7f56f`.
+- Verification boundary: commit diff reviewed; automated CI/build and browser verification have not yet been confirmed. Live WooCommerce connection and controlled product create/read-back/retry tests remain pending until the staging store is connected.
