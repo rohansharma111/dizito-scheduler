@@ -1281,3 +1281,11 @@ Important rollout boundary:
 - Added regression coverage for MIME whitespace/casing normalization.
 - Commits: `c34577e3347526d41f514fe9474e84d7cec4f83f` (normalization), `ddd68e850f903319d5fc15f965428f43c286a553` (test).
 - Earlier upload policy, policy-boundary tests and documentation CI runs passed. CI for signature normalization is pending. No deployment, production database change, or provider mutation was performed.
+
+
+## 2026-10-09 — WooCommerce product context in Marketing Content
+
+- Extended weekly-plan approval to persist selected WooCommerce products as external product references inside each generated content item's planning_metadata; references remain distinct from Dizito's canonical products IDs.
+- Marketing Content now displays linked WooCommerce product name, external ID, optional SKU, price snapshot, stock-status snapshot, and a product link. The UI labels these as planning-time snapshots and reminds users to verify current price and availability before publishing.
+- Approval API validates external references and enforces field/array limits plus HTTPS-only permalinks. No WooCommerce write calls, publishing, or production data mutations were introduced.
+- CI for implementation commits 23868b5, 3775698, and 6570cf9: both Validate and Quality Checks passed on the latest approval-flow commit. This UI follow-up is awaiting CI; browser/runtime validation remains pending.
