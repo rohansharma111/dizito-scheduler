@@ -1,3 +1,10 @@
+## 2026-10-09 — Proxy upload service validation
+
+- Hardened `MediaService.uploadMedia` to apply the shared upload policy to actual buffer length, normalize the declared MIME type, verify the magic-byte signature, and reject video on the server-proxy path before Cloudinary is called.
+- Added tests for the image size limit, mismatched content signature, and normalized MIME handling.
+- A request-body parsing/resource limit is still a separate infrastructure concern; a declared `Content-Length` precheck by itself is not sufficient for chunked requests.
+- No deployment, production database change, provider mutation, or browser QA was performed.
+
 ## 2026-10-09 — Media service upload-policy defense in depth
 
 - `MediaService.completeDirectUpload` now enforces `getUploadPolicy` immediately before persistence, so the service boundary independently rejects unsupported MIME types, out-of-policy byte counts, and resource-type mismatches even if a caller bypasses the route-level check.
