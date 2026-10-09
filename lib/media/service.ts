@@ -2,6 +2,7 @@ import { mediaRepository } from "./repository";
 import { mediaCloudinary } from "./cloudinary";
 import { CreateMediaInput, CompleteDirectUploadInput, UploadMediaInput } from "./types";
 import { getUploadPolicy } from "./upload-policy";
+import { matchesDeclaredMediaType } from "../security/media-signature";
 
 export class MediaService {
   async uploadMedia(input: UploadMediaInput) {
@@ -9,11 +10,20 @@ export class MediaService {
       throw new Error("File is empty");
     }
 
-    if (input.mimeType.startsWith("video/")) {
+    const normalizedMimeType = input.mimeType.trim().toLowerCase();
+    const uploadPolicy = getUploadPolicy(normalizedMimeType, input.buffer.length);
+    if (!uploadPolicy.allowed) {
+      throw new Error(uploadPolicy.error);
+    }
+    if (uploadPolicy.resourceType !== "image") {
       throw new Error("Video uploads must use the signed direct Cloudinary upload flow");
     }
+    if (!matchesDeclaredMediaType(input.buffer, normalizedMimeType)) {
+      throw new Error("File content does not match the declared media type");
+    }
 
-    const uploadResult = await mediaCloudinary.upload(input);
+    const normalizedInput = { ...input, mimeType: normalizedMimeType };
+    const uploadResult = await mediaCloudinary.upload(normalizedInput);
 
     const media: CreateMediaInput = {
       userId: input.userId,
@@ -22,7 +32,7 @@ export class MediaService {
       fileName: input.fileName,
       secureUrl: uploadResult.secureUrl,
       format: uploadResult.format,
-      mimeType: input.mimeType,
+      mimeType: normalizedMimeType,
       width: uploadResult.width,
       height: uploadResult.height,
       bytes: uploadResult.bytes,
