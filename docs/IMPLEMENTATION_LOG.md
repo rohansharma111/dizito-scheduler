@@ -2,7 +2,7 @@
 
 - Added `lib/security/request-body.ts` with a streaming byte counter and cancellation when a configured request-body limit is exceeded.
 - `app/api/upload/route.ts` now applies the helper before calling `formData()`, including when the request omits `Content-Length`; only a body already bounded to the image allowance plus multipart overhead is passed to the multipart parser.
-- Added `lib/security/request-body.test.ts` for body-at-limit, over-limit stream without a declared length, and empty-body cases. CI has not yet validated these commits.
+- Added `lib/security/request-body.test.ts` for body-at-limit, over-limit stream without a declared length, and empty-body cases. A TypeScript incompatibility when passing `Uint8Array` as `BodyInit` was fixed by copying the bounded bytes into an `ArrayBuffer`. Both GitHub Actions workflows passed on code commit `12cac848dea464674f3fb302c0d85170ff1fdf58`: [Validate](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240619) and [Quality Checks](https://github.com/rohansharma111/dizito-scheduler/actions/runs/37904240616).
 - Platform ingress limits remain an additional defense; no deployment, production DB change, provider mutation, or browser QA was performed.
 
 ## 2026-10-09 — Media upload API regression coverage
