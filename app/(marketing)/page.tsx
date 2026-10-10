@@ -164,7 +164,7 @@ export default async function HomePage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-extrabold text-slate-900">AI, with clear human control</p>
-                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">AI-powered strategy and content generation are marked as coming soon while the no-AI-cost workflow stays usable. Review and approval remain explicit steps—not hidden automation.</p>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Plan your content, create posts, and review everything before publishing. AI-powered strategy and content creation are coming soon. Until then, you can plan and manage your content using our manual tools.</p>
               </div>
               <Link href="/how-it-works" className="inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-violet-700 hover:text-violet-900">Explore the workflow <ArrowRight size={16} /></Link>
             </div>
@@ -173,14 +173,19 @@ export default async function HomePage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h3 className="font-extrabold text-slate-900">Commerce connections</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Build around the stores you use today. Availability and publishing readiness depend on each provider’s access and verification status.</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Connect your store to bring products into your marketing workflow. Choose a supported connection to get started; some integrations are still in development.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {["Shopify", "WooCommerce"].map((channel) => (
-                  <span key={channel} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">{channel}</span>
-                ))}
-                {["Amazon", "Flipkart", "Meesho"].map((channel) => (
-                  <span key={channel} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">{channel} · in progress</span>
+                {[
+                  { name: "Shopify", status: "Connect a store", available: true },
+                  { name: "WooCommerce", status: "Setup required", available: false },
+                  { name: "Amazon India", status: "Coming soon", available: false },
+                  { name: "Flipkart", status: "Coming soon", available: false },
+                  { name: "Meesho", status: "Coming soon", available: false },
+                ].map((provider) => (
+                  <span key={provider.name} className={`rounded-full border px-3 py-1.5 text-xs font-bold ${provider.available ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+                    {provider.name}{provider.available ? "" : ` · ${provider.status}`}
+                  </span>
                 ))}
               </div>
             </div>
