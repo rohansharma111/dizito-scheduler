@@ -1164,3 +1164,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Replaced generic social “Connect Meta / LinkedIn / Pinterest / Google Business” buttons with branded-feeling provider tiles, platform-specific color accents, concise descriptions (Meta explicitly covers Instagram and Facebook), keyboard focus states, and clearer authorization cues. Account limit enforcement and OAuth/reconnect URLs remain unchanged.
 - Commits: `01735f6e` (commerce card styling), `c660783d` (social connection tiles), `c59744cd` (commerce markup correction).
 - Verification boundary: source-level markup reviewed; no browser screenshot/device QA has been performed in this session. Check the latest main Validate and Quality Checks runs before considering this UI pass CI-verified. Provider availability/approval states have not been changed or overstated.
+
+
+## 2026-10-10 — Connected channel management clarity (main)
+
+- Rebuilt the connected commerce channel list as structured responsive cards with provider identity, explicit enabled/inactive state, short guidance on what that state means, and provider-specific actions. Added active/attention counts and a clearer first-connection empty state.
+- The UI deliberately distinguishes an enabled connection from a provider access check: an active database status is not represented as proof of live provider authorization or publishing readiness. WooCommerce and Amazon expose existing provider access-check actions where implemented.
+- Added connected/needs-attention counts and a clearer heading/description to the connected social account area. Existing OAuth, reconnect, disconnect, entitlement, and provider actions are preserved.
+- Commits: `015b492c` (commerce connection management), `39da2058` (social account summary).
+- Verification boundary: source-reviewed only; browser/mobile QA is outstanding and latest main CI must be checked before this pass is considered CI-verified.
