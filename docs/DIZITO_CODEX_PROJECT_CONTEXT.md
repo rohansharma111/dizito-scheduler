@@ -702,3 +702,11 @@ The onboarding checklist no longer counts a created post as proof that goals/pro
 ## 2026-10-10 — Channel connection UI notes
 
 Commerce channel connection UI now uses platform-specific cards under a shared sales-channel section; social account setup uses differentiated provider tiles. Treat these as presentation and information-architecture changes only. OAuth routes, provider adapters, entitlements/account limits, and WooCommerce staging guard are unchanged. Browser/mobile visual QA remains required.
+
+
+## 2026-10-10 — Product catalog toggle and Marketing Content usability pass
+
+- Replaced the WooCommerce catalog `<details>` styling-dependent labels with explicit React state and `aria-expanded`. The control now reliably reads `Browse catalog` while closed and `Hide catalog` while open, avoiding the observed state where the hide label appeared while the catalog was collapsed. Product lookup/linking behavior is unchanged.
+- Simplified Marketing Content's page header (removed the repeated title/description card), added a short three-step workflow, moved publishing-account selection behind a clearly labeled disclosure, and collapsed the platform-variant editor by default so the main content review action is easier to find on mobile. Existing editing, approval, variant persistence, account selection, and scheduling handlers are preserved.
+- Commits: `a75f09c427248d5aa84f126320ac0c614fb623c3` and `450a01cd559cb9b425f6ce3cfa7e192a71d09d7d`.
+- Validate and Quality Checks are queued/running for the UI commits; browser/mobile runtime verification remains pending. No database or provider state changed.
