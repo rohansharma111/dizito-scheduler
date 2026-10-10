@@ -1,21 +1,21 @@
 # Dizito V1 — Pre-Screen QA Readiness and Screen Test Matrix
 
-**Status:** Prepared; execution pending  
-**Last updated:** 2026-10-09  
+**Status:** CI gate passed; environment/browser QA execution pending  
+**Last updated:** 2026-10-10  
 **Purpose:** Make the next screen-by-screen browser QA pass repeatable and evidence-based. This is a checklist, not a claim that the checks have passed.
 
 ## Current known checkpoint
 
 - Media race-safety PR #59 merged to `main` as `aa9ffd9902c505f3c5ba3c48c21ae280765afd27`.
 - Production Neon migration `20261009_media_library_unique_cloudinary_public_id.sql` was applied to project `purple-wildflower-87394884`, branch `br-empty-rice-ayeuugek`, database `neondb`. Preflight duplicate-pair count was zero; the unique index and `schema_migrations` entry were verified afterward.
-- Workflow lookup for the merge/documentation commits returned no workflow runs/statuses. CI on the current `main` must be run or otherwise evidenced before QA is called green.
+- Current `main` head at this checkpoint: `563617250f382cd8b3cd9ae74a92893419c47773` (`Document connected channel management improvements`). GitHub Actions **Validate passed**: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852014. **Quality Checks passed**: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852027. These are CI results only; they do not establish deployment health or browser/runtime correctness.
 - Real Cloudinary test-cloud verification is pending. Provider-side pre-ingestion upload-size enforcement has not been proven.
 - This plan does not authorize live publishing or external provider mutations.
 
 ## Gate 0 — Before opening the browser
 
 - [ ] Confirm the deployed environment and exact deployed Git SHA; verify it contains the expected current `main` changes.
-- [ ] Run GitHub Actions Validate and Quality Checks on the current `main` head (or equivalent local checks): lint, TypeScript/typecheck, Vitest, production build. Record run URLs and commit SHA. Investigate failures before continuing.
+- [x] Run GitHub Actions Validate and Quality Checks on current `main` head `563617250f382cd8b3cd9ae74a92893419c47773`. Validate: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852014. Quality Checks: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852027. Both passed. Confirm the deployed SHA separately before browser QA.
 - [ ] Verify the production/staging DB target, migration ledger entry, and unique index. Never run migration SQL against an unintended branch/database.
 - [ ] Confirm app host health, required environment variables, OAuth callback URLs, public app URL, cron/worker configuration, and provider secrets are present without printing secret values.
 - [ ] Use a dedicated QA merchant/user with no real customer data. Seed representative product/service, offer, campaign, image, video, and channel connection fixtures.
