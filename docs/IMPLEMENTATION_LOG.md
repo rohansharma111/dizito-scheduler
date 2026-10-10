@@ -1133,3 +1133,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added a commerce connection section that distinguishes Shopify/WooCommerce from Amazon/Flipkart/Meesho in-progress work. Copy explicitly says availability/readiness depends on provider access and verification; it does not claim every marketplace is live.
 - Clarified that AI-assisted features are coming soon while manual workflows remain usable and human review stays explicit.
 - This is a marketing-positioning/UI change only. It does not enable AI, change provider integrations, or certify social/commerce publishing readiness. Build, lint, tests, and desktop/mobile visual QA are still required; broader in-app marketing workflow organisation remains a follow-up workstream.
+
+
+## 2026-10-10 — Homepage positioning merged; guided Marketing Workspace added on main
+
+- PR #64 merged to `main` as squash commit `368cc392697112651a10c521f3530f45c048f8d3`. Validate run 38026217600 and Quality Checks run 38026217568 both passed for the PR head `56ebab0bf035060ccf84e92c283a104f407724f1`.
+- Follow-up user feedback: the existing marketing workspace was confusing even to the product owner. Added `/marketing-workspace` as a guided starting page with five plain-language steps, direct action links, contextual explanations, explicit approval-vs-publishing distinction, and an AI-coming-soon/manual-workflow notice.
+- Updated `components/SidebarClient.tsx` to put Marketing Workspace first under START HERE and renamed sections to PLAN & CREATE and PUBLISH & MANAGE. Existing routes and API behavior are preserved.
+- Follow-up commits on main: `dd0fb5645dd16ee65346b14b249845e93ee7eacc` (page), `47d24a47463e7bec50506e132c293614cca88905` (sidebar), `682e90d6bed1202b341d8de8760828672ed3bef7` (import cleanup).
+- Verification: source-level review only for the new page/sidebar changes. No current-main CI, build/typecheck/lint, or browser/mobile verification has been run for these latest commits. The workflow guide does not persist inferred completion; it intentionally provides a clear path without pretending steps were completed.
