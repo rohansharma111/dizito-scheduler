@@ -1394,3 +1394,11 @@ Important rollout boundary:
 - Replaced the oversized, inert Products search/status controls with a compact responsive search field and working All / Active / Draft filters. Search matches product name, brand, and category; result counts and a clear-filters empty state are included. The existing product table, pagination, links, and server-side tenant-scoped product loading remain in use.
 - Direct commits on `main`: `a835bc74d9c9c08ef2e9ec6332a0f92917d1346c` (new client filter), `621ecd1801d1e5a066e1f41370cb80ee498bfb86` (Products page wiring), `5647c82ea07c7674259a64b4eb1e481738de73e4` (social logos).
 - Validate and Quality Checks have been triggered for the commits; results are pending at time of writing. Mobile browser verification has not been performed from this session.
+
+
+## 2026-10-10 — Homepage merchant-facing copy refinement
+
+- Rewrote the AI callout in plain merchant language: manual content planning and review remain available, while AI strategy/content creation are clearly described as coming soon.
+- Simplified the commerce-connections explanation and replaced the ambiguous “in progress” labels with clearer availability language: Shopify (“Connect a store”), WooCommerce (“Setup required”), and Amazon India/Flipkart/Meesho (“Coming soon”). WooCommerce is not presented as fully production-ready because controlled provider verification remains outstanding.
+- Scope is copy/status presentation only; links, page layout, connection flows, provider logic and AI feature gates are unchanged.
+- Direct-to-main commit: `8e456b35290a499940cff5ad3925743f7bfe4e7b` (`app/(marketing)/page.tsx`). CI and live browser verification are pending.
