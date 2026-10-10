@@ -19,7 +19,6 @@ type Analytics = {
   topPlatform: string | null;
   insights: string[];
   recent: RecentEvent[];
-  premium?: boolean;
   error?: string;
 };
 
@@ -61,22 +60,8 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <DizitoPage>
-        <DizitoPageHeader eyebrow="Measure" title="Analytics" description="Track publishing performance across your connected channels." />
+        <DizitoPageHeader eyebrow="Measure" title="Analytics" description="Track publishing reliability and channel activity. Basic publishing analytics are included on every plan." />
         <DizitoCard><div role="status" aria-label="Loading analytics" className="animate-pulse space-y-4"><div className="h-5 w-40 rounded bg-slate-100"/><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">{[0,1,2,3,4].map((item)=><div key={item} className="h-24 rounded-xl bg-slate-100"/> )}</div><div className="grid gap-4 lg:grid-cols-2"><div className="h-56 rounded-xl bg-slate-100"/><div className="h-56 rounded-xl bg-slate-100"/></div></div></DizitoCard>
-      </DizitoPage>
-    );
-  }
-
-  if (analytics?.premium) {
-    return (
-      <DizitoPage>
-        <DizitoCard className="text-center" tone="ai">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">🔒</div>
-          <DizitoBadge tone="ai">PREMIUM</DizitoBadge>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight">Analytics</h1>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-gray-500">Analytics is available on Creator and Agency plans.</p>
-          <Link href="/pricing" className="dizito-button dizito-button-primary mt-7">View plans</Link>
-        </DizitoCard>
       </DizitoPage>
     );
   }
@@ -104,7 +89,7 @@ export default function AnalyticsPage() {
         eyebrow="Measure"
         title="Analytics"
         description="Track publishing performance across your connected channels."
-        action={<DizitoBadge tone="ai">PREMIUM</DizitoBadge>}
+        
       />
 
       <DizitoCard className="mb-5" tone="dark">
