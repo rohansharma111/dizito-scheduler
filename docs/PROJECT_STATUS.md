@@ -1402,3 +1402,9 @@ Important rollout boundary:
 - Simplified the commerce-connections explanation and replaced the ambiguous “in progress” labels with clearer availability language: Shopify (“Connect a store”), WooCommerce (“Setup required”), and Amazon India/Flipkart/Meesho (“Coming soon”). WooCommerce is not presented as fully production-ready because controlled provider verification remains outstanding.
 - Scope is copy/status presentation only; links, page layout, connection flows, provider logic and AI feature gates are unchanged.
 - Direct-to-main commit: `8e456b35290a499940cff5ad3925743f7bfe4e7b` (`app/(marketing)/page.tsx`). CI and live browser verification are pending.
+
+
+## 2026-10-10 — Clarify WooCommerce homepage status
+
+- Corrected the homepage label from “Setup required” to “WooCommerce · Connect a test store”. The current connection flow explicitly requires staging/test-store confirmation, so the copy now communicates the usable path without implying unrestricted live-store readiness.
+- Commit: `f6fcc2cae7bcd8f5cc9b38777d84c1fa2f16fe3b` on `main`. CI pending; no provider configuration or live publishing state changed.
