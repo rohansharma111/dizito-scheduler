@@ -1360,3 +1360,11 @@ Important rollout boundary:
 - Added `/marketing-workspace` to address navigation/process confusion. It explains the recommended journey in plain language and links to Business Brain, weekly planning, content review, connected channels, and Business Impact. Added direct shortcuts to products, commerce channels, and the product guide.
 - Sidebar now exposes Marketing Workspace as the first START HERE destination; AI WORKSPACE was renamed PLAN & CREATE, and ASSETS & DISTRIBUTION was renamed PUBLISH & MANAGE.
 - Latest workspace/sidebar commits are source-reviewed only. Run CI, lint/typecheck/build, and responsive browser QA before marking the new guided experience verified. No backend contracts or provider behavior changed.
+
+
+## 2026-10-10 — Onboarding clarity refinement
+
+- Marketing Workspace now routes first-time users to the existing data-backed `/onboarding` checklist rather than duplicating progress state.
+- Onboarding copy explains the business setup purpose and clearly distinguishes manual weekly planning available now from AI-powered strategy coming soon.
+- Main commits: `b6c658f51086c9694c7b5c073224432eac9df708`, `277ea3c0161b72761707af86ff305bac508f04ea`.
+- Latest workspace and onboarding changes still need CI/build and desktop/mobile visual verification.
