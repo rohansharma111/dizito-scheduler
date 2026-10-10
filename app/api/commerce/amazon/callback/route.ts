@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import {
   createCommerceChannel,
   getCommerceChannelByExternalAccount,
+  getCommerceChannelCapacity,
   updateCommerceChannel,
 } from "@/lib/commerce/channels/service";
 import { saveAmazonCredentials } from "@/lib/commerce/channels/amazon-credentials";
@@ -70,6 +71,13 @@ export async function GET(request: Request) {
       "amazon",
       sellingPartnerId,
     );
+
+    if (!existingChannel) {
+      const capacity = await getCommerceChannelCapacity(userId);
+      if (!capacity.allowed) {
+        return redirectWithError(request, "Commerce channel limit reached (" + capacity.used + "/" + capacity.limit + "). Reconnect an existing store or compare plans; existing connections were not changed.");
+      }
+    }
 
     const channel = existingChannel
       ? await updateCommerceChannel(String(existingChannel.id), userId, {
