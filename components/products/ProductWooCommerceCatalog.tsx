@@ -164,14 +164,14 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
           ) : (
             <div className="divide-y divide-slate-100 rounded-xl border border-slate-100">
               {visibleProducts.map((item) => (
-                <div key={item.id} className="flex items-start gap-3 p-3 sm:p-4">
+                <div key={item.id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:gap-3 sm:p-4">
                   {item.image ? <img src={item.image} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-slate-100 object-cover" /> : <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400"><ShoppingBag size={20} /></div>}
                   <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-semibold text-slate-800">{item.name}</p>
-                    <p className="mt-1 break-words text-xs text-slate-500">ID {item.id}{item.sku ? ` · SKU ${item.sku}` : ""} · {item.type} · {item.status}</p>
-                    <p className="mt-1 text-xs text-slate-600">{item.price ? `${item.currency ? item.currency + " " : ""}${item.price}` : "Price not provided"} · Stock: {item.stockStatus || "unknown"}</p>
+                    <p className="break-normal [overflow-wrap:anywhere] text-sm font-semibold leading-5 text-slate-900">{item.name}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">ID {item.id}{item.sku ? <> · SKU <span className="break-all">{item.sku}</span></> : ""} · {item.type} · {item.status}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">{item.price ? `${item.currency ? item.currency + " " : ""}${item.price}` : "Price not provided"} <span className="text-slate-400">·</span> Stock: {item.stockStatus || "unknown"}</p>
                   </div>
-                  {<div className="flex shrink-0 flex-col items-end gap-2">{item.permalink && /^https?:\/\//i.test(item.permalink) && <a href={item.permalink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900">View <ExternalLink size={13} /></a>}<button type="button" onClick={() => void linkProduct(item)} disabled={linkingId !== null || (Boolean(linkedExternalId) && linkedExternalId !== String(item.id))} className="rounded-lg border border-violet-200 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40">{linkingId === item.id ? "Linking…" : linkedExternalId === String(item.id) ? "Linked" : "Link to product"}</button></div>}
+                  {<div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:flex-col sm:items-end">{item.permalink && /^https?:\/\//i.test(item.permalink) && <a href={item.permalink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900">View <ExternalLink size={13} /></a>}<button type="button" onClick={() => void linkProduct(item)} disabled={linkingId !== null || (Boolean(linkedExternalId) && linkedExternalId !== String(item.id))} className="min-h-9 rounded-lg border border-[#c7f36b] bg-[#f7fce9] px-3 py-2 text-xs font-semibold text-slate-900 transition hover:bg-[#eaf8c9] disabled:cursor-not-allowed disabled:opacity-40">{linkingId === item.id ? "Linking…" : linkedExternalId === String(item.id) ? "Linked" : "Link to product"}</button></div>}
                 </div>
               ))}
             </div>
