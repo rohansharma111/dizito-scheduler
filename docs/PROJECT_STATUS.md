@@ -1435,3 +1435,9 @@ Important rollout boundary:
 - Changed the WooCommerce catalog component so opening its outer product-details panel no longer expands the entire store inventory. The default view now shows only whether the current Dizito product is linked (including the external WooCommerce ID) and a compact “Browse store catalog” disclosure.
 - Store selection, search, refresh, product results, link actions, and pagination remain available inside the nested disclosure. Existing read-only/link-only behavior and APIs are unchanged; no store products are mutated by browsing or linking.
 - Direct-to-main commit: `50fc1f13db1b226ee44566b875ee8f863d5746e3`. CI and mobile browser verification pending.
+
+
+## 2026-10-10 — WooCommerce catalog disclosure CI correction
+
+- Follow-up verification found the new nested catalog disclosure had a JSX syntax typo (`sm:flex-row>` missing its closing quote). The Validate and Quality Checks runs failed at lint parsing before TypeScript/build stages. Corrected the JSX directly on `main` in commit `598c24d71fcfd575ccd27c2b11bedb94d158be6a`.
+- Re-run CI for the corrected commit before considering the catalog UX change verified. No product/provider behavior or data changed.
