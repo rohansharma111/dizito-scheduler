@@ -1150,3 +1150,9 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Reworded onboarding to focus on business setup and better marketing, and explicitly state that AI-powered strategy is coming soon while manual weekly planning is available.
 - Main commits: `b6c658f51086c9694c7b5c073224432eac9df708` (workspace CTA/step), `277ea3c0161b72761707af86ff305bac508f04ea` (onboarding copy).
 - Latest UI remains source-reviewed only. No lint/typecheck/build or browser/mobile QA has been run for the new workspace/onboarding changes.
+
+
+## 2026-10-10 — Onboarding readiness logic corrected
+
+- The setup checklist's “Add goals, products & offers” step previously treated any created post as proof that business context was configured. It now checks the actual Business Brain goals/products/offers arrays and validates those response fields as arrays when present.
+- Commit: `1f8e9f5ffe04b4c06327fcab702a15d9f180bd4b`. This is a small source-level correctness fix; CI and browser verification are pending.
