@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createCommerceChannel, getCommerceChannelByExternalAccount, updateCommerceChannel } from "@/lib/commerce/channels/service";
+import { createCommerceChannel, getCommerceChannelByExternalAccount, getCommerceChannelCapacity, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { getWooCommerceSystemStatus, normalizeWooCommerceStoreUrl } from "@/lib/platforms/woocommerce/client";
 import { saveWooCommerceCredentials } from "@/lib/platforms/woocommerce/credentials";
 
@@ -48,6 +48,17 @@ export async function POST(request: Request) {
         throw new Error("WooCommerce connection was verified, but the existing channel could not be updated");
       }
       return NextResponse.json({ success: true, channel: { id: channel.id, provider: channel.provider, name: channel.name, external_account_id: channel.external_account_id, status: channel.status, metadata: channel.metadata }, reconnected: true }, { status: 200 });
+    }
+
+    const capacity = await getCommerceChannelCapacity(userId);
+    if (!capacity.allowed) {
+      return NextResponse.json({
+        success: false,
+        error: "Commerce channel limit reached",
+        code: "COMMERCE_CHANNEL_LIMIT_REACHED",
+        usage: { used: capacity.used, limit: capacity.limit },
+        message: "Your plan has reached its commerce connection limit. Reconnect an existing store or compare plans to add another. Existing connections have not been changed.",
+      }, { status: 409 });
     }
 
     const channel = await createCommerceChannel(userId, {
