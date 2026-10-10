@@ -30,18 +30,18 @@ const features = [
 const steps = [
   {
     number: "01",
-    title: "Connect Accounts",
-    description: "Connect your Instagram, Facebook, LinkedIn, Pinterest and Google Business accounts securely.",
+    title: "Connect your business",
+    description: "Add your business context, products and the social or commerce channels you currently use.",
   },
   {
     number: "02",
-    title: "Create Content",
-    description: "Create one post and select multiple social accounts.",
+    title: "Plan your marketing",
+    description: "Organize campaigns, offers and content in a repeatable weekly workflow. AI-assisted features are coming soon; manual planning remains available.",
   },
   {
     number: "03",
-    title: "Schedule & Publish",
-    description: "Schedule once and let Dizito publish automatically.",
+    title: "Review, publish and improve",
+    description: "Review content before it goes live, manage supported channel workflows and use available business-impact evidence to guide the next cycle.",
   },
 ];
 
