@@ -1,3 +1,12 @@
+## 2026-10-10 — Pre-screen QA gate: current main CI verified
+
+- Confirmed current main head at the start of this checkpoint was `563617250f382cd8b3cd9ae74a92893419c47773` (`Document connected channel management improvements`).
+- GitHub Actions Validate passed: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852014.
+- GitHub Actions Quality Checks passed: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852027.
+- Updated `docs/DIZITO_SCREEN_QA_READINESS.md` to record these exact run URLs and separate CI success from deployment/browser verification.
+- Remaining Gate 0 work: confirm deployed environment/SHA, verify environment readiness without exposing secrets, confirm the intended DB/migration state, and prepare an isolated QA merchant plus sandbox/test provider accounts. Browser and mobile screen QA has not been performed by this checkpoint. Do not claim runtime or provider readiness based on CI alone.
+- No application behavior, database, credentials, provider flags, or live provider state changed in this documentation-only checkpoint.
+
 ## 2026-10-09 — Keep AI features visible but off until funded; add no-AI workflows
 
 - Added opt-in `DIZITO_AI_ENABLED === "true"` gate and `/api/marketing/ai-status`. Guarded paid OpenAI-backed routes (Strategist, Optimizer, legacy AI Generate Week, Creator) with explicit `503 AI_COMING_SOON` responses when disabled. This prevents unexpected provider calls and communicates a planned feature rather than returning opaque 500s.
