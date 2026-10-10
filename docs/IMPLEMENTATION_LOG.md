@@ -1191,3 +1191,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added connected/needs-attention counts and a clearer heading/description to the connected social account area. Existing OAuth, reconnect, disconnect, entitlement, and provider actions are preserved.
 - Commits: `015b492c` (commerce connection management), `39da2058` (social account summary).
 - Verification boundary: source-reviewed only; browser/mobile QA is outstanding and latest main CI must be checked before this pass is considered CI-verified.
+
+
+## 2026-10-10 — Mobile social logos and functional compact product filters
+
+- Updated the social-channel connect cards to use recognizable inline SVG platform marks for Meta, LinkedIn, Pinterest, and Google Business instead of generic letter tiles. Accessible card labels and existing OAuth/connect handlers are preserved.
+- Replaced the oversized, inert Products search/status controls with a compact responsive search field and working All / Active / Draft filters. Search matches product name, brand, and category; result counts and a clear-filters empty state are included. The existing product table, pagination, links, and server-side tenant-scoped product loading remain in use.
+- Direct commits on `main`: `a835bc74d9c9c08ef2e9ec6332a0f92917d1346c` (new client filter), `621ecd1801d1e5a066e1f41370cb80ee498bfb86` (Products page wiring), `5647c82ea07c7674259a64b4eb1e481738de73e4` (social logos).
+- Validate and Quality Checks have been triggered for the commits; results are pending at time of writing. Mobile browser verification has not been performed from this session.
