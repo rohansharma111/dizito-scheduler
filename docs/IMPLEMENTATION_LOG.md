@@ -1226,3 +1226,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Reorganized `/products/[id]` into a compact product summary, a dedicated Store connections section, and Product assets section. Store/provider tools are now collapsed into accessible native disclosure panels so their long forms and catalog lists do not all stack open on a narrow screen. Product images are open by default; other channel and variants panels open on demand.
 - Added clearer product summary cards for brand, category, status and variant count; retained edit navigation and all existing provider/media/variant components, handlers and server-side `getProductDetails(id, authenticatedUserId)` ownership-scoped load.
 - No APIs, schema, provider operations, publishing behavior or data changed. Direct-main commits: `359b1ec620b17079535ae574242029390e6a43fe`, `9db496731b9bd28e892332400a2035f3f8fe7162`. CI and mobile browser verification pending.
+
+
+## 2026-10-10 — Product page mobile wrapping and brand button correction
+
+- Fixed WooCommerce catalog rows to use a stacked mobile layout: thumbnail, product metadata, and actions now get usable width rather than squeezing the title and SKU into a narrow center column. Product names wrap naturally; only long SKUs may break within the identifier. Catalog link actions remain functional.
+- Updated Shopify publish/sync button styling from bright blue to Dizito lime/neutral styling and aligned the publishing panel padding/border with the current design system.
+- Direct-to-main commits: `f1443f9124ae0669b2d48b2555f594869f91d393` and `1d24e4a70befa372e808b60df315b2aba60b601e`. No workflow/API changes. CI and mobile browser verification pending.
