@@ -1262,3 +1262,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Added a capacity check to Shopify, Amazon, and Flipkart OAuth callbacks after identifying whether the authorized external account already exists. New connections above plan limit return to Accounts with an explicit explanation; reconnects update the existing row and remain allowed. Existing stores are not disconnected or downgraded.
 - Commits: `ad50c38fabdda6079062546b09e38170493e7242`, `9c81b47f7acbfd9347155eaf0bca8808674873a2`, `4e294489c22bf3fd295ccdf4dc01ec6aa9964aa6`, `80561e8e61fb6dea8b2b29c8a5c9d8568ef8ef29`, `a609ab6b0d58e33a1ba3bfde92f455fed35e3844`.
 - Remaining verification: CI on current `main`, inspect route coverage for any other commerce-channel creation paths, and test an at-limit new connection plus reconnect of an existing store. No migration was required.
+
+
+## 2026-10-10 — Product catalog toggle and Marketing Content usability pass
+
+- Replaced the WooCommerce catalog `<details>` styling-dependent labels with explicit React state and `aria-expanded`. The control now reliably reads `Browse catalog` while closed and `Hide catalog` while open, avoiding the observed state where the hide label appeared while the catalog was collapsed. Product lookup/linking behavior is unchanged.
+- Simplified Marketing Content's page header (removed the repeated title/description card), added a short three-step workflow, moved publishing-account selection behind a clearly labeled disclosure, and collapsed the platform-variant editor by default so the main content review action is easier to find on mobile. Existing editing, approval, variant persistence, account selection, and scheduling handlers are preserved.
+- Commits: `a75f09c427248d5aa84f126320ac0c614fb623c3` and `450a01cd559cb9b425f6ce3cfa7e192a71d09d7d`.
+- Validate and Quality Checks are queued/running for the UI commits; browser/mobile runtime verification remains pending. No database or provider state changed.
