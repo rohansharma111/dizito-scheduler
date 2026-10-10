@@ -205,8 +205,8 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
             </div>
           </div>
           <p className="text-xs leading-5 text-slate-500">Linking saves only the mapping inside Dizito. It does not publish, edit, or otherwise change products in your WooCommerce store.</p>
-            </div>
             </div>}
+          </div>
         </div>
       )}
     </DizitoCard>
