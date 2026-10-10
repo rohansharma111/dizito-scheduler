@@ -1428,3 +1428,10 @@ Important rollout boundary:
 - Fixed WooCommerce catalog rows to use a stacked mobile layout: thumbnail, product metadata, and actions now get usable width rather than squeezing the title and SKU into a narrow center column. Product names wrap naturally; only long SKUs may break within the identifier. Catalog link actions remain functional.
 - Updated Shopify publish/sync button styling from bright blue to Dizito lime/neutral styling and aligned the publishing panel padding/border with the current design system.
 - Direct-to-main commits: `f1443f9124ae0669b2d48b2555f594869f91d393` and `1d24e4a70befa372e808b60df315b2aba60b601e`. No workflow/API changes. CI and mobile browser verification pending.
+
+
+## 2026-10-10 — Compact WooCommerce catalog linking UX
+
+- Changed the WooCommerce catalog component so opening its outer product-details panel no longer expands the entire store inventory. The default view now shows only whether the current Dizito product is linked (including the external WooCommerce ID) and a compact “Browse store catalog” disclosure.
+- Store selection, search, refresh, product results, link actions, and pagination remain available inside the nested disclosure. Existing read-only/link-only behavior and APIs are unchanged; no store products are mutated by browsing or linking.
+- Direct-to-main commit: `50fc1f13db1b226ee44566b875ee8f863d5746e3`. CI and mobile browser verification pending.
