@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, Pencil, Package, Image as ImageIcon, Layers3, ShoppingBag, ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowLeft, Pencil, Package, Image as ImageIcon, Layers3, ChevronDown } from "lucide-react";
 import { redirect, notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import ProductVariants from "@/components/products/ProductVariants";
@@ -15,7 +16,7 @@ import { getProductDetails } from "@/lib/commerce/products/service";
 
 interface Params { params: Promise<{ id: string }> }
 
-function WorkflowPanel({ title, description, children, defaultOpen = false }: { title: string; description: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function WorkflowPanel({ title, description, children, defaultOpen = false }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean }) {
   return (
     <details open={defaultOpen} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 transition hover:bg-slate-50 sm:px-5 [&::-webkit-details-marker]:hidden">
