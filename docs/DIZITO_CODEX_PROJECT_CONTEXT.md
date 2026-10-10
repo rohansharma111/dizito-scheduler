@@ -1,3 +1,9 @@
+## 2026-10-10 — Screen QA checkpoint after connected-channel UI polish
+
+- Connected commerce/social account UX improvements are on `main`; current UI checkpoint `563617250f382cd8b3cd9ae74a92893419c47773` passed Validate and Quality Checks (run links recorded in `docs/DIZITO_SCREEN_QA_READINESS.md`).
+- QA preparation has advanced to the documented CI gate. Next: confirm deployed environment and SHA, environment/DB readiness without disclosing secrets, isolate QA merchant data, and perform the screen matrix in `docs/DIZITO_SCREEN_QA_READINESS.md`.
+- Browser and mobile runtime testing has not been performed in this checkpoint. Do not treat CI as proof of live publishing/provider behavior. Keep paid AI disabled until funded and keep live provider mutation guards closed.
+
 ## 2026-10-09 — Public homepage positioning correction
 
 - Direct-to-main follow-up at `a0f2a1f8854314e36425e9313f2ef5ac6e9ab08c`: the homepage should clearly communicate Dizito's current user-facing product as a social media scheduler/publishing workspace, not lead with broad “operating system” language.
