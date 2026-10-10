@@ -1246,3 +1246,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 
 - Follow-up verification found the new nested catalog disclosure had a JSX syntax typo (`sm:flex-row>` missing its closing quote). The Validate and Quality Checks runs failed at lint parsing before TypeScript/build stages. Corrected the JSX directly on `main` in commit `598c24d71fcfd575ccd27c2b11bedb94d158be6a`.
 - Re-run CI for the corrected commit before considering the catalog UX change verified. No product/provider behavior or data changed.
+
+
+## 2026-10-10 — Billing usage clarity and legacy plan display
+
+- Billing usage cards now explicitly label AI actions as coming soon and explain that AI generation is disabled, rather than implying those quotas are currently usable. Commerce usage above its entitlement is visibly flagged with a non-destructive explanation; existing connections remain untouched. Commit: `bbe2544787f7c44fb8cecafcdda004d8d54c6965`.
+- Public pricing now normalizes legacy `creator` to `growth` for current-plan display only. It no longer marks both Growth and Pro as current for a legacy Creator account. Commit: `9baaf8fe09d42f8828adffa14a6ce54f5ec3f30d`.
+- No subscription, entitlement, database or provider connection records were changed. CI is the next verification step; deployed browser QA remains separate.
