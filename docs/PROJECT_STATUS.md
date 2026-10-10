@@ -1374,3 +1374,9 @@ Important rollout boundary:
 
 - Corrected onboarding progress so creating a post no longer falsely marks “Add goals, products & offers” complete. That step now checks saved goals, products or offers from Business Brain.
 - Commit: `1f8e9f5ffe04b4c06327fcab702a15d9f180bd4b`. CI and browser verification remain pending.
+
+
+## 2026-10-10 — Channel connection UI polish
+
+- Main now groups commerce integrations under a sales-channel intro with active connection count and platform-specific setup cards. Social account connection choices use distinct provider tiles and explain which destinations each authorization covers.
+- Existing OAuth URLs, account-limit checks, WooCommerce test-store confirmation, and provider workflows are preserved. Visual browser/device QA remains outstanding; await latest CI before declaring the pass validated.
