@@ -1441,3 +1441,11 @@ Important rollout boundary:
 
 - Follow-up verification found the new nested catalog disclosure had a JSX syntax typo (`sm:flex-row>` missing its closing quote). The Validate and Quality Checks runs failed at lint parsing before TypeScript/build stages. Corrected the JSX directly on `main` in commit `598c24d71fcfd575ccd27c2b11bedb94d158be6a`.
 - Re-run CI for the corrected commit before considering the catalog UX change verified. No product/provider behavior or data changed.
+
+
+## 2026-10-10 — Product catalog toggle and Marketing Content usability pass
+
+- Replaced the WooCommerce catalog `<details>` styling-dependent labels with explicit React state and `aria-expanded`. The control now reliably reads `Browse catalog` while closed and `Hide catalog` while open, avoiding the observed state where the hide label appeared while the catalog was collapsed. Product lookup/linking behavior is unchanged.
+- Simplified Marketing Content's page header (removed the repeated title/description card), added a short three-step workflow, moved publishing-account selection behind a clearly labeled disclosure, and collapsed the platform-variant editor by default so the main content review action is easier to find on mobile. Existing editing, approval, variant persistence, account selection, and scheduling handlers are preserved.
+- Commits: `a75f09c427248d5aa84f126320ac0c614fb623c3` and `450a01cd559cb9b425f6ce3cfa7e192a71d09d7d`.
+- Validate and Quality Checks are queued/running for the UI commits; browser/mobile runtime verification remains pending. No database or provider state changed.
