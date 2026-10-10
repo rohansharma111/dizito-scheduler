@@ -204,7 +204,7 @@ export default function ProductShopifyPublish({
   }
 
   return (
-    <section className="bg-white border rounded-xl p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-5">
         <h2 className="text-lg font-semibold">Shopify Publishing</h2>
         <p className="text-sm text-gray-500 mt-1">
@@ -246,7 +246,7 @@ export default function ProductShopifyPublish({
                 type="button"
                 onClick={publish}
                 disabled={!channelId || !hasVariants || publishing || syncing}
-                className="bg-blue-600 text-white rounded-lg px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-xl bg-[#c7f36b] px-5 py-2.5 font-bold text-slate-950 shadow-sm transition hover:bg-[#b8e95a] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {publishing ? "Publishing..." : "Publish to Shopify"}
               </button>
@@ -255,7 +255,7 @@ export default function ProductShopifyPublish({
                 type="button"
                 onClick={sync}
                 disabled={!channelId || !hasVariants || publishing || syncing}
-                className="border border-blue-600 text-blue-700 rounded-lg px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-xl border border-[#c7f36b] bg-[#f7fce9] px-5 py-2.5 font-bold text-slate-900 transition hover:bg-[#eaf8c9] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {syncing ? "Syncing..." : "Sync Changes"}
               </button>
