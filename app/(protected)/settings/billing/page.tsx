@@ -118,7 +118,7 @@ export default function BillingPage() {
     { label: "Social channels", used: billing.usage.socialChannels, limit: billing.usage.socialChannelsLimit },
     { label: "Commerce channels", used: billing.usage.commerceChannels, limit: billing.usage.commerceChannelsLimit },
     { label: "Publishing / month", used: billing.usage.publishing, limit: billing.usage.publishingLimit },
-    { label: "AI actions / month", used: billing.usage.aiActions, limit: billing.usage.aiActionsLimit },
+    { label: "AI actions / month · coming soon", used: billing.usage.aiActions, limit: billing.usage.aiActionsLimit },
   ];
 
   return (
@@ -164,8 +164,18 @@ export default function BillingPage() {
             <DizitoCard key={label}>
               <DizitoMetric label={label} value={`${used} / ${limit}`} />
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(1, Number(limit))} aria-valuenow={Math.min(Number(used), Number(limit))}>
-                <div className="h-full rounded-full bg-lime-500" style={{ width: `${Math.min(100, limit ? (Number(used) / Number(limit)) * 100 : 0)}%` }} />
+                <div className={`h-full ${Number(used) > Number(limit) ? "bg-rose-500" : "bg-[#8bd400]"}`} style={{ width: `${Math.min(100, limit ? (Number(used) / Number(limit)) * 100 : 0)}%` }} />
               </div>
+              {Number(used) > Number(limit) && label === "Commerce channels" && (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">
+                  <p className="font-semibold">Above this plan’s allowance</p>
+                  <p className="mt-1">Your existing connections are preserved. Review your plan before adding another store; Dizito has not disconnected anything.</p>
+                  <Link href="/pricing" className="mt-2 inline-flex font-semibold underline underline-offset-4">Compare plans</Link>
+                </div>
+              )}
+              {label.startsWith("AI actions") && (
+                <p className="mt-3 text-xs leading-5 text-slate-500">AI generation is currently coming soon and does not make paid AI calls.</p>
+              )}
             </DizitoCard>
           ))}
         </div>
