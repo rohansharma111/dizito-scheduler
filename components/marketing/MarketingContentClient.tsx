@@ -54,7 +54,10 @@ export default function MarketingContentClient() {
     const nextCampaign = value && /^\d+$/.test(value) ? Number(value) : null;
     const contentValue = params.get("contentItemId");
     const nextContent = contentValue && /^\d+$/.test(contentValue) ? Number(contentValue) : null;
+    // The URL initializes the selected campaign/content when opening this page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCampaignFilter(nextCampaign);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContentFocus(nextContent);
     load(nextCampaign, nextContent);
   }, []);
