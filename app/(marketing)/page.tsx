@@ -178,7 +178,7 @@ export default async function HomePage() {
               <div className="flex flex-wrap gap-2">
                 {[
                   { name: "Shopify", status: "Connect a store", available: true },
-                  { name: "WooCommerce", status: "Connect a test store", available: true },
+                  { name: "WooCommerce", status: "Connect your store", available: true },
                   { name: "Amazon India", status: "Coming soon", available: false },
                   { name: "Flipkart", status: "Coming soon", available: false },
                   { name: "Meesho", status: "Coming soon", available: false },
