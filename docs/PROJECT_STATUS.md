@@ -1408,3 +1408,9 @@ Important rollout boundary:
 
 - Corrected the homepage label from “Setup required” to “WooCommerce · Connect a test store”. The current connection flow explicitly requires staging/test-store confirmation, so the copy now communicates the usable path without implying unrestricted live-store readiness.
 - Commit: `f6fcc2cae7bcd8f5cc9b38777d84c1fa2f16fe3b` on `main`. CI pending; no provider configuration or live publishing state changed.
+
+
+## 2026-10-10 — WooCommerce integration availability copy correction
+
+- User confirmed WooCommerce has already been verified. Updated the public homepage badge from “WooCommerce · Connect a test store” to “WooCommerce · Connect your store” and kept it in the available/green group, consistent with the completed verification. No provider code, store credentials, or live publishing state changed.
+- Commit on `main`: `b667cc60989e25439420df9adedcae56aa281d5c`. CI status pending.
