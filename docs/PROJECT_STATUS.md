@@ -1,3 +1,9 @@
+## 2026-10-10 — Screen QA readiness checkpoint
+
+- Current main UI polish checkpoint `563617250f382cd8b3cd9ae74a92893419c47773` passed Validate (https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852014) and Quality Checks (https://github.com/rohansharma111/dizito-scheduler/actions/runs/38032852027).
+- `docs/DIZITO_SCREEN_QA_READINESS.md` records the CI evidence and the required screen-by-screen test matrix.
+- Browser/mobile QA and deployed-SHA confirmation remain pending. CI success is not proof of runtime correctness, provider readiness, or production readiness. Keep AI calls disabled until funded; do not enable live provider mutations for QA without explicit scoped approval.
+
 ## 2026-10-09 — Zero-AI-spend marketing workflow implemented
 
 - Added server-side AI availability switch `DIZITO_AI_ENABLED`; AI endpoints for Strategist, Optimizer, AI weekly strategy, and AI copy generation return a clear 503 `AI_COMING_SOON` response unless the env var is explicitly `true`. This is opt-in and prevents these endpoints from calling OpenAI while the feature is disabled. `/api/marketing/ai-status` exposes the switch to authenticated UI surfaces (status only; it does not reveal credentials).
