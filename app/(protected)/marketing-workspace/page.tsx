@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpen, Brain, CalendarDays, CheckCircle2, ClipboardList, Package, Send, Store, BarChart3, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, CalendarDays, ClipboardList, Package, Send, Store, BarChart3, Sparkles } from "lucide-react";
 
 const steps = [
   {
