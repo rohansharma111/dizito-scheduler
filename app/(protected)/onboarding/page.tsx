@@ -6,7 +6,7 @@ import { ArrowRight, Brain, CheckCircle2, Link2, Package, Sparkles } from "lucid
 import { DizitoBadge, DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader, DizitoState } from "@/components/dizito/DizitoUI";
 
 type Progress = { connectedAccounts: number; postsCreated: number; postsScheduled: number };
-type BusinessBrain = { profile?: unknown; goals?: unknown[] } & Record<string, unknown>;
+type BusinessBrain = { profile?: unknown; goals?: unknown[]; products?: unknown[]; offers?: unknown[] } & Record<string, unknown>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -32,8 +32,10 @@ function parseBusinessBrain(value: unknown): BusinessBrain | null {
   if (value.businessBrain == null) return null;
   if (!isRecord(value.businessBrain)) throw new Error("Business Brain returned an unexpected response.");
   const brain = value.businessBrain;
-  if (brain.goals != null && !Array.isArray(brain.goals)) {
-    throw new Error("Business Brain returned an unexpected response.");
+  for (const field of ["goals", "products", "offers"] as const) {
+    if (brain[field] != null && !Array.isArray(brain[field])) {
+      throw new Error("Business Brain returned an unexpected response.");
+    }
   }
   return brain as BusinessBrain;
 }
@@ -76,7 +78,7 @@ export default function OnboardingPage() {
 
   const steps = [
     { done: Boolean(brain?.profile), title: "Define your Business Brain", description: "Give Dizito the business identity and context it should use for every recommendation.", href: "/business-brain", icon: Brain },
-    { done: (brain?.goals?.length ?? 0) > 0 || progress.postsCreated > 0, title: "Add goals, products & offers", description: "Connect the commercial context that makes weekly recommendations concrete.", href: "/products", icon: Package },
+    { done: (brain?.goals?.length ?? 0) > 0 || (brain?.products?.length ?? 0) > 0 || (brain?.offers?.length ?? 0) > 0, title: "Add goals, products & offers", description: "Connect the commercial context that makes weekly recommendations concrete.", href: "/products", icon: Package },
     { done: progress.connectedAccounts > 0, title: "Connect a distribution channel", description: "Choose where approved content should be published.", href: "/accounts", icon: Link2 },
     { done: progress.postsCreated > 0, title: "Create and review content", description: "Generate a weekly plan and keep human review in the loop.", href: "/generate-week", icon: Sparkles },
   ];
