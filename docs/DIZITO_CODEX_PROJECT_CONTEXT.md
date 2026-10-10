@@ -672,3 +672,7 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 - User verified that the Dizito listing maps to external product `2800` and the local listing/publish-attempt records show the reconciled success state.
 - Do not retry publishing this product. Reuse its external ID; verify idempotent replay behavior separately before declaring duplicate-prevention fully tested.
 - Production Neon schema was updated and inspected: `publish_idempotency_key`, `unique_channel_publish_idempotency`, and `commerce_publish_attempts` plus required indexes/constraints are present.
+
+
+### 2026-10-10 — Public positioning proposal
+The marketing homepage is being revised on branch `v1/ai-commerce-positioning` to communicate Dizito's long-term commerce + marketing operating-system direction rather than only social scheduling. Public copy distinguishes current Shopify/WooCommerce work from Amazon/Flipkart/Meesho in-progress work and keeps AI-assisted strategy/content marked as coming soon while AI spend is disabled. This is a proposed homepage/UI change, not provider-readiness evidence; merge, CI, and desktop/mobile browser verification remain pending. LinkedIn's current-build publishing verification also remains open.

@@ -1343,3 +1343,12 @@ Important rollout boundary:
 - Reconciliation returned `published`; do not retry or republish this item. Treat WooCommerce product `2800` as the existing external product to avoid duplicate creation.
 - Production Neon schema was updated and verified: `product_listings.publish_idempotency_key`, the channel-scoped unique idempotency index, and `commerce_publish_attempts` with status constraints and indexes are present.
 - The user-verified listing link and success state are recorded; retry/replay behavior and broader end-to-end CI/browser coverage remain separate verification items.
+
+
+## 2026-10-10 — Homepage positioning update proposed (branch; not merged)
+
+- Proposed public positioning: Dizito is a commerce + marketing operating system, not only a social media scheduler.
+- Homepage now introduces a clear four-stage operating loop and presents Shopify/WooCommerce separately from Amazon/Flipkart/Meesho in-progress work.
+- AI is described as coming soon where relevant; manual marketing workflows and explicit review/approval are not represented as AI-dependent.
+- Branch: `v1/ai-commerce-positioning`. No merge yet. CI and browser/mobile QA are pending.
+- Provider status remains mixed: WooCommerce product ID 2800 was reconciled as published and user-verified; Shopify is documented as the most mature integration; Pinterest Standard Access is granted but current-build live verification is pending; Meta and Google Business remain external approval/access dependencies; Flipkart controlled provider verification remains pending; Meesho is blocked on authoritative partner/API access; Amazon has catalog/offer foundations rather than complete marketplace readiness. LinkedIn's current-build publishing status needs direct verification before making an unconditional public claim.

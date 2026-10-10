@@ -15,11 +15,11 @@ import {
 import { authOptions } from "@/lib/auth";
 
 const features = [
-  { icon: Layers3, title: "Instagram Publishing", tone: "violet" },
-  { icon: Layers3, title: "Facebook Publishing", tone: "cyan" },
-  { icon: Layers3, title: "LinkedIn Publishing", tone: "violet" },
-  { icon: Layers3, title: "Pinterest Publishing", tone: "lime" },
-  { icon: Layers3, title: "Google Business Publishing", tone: "cyan" },
+  { icon: Layers3, title: "Social Content Planning", tone: "violet" },
+  { icon: Layers3, title: "Campaign & Content Workflow", tone: "cyan" },
+  { icon: Layers3, title: "Product Catalog Management", tone: "violet" },
+  { icon: Layers3, title: "Commerce Channel Connections", tone: "lime" },
+  { icon: Layers3, title: "Publishing & Scheduling", tone: "cyan" },
   { icon: Clapperboard, title: "Bulk CSV Upload", tone: "violet" },
   { icon: Users, title: "Multi Account Support", tone: "lime" },
   { icon: CalendarClock, title: "Calendar Scheduling", tone: "cyan" },
@@ -30,18 +30,18 @@ const features = [
 const steps = [
   {
     number: "01",
-    title: "Connect Accounts",
-    description: "Connect your Instagram, Facebook, LinkedIn, Pinterest and Google Business accounts securely.",
+    title: "Connect your business",
+    description: "Add your business context, products and the social or commerce channels you currently use.",
   },
   {
     number: "02",
-    title: "Create Content",
-    description: "Create one post and select multiple social accounts.",
+    title: "Plan your marketing",
+    description: "Organize campaigns, offers and content in a repeatable weekly workflow. AI-assisted features are coming soon; manual planning remains available.",
   },
   {
     number: "03",
-    title: "Schedule & Publish",
-    description: "Schedule once and let Dizito publish automatically.",
+    title: "Review, publish and improve",
+    description: "Review content before it goes live, manage supported channel workflows and use available business-impact evidence to guide the next cycle.",
   },
 ];
 
@@ -60,13 +60,13 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl text-center">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white/85 px-4 py-2 text-xs font-bold tracking-wide text-violet-700 shadow-sm sm:text-sm">
             <Sparkles size={15} />
-            The social media scheduler for every channel
+            The operating system for modern commerce
           </div>
           <h1 className="mx-auto mt-7 max-w-5xl text-4xl font-extrabold leading-[1.08] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
-            Your social media calendar, all in one place.
+            Run your commerce and marketing from one connected workspace.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-xl sm:leading-8">
-            Schedule posts for Instagram, Facebook, LinkedIn, Pinterest and Google Business from one dashboard. Create drafts, plan your week and publish without switching tools.
+            Bring your business context, product catalog, marketing workflow and connected sales channels together. Plan campaigns, prepare content, manage product listings and learn what is working—all from one place. AI capabilities are being introduced progressively, with practical manual workflows available today.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href={ctaHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c7f36b] px-7 py-3 text-sm font-extrabold text-slate-950 shadow-[0_8px_24px_rgba(159,218,53,0.22)] transition hover:-translate-y-0.5 hover:bg-[#b8e95a]">
@@ -130,11 +130,60 @@ export default async function HomePage() {
 
       <section className="border-y border-slate-200/80 bg-white/75 px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-6xl">
-          <p className="text-center text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">One calendar for your social channels</p>
+          <p className="text-center text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">One workspace for connected business workflows</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             {["Instagram", "Facebook", "LinkedIn", "Pinterest", "Google Business"].map((channel) => (
               <span key={channel} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">{channel}</span>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 py-16 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">The Dizito operating loop</p>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-5xl">From business context to better decisions.</h2>
+            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">A clear process for doing the work—not another disconnected tool to manage.</p>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { number: "01", title: "Set your foundation", body: "Keep business details, products, offers and media organised." },
+              { number: "02", title: "Plan the work", body: "Build campaigns and a weekly content plan using available manual workflows." },
+              { number: "03", title: "Review and distribute", body: "Prepare platform-specific content and approve it before publishing." },
+              { number: "04", title: "Learn and improve", body: "Review available activity and business-impact evidence to inform the next cycle." },
+            ].map((item) => (
+              <article key={item.number} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <span className="text-xs font-extrabold tracking-widest text-violet-700">{item.number}</span>
+                <h3 className="mt-4 text-lg font-extrabold">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/70 p-5 sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-extrabold text-slate-900">AI, with clear human control</p>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">AI-powered strategy and content generation are marked as coming soon while the no-AI-cost workflow stays usable. Review and approval remain explicit steps—not hidden automation.</p>
+              </div>
+              <Link href="/how-it-works" className="inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-violet-700 hover:text-violet-900">Explore the workflow <ArrowRight size={16} /></Link>
+            </div>
+          </div>
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-900">Commerce connections</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Build around the stores you use today. Availability and publishing readiness depend on each provider’s access and verification status.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["Shopify", "WooCommerce"].map((channel) => (
+                  <span key={channel} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">{channel}</span>
+                ))}
+                {["Amazon", "Flipkart", "Meesho"].map((channel) => (
+                  <span key={channel} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">{channel} · in progress</span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -178,9 +227,9 @@ export default async function HomePage() {
       <section className="px-5 py-20 sm:px-8 sm:py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">Made for social media workflows</p>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Keep every channel on schedule.</h2>
-            <p className="mt-5 leading-7 text-slate-600">Whether you publish on your own or coordinate content for a team, Dizito keeps drafts, schedules and channels together in one place.</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">Built for commerce and marketing teams</p>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Keep commerce and marketing moving together.</h2>
+            <p className="mt-5 leading-7 text-slate-600">Organize products, campaigns, content and connected channels in one place—with clear review steps and a workflow that can expand as your business grows.</p>
             <Link href="/how-it-works" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-violet-700 hover:text-violet-900">See how it works <ArrowRight size={16} /></Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -191,8 +240,8 @@ export default async function HomePage() {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex size-11 items-center justify-center rounded-xl bg-lime-100 text-slate-900"><Users size={21} /></div>
-              <h3 className="mt-4 font-extrabold">For social teams</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Coordinate channels and content without losing sight of the plan.</p>
+              <h3 className="mt-4 font-extrabold">For commerce teams</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Bring product listings and marketing activity into a more organised operating workflow.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:col-span-2">
               <div className="flex size-11 items-center justify-center rounded-xl bg-teal-50 text-teal-700"><ShieldCheck size={21} /></div>
@@ -207,8 +256,8 @@ export default async function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-7 overflow-hidden rounded-[1.75rem] bg-[#c7f36b] px-7 py-10 sm:px-12 sm:py-14 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-700">Get your publishing week organized</p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-4xl">Your next week of social content starts here.</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-700 sm:text-base">Bring your social channels together and keep drafts, scheduled posts and publishing in one place.</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-4xl">Build a more organised way to run your business online.</h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-700 sm:text-base">Connect business context, products, content and supported channels in a workflow designed to grow with your business.</p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
             <Link href={ctaHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#171923] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-slate-800">{ctaText}<ArrowRight size={16} /></Link>
