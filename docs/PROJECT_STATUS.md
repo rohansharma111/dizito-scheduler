@@ -1352,3 +1352,11 @@ Important rollout boundary:
 - AI is described as coming soon where relevant; manual marketing workflows and explicit review/approval are not represented as AI-dependent.
 - Branch: `v1/ai-commerce-positioning`. No merge yet. CI and browser/mobile QA are pending.
 - Provider status remains mixed: WooCommerce product ID 2800 was reconciled as published and user-verified; Shopify is documented as the most mature integration; Pinterest Standard Access is granted but current-build live verification is pending; Meta and Google Business remain external approval/access dependencies; Flipkart controlled provider verification remains pending; Meesho is blocked on authoritative partner/API access; Amazon has catalog/offer foundations rather than complete marketplace readiness. LinkedIn's current-build publishing status needs direct verification before making an unconditional public claim.
+
+
+## 2026-10-10 — Marketing Workspace guided entry point on main
+
+- Homepage positioning PR #64 was merged as `368cc392697112651a10c521f3530f45c048f8d3`; PR Validate and Quality Checks both passed on its head commit.
+- Added `/marketing-workspace` to address navigation/process confusion. It explains the recommended journey in plain language and links to Business Brain, weekly planning, content review, connected channels, and Business Impact. Added direct shortcuts to products, commerce channels, and the product guide.
+- Sidebar now exposes Marketing Workspace as the first START HERE destination; AI WORKSPACE was renamed PLAN & CREATE, and ASSETS & DISTRIBUTION was renamed PUBLISH & MANAGE.
+- Latest workspace/sidebar commits are source-reviewed only. Run CI, lint/typecheck/build, and responsive browser QA before marking the new guided experience verified. No backend contracts or provider behavior changed.
