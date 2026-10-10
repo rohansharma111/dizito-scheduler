@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import LogoutButton from "./LogoutButton";
 import { hasFeature } from "@/lib/plans";
-import { LayoutDashboard, Upload, FileText, FilePen, Link2, Settings, PanelLeftClose, PanelLeftOpen, X, Crown, Activity, BarChart3, CreditCard, Package, Warehouse, ShoppingBag, Store, Sparkles, Send, Brain, Target } from "lucide-react";
+import { LayoutDashboard, Upload, FileText, FilePen, Link2, Settings, PanelLeftClose, PanelLeftOpen, X, Crown, Activity, BarChart3, CreditCard, Package, Warehouse, ShoppingBag, Store, Sparkles, Send, Brain, Target, Compass } from "lucide-react";
 
 type SidebarSection = { title:string; items:{href:string;label:string;icon:any;premium?:boolean}[] };
 
@@ -14,8 +14,8 @@ export default function SidebarClient({ user, plan, mobileOpen=false, onClose }:
   useEffect(()=>{ const saved=localStorage.getItem("sidebar-collapsed"); if(saved) setCollapsed(JSON.parse(saved)); },[]);
   function toggleSidebar(){ const next=!collapsed; setCollapsed(next); localStorage.setItem("sidebar-collapsed",JSON.stringify(next)); }
   const sections:SidebarSection[]=[
-    {title:"COMMAND",items:[{href:"/dashboard",label:"Dashboard",icon:LayoutDashboard}]},
-    {title:"AI WORKSPACE",items:[
+    {title:"START HERE",items:[{href:"/marketing-workspace",label:"Marketing Workspace",icon:Compass},{href:"/dashboard",label:"Dashboard",icon:LayoutDashboard}]},
+    {title:"PLAN & CREATE",items:[
       {href:"/business-brain",label:"Business Brain",icon:Brain},
       {href:"/onboarding",label:"Business Setup",icon:Settings},
       {href:"/ai-strategist",label:"AI Strategist",icon:Sparkles},
@@ -23,7 +23,7 @@ export default function SidebarClient({ user, plan, mobileOpen=false, onClose }:
       {href:"/marketing-content",label:"Content Review",icon:Send},
       {href:"/ai-optimizer",label:"Optimizer",icon:Sparkles},
     ]},
-    {title:"ASSETS & DISTRIBUTION",items:[
+    {title:"PUBLISH & MANAGE",items:[
       {href:"/media",label:"Media",icon:Upload},
       {href:"/accounts",label:"Channels & Accounts",icon:Link2},
       {href:"/posts",label:"Posts",icon:FileText},
