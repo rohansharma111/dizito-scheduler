@@ -250,10 +250,27 @@ export default function CommerceChannelsPage() {
     <DizitoPage className="px-4 sm:px-6">
       <DizitoPageHeader eyebrow="Commerce" title="Commerce channels" description="Connect sales channels without changing your canonical Dizito product catalog." />
 
-      <DizitoCard className="mb-5">
-        <h2 className="text-xl font-semibold">Connect Shopify</h2>
+      <div className="mb-5 rounded-3xl border border-violet-100 bg-gradient-to-r from-violet-50 via-white to-lime-50/60 p-5 sm:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Sales channels</p>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Bring your storefronts into Dizito</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Choose where you sell. Connect a store or marketplace below, then manage your product listings and publishing workflows from one place.</p>
+          </div>
+          <div className="shrink-0 rounded-2xl border border-white bg-white/80 px-4 py-3 shadow-sm">
+            <p className="text-xs font-semibold text-slate-500">Connected channels</p>
+            <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-950">{channels.filter((channel) => channel.status === "active").length}<span className="ml-1 text-sm font-medium text-slate-500">active</span></p>
+          </div>
+        </div>
+      </div>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div><h2 className="text-lg font-bold tracking-tight text-slate-950">Available connections</h2><p className="mt-1 text-sm text-slate-500">Pick a platform to see its setup steps.</p></div>
+        <span className="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 sm:inline-flex">3 integrations</span>
+      </div>
+      <div className="mb-5 grid gap-4 md:grid-cols-2">\n      <DizitoCard className="group border border-slate-200/80 bg-gradient-to-br from-white to-emerald-50/40 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+        <div className="mb-4 flex items-start gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-lg font-black text-emerald-800">S</div><div className="min-w-0 flex-1"><div className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Online store</div><h2 className="text-lg font-bold tracking-tight text-slate-950">Shopify</h2><p className="mt-1 text-xs text-slate-500">Recommended for Shopify storefronts</p></div></div>
         <p className="text-sm text-gray-600 mt-1">
-          Enter the store&apos;s myshopify.com domain to begin Shopify authorization.
+          Connect your Shopify store securely. You’ll be redirected to authorize access.
         </p>
 
         <form onSubmit={connectShopify} className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -264,14 +281,28 @@ export default function CommerceChannelsPage() {
             className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             autoComplete="url"
           />
-          <button type="submit" className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">
+          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2">
             Connect Shopify
           </button>
         </form>
       </DizitoCard>
 
-      <DizitoCard className="mb-5">
-        <h2 className="text-xl font-semibold">Connect WooCommerce</h2>
+      <DizitoCard className="group border border-slate-200/80 bg-gradient-to-br from-white to-amber-50/50 shadow-sm transition hover:border-amber-200 hover:shadow-md">
+        <div className="mb-4 flex items-start gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-lg font-black text-amber-900">a</div><div className="min-w-0 flex-1"><div className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-800">Marketplace</div><h2 className="text-lg font-bold tracking-tight text-slate-950">Amazon India</h2><p className="mt-1 text-xs text-slate-500">Seller Central authorization</p></div></div>
+        <p className="text-sm text-gray-600 mt-1">
+          Link your seller account through Amazon’s official authorization flow. Product and offer workflows remain separate.
+        </p>
+        <button
+          type="button"
+          onClick={connectAmazon}
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2"
+        >
+          Connect Amazon India
+        </button>
+      </DizitoCard>
+
+      </div>\n      <DizitoCard className="mb-5 border border-slate-200/80 bg-gradient-to-br from-white to-violet-50/40 shadow-sm">
+        <div className="mb-3 flex items-start gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-lg font-black text-violet-800">W</div><div className="min-w-0 flex-1"><div className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">WordPress store</div><h2 className="text-lg font-bold tracking-tight text-slate-950">WooCommerce</h2><p className="mt-1 text-xs text-slate-500">Guided setup · test store required</p></div></div>
         <p className="mt-1 text-sm text-gray-600">
           Connect a dedicated staging/test store. WooCommerce REST API keys are created in your store admin, so this guided flow opens the right settings page before you return here to verify the connection.
         </p>
@@ -322,20 +353,6 @@ export default function CommerceChannelsPage() {
         </form>
         {wooSettingsOpened && <p className="mt-3 text-sm text-slate-600">WooCommerce settings opened in a new tab. After creating your Read/Write key, return here and enter both credentials.</p>}
         {wooMessage && <div role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{wooMessage}</div>}
-      </DizitoCard>
-
-      <DizitoCard className="mb-5">
-        <h2 className="text-xl font-semibold">Connect Amazon India</h2>
-        <p className="text-sm text-gray-600 mt-1">
-          Authorize Dizito to access your Amazon Seller Central account through SP-API.
-        </p>
-        <button
-          type="button"
-          onClick={connectAmazon}
-          className="mt-4 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
-        >
-          Connect Amazon India
-        </button>
       </DizitoCard>
 
       {catalogChannelId && (
