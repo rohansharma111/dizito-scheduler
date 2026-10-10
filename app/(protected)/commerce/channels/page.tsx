@@ -267,7 +267,8 @@ export default function CommerceChannelsPage() {
         <div><h2 className="text-lg font-bold tracking-tight text-slate-950">Available connections</h2><p className="mt-1 text-sm text-slate-500">Pick a platform to see its setup steps.</p></div>
         <span className="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 sm:inline-flex">3 integrations</span>
       </div>
-      <div className="mb-5 grid gap-4 md:grid-cols-2">\n      <DizitoCard className="group border border-slate-200/80 bg-gradient-to-br from-white to-emerald-50/40 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+      <div className="mb-5 grid gap-4 md:grid-cols-2">
+      <DizitoCard className="group border border-slate-200/80 bg-gradient-to-br from-white to-emerald-50/40 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
         <div className="mb-4 flex items-start gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-lg font-black text-emerald-800">S</div><div className="min-w-0 flex-1"><div className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Online store</div><h2 className="text-lg font-bold tracking-tight text-slate-950">Shopify</h2><p className="mt-1 text-xs text-slate-500">Recommended for Shopify storefronts</p></div></div>
         <p className="text-sm text-gray-600 mt-1">
           Connect your Shopify store securely. You’ll be redirected to authorize access.
@@ -301,7 +302,8 @@ export default function CommerceChannelsPage() {
         </button>
       </DizitoCard>
 
-      </div>\n      <DizitoCard className="mb-5 border border-slate-200/80 bg-gradient-to-br from-white to-violet-50/40 shadow-sm">
+      </div>
+      <DizitoCard className="mb-5 border border-slate-200/80 bg-gradient-to-br from-white to-violet-50/40 shadow-sm">
         <div className="mb-3 flex items-start gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-lg font-black text-violet-800">W</div><div className="min-w-0 flex-1"><div className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">WordPress store</div><h2 className="text-lg font-bold tracking-tight text-slate-950">WooCommerce</h2><p className="mt-1 text-xs text-slate-500">Guided setup · test store required</p></div></div>
         <p className="mt-1 text-sm text-gray-600">
           Connect a dedicated staging/test store. WooCommerce REST API keys are created in your store admin, so this guided flow opens the right settings page before you return here to verify the connection.
