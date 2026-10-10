@@ -451,75 +451,87 @@ export default function CommerceChannelsPage() {
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Connected Commerce Channels</h2>
+      <section aria-labelledby="connected-commerce-heading" className="mt-8">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">Your setup</p>
+            <h2 id="connected-commerce-heading" className="mt-1 text-xl font-extrabold tracking-tight text-slate-950">Connected commerce channels</h2>
+            <p className="mt-1 text-sm text-slate-500">Manage existing connections and run available access checks.</p>
+          </div>
+          {!loading && channels.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-800">{channels.filter((channel) => channel.status === "active").length} active</span>
+              {channels.some((channel) => channel.status !== "active") && <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-800">{channels.filter((channel) => channel.status !== "active").length} need attention</span>}
+            </div>
+          )}
+        </div>
 
-        {loading && <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 text-sm text-slate-500" role="status">Loading commerce channels…</div>}
+        {loading && <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500" role="status">Loading your commerce connections…</div>}
 
         {!loading && channels.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">No commerce channels connected yet. Connect WooCommerce, Shopify, or Amazon above to get started.</div>
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center sm:p-8">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl shadow-sm" aria-hidden="true">↗</div>
+            <h3 className="mt-3 text-base font-bold text-slate-900">Your commerce channels will appear here</h3>
+            <p className="mx-auto mt-1 max-w-lg text-sm leading-6 text-slate-600">Choose Shopify, Amazon India or WooCommerce above to get started. Once linked, you’ll see its connection status and the available management actions here.</p>
+          </div>
         )}
 
-        {!loading && channels.map((channel) => {
-          const active = channel.status === "active";
-          const updating = updatingId === channel.id;
-          const verifying = verifyingId === channel.id;
-          const amazon = channel.provider === "amazon";
-          const woocommerce = channel.provider === "woocommerce";
+        {!loading && channels.length > 0 && (
+          <div className="grid gap-3">
+            {channels.map((channel) => {
+              const active = channel.status === "active";
+              const updating = updatingId === channel.id;
+              const verifying = verifyingId === channel.id;
+              const amazon = channel.provider === "amazon";
+              const woocommerce = channel.provider === "woocommerce";
+              const providerName = amazon ? "Amazon India" : woocommerce ? "WooCommerce" : channel.provider === "shopify" ? "Shopify" : channel.provider;
+              const providerStyle = amazon ? "bg-amber-100 text-amber-900" : woocommerce ? "bg-violet-100 text-violet-900" : channel.provider === "shopify" ? "bg-emerald-100 text-emerald-900" : "bg-slate-100 text-slate-800";
 
-          return (
-            <div key={channel.id} className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-semibold">{channel.name}</div>
-                  <div className="text-sm text-gray-600 capitalize">{channel.provider}</div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-sm">{active ? "🟢 Active" : channel.status}</div>
-                  {woocommerce && active && (
-                    <button
-                      type="button"
-                      onClick={() => void verifyWooCommerce(channel)}
-                      disabled={verifying || updating}
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      {verifying ? "Verifying..." : "Verify & read products"}
-                    </button>
-                  )}
-                  {channel.provider === "woocommerce" && active && (
-                    <button
-                      type="button"
-                      onClick={() => void loadWooCommerceCatalog(channel, 1)}
-                      disabled={catalogLoading}
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      {catalogLoading && catalogChannelId === channel.id ? "Loading catalog..." : "Load read-only catalog"}
-                    </button>
-                  )}
-                  {amazon && active && (
-                    <button
-                      type="button"
-                      onClick={() => void verifyAmazon(channel)}
-                      disabled={verifying || updating}
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      {verifying ? "Verifying..." : "Verify"}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => void setChannelStatus(channel, active ? "inactive" : "active")}
-                    disabled={updating || verifying}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    {updating ? "Updating..." : active ? "Disconnect" : "Reconnect"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              return (
+                <article key={channel.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 sm:p-5">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base font-extrabold ${providerStyle}`} aria-hidden="true">{amazon ? "a" : woocommerce ? "W" : channel.provider === "shopify" ? "S" : providerName.slice(0, 1).toUpperCase()}</div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="break-words text-base font-bold text-slate-950">{channel.name}</h3>
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${active ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-amber-500"}`} aria-hidden="true" />
+                            {active ? "Connection enabled" : "Inactive"}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">{providerName}{channel.external_account_id ? ` · Account ID ${channel.external_account_id}` : ""}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">{active ? "Dizito has this channel saved as active. Use the access check to confirm provider access where available." : "This connection is currently inactive. Re-enable it only if you want to use it again."}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 xl:max-w-[620px] xl:justify-end">
+                      {woocommerce && active && (
+                        <button type="button" onClick={() => void verifyWooCommerce(channel)} disabled={verifying || updating} className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-2.5 text-sm font-semibold text-violet-900 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50">
+                          {verifying ? "Checking access…" : "Check store access"}
+                        </button>
+                      )}
+                      {woocommerce && active && (
+                        <button type="button" onClick={() => void loadWooCommerceCatalog(channel, 1)} disabled={catalogLoading || updating} className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+                          {catalogLoading && catalogChannelId === channel.id ? "Loading…" : "View product catalog"}
+                        </button>
+                      )}
+                      {amazon && active && (
+                        <button type="button" onClick={() => void verifyAmazon(channel)} disabled={verifying || updating} className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50">
+                          {verifying ? "Checking access…" : "Check seller access"}
+                        </button>
+                      )}
+                      <button type="button" onClick={() => void setChannelStatus(channel, active ? "inactive" : "active")} disabled={updating || verifying} className={`rounded-xl px-3.5 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" : "bg-violet-700 text-white hover:bg-violet-800"}`}>
+                        {updating ? "Updating…" : active ? "Disconnect" : "Enable connection"}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </DizitoPage>
   );
 }
