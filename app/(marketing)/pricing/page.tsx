@@ -81,7 +81,8 @@ export default async function PricingPage() {
 
       <section aria-label="Pricing plans" className="mx-auto mt-10 grid max-w-6xl items-stretch gap-5 md:mt-14 md:grid-cols-3 md:gap-6">
         {planRows.map((plan: any) => {
-          const isCurrent = currentPlan === plan.code || (currentPlan === "creator" && ["growth", "pro"].includes(plan.code));
+          const normalizedCurrentPlan = currentPlan === "creator" ? "growth" : currentPlan;
+          const isCurrent = normalizedCurrentPlan === plan.code;
           const paid = plan.code !== "free";
           const price = Math.round(Number(plan.price_minor) / 100);
           const recommended = plan.code === "growth";
