@@ -7,7 +7,7 @@ import {
   getFlipkartOAuthEnvironment,
   verifyOAuthState,
 } from "@/lib/platforms/flipkart/auth";
-import { createCommerceChannel, getCommerceChannelByExternalAccount, updateCommerceChannel } from "@/lib/commerce/channels/service";
+import { createCommerceChannel, getCommerceChannelByExternalAccount, getCommerceChannelCapacity, updateCommerceChannel } from "@/lib/commerce/channels/service";
 import { saveFlipkartCredentials } from "@/lib/platforms/flipkart/credentials";
 
 function getCookieValue(request: Request, name: string) {
@@ -67,6 +67,13 @@ export async function GET(request: Request) {
       "flipkart",
       "flipkart",
     );
+
+    if (!existingChannel) {
+      const capacity = await getCommerceChannelCapacity(userId);
+      if (!capacity.allowed) {
+        return redirectWithError(request, "Commerce channel limit reached (" + capacity.used + "/" + capacity.limit + "). Reconnect an existing store or compare plans; existing connections were not changed.");
+      }
+    }
 
     const channel = existingChannel
       ? await updateCommerceChannel(String(existingChannel.id), userId, {
