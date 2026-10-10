@@ -75,7 +75,7 @@ export default async function PricingPage() {
           Plans built around the <span className="text-violet-700">Dizito operating loop.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-          Business Brain, strategy, creation, weekly planning, optimization and commerce capabilities scale with your plan.
+          Publishing, planning and commerce capabilities scale with your plan. AI-powered generation is coming soon while we prepare the funded service.
         </p>
       </section>
 
@@ -120,7 +120,7 @@ export default async function PricingPage() {
                 {[
                   { label: `${plan.social} social channels`, included: true },
                   { label: `${plan.publishing.toLocaleString("en-IN")} publishing actions / month`, included: true },
-                  { label: `${plan.ai.toLocaleString("en-IN")} AI actions / month`, included: true },
+                  { label: "AI-powered generation (coming soon)", included: false },
                   { label: "Business Brain", included: true },
                   { label: "Strategy + Generate My Week", included: plan.code !== "free" },
                   { label: "Optimizer", included: plan.code === "pro" },
