@@ -244,6 +244,20 @@ export default function AccountsPage() {
         </div>
       </DizitoCard>
 
+      <section aria-labelledby="connected-social-heading" className="mt-7">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">Your setup</p>
+            <h2 id="connected-social-heading" className="mt-1 text-xl font-extrabold tracking-tight text-slate-950">Connected social accounts</h2>
+            <p className="mt-1 text-sm text-gray-500">Check authorization health and manage the accounts available for publishing.</p>
+          </div>
+          {accounts.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-800">{accounts.filter((account) => account.status === "connected").length} connected</span>
+              {accounts.some((account) => account.status !== "connected") && <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-900">{accounts.filter((account) => account.status !== "connected").length} need attention</span>}
+            </div>
+          )}
+        </div>
       {accounts.length === 0 ? (
         <DizitoState
           kind="empty"
@@ -305,6 +319,7 @@ export default function AccountsPage() {
           })}
         </div>
       )}
+      </section>
     </DizitoPage>
   );
 }
