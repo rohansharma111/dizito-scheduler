@@ -1156,3 +1156,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 
 - The setup checklist's “Add goals, products & offers” step previously treated any created post as proof that business context was configured. It now checks the actual Business Brain goals/products/offers arrays and validates those response fields as arrays when present.
 - Commit: `1f8e9f5ffe04b4c06327fcab702a15d9f180bd4b`. This is a small source-level correctness fix; CI and browser verification are pending.
+
+
+## 2026-10-10 — Commerce and social channel connection UI organization (main)
+
+- Reorganized the commerce connection surface with a clearer sales-channel introduction, active-connection count, and platform-specific cards for Shopify, Amazon India, and WooCommerce. Each provider now has a distinct visual identity, clear channel type, and more specific authorization/setup language. WooCommerce retains its existing staged two-step credential flow and explicit test-store confirmation; provider endpoints and connection behavior are unchanged.
+- Replaced generic social “Connect Meta / LinkedIn / Pinterest / Google Business” buttons with branded-feeling provider tiles, platform-specific color accents, concise descriptions (Meta explicitly covers Instagram and Facebook), keyboard focus states, and clearer authorization cues. Account limit enforcement and OAuth/reconnect URLs remain unchanged.
+- Commits: `01735f6e` (commerce card styling), `c660783d` (social connection tiles), `c59744cd` (commerce markup correction).
+- Verification boundary: source-level markup reviewed; no browser screenshot/device QA has been performed in this session. Check the latest main Validate and Quality Checks runs before considering this UI pass CI-verified. Provider availability/approval states have not been changed or overstated.
