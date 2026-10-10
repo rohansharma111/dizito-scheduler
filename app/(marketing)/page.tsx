@@ -130,7 +130,7 @@ export default async function HomePage() {
 
       <section className="border-y border-slate-200/80 bg-white/75 px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-6xl">
-          <p className="text-center text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">One calendar for your social channels</p>
+          <p className="text-center text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">One workspace for connected business workflows</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             {["Instagram", "Facebook", "LinkedIn", "Pinterest", "Google Business"].map((channel) => (
               <span key={channel} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">{channel}</span>
@@ -167,6 +167,22 @@ export default async function HomePage() {
                 <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">AI-powered strategy and content generation are marked as coming soon while the no-AI-cost workflow stays usable. Review and approval remain explicit steps—not hidden automation.</p>
               </div>
               <Link href="/how-it-works" className="inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-violet-700 hover:text-violet-900">Explore the workflow <ArrowRight size={16} /></Link>
+            </div>
+          </div>
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-900">Commerce connections</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Build around the stores you use today. Availability and publishing readiness depend on each provider’s access and verification status.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["Shopify", "WooCommerce"].map((channel) => (
+                  <span key={channel} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">{channel}</span>
+                ))}
+                {["Amazon", "Flipkart", "Meesho"].map((channel) => (
+                  <span key={channel} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">{channel} · in progress</span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -211,9 +227,9 @@ export default async function HomePage() {
       <section className="px-5 py-20 sm:px-8 sm:py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">Made for social media workflows</p>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Keep every channel on schedule.</h2>
-            <p className="mt-5 leading-7 text-slate-600">Whether you publish on your own or coordinate content for a team, Dizito keeps drafts, schedules and channels together in one place.</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">Built for commerce and marketing teams</p>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Keep commerce and marketing moving together.</h2>
+            <p className="mt-5 leading-7 text-slate-600">Organize products, campaigns, content and connected channels in one place—with clear review steps and a workflow that can expand as your business grows.</p>
             <Link href="/how-it-works" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-violet-700 hover:text-violet-900">See how it works <ArrowRight size={16} /></Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -224,8 +240,8 @@ export default async function HomePage() {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex size-11 items-center justify-center rounded-xl bg-lime-100 text-slate-900"><Users size={21} /></div>
-              <h3 className="mt-4 font-extrabold">For social teams</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Coordinate channels and content without losing sight of the plan.</p>
+              <h3 className="mt-4 font-extrabold">For commerce teams</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Bring product listings and marketing activity into a more organised operating workflow.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:col-span-2">
               <div className="flex size-11 items-center justify-center rounded-xl bg-teal-50 text-teal-700"><ShieldCheck size={21} /></div>
