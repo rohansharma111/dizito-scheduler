@@ -1123,3 +1123,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - User confirmed (1) the local listing is linked to product `2800`, and (2) the local listing and publish-attempt records reflect the reconciled successful state.
 - Do not republish or retry this item; use the reconciled external ID to prevent duplicate creation. Idempotent replay behavior still needs separate verification.
 - Production Neon schema now contains `product_listings.publish_idempotency_key`, `unique_channel_publish_idempotency`, and `commerce_publish_attempts` with its constraints and indexes; production schema inspection verified these objects.
+
+
+## 2026-10-10 — AI Commerce Operating System public positioning (branch; verification pending)
+
+- Branch: `v1/ai-commerce-positioning`.
+- Updated the marketing homepage hero and feature language from a social-scheduler-only message to a broader commerce + marketing operating workspace.
+- Added a visible operating loop: business foundation → marketing planning → review/distribution → learning from available business-impact evidence.
+- Added a commerce connection section that distinguishes Shopify/WooCommerce from Amazon/Flipkart/Meesho in-progress work. Copy explicitly says availability/readiness depends on provider access and verification; it does not claim every marketplace is live.
+- Clarified that AI-assisted features are coming soon while manual workflows remain usable and human review stays explicit.
+- This is a marketing-positioning/UI change only. It does not enable AI, change provider integrations, or certify social/commerce publishing readiness. Build, lint, tests, and desktop/mobile visual QA are still required; broader in-app marketing workflow organisation remains a follow-up workstream.
