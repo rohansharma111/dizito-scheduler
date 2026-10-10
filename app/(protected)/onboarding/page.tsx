@@ -95,8 +95,8 @@ export default function OnboardingPage() {
     <DizitoPage>
       <DizitoPageHeader
         eyebrow="Business setup"
-        title="Build the context that makes AI useful."
-        description="Dizito gets better when it understands your business, your goals, your assets and where you want to show up."
+        title="Set up your business for better marketing."
+        description="Add your business details, goals, products and channels once so your marketing work starts with the right context."
         action={<DizitoBadge tone={done === steps.length ? "success" : "ai"}>{done}/{steps.length} ready</DizitoBadge>}
       />
       {error && (
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-[#c7f36b]"><Sparkles size={21} /></div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-black">Your setup should end in a useful weekly loop.</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Once the basics are ready, let the Strategist turn them into a plan you can review and approve.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">Once the basics are ready, build a weekly plan you can edit and approve. AI-powered strategy is coming soon; manual planning is available now.</p>
           </div>
           <Link href="/generate-week"><DizitoButton>Generate a week <ArrowRight size={15} /></DizitoButton></Link>
         </div>
