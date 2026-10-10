@@ -691,3 +691,8 @@ The new Marketing Workspace links first-time users to the existing data-backed `
 
 ### 2026-10-10 — Setup progress accuracy fix
 The onboarding checklist no longer counts a created post as proof that goals/products/offers are configured. It checks the corresponding Business Brain collections. Commit `1f8e9f5ffe04b4c06327fcab702a15d9f180bd4b`; verification pending.
+
+
+## 2026-10-10 — Channel connection UI notes
+
+Commerce channel connection UI now uses platform-specific cards under a shared sales-channel section; social account setup uses differentiated provider tiles. Treat these as presentation and information-architecture changes only. OAuth routes, provider adapters, entitlements/account limits, and WooCommerce staging guard are unchanged. Browser/mobile visual QA remains required.
