@@ -8,10 +8,10 @@ const steps = [
     number: "01",
     title: "Set up your business",
     description: "Add your business details, goals, products and offers. This gives your marketing work useful context.",
-    href: "/business-brain",
-    action: "Review business setup",
+    href: "/onboarding",
+    action: "Open setup checklist",
     icon: Brain,
-    detail: "Start here if this is your first visit.",
+    detail: "The setup checklist shows which foundations are ready and what is still missing.",
   },
   {
     number: "02",
@@ -66,8 +66,8 @@ export default function MarketingWorkspacePage() {
         <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
           Dizito brings your business context, marketing planning, content review, publishing and results into one workflow. Follow these steps in order the first time. After setup, return here whenever you need a clear next action.
         </p>
-        <Link href="/business-brain" className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#c7f36b] px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-[#b8e95a]">
-          Start with your business setup <ArrowRight size={17} />
+        <Link href="/onboarding" className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#c7f36b] px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-[#b8e95a]">
+          Start with the setup checklist <ArrowRight size={17} />
         </Link>
       </header>
 
