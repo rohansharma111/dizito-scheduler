@@ -1219,3 +1219,10 @@ Never convert “implemented” to “verified” or “production-ready” with
 
 - User confirmed WooCommerce has already been verified. Updated the public homepage badge from “WooCommerce · Connect a test store” to “WooCommerce · Connect your store” and kept it in the available/green group, consistent with the completed verification. No provider code, store credentials, or live publishing state changed.
 - Commit on `main`: `b667cc60989e25439420df9adedcae56aa281d5c`. CI status pending.
+
+
+## 2026-10-10 — Product details mobile layout cleanup
+
+- Reorganized `/products/[id]` into a compact product summary, a dedicated Store connections section, and Product assets section. Store/provider tools are now collapsed into accessible native disclosure panels so their long forms and catalog lists do not all stack open on a narrow screen. Product images are open by default; other channel and variants panels open on demand.
+- Added clearer product summary cards for brand, category, status and variant count; retained edit navigation and all existing provider/media/variant components, handlers and server-side `getProductDetails(id, authenticatedUserId)` ownership-scoped load.
+- No APIs, schema, provider operations, publishing behavior or data changed. Direct-main commits: `359b1ec620b17079535ae574242029390e6a43fe`, `9db496731b9bd28e892332400a2035f3f8fe7162`. CI and mobile browser verification pending.
