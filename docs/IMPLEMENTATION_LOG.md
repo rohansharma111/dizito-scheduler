@@ -1142,3 +1142,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Updated `components/SidebarClient.tsx` to put Marketing Workspace first under START HERE and renamed sections to PLAN & CREATE and PUBLISH & MANAGE. Existing routes and API behavior are preserved.
 - Follow-up commits on main: `dd0fb5645dd16ee65346b14b249845e93ee7eacc` (page), `47d24a47463e7bec50506e132c293614cca88905` (sidebar), `682e90d6bed1202b341d8de8760828672ed3bef7` (import cleanup).
 - Verification: source-level review only for the new page/sidebar changes. No current-main CI, build/typecheck/lint, or browser/mobile verification has been run for these latest commits. The workflow guide does not persist inferred completion; it intentionally provides a clear path without pretending steps were completed.
+
+
+## 2026-10-10 — Guided workspace follow-up: use real onboarding checklist
+
+- Updated the new Marketing Workspace's primary CTA and first step to open the existing `/onboarding` checklist, which computes actual setup readiness from Business Brain, connected accounts and post activity instead of creating a duplicate/fake progress tracker.
+- Reworded onboarding to focus on business setup and better marketing, and explicitly state that AI-powered strategy is coming soon while manual weekly planning is available.
+- Main commits: `b6c658f51086c9694c7b5c073224432eac9df708` (workspace CTA/step), `277ea3c0161b72761707af86ff305bac508f04ea` (onboarding copy).
+- Latest UI remains source-reviewed only. No lint/typecheck/build or browser/mobile QA has been run for the new workspace/onboarding changes.
