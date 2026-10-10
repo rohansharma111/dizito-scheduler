@@ -178,13 +178,13 @@ export default async function HomePage() {
               <div className="flex flex-wrap gap-2">
                 {[
                   { name: "Shopify", status: "Connect a store", available: true },
-                  { name: "WooCommerce", status: "Setup required", available: false },
+                  { name: "WooCommerce", status: "Connect a test store", available: true },
                   { name: "Amazon India", status: "Coming soon", available: false },
                   { name: "Flipkart", status: "Coming soon", available: false },
                   { name: "Meesho", status: "Coming soon", available: false },
                 ].map((provider) => (
                   <span key={provider.name} className={`rounded-full border px-3 py-1.5 text-xs font-bold ${provider.available ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
-                    {provider.name}{provider.available ? "" : ` · ${provider.status}`}
+                    {provider.name}{provider.status ? ` · ${provider.status}` : ""}
                   </span>
                 ))}
               </div>
