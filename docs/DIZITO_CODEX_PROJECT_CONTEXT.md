@@ -687,3 +687,7 @@ The marketing homepage is being revised on branch `v1/ai-commerce-positioning` t
 
 ### 2026-10-10 — Guided workspace uses existing onboarding progress
 The new Marketing Workspace links first-time users to the existing data-backed `/onboarding` checklist rather than inventing a parallel progress tracker. Onboarding copy now explains setup in plain language and clarifies manual planning versus coming-soon AI strategy. Latest main commits: `b6c658f51086c9694c7b5c073224432eac9df708` and `277ea3c0161b72761707af86ff305bac508f04ea`. Fresh CI and responsive browser QA remain pending.
+
+
+### 2026-10-10 — Setup progress accuracy fix
+The onboarding checklist no longer counts a created post as proof that goals/products/offers are configured. It checks the corresponding Business Brain collections. Commit `1f8e9f5ffe04b4c06327fcab702a15d9f180bd4b`; verification pending.
