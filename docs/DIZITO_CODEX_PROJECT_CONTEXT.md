@@ -676,3 +676,10 @@ Use `docs/DIZITO_PARALLEL_WORKSTREAMS.md` to split work across independent chats
 
 ### 2026-10-10 — Public positioning proposal
 The marketing homepage is being revised on branch `v1/ai-commerce-positioning` to communicate Dizito's long-term commerce + marketing operating-system direction rather than only social scheduling. Public copy distinguishes current Shopify/WooCommerce work from Amazon/Flipkart/Meesho in-progress work and keeps AI-assisted strategy/content marked as coming soon while AI spend is disabled. This is a proposed homepage/UI change, not provider-readiness evidence; merge, CI, and desktop/mobile browser verification remain pending. LinkedIn's current-build publishing verification also remains open.
+
+
+### 2026-10-10 — Homepage merge and guided marketing workspace
+- Homepage positioning PR #64 merged to main as `368cc392697112651a10c521f3530f45c048f8d3`; PR Validate and Quality Checks passed for its head SHA.
+- Added `/marketing-workspace` as a plain-language starting point after user feedback that the current marketing workspace was difficult to understand. Sidebar puts this route first under START HERE and groups existing routes by planning/creation and publishing/management.
+- The new guide explains the manual workflow available while paid AI calls are disabled and preserves the distinction between plan approval and actual publishing. It does not claim steps are complete automatically.
+- Latest guided workspace/sidebar code has not yet received fresh CI/build/browser/mobile verification. LinkedIn current-build provider verification remains open.
