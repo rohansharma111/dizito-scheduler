@@ -196,18 +196,35 @@ export default function AccountsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ["Meta", "/api/meta/connect"],
-              ["LinkedIn", "/api/linkedin/login"],
-              ["Pinterest", "/api/pinterest/login"],
-              ["Google Business", "/api/google-business/login"],
-            ].map(([label, url]) => (
-              <DizitoButton key={label} variant="secondary" disabled={accountLimitReached} onClick={() => connect(url)}>
-                <Link2 size={15} />
-                Connect {label}
-              </DizitoButton>
-            ))}
+          <div>
+            <div className="mb-3">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">Connect a social channel</h2>
+              <p className="mt-1 text-sm text-gray-500">Choose where you want to publish. You’ll sign in with that platform to authorize Dizito.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { label: "Meta", detail: "Instagram & Facebook", url: "/api/meta/connect", mark: "M", style: "border-blue-200 bg-blue-50 text-blue-800", iconStyle: "bg-blue-100 text-blue-800" },
+                { label: "LinkedIn", detail: "Professional network", url: "/api/linkedin/login", mark: "in", style: "border-sky-200 bg-sky-50 text-sky-800", iconStyle: "bg-sky-100 text-sky-800" },
+                { label: "Pinterest", detail: "Visual discovery", url: "/api/pinterest/login", mark: "P", style: "border-rose-200 bg-rose-50 text-rose-800", iconStyle: "bg-rose-100 text-rose-800" },
+                { label: "Google Business", detail: "Local business profile", url: "/api/google-business/login", mark: "G", style: "border-amber-200 bg-amber-50 text-amber-900", iconStyle: "bg-amber-100 text-amber-900" },
+              ].map((provider) => (
+                <button
+                  key={provider.label}
+                  type="button"
+                  disabled={accountLimitReached}
+                  onClick={() => connect(provider.url)}
+                  className={`group flex min-h-[126px] w-full flex-col rounded-2xl border p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none ${provider.style}`}
+                  aria-label={`Connect ${provider.label}: ${provider.detail}`}
+                >
+                  <span className="flex w-full items-center justify-between gap-2">
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-base font-extrabold shadow-sm ${provider.iconStyle}`}>{provider.mark}</span>
+                    <span className="text-xs font-semibold opacity-70">Connect <span aria-hidden="true">↗</span></span>
+                  </span>
+                  <span className="mt-4 text-sm font-extrabold">{provider.label}</span>
+                  <span className="mt-1 text-xs leading-5 opacity-80">{provider.detail}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {accountLimitReached && (
