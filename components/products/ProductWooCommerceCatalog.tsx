@@ -38,6 +38,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [linkingId, setLinkingId] = useState<number | null>(null);
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,16 +151,15 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
           ) : (
             <p className="text-sm text-slate-600">No WooCommerce product is linked to this Dizito product yet.</p>
           )}
-          <details className="group rounded-xl border border-slate-200 bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
+          <div className="rounded-xl border border-slate-200 bg-white">
+            <button type="button" aria-expanded={catalogOpen} onClick={() => setCatalogOpen((open) => !open)} className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-3 text-left">
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-slate-900">Browse store catalog</span>
                 <span className="mt-0.5 block text-xs text-slate-500">Find and link an existing WooCommerce product</span>
               </span>
-              <span className="shrink-0 rounded-lg bg-[#f7fce9] px-3 py-2 text-xs font-bold text-slate-900 group-open:hidden">Browse</span>
-              <span className="hidden shrink-0 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 group-open:inline">Hide catalog</span>
-            </summary>
-            <div className="space-y-4 border-t border-slate-100 p-3 sm:p-4">
+              <span className="shrink-0 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{catalogOpen ? "Hide catalog" : "Browse catalog"}</span>
+            </button>
+            {catalogOpen && <div className="space-y-4 border-t border-slate-100 p-3 sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <label className="min-w-0 flex-1 text-sm font-medium text-slate-700">
               Connected store
@@ -206,7 +206,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
           </div>
           <p className="text-xs leading-5 text-slate-500">Linking saves only the mapping inside Dizito. It does not publish, edit, or otherwise change products in your WooCommerce store.</p>
             </div>
-          </details>
+            </div>}
         </div>
       )}
     </DizitoCard>
