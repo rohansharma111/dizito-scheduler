@@ -1,4 +1,6 @@
 import { pool } from "@/lib/db";
+import { getEntitlement } from "@/lib/billing/entitlements";
+import { BILLING_ENTITLEMENT_KEYS } from "@/lib/billing/catalog";
 
 export type CommerceChannelStatus = "active" | "inactive" | "error";
 
@@ -15,6 +17,19 @@ export interface UpdateCommerceChannelInput {
   externalAccountId?: string | null;
   status?: CommerceChannelStatus;
   metadata?: Record<string, unknown>;
+}
+
+export async function getCommerceChannelCapacity(userId: number) {
+  const [countResult, limitValue] = await Promise.all([
+    pool.query(
+      "SELECT COUNT(*)::int AS count FROM commerce_channels WHERE user_id = $1 AND status = 'active'",
+      [userId],
+    ),
+    getEntitlement(userId, BILLING_ENTITLEMENT_KEYS.commerceChannels),
+  ]);
+  const used = Number(countResult.rows[0]?.count ?? 0);
+  const limit = typeof limitValue === "number" ? limitValue : Number(limitValue ?? 0);
+  return { used, limit, allowed: used < limit };
 }
 
 export async function getCommerceChannels(userId: number) {
