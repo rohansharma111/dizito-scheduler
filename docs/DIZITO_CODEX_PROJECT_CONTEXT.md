@@ -683,3 +683,7 @@ The marketing homepage is being revised on branch `v1/ai-commerce-positioning` t
 - Added `/marketing-workspace` as a plain-language starting point after user feedback that the current marketing workspace was difficult to understand. Sidebar puts this route first under START HERE and groups existing routes by planning/creation and publishing/management.
 - The new guide explains the manual workflow available while paid AI calls are disabled and preserves the distinction between plan approval and actual publishing. It does not claim steps are complete automatically.
 - Latest guided workspace/sidebar code has not yet received fresh CI/build/browser/mobile verification. LinkedIn current-build provider verification remains open.
+
+
+### 2026-10-10 — Guided workspace uses existing onboarding progress
+The new Marketing Workspace links first-time users to the existing data-backed `/onboarding` checklist rather than inventing a parallel progress tracker. Onboarding copy now explains setup in plain language and clarifies manual planning versus coming-soon AI strategy. Latest main commits: `b6c658f51086c9694c7b5c073224432eac9df708` and `277ea3c0161b72761707af86ff305bac508f04ea`. Fresh CI and responsive browser QA remain pending.
