@@ -1368,3 +1368,9 @@ Important rollout boundary:
 - Onboarding copy explains the business setup purpose and clearly distinguishes manual weekly planning available now from AI-powered strategy coming soon.
 - Main commits: `b6c658f51086c9694c7b5c073224432eac9df708`, `277ea3c0161b72761707af86ff305bac508f04ea`.
 - Latest workspace and onboarding changes still need CI/build and desktop/mobile visual verification.
+
+
+## 2026-10-10 — Setup checklist accuracy
+
+- Corrected onboarding progress so creating a post no longer falsely marks “Add goals, products & offers” complete. That step now checks saved goals, products or offers from Business Brain.
+- Commit: `1f8e9f5ffe04b4c06327fcab702a15d9f180bd4b`. CI and browser verification remain pending.
