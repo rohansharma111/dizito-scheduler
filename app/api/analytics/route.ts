@@ -1,7 +1,6 @@
 import { pool } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
-import { hasFeature } from "@/lib/plans";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -20,32 +19,6 @@ export async function GET() {
   const userId = (session.user as any).id;
 
   try {
-    /*
-      User plan
-    */
-    const userResult = await pool.query(
-      `
-        SELECT plan
-        FROM users
-        WHERE id = $1
-        `,
-      [userId],
-    );
-
-    const user = userResult.rows[0];
-
-    if (!hasFeature(user.plan, "analytics")) {
-      return Response.json(
-        {
-          premium: true,
-          error: "Analytics requires Creator plan",
-        },
-        {
-          status: 403,
-        },
-      );
-    }
-
     /*
       Published
     */
