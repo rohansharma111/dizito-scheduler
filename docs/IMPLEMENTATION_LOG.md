@@ -1253,3 +1253,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Billing usage cards now explicitly label AI actions as coming soon and explain that AI generation is disabled, rather than implying those quotas are currently usable. Commerce usage above its entitlement is visibly flagged with a non-destructive explanation; existing connections remain untouched. Commit: `bbe2544787f7c44fb8cecafcdda004d8d54c6965`.
 - Public pricing now normalizes legacy `creator` to `growth` for current-plan display only. It no longer marks both Growth and Pro as current for a legacy Creator account. Commit: `9baaf8fe09d42f8828adffa14a6ce54f5ec3f30d`.
 - No subscription, entitlement, database or provider connection records were changed. CI is the next verification step; deployed browser QA remains separate.
+
+
+## 2026-10-10 — Commerce connection entitlement enforcement and production reconciliation
+
+- Read-only Neon inspection of production project `purple-wildflower-87394884`, default branch `production`, confirmed the account represented by the Creator/Growth billing state has legacy `users.plan = creator`, an active `subscriptions.plan = growth`, and three distinct active commerce records: Shopify (`dizito.myshopify.com`), Amazon India (selling-partner ID), and WooCommerce Staging (Hostinger staging URL). The three records have different providers and external account identities, so `3 / 2` is a genuine over-limit state, not duplicate rows. No production data was modified.
+- Added `getCommerceChannelCapacity` using the canonical `channels.commerce.max` entitlement and active connection count. New WooCommerce connections are rejected with HTTP 409 and a structured limit response when at capacity; existing-store reconnections remain allowed.
+- Added a capacity check to Shopify, Amazon, and Flipkart OAuth callbacks after identifying whether the authorized external account already exists. New connections above plan limit return to Accounts with an explicit explanation; reconnects update the existing row and remain allowed. Existing stores are not disconnected or downgraded.
+- Commits: `ad50c38fabdda6079062546b09e38170493e7242`, `9c81b47f7acbfd9347155eaf0bca8808674873a2`, `4e294489c22bf3fd295ccdf4dc01ec6aa9964aa6`, `80561e8e61fb6dea8b2b29c8a5c9d8568ef8ef29`, `a609ab6b0d58e33a1ba3bfde92f455fed35e3844`.
+- Remaining verification: CI on current `main`, inspect route coverage for any other commerce-channel creation paths, and test an at-limit new connection plus reconnect of an existing store. No migration was required.
