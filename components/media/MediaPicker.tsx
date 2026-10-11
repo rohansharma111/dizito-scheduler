@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { MediaItem } from "@/types/media";
 import MediaPickerModal from "./MediaPickerModal";
+import { DizitoButton } from "@/components/dizito/DizitoUI";
 
 interface MediaPickerProps {
   value?: MediaItem | null;
@@ -41,12 +42,9 @@ export default function MediaPicker({ value, onChange }: MediaPickerProps) {
               </p>
             </div>
 
-            <button
-              onClick={() => setOpen(true)}
-              className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
-            >
+            <DizitoButton type="button" variant="secondary" onClick={() => setOpen(true)}>
               Change
-            </button>
+            </DizitoButton>
           </div>
         ) : (
           <div className="flex items-center justify-between">
@@ -58,12 +56,9 @@ export default function MediaPicker({ value, onChange }: MediaPickerProps) {
               </p>
             </div>
 
-            <button
-              onClick={() => setOpen(true)}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
+            <DizitoButton type="button" variant="primary" onClick={() => setOpen(true)}>
               Choose Media
-            </button>
+            </DizitoButton>
           </div>
         )}
       </div>
