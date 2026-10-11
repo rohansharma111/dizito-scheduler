@@ -7,6 +7,7 @@ import { MediaItem } from "@/types/media";
 
 import UploadButton from "@/components/media/UploadButton";
 import AIGenerateModal from "@/components/media/AIGenerateModal";
+import { DizitoButton } from "@/components/dizito/DizitoUI";
 
 interface MediaPickerModalProps {
   open: boolean;
@@ -79,32 +80,13 @@ export default function MediaPickerModal({
             <div className="flex items-center gap-3">
               <UploadButton onUploadSuccess={handleUploadSuccess} />
 
-              <button
-                onClick={() => setShowAIModal(true)}
-                className="
-                  rounded-lg
-                  bg-purple-600
-                  px-4
-                  py-2
-                  text-white
-                  hover:bg-purple-700
-                "
-              >
+              <DizitoButton type="button" variant="ai" onClick={() => setShowAIModal(true)}>
                 ✨ Generate AI
-              </button>
+              </DizitoButton>
 
-              <button
-                onClick={onClose}
-                className="
-                  rounded-lg
-                  border
-                  px-4
-                  py-2
-                  hover:bg-gray-100
-                "
-              >
+              <DizitoButton type="button" variant="secondary" onClick={onClose}>
                 Close
-              </button>
+              </DizitoButton>
             </div>
           </div>
 
@@ -138,7 +120,7 @@ export default function MediaPickerModal({
                       rounded-lg
                       border
                       transition
-                      hover:border-blue-500
+                      hover:border-violet-400
                       hover:shadow
                     "
                   >
