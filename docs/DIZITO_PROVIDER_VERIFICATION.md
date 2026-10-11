@@ -120,3 +120,13 @@ Current media verification boundary:
 - Google Business video: remains fail-closed; do not advertise generic Local Post video support.
 
 Provider access authorization and provider runtime mutation verification remain separate gates.
+
+## 2026-10-11 — Current provider-control UI checkpoint
+
+The current main UI checkpoint standardizes provider-aware controls for Commerce Channels, WooCommerce catalog linking, Amazon catalog matching, Amazon listing validation, and Amazon offer validation. This is presentation and action-label consistency only; it does not change provider verification status in the matrix above.
+
+- Current checkpoint: `9253a76d39995cf81b2c47aea998e66bd9d95143`.
+- Validate: passed https://github.com/rohansharma111/dizito-scheduler/actions/runs/38110135930.
+- Quality Checks: passed https://github.com/rohansharma111/dizito-scheduler/actions/runs/38110135879.
+- Still required: review every remaining legacy provider control, run desktop/mobile browser checks, and perform the provider-specific runtime tests listed above using explicitly authorized test/sandbox accounts.
+- No live provider mutation was performed by this UI pass. Do not infer production readiness from these CI runs.
