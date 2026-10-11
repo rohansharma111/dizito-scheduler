@@ -1,10 +1,13 @@
 "use client";
 
-import { Search, User, Menu } from "lucide-react";
+import { Search, User, Menu, Settings, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { useState } from "react";
 import Link from "next/link";
 import NotificationDropdown from "@/components/NotificationDropdown";
 
 export default function AppHeader({ onMenuClick }: { onMenuClick: () => void }) {
+  const [profileOpen, setProfileOpen] = useState(false);
   return (
     <header className="sticky top-0 z-30 flex h-[68px] shrink-0 items-center justify-between border-b border-black/5 bg-white/80 px-4 backdrop-blur-xl md:px-7 lg:px-9">
       <div className="flex min-w-0 items-center gap-3 md:gap-5">
@@ -18,7 +21,13 @@ export default function AppHeader({ onMenuClick }: { onMenuClick: () => void }) 
       </div>
       <div className="flex items-center gap-1 md:gap-3">
         <div className="rounded-xl p-1.5 hover:bg-slate-100"><NotificationDropdown /></div>
-        <button className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 hover:bg-slate-50" aria-label="Profile"><User size={18} /></button>
+        <div className="relative">
+          <button type="button" onClick={() => setProfileOpen((open) => !open)} aria-label="Account menu" aria-expanded={profileOpen} className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 hover:bg-slate-50"><User size={18} /></button>
+          {profileOpen && <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+            <Link href="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><Settings size={16} /> Settings</Link>
+            <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50"><LogOut size={16} /> Log out</button>
+          </div>}
+        </div>
       </div>
     </header>
   );
