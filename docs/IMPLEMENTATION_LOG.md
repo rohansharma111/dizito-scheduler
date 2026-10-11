@@ -1270,3 +1270,11 @@ Never convert “implemented” to “verified” or “production-ready” with
 - Simplified Marketing Content's page header (removed the repeated title/description card), added a short three-step workflow, moved publishing-account selection behind a clearly labeled disclosure, and collapsed the platform-variant editor by default so the main content review action is easier to find on mobile. Existing editing, approval, variant persistence, account selection, and scheduling handlers are preserved.
 - Commits: `a75f09c427248d5aa84f126320ac0c614fb623c3` and `450a01cd559cb9b425f6ce3cfa7e192a71d09d7d`.
 - Validate and Quality Checks are queued/running for the UI commits; browser/mobile runtime verification remains pending. No database or provider state changed.
+
+
+## 2026-10-11 — Settings page reassessment
+
+- Reworked `/settings` into a compact account hub: account identity, concise subscription summary with a clear Billing link, social account status with a link to account management, and an honest notification-preferences Coming Later state.
+- Removed the disabled, misleading upgrade button and inert Delete Account danger zone. Removed displayed notification On/Off values because `/api/settings` currently returns hard-coded defaults rather than persisted user preferences. Clearly labels profile editing as not available rather than implying these values can be changed.
+- Billing usage, plan changes, and billing history remain in `/settings/billing`; social connection actions remain in `/accounts`. No API behavior, database, or subscription state changed.
+- Commit: `96dd623dcce40474a9f8c14a2f0387446b2e2702`. Validate and Quality Checks are pending; deployed browser verification is still required.
