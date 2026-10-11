@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DizitoButton, DizitoCard, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
 
 interface CommerceChannel {
   id: string;
@@ -204,13 +205,8 @@ export default function ProductShopifyPublish({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-5">
-        <h2 className="text-lg font-semibold">Shopify Publishing</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Publish this canonical product to an active Shopify channel, or sync changes to an existing listing.
-        </p>
-      </div>
+    <DizitoCard>
+      <DizitoSectionHeader title="Shopify publishing" description="Publish this canonical product to an active Shopify channel, or sync changes to an existing listing." />
 
       {loading && <p className="text-sm text-gray-500">Loading Shopify channels...</p>}
 
@@ -242,23 +238,13 @@ export default function ProductShopifyPublish({
             </select>
 
             {!published ? (
-              <button
-                type="button"
-                onClick={publish}
-                disabled={!channelId || !hasVariants || publishing || syncing}
-                className="rounded-xl bg-[#c7f36b] px-5 py-2.5 font-bold text-slate-950 shadow-sm transition hover:bg-[#b8e95a] disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <DizitoButton type="button" variant="provider-shopify" onClick={publish} disabled={!channelId || !hasVariants || publishing || syncing}>
                 {publishing ? "Publishing..." : "Publish to Shopify"}
-              </button>
+              </DizitoButton>
             ) : (
-              <button
-                type="button"
-                onClick={sync}
-                disabled={!channelId || !hasVariants || publishing || syncing}
-                className="rounded-xl border border-[#c7f36b] bg-[#f7fce9] px-5 py-2.5 font-bold text-slate-900 transition hover:bg-[#eaf8c9] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {syncing ? "Syncing..." : "Sync Changes"}
-              </button>
+              <DizitoButton type="button" variant="provider-shopify" onClick={sync} disabled={!channelId || !hasVariants || publishing || syncing}>
+                {syncing ? "Syncing..." : "Sync Shopify changes"}
+              </DizitoButton>
             )}
           </div>
 
@@ -294,6 +280,6 @@ export default function ProductShopifyPublish({
 
       {message && <p className="text-sm text-green-700 mt-3">{message}</p>}
       {error && <p className="text-sm text-red-700 mt-3">{error}</p>}
-    </section>
+    </DizitoCard>
   );
 }
