@@ -733,3 +733,10 @@ Commerce channel connection UI now uses platform-specific cards under a shared s
 - The desktop/mobile sidebar already had a LogoutButton, but it was easy to miss when the sidebar was collapsed or closed on mobile, and the header profile icon was inert.
 - Made the header account icon open a compact menu with Settings and Log out. Log out uses NextAuth `signOut({ callbackUrl: "/login" })`. Existing sidebar logout remains available.
 - Commit: `ff916c9bab10297eb0e7e206a00a446c8eb5ceed`. CI and deployed-browser verification pending.
+
+## 2026-10-11 — Provider-aware UI and documentation checkpoint
+
+- Provider-aware Dizito buttons now cover Commerce Channels connection actions, WooCommerce catalog controls, Amazon catalog search, listing validation and offer validation. Existing provider safeguards remain unchanged.
+- Current implementation checkpoint `9253a76d39995cf81b2c47aea998e66bd9d95143`: Validate and Quality Checks both passed; exact links are recorded in `docs/DIZITO_SCREEN_QA_READINESS.md`.
+- This does not mean all legacy provider controls have been audited or browser QA has passed. Next: confirm deployed environment/SHA, run responsive browser QA, fix observed defects, then continue sandbox/runtime provider verification.
+- Keep AI calls disabled until funded and live provider mutation guards closed unless a test is explicitly approved.
