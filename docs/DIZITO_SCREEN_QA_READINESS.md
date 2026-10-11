@@ -92,3 +92,12 @@ Each finding should include: ID, route, SHA/environment, setup, steps, expected/
 - End-to-end merchant journey has evidence of persisted state across stages.
 - Provider-specific tests are clearly labeled sandbox vs live; no unverified provider capability is called production-ready.
 - Known limitations (including unproven Cloudinary pre-ingestion size enforcement) remain visible in the handover.
+
+## 2026-10-11 — Provider-aware commerce controls checkpoint
+
+- Current repository head for this documentation pass: `9253a76d39995cf81b2c47aea998e66bd9d95143`.
+- Shared Dizito provider-aware button styles now cover Commerce Channels provider connection actions, WooCommerce catalog browse/refresh/link/pagination controls, Amazon catalog search, Amazon listing validation, and Amazon offer validation. Implementation commits are recorded in `docs/IMPLEMENTATION_LOG.md`.
+- Validate passed on current head: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38110135930. Quality Checks passed on current head: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38110135879.
+- CI confirms automated checks only. Deployed SHA, mobile/browser behavior, provider API runtime behavior, and end-to-end user journey remain unverified.
+- Next QA priority: inspect the deployed build on narrow mobile and desktop; verify provider buttons retain shared sizing, focus, disabled/loading states and provider safety copy; then continue the Gate 0 setup and Gate 2 screen matrix below.
+- Do not mark any screen checked until actual observed results and evidence are recorded.
