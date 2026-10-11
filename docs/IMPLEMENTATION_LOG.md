@@ -1302,3 +1302,13 @@ Never convert “implemented” to “verified” or “production-ready” with
 - No API, provider behavior, persistence, or publish-safety logic changed.
 - Commit: `7ff1c9e5242256d6b93d71d042b16c445c23fab5`.
 - Validate and Quality Checks are running for this commit; browser verification remains pending.
+
+
+## 2026-10-11 — Provider-aware commerce controls
+
+- Replaced inconsistent hard-coded provider action styling with shared Dizito button variants across Commerce Channels (Shopify, Amazon India, WooCommerce), WooCommerce catalog browse/link actions, Amazon catalog matching, Amazon listing validation and Amazon offer validation.
+- Provider accents are restrained and share the same sizing/typography/disabled behavior. The existing WooCommerce staging-store confirmation, Amazon product-identity validation, and validate-only (non-publish) workflows are unchanged.
+- Commerce channel catalog brief actions now use the shared Dizito button classes.
+- Files: `app/(protected)/commerce/channels/page.tsx`, `components/products/ProductWooCommerceCatalog.tsx`, `components/products/AmazonCatalogMatch.tsx`, `components/products/ProductAmazonListing.tsx`, `components/products/AmazonOfferLayer.tsx`.
+- Commits: `e375c8c7d375a0de60e25d51d148d2e7e92da241`, `19f9f28204936dc6b4c7da4bc51dba5f534960f6`, `6a33160f22a2cde1acdb13d8f5f27ff0539ec33c`, `8c11de0d56abf9f5c6651ab68e47117190a2e81c`, `b8da16bc9225b63a4e3fc0546be61adca1b955e9`.
+- CI and browser verification pending. No provider credentials, data, or live publishing behavior changed.
