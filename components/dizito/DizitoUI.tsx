@@ -24,7 +24,7 @@ export function DizitoSectionHeader({ title, description, action }: { title: str
   return <div className="dizito-section-header"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{action}</div>;
 }
 
-export function DizitoButton({ children, variant = "primary", className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" | "danger" | "ai" }) {
+export function DizitoButton({ children, variant = "primary", className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" | "danger" | "ai" | "provider-woocommerce" | "provider-shopify" | "provider-amazon" }) {
   return <button className={`dizito-button dizito-button-${variant} ${className}`} {...props}>{children}</button>;
 }
 
