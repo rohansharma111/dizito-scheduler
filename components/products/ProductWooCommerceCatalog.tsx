@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, RefreshCw, ShoppingBag } from "lucide-react";
-import { DizitoCard, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
+import { DizitoButton, DizitoCard, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
 
 interface Channel {
   id: string;
@@ -136,7 +136,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
         <div className="rounded-xl border border-dashed border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-800">No WooCommerce store connected</p>
           <p className="mt-1 text-sm text-slate-500">Connect your store in Commerce → Channels to browse its catalog here.</p>
-          <a href="/commerce/channels" className="mt-3 inline-flex text-sm font-semibold text-violet-700 hover:text-violet-900">Open Commerce Channels</a>
+          <a href="/commerce/channels" className="dizito-button dizito-button-primary mt-3">Connect WooCommerce</a>
         </div>
       ) : (
         <div className="space-y-3">
@@ -157,7 +157,7 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
                 <span className="block text-sm font-semibold text-slate-900">Browse store catalog</span>
                 <span className="mt-0.5 block text-xs text-slate-500">Find and link an existing WooCommerce product</span>
               </span>
-              <span className="shrink-0 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{catalogOpen ? "Hide catalog" : "Browse catalog"}</span>
+              <span className="dizito-button dizito-button-secondary shrink-0">{catalogOpen ? "Hide catalog" : "Browse catalog"}</span>
             </button>
             {catalogOpen && <div className="space-y-4 border-t border-slate-100 p-3 sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -200,8 +200,8 @@ export default function ProductWooCommerceCatalog({ productId }: Props) {
           <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
             <p className="text-xs text-slate-500">Page {page} · 20 products per page</p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => void loadProducts(page - 1)} disabled={page <= 1 || loadingProducts} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium disabled:opacity-40">Previous</button>
-              <button type="button" onClick={() => void loadProducts(page + 1)} disabled={!hasMore || loadingProducts} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium disabled:opacity-40">Next</button>
+              <DizitoButton type="button" variant="secondary" onClick={() => void loadProducts(page - 1)} disabled={page <= 1 || loadingProducts}>Previous</DizitoButton>
+              <DizitoButton type="button" variant="secondary" onClick={() => void loadProducts(page + 1)} disabled={!hasMore || loadingProducts}>Next</DizitoButton>
             </div>
           </div>
           <p className="text-xs leading-5 text-slate-500">Linking saves only the mapping inside Dizito. It does not publish, edit, or otherwise change products in your WooCommerce store.</p>
