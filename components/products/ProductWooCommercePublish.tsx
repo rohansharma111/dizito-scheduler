@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, CircleDot, Loader2, Send, ShieldCheck } from "lucide-react";
-import { DizitoCard, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
+import { DizitoButton, DizitoCard, DizitoSectionHeader } from "@/components/dizito/DizitoUI";
 
 interface Variant {
   id: number | string;
@@ -122,7 +122,7 @@ export default function ProductWooCommercePublish({ product }: Props) {
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <div className="flex items-start gap-2"><AlertTriangle size={18} className="mt-0.5 shrink-0" /><span>Publishing creates a product in the selected store. Verify it is your staging store before continuing.</span></div>
-          <button type="button" onClick={() => void loadChannels()} disabled={busy !== null} className="rounded-lg border border-amber-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">{busy === "load" ? "Loading…" : channels.length ? "Refresh stores" : "Load stores"}</button>
+          <DizitoButton type="button" variant="provider-woocommerce" onClick={() => void loadChannels()} disabled={busy !== null}>{busy === "load" ? "Loading…" : channels.length ? "Refresh WooCommerce stores" : "Load WooCommerce stores"}</DizitoButton>
         </div>
         {channels.length > 0 && <label className="block text-sm font-medium text-slate-700">Destination store
           <select value={channelId} onChange={(event) => { setChannelId(event.target.value); setListing(null); setPayload(null); setConfirmPublish(false); setIdempotencyKey(""); }} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5">
@@ -146,7 +146,7 @@ export default function ProductWooCommercePublish({ product }: Props) {
           <p className="text-slate-600">SKU: {sku || "—"} · Price: {price || "—"}</p>
           <p className="text-xs text-slate-500">Product images and category are taken from the canonical Dizito product.</p>
         </div>
-        {!listing ? <button type="button" onClick={() => void prepareDraft()} disabled={busy !== null || !channelId} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50">{busy === "draft" ? <Loader2 size={16} className="animate-spin" /> : <CircleDot size={16} />} Prepare draft</button> : (
+        {!listing ? <DizitoButton type="button" variant="provider-woocommerce" onClick={() => void prepareDraft()} disabled={busy !== null || !channelId}>{busy === "draft" ? <Loader2 size={16} className="animate-spin" /> : <CircleDot size={16} />} Prepare WooCommerce draft</DizitoButton> : (
           <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/60 p-4">
             <p className="flex items-center gap-2 text-sm font-semibold text-violet-900"><ShieldCheck size={17} /> Draft prepared · Listing {listing.id}</p>
             {listing.external_id && <p className="text-sm text-emerald-800">Linked external product ID: {listing.external_id}</p>}
@@ -155,8 +155,8 @@ export default function ProductWooCommercePublish({ product }: Props) {
             </label>}
             <label className="flex items-start gap-2 text-sm text-slate-800"><input type="checkbox" checked={confirmPublish} onChange={(event) => setConfirmPublish(event.target.checked)} className="mt-1" /><span>I verified the destination is a disposable staging store and authorize creating this product there.</span></label>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => void publish()} disabled={busy !== null || !confirmPublish || Boolean(listing.external_id)} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy === "publish" ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Publish to WooCommerce</button>
-              {idempotencyKey && <button type="button" onClick={() => void reconcile()} disabled={busy !== null} className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-800 disabled:opacity-50">{busy === "reconcile" ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Reconcile result</button>}
+              <DizitoButton type="button" variant="provider-woocommerce" onClick={() => void publish()} disabled={busy !== null || !confirmPublish || Boolean(listing.external_id)}>{busy === "publish" ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Publish to WooCommerce</DizitoButton>
+              {idempotencyKey && <DizitoButton type="button" variant="provider-woocommerce" onClick={() => void reconcile()} disabled={busy !== null}>{busy === "reconcile" ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Reconcile WooCommerce result</DizitoButton>}
             </div>
             {idempotencyKey && <p className="break-all text-xs text-slate-500">Publish attempt key: {idempotencyKey}. Keep this page open until the result is confirmed. If the result is uncertain, reconcile before any retry.</p>}
           </div>
