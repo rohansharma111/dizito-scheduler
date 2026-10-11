@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { DizitoCard, DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
+import { DizitoButton, DizitoCard, DizitoPage, DizitoPageHeader } from "@/components/dizito/DizitoUI";
 
 interface CommerceChannel {
   id: string;
@@ -282,9 +282,7 @@ export default function CommerceChannelsPage() {
             className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             autoComplete="url"
           />
-          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2">
-            Connect Shopify
-          </button>
+          <DizitoButton type="submit" variant="provider-shopify">Connect Shopify</DizitoButton>
         </form>
       </DizitoCard>
 
@@ -293,13 +291,7 @@ export default function CommerceChannelsPage() {
         <p className="text-sm text-gray-600 mt-1">
           Link your seller account through Amazon’s official authorization flow. Product and offer workflows remain separate.
         </p>
-        <button
-          type="button"
-          onClick={connectAmazon}
-          className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2"
-        >
-          Connect Amazon India
-        </button>
+        <div className="mt-4"><DizitoButton type="button" variant="provider-amazon" onClick={connectAmazon}>Connect Amazon India</DizitoButton></div>
       </DizitoCard>
 
       </div>
@@ -323,9 +315,7 @@ export default function CommerceChannelsPage() {
             </label>
             <p className="text-xs text-slate-500">Use the full HTTPS URL for your test store, not your live production store.</p>
             <div>
-              <button type="button" onClick={openWooCommerceApiSettings} disabled={!wooStoreUrl.trim()} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-                Open WooCommerce API settings ↗
-              </button>
+              <DizitoButton type="button" variant="provider-woocommerce" onClick={openWooCommerceApiSettings} disabled={!wooStoreUrl.trim()}>Open WooCommerce API settings ↗</DizitoButton>
             </div>
             <p className="text-xs text-slate-500">In the new tab, go to WooCommerce → Settings → Advanced → REST API, select Add key, choose Dizito as the description, and set permissions to Read/Write. Copy the consumer key and secret; WooCommerce may show the secret only once.</p>
           </div>
@@ -348,9 +338,7 @@ export default function CommerceChannelsPage() {
             <span>I confirm this is a staging/test store, not production, and it is safe to use for test product creation.</span>
           </label>
           <div>
-            <button type="submit" disabled={connectingWoo || !wooTestStoreConfirmed} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
-              {connectingWoo ? "Verifying connection..." : "Verify & connect WooCommerce"}
-            </button>
+            <DizitoButton type="submit" variant="provider-woocommerce" disabled={connectingWoo || !wooTestStoreConfirmed} aria-busy={connectingWoo}>{connectingWoo ? "Verifying connection..." : "Verify & connect WooCommerce"}</DizitoButton>
           </div>
         </form>
         {wooSettingsOpened && <p className="mt-3 text-sm text-slate-600">WooCommerce settings opened in a new tab. After creating your Read/Write key, return here and enter both credentials.</p>}
@@ -387,7 +375,7 @@ export default function CommerceChannelsPage() {
                     ].filter(Boolean).join("\\n")).join("\\n\\n");
                     void navigator.clipboard.writeText(brief).then(() => setProductBriefMessage("Product brief copied. Paste it into your marketing content or weekly plan.")).catch(() => setProductBriefMessage("Clipboard access was blocked. Select products and copy their details manually."));
                   }}
-                  className="rounded-lg bg-violet-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="dizito-button dizito-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Copy product brief
                 </button>
@@ -403,7 +391,7 @@ export default function CommerceChannelsPage() {
                     }
                   }}
                   disabled={selectedWooProductIds.length === 0}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="dizito-button dizito-button-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >Use in weekly plan</button>
               </div>
             </div>
