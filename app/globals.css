@@ -52,6 +52,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .dizito-button-ghost { color:#475467; background:transparent; }
 .dizito-button-danger { color:#b42318; background:#fff1f0; border-color:#fecdca; }
 .dizito-button-ai { color:#fff; background:#17132f; }
+
+/* Provider-associated actions retain the shared button geometry while using restrained brand cues. */
+.dizito-button-provider-woocommerce { color:#5b2a8b; background:#fff; border-color:#bca0d8; box-shadow:inset 3px 0 0 #7f54b3; }
+.dizito-button-provider-woocommerce:hover:not(:disabled) { background:#f8f3fc; border-color:#7f54b3; }
+.dizito-button-provider-shopify { color:#245c36; background:#fff; border-color:#a8cdb2; box-shadow:inset 3px 0 0 #5b9b6a; }
+.dizito-button-provider-shopify:hover:not(:disabled) { background:#f2faf3; border-color:#5b9b6a; }
+.dizito-button-provider-amazon { color:#202b3a; background:#fff; border-color:#e7b46b; box-shadow:inset 3px 0 0 #e99a2b; }
+.dizito-button-provider-amazon:hover:not(:disabled) { background:#fff9ef; border-color:#e99a2b; }
+
 .dizito-badge { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:5px 9px; font-size:11px; font-weight:750; }
 .dizito-badge-neutral { color:#475467; background:#f2f4f7; }
 .dizito-badge-success { color:#067647; background:#ecfdf3; }
