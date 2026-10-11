@@ -718,3 +718,11 @@ Commerce channel connection UI now uses platform-specific cards under a shared s
 - Removed the disabled, misleading upgrade button and inert Delete Account danger zone. Removed displayed notification On/Off values because `/api/settings` currently returns hard-coded defaults rather than persisted user preferences. Clearly labels profile editing as not available rather than implying these values can be changed.
 - Billing usage, plan changes, and billing history remain in `/settings/billing`; social connection actions remain in `/accounts`. No API behavior, database, or subscription state changed.
 - Commit: `96dd623dcce40474a9f8c14a2f0387446b2e2702`. Validate and Quality Checks are pending; deployed browser verification is still required.
+
+
+## 2026-10-11 — Settings reflects Dizito's commerce + social product
+
+- Extended the authenticated `/api/settings` response with the user's commerce connections using the existing `getCommerceChannels` service; no new query logic or provider mutations were introduced.
+- Added a Commerce stores summary to `/settings` alongside Social accounts, with up to three connection rows, provider/status labels, a no-connections empty state, and a link to `/commerce/channels`. Copy explicitly distinguishes saved connections from verified publishing access.
+- This aligns Settings with Dizito's current product: a workspace for social publishing plus commerce catalog/listing workflows, rather than a social-only scheduler. Existing connection management stays on its dedicated page.
+- Commits: `f746db0674ee4b3555309a415b8c9f125d03a7be`, `842a9615a66732c29bcf2e0ec54b754f6a8b30f1`. Validate and Quality Checks pending; deployed runtime verification not yet done.
