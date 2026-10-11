@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DizitoButton } from "@/components/dizito/DizitoUI";
 
 interface Variant { id: string | number; name?: string | null; sku?: string | null; price?: number | null; }
 interface Channel { id: string; provider: string; status: string; }
@@ -148,7 +149,7 @@ export default function AmazonOfferLayer({ productId }: Props) {
       <div><label className="block text-sm font-medium mb-1">Condition</label><select value={condition} onChange={(event) => { setCondition(event.target.value as Condition); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="new_new">New</option><option value="used_like_new">Used — Like New</option><option value="used_very_good">Used — Very Good</option><option value="used_good">Used — Good</option><option value="used_acceptable">Used — Acceptable</option></select></div>
       <div><label className="block text-sm font-medium mb-1">Fulfillment</label><select value={fulfillment} onChange={(event) => { setFulfillment(event.target.value as Fulfillment); setValidation(null); setDraftSaved(false); }} className="border rounded-lg px-3 py-2 w-full bg-white"><option value="DEFAULT">Seller fulfilled</option><option value="AMAZON_IN">Amazon fulfillment</option></select></div>
     </div>
-    <div className="mt-4 flex items-center justify-between gap-3 flex-wrap"><p className="text-sm text-gray-500">{status}</p><button type="button" onClick={validateOffer} disabled={loading || variants.length === 0} className="border px-4 py-2 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50">{loading ? "Validating…" : "Validate Offer with Amazon"}</button></div>
+    <div className="mt-4 flex items-center justify-between gap-3 flex-wrap"><p className="text-sm text-gray-500">{status}</p><DizitoButton type="button" variant="provider-amazon" onClick={validateOffer} disabled={loading || variants.length === 0} aria-busy={loading}>{loading ? "Validating with Amazon…" : "Validate Amazon offer"}</DizitoButton></div>
     {draftSaved && <p className="mt-3 text-sm text-green-700">Commerce listing draft saved. No Amazon listing was published.</p>}
     {validation && <div className="mt-6 border-t pt-5"><h3 className="font-medium">Amazon offer validation result</h3><p className="text-sm text-gray-600 mt-2">Status: <span className="font-medium">{validation.status || "returned"}</span>{validation.submissionId ? ` · Submission ${validation.submissionId}` : ""}</p>{validation.issues && validation.issues.length > 0 ? <div className="mt-3 space-y-2">{validation.issues.map((issue, index) => <div key={index} className="border rounded-lg p-3 text-sm">{displayIssue(issue)}</div>)}</div> : <p className="text-sm text-gray-600 mt-3">Amazon returned no offer validation issues.</p>}</div>}
   </section>;
