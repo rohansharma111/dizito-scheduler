@@ -1293,3 +1293,12 @@ Never convert “implemented” to “verified” or “production-ready” with
 - The desktop/mobile sidebar already had a LogoutButton, but it was easy to miss when the sidebar was collapsed or closed on mobile, and the header profile icon was inert.
 - Made the header account icon open a compact menu with Settings and Log out. Log out uses NextAuth `signOut({ callbackUrl: "/login" })`. Existing sidebar logout remains available.
 - Commit: `ff916c9bab10297eb0e7e206a00a446c8eb5ceed`. CI and deployed-browser verification pending.
+
+
+## 2026-10-11 — Customer-facing copy audit: Commerce Listings
+
+- Rewrote the Commerce Listings loading and empty states in plain language, and removed the internal-sounding disclaimer about stored provider workflow state and production readiness.
+- New copy explains what the page is for and what a user can do when a store has not finished syncing, without implying a provider is verified merely because a listing exists.
+- No API, provider behavior, persistence, or publish-safety logic changed.
+- Commit: `7ff1c9e5242256d6b93d71d042b16c445c23fab5`.
+- Validate and Quality Checks are running for this commit; browser verification remains pending.
