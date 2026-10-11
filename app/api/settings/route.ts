@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { getCommerceChannels } from "@/lib/commerce/channels/service";
 
 export async function GET() {
   try {
@@ -21,6 +22,7 @@ export async function GET() {
     }
 
     const userId = (session.user as any).id;
+    const commerceChannels = await getCommerceChannels(Number(userId));
 
     /*
       User
@@ -121,6 +123,8 @@ export async function GET() {
       },
 
       connectedAccounts: accountsResult.rows,
+
+      commerceChannels,
 
       preferences: {
         emailNotifications: true,
