@@ -5,6 +5,8 @@
 
 > This document defines how multiple ChatGPT/Codex development chats can work simultaneously without stepping on each other. The repository is the source of truth. Each workstream has an explicit ownership boundary. Do not modify another workstream's owned files unless the task explicitly requires a coordinated change.
 
+**Current execution note (2026-10-11):** This is a coordination template, not an authoritative list of what is still incomplete. Check `main`, `docs/PROJECT_STATUS.md`, `docs/IMPLEMENTATION_LOG.md`, and the launch/QA/provider trackers before selecting work. Recent sessions have intentionally made coordinated changes directly on `main` at the user's direction; follow that explicit direction for this project rather than assuming an isolated branch is required. Keep the ownership boundaries as conflict-avoidance guidance and update the relevant docs when actual work lands.
+
 ## 1. Global rules for every workstream
 
 Every chat must begin by:
