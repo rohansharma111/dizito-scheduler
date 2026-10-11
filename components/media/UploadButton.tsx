@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { DizitoButton } from "@/components/dizito/DizitoUI";
 
 interface UploadButtonProps {
   onUploadSuccess: () => void;
@@ -144,15 +145,15 @@ export default function UploadButton({ onUploadSuccess }: UploadButtonProps) {
         aria-label="Choose an image or video to upload"
         disabled={uploading}
       />
-      <button
+      <DizitoButton
         type="button"
+        variant="primary"
         onClick={handleClick}
         disabled={uploading}
         aria-busy={uploading}
-        className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {uploading ? "Uploading..." : "Upload Media"}
-      </button>
+      </DizitoButton>
       {uploading && <p role="status" className="text-sm text-slate-600">Uploading your media. Please keep this page open.</p>}
       {error && <p role="alert" className="max-w-sm text-sm text-red-700">{error}</p>}
     </div>
