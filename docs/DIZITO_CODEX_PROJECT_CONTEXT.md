@@ -726,3 +726,10 @@ Commerce channel connection UI now uses platform-specific cards under a shared s
 - Added a Commerce stores summary to `/settings` alongside Social accounts, with up to three connection rows, provider/status labels, a no-connections empty state, and a link to `/commerce/channels`. Copy explicitly distinguishes saved connections from verified publishing access.
 - This aligns Settings with Dizito's current product: a workspace for social publishing plus commerce catalog/listing workflows, rather than a social-only scheduler. Existing connection management stays on its dedicated page.
 - Commits: `f746db0674ee4b3555309a415b8c9f125d03a7be`, `842a9615a66732c29bcf2e0ec54b754f6a8b30f1`. Validate and Quality Checks pending; deployed runtime verification not yet done.
+
+
+## 2026-10-11 — Header account menu and logout discoverability
+
+- The desktop/mobile sidebar already had a LogoutButton, but it was easy to miss when the sidebar was collapsed or closed on mobile, and the header profile icon was inert.
+- Made the header account icon open a compact menu with Settings and Log out. Log out uses NextAuth `signOut({ callbackUrl: "/login" })`. Existing sidebar logout remains available.
+- Commit: `ff916c9bab10297eb0e7e206a00a446c8eb5ceed`. CI and deployed-browser verification pending.
