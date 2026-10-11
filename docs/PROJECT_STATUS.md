@@ -1472,3 +1472,11 @@ Important rollout boundary:
 - The desktop/mobile sidebar already had a LogoutButton, but it was easy to miss when the sidebar was collapsed or closed on mobile, and the header profile icon was inert.
 - Made the header account icon open a compact menu with Settings and Log out. Log out uses NextAuth `signOut({ callbackUrl: "/login" })`. Existing sidebar logout remains available.
 - Commit: `ff916c9bab10297eb0e7e206a00a446c8eb5ceed`. CI and deployed-browser verification pending.
+
+## 2026-10-11 — Current repository and next-step checkpoint
+
+- Latest verified repository checkpoint before this documentation refresh: `9253a76d39995cf81b2c47aea998e66bd9d95143`. Provider-aware controls were standardized across Commerce Channels, WooCommerce catalog linking, Amazon catalog matching, listing validation and offer validation.
+- GitHub Actions Validate passed on this SHA: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38110135930. Quality Checks passed: https://github.com/rohansharma111/dizito-scheduler/actions/runs/38110135879.
+- The recent UI pass changes presentation/action labels only; existing provider safety gates and behavior were preserved. It does not establish provider production readiness.
+- Current top priority remains deployed environment/SHA confirmation and evidence-based desktop/mobile browser QA, followed by remaining legacy provider-control review and controlled provider-specific runtime verification. See `docs/DIZITO_SCREEN_QA_READINESS.md` and `docs/DIZITO_PROVIDER_VERIFICATION.md`.
+- Keep AI calls disabled until funded. Do not enable live provider mutations as part of UI QA.
