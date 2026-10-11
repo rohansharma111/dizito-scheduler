@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DizitoButton } from "@/components/dizito/DizitoUI";
 
 interface CatalogItem { asin: string; itemName?: string | null; brand?: string | null; productType?: string | null; identifiers?: Array<{ identifier?: string; identifierType?: string }>; }
 
@@ -73,11 +74,11 @@ export default function AmazonCatalogMatch({ channelId, productId, onSelectASIN 
     <div className="mt-4 grid gap-3 md:grid-cols-[140px_1fr_auto]">
       <select value={identifierType} onChange={(e) => setIdentifierType(e.target.value)} className="border rounded-lg px-3 py-2 bg-white"><option>EAN</option><option>UPC</option><option>GTIN</option><option>ISBN</option></select>
       <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="Product identifier" className="border rounded-lg px-3 py-2 bg-white" />
-      <button type="button" disabled={loading || !identifier.trim()} onClick={() => void search({ identifier, identifierType })} className="border rounded-lg px-4 py-2 font-medium disabled:opacity-50">{loading ? "Searching…" : "Find by identifier"}</button>
+      <DizitoButton type="button" variant="provider-amazon" disabled={loading || !identifier.trim()} onClick={() => void search({ identifier, identifierType })}>{loading ? "Searching Amazon…" : "Find on Amazon by identifier"}</DizitoButton>
     </div>
     <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
       <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Or search Amazon catalog by product keywords" className="border rounded-lg px-3 py-2 bg-white" />
-      <button type="button" disabled={loading || !keywords.trim()} onClick={() => void search({ keywords })} className="border rounded-lg px-4 py-2 font-medium disabled:opacity-50">Search catalog</button>
+      <DizitoButton type="button" variant="provider-amazon" disabled={loading || !keywords.trim()} onClick={() => void search({ keywords })}>Search Amazon catalog</DizitoButton>
     </div>
     {selectedASIN && <p className="text-sm text-gray-700 mt-3">Selected ASIN: <span className="font-mono font-medium">{selectedASIN}</span></p>}
     {status && <p className="text-sm text-gray-600 mt-3">{status}</p>}
