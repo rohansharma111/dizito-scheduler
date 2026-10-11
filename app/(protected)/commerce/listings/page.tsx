@@ -56,9 +56,9 @@ export default function CommerceListingsPage() {
     <DizitoPage className="px-4 sm:px-6">
       <DizitoPageHeader eyebrow="Commerce" title="Commerce listings" description="Review channel-specific listings created from your canonical Dizito catalog." action={<Link href="/commerce/channels" className="dizito-button dizito-button-secondary"><Store size={16} /> Manage channels <ArrowUpRight size={15} /></Link>} />
 
-      {loading && <DizitoState kind="empty" title="Loading commerce listings" description="Retrieving the latest listing and sync status from your workspace." />}
+      {loading && <DizitoState kind="empty" title="Loading your listings" description="We’re getting your store listings ready." />}
       {error && <DizitoState kind="error" title="Listings could not be loaded" description={error} />}
-      {!loading && !error && listings.length === 0 && <DizitoState kind="empty" title="No commerce listings yet" description="Listings appear here after products are prepared for a connected commerce channel." action={<Link href="/products" className="dizito-button dizito-button-primary">View products</Link>} />}
+      {!loading && !error && listings.length === 0 && <DizitoState kind="empty" title="Your store listings will appear here" description="Prepare a product for a connected store to track its listing and sync status here." action={<Link href="/products" className="dizito-button dizito-button-primary">View products</Link>} />}
 
       {!loading && !error && listings.length > 0 && (
         <div className="grid grid-cols-1 gap-4">
@@ -84,7 +84,7 @@ export default function CommerceListingsPage() {
           ))}
         </div>
       )}
-      <div className="mt-5 flex items-start gap-2 text-xs leading-5 text-slate-500"><RefreshCw size={14} className="mt-0.5 shrink-0" /> Listing status reflects stored application/provider workflow state; it does not by itself certify that a provider integration is production-ready.</div>
+      <div className="mt-5 flex items-start gap-2 text-xs leading-5 text-slate-500"><RefreshCw size={14} className="mt-0.5 shrink-0" /> Your listing shows the latest information available to Dizito. If a store has not finished syncing, check the listing for details.</div>
     </DizitoPage>
   );
 }
