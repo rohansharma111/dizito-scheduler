@@ -370,3 +370,10 @@ Launch gates remain:
 - run current focused and repository validation suites;
 - perform controlled Instagram, Pinterest and LinkedIn video runtime verification;
 - retain Facebook/Google video fail-closed behavior until their verification boundary changes.
+
+## 2026-10-11 — Current execution checkpoint
+
+- Current main checkpoint: `9253a76d39995cf81b2c47aea998e66bd9d95143`.
+- Shared provider-aware Dizito button styling has been applied to key Commerce Channels, WooCommerce catalog, Amazon catalog, listing, and offer controls. Validate and Quality Checks both pass on this checkpoint (run links in `docs/DIZITO_SCREEN_QA_READINESS.md`).
+- This is not a launch-readiness declaration. Deployed-SHA confirmation and browser/device QA remain open; external provider runtime verification, billing/entitlement review, security evidence, and end-to-end merchant journey still require their own documented gates.
+- Immediate order: (1) confirm deployed SHA/environment and safe QA fixtures; (2) perform responsive screen QA and fix confirmed defects; (3) complete provider-specific sandbox/runtime verification; (4) reconcile billing/security/AI-off launch gates; (5) only then assess limited beta readiness.
